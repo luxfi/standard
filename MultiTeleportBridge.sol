@@ -1323,9 +1323,6 @@ contract MultiTeleportBridge is Ownable, AccessControl {
 
     constructor() {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-
-        // Initialize paymasters - where the fees go
-        //payoutAddr = 0x83dF1Cf165439935Ff2a8c2f8b3837338B5f3554; //reset this at start
     }
 
     /* Sets admins */
@@ -1439,8 +1436,8 @@ contract MultiTeleportBridge is Ownable, AccessControl {
     }
 
     /* Concat data to sign */
-    function append(string memory amt, string memory toTargetAddrStr, string memory txid, string memory blockH, string memory tokenAddrStr, string memory chainIdStr) internal pure returns (string memory) {
-        return string(abi.encodePacked(amt, toTargetAddrStr, txid, blockH, tokenAddrStr, chainIdStr));
+    function append(string memory amt, string memory toTargetAddrStr, string memory txid, string memory blockH, string memory tokenAddrStr, string memory chainIdStr, string memory vault) internal pure returns (string memory) {
+        return string(abi.encodePacked(amt, toTargetAddrStr, txid, blockH, tokenAddrStr, chainIdStr, vault));
     }
 
     function parseAddr(string memory _a) internal pure returns (address _parsedAddress) {
@@ -1477,14 +1474,14 @@ contract MultiTeleportBridge is Ownable, AccessControl {
         address tokenAddr;
         string chainIdStr;
         string amtStr;
-        string bhStr; 
+        string bhStr;
     }
 
     /* Mint:
      * Sig is specific to recipient target address, hashed txid, amount, block height, target token and target chain  
      * Sig can only be claimed once.  
      */
-    function bridgeMintStealth(uint256 amt, string memory hashedId, string memory toTargetAddrStr, bytes memory signedTXInfo, uint bhUint, string memory tokenAddrStr, uint256 chainId) public returns (address) { //chainId
+    function bridgeMintStealth(uint256 amt, string memory hashedId, string memory toTargetAddrStr, bytes memory signedTXInfo, uint bhUint, string memory tokenAddrStr, uint256 chainId, bool vault) public returns (address) { //chainId
         VarStruct memory varStruct;
         varStruct.tokenAddr = parseAddr(tokenAddrStr);
         token = ERC20WrappedAsset(varStruct.tokenAddr);
@@ -1492,9 +1489,11 @@ contract MultiTeleportBridge is Ownable, AccessControl {
         varStruct.chainIdStr = Strings.toString(chainId);
         varStruct.amtStr = Strings.toString(amt);
         varStruct.bhStr = Strings.toString(bhUint);
+        
+        require((vault==false), "Transaction vaulted not burned");
 
         // Concat msg
-        string memory msg1 = append(varStruct.amtStr, toTargetAddrStr, hashedId, varStruct.bhStr, tokenAddrStr, varStruct.chainIdStr);
+        string memory msg1 = append(varStruct.amtStr, toTargetAddrStr, hashedId, varStruct.bhStr, tokenAddrStr, varStruct.chainIdStr, "false");
         
         // Check signedTXInfo doesn't already exist
         require(!transactionMap[signedTXInfo].exists, "Dupe TX attempt"); 
@@ -1503,8 +1502,11 @@ contract MultiTeleportBridge is Ownable, AccessControl {
         address signer = recoverSigner(prefixed(keccak256(abi.encodePacked(msg1))), signedTXInfo);
 
         // Check signer is MPCOracle and corresponds to the correct ERC20 WrappedAsset
-        require((MPCOracleAddrMap[signer].exists && MPCOracleAddrMap[signer].MPCBlockHeight<= bhUint), 'Bad Signature'); 
-        
+        require((MPCOracleAddrMap[signer].exists), 'Bad Signature');
+
+        // Check correct block height
+        require((MPCOracleAddrMap[signer].MPCBlockHeight<= bhUint), 'Bad Block Height');
+
         //If correct signer, then payout
         fee = (amt * feeRate).div(uint256(10) ** _decimals);
         amt = amt.sub(fee); //remove fees
@@ -1524,7 +1526,7 @@ contract MultiTeleportBridge is Ownable, AccessControl {
      * Sig is specific to recipient target address, hashed txid, amount, block height, target token and target chain  
      * Sig can only be claimed once.  
      */
-    function unvaultStealth(uint256 amt, string memory hashedId, string memory toTargetAddrStr, bytes memory signedTXInfo, uint bhUint, string memory tokenAddrStr, uint256 chainId) public returns (address) { 
+    function unvaultStealth(uint256 amt, string memory hashedId, string memory toTargetAddrStr, bytes memory signedTXInfo, uint bhUint, string memory tokenAddrStr, uint256 chainId, bool vault) public returns (address) { 
         VarStruct memory varStruct;
         varStruct.tokenAddr = parseAddr(tokenAddrStr);
         token = ERC20WrappedAsset(varStruct.tokenAddr);
@@ -1533,12 +1535,13 @@ contract MultiTeleportBridge is Ownable, AccessControl {
         varStruct.amtStr = Strings.toString(amt);
         varStruct.bhStr = Strings.toString(bhUint);
 
+        require((vault==true), "Transaction burned not vaulted");
+
          // Check signedTXInfo doesn't already exist
         require(!transactionMap[signedTXInfo].exists); 
 
         // Concat msg
-        string memory msg1 = append(varStruct.amtStr, toTargetAddrStr, hashedId, varStruct.bhStr, tokenAddrStr, varStruct.chainIdStr);
-
+        string memory msg1 = append(varStruct.amtStr, toTargetAddrStr, hashedId, varStruct.bhStr, tokenAddrStr, varStruct.chainIdStr, "true");
 
         // Check that amt exists
         require((token.balanceOf(address(this)) >=amt), "Vault Undercapitalized"); 
@@ -1547,7 +1550,10 @@ contract MultiTeleportBridge is Ownable, AccessControl {
         address signer = recoverSigner(prefixed(keccak256(abi.encodePacked(msg1))), signedTXInfo);
 
         // Check signer is MPCOracle 
-        require((MPCOracleAddrMap[signer].exists && MPCOracleAddrMap[signer].MPCBlockHeight<= bhUint), 'Bad Signature');
+        require((MPCOracleAddrMap[signer].exists), 'Bad Signature');
+
+        // Check correct block height
+        require((MPCOracleAddrMap[signer].MPCBlockHeight<= bhUint), 'Bad Block Height');
 
         //If correct signer, then payout
         fee = (amt * feeRate).div(uint256(10) ** _decimals);
