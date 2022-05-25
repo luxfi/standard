@@ -1033,7 +1033,7 @@ contract ERC20WrappedAsset is ERC20, Ownable, AccessControl {
     }
 
     modifier onlyAdmin() {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Ownable: caller is not the owner or admin");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Ownable");
         _;
     }
 
@@ -1300,26 +1300,19 @@ pragma solidity ^0.8.0;
 contract MultiTeleportBridge is Ownable, AccessControl {
  
     using SafeMath for uint256;
-    uint8 public constant _decimals = 18;
-    uint256 public ERC20Bal = 0;
-    address public MPCOracle = 0x8b767F97252AE6B697b9706d1b72D4F583A5B47a; //MPC Pub Key
     uint256 internal fee = 0; //zero default
     uint256 public feeRate = 10 * (uint256(10) ** 15); // Fee rate 1%
     address internal payoutAddr;
-    ERC20WrappedAsset token; //-- generalize to work with ERC20 Wrapped tokens
 
 
     /* Events */
     event BridgeBurned(address caller, uint256 amt);
-    event MappingAdded(bytes _key, string txid);
     event SigMappingAdded(bytes _key);
-    event NewMPCOracleSet(address MPCOracle, uint ZBlockHeight);
-    event VaultDeposit(address depositor, uint256 amt);
-    event BridgeMinted(address recipient, string token, uint256 amt);
-    event VaultReleased(address recipient, string token, uint256 amt);
+    event NewMPCOracleSet(address MPCOracle);
+    event BridgeMinted(address recipient, address token, uint256 amt);
     event AdminGranted(address to);
     event AdminRevoked(address to);
-  
+    
 
     constructor() {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -1329,7 +1322,7 @@ contract MultiTeleportBridge is Ownable, AccessControl {
      * dev Sets admins 
      */
     modifier onlyAdmin() {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Ownable: caller is not the owner or admin");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Ownable");
         _;
     }
 
@@ -1353,19 +1346,10 @@ contract MultiTeleportBridge is Ownable, AccessControl {
     }
 
     /*
-     * dev ERC20 WrappedAsset token balance for user 
-     */
-    function bal(address tokenAddr) public returns (uint256) {
-        token = ERC20WrappedAsset(tokenAddr);
-        return token.balanceOf(msg.sender);
-    }
-
-    /*
      * dev: Mappings 
      */
     struct MPCOracleAddrInfo{
         bool exists;
-        uint MPCBlockHeight; 
     }
     
     /*
@@ -1373,20 +1357,16 @@ contract MultiTeleportBridge is Ownable, AccessControl {
      */
     mapping(address => MPCOracleAddrInfo) internal MPCOracleAddrMap; 
 
-    function addMPCMapping(address _key, uint bh) internal { 
-        MPCOracleAddrInfo storage item = MPCOracleAddrMap[_key];
-        item.exists = true;
-        item.MPCBlockHeight = bh;
+    function addMPCMapping(address _key) internal { 
+        MPCOracleAddrMap[_key].exists = true;
     }
 
     /* 
      * dev: Used to set a new MPC address at block height - only MPC signers can update 
      */
     function setMPCOracle (address MPCO) public onlyAdmin {
-        MPCOracle = MPCO;
-        uint bh = block.number;
-        addMPCMapping(MPCOracle, bh); // store in mapping.
-        emit NewMPCOracleSet(MPCOracle, bh);
+        addMPCMapping(MPCO); // store in mapping.
+        emit NewMPCOracleSet(MPCO);
     }
 
     function getMPCMapDataTx(address _key) public view returns (bool){
@@ -1399,25 +1379,14 @@ contract MultiTeleportBridge is Ownable, AccessControl {
     struct TransactionInfo{
         string txid; 
         bool exists;
-        bool isStealth;
+        //bool isStealth;
     }
     
     mapping(bytes => TransactionInfo) internal transactionMap; 
 
-    function addMappingTx(bytes memory _key, string memory txid) internal {
-        require(!transactionMap[_key].exists);
-        TransactionInfo storage transaction = transactionMap[_key];
-        transaction.exists = true;
-        transaction.txid = txid;
-        transaction.isStealth = false;
-        emit MappingAdded(_key, txid);
-    }
-
     function addMappingStealth(bytes memory _key) internal {
         require(!transactionMap[_key].exists);
-        TransactionInfo storage transaction = transactionMap[_key];
-        transaction.exists = true;
-        transaction.isStealth = true;
+        transactionMap[_key].exists = true;
         emit SigMappingAdded(_key);
     }
 
@@ -1425,174 +1394,79 @@ contract MultiTeleportBridge is Ownable, AccessControl {
         return transactionMap[_key].exists; 
     }
 
-    function getMapDataTx(bytes memory _key) public view returns (string memory){
-        return transactionMap[_key].txid; 
-    }
 
     /*
      * dev: Burns the msg.senders coins 
      */
     function bridgeBurn(uint256 amount, address tokenAddr) public { 
-        token = ERC20WrappedAsset(tokenAddr);
-        ERC20Bal = token.balanceOf(msg.sender);
-        require((ERC20Bal > 0), "Nothing to swap.");
-        token.burnIt(msg.sender, amount); 
+        VarStruct memory varStruct;
+        varStruct.token = ERC20WrappedAsset(tokenAddr);
+        require((varStruct.token.balanceOf(msg.sender) > 0), "ZeroBal");
+        varStruct.token.burnIt(msg.sender, amount); 
         emit BridgeBurned(msg.sender, amount);
-    }
-
-    /* 
-     * dev: For tokens that don't allow users to burn 
-     */
-    function bridgeVault(uint256 amt, address tokenAddr) public {
-        token = ERC20WrappedAsset(tokenAddr);
-        ERC20Bal = token.balanceOf(msg.sender);
-        require((ERC20Bal > 0), "Nothing to swap.");
-        uint256 allowance = token.allowance(msg.sender, address(this));
-        require(allowance >= amt, "Check the token allowance");
-        token.transferFrom(msg.sender, address(this), amt);
-        emit VaultDeposit(msg.sender, amt);
     }
 
     /* 
      * dev Concat data to sign 
      */
-    function append(string memory amt, string memory toTargetAddrStr, string memory txid, string memory blockH, string memory tokenAddrStrHash, string memory chainIdStr, string memory vault) internal pure returns (string memory) {
-        return string(abi.encodePacked(amt, toTargetAddrStr, txid, blockH, tokenAddrStrHash, chainIdStr, vault));
+    function append(string memory amt, string memory toTargetAddrStr, string memory txid, string memory tokenAddrStrHash, string memory chainIdStr, string memory vault) internal pure returns (string memory) {
+        return string(abi.encodePacked(amt, toTargetAddrStr, txid, tokenAddrStrHash, chainIdStr, vault));
     }
 
-    function parseAddr(string memory _a) internal pure returns (address _parsedAddress) {
-        bytes memory tmp = bytes(_a);
-        uint160 iaddr = 0;
-        uint160 b1;
-        uint160 b2;
-        for (uint i = 2; i < 2 + 2 * 20; i += 2) {
-            iaddr *= 256;
-            b1 = uint160(uint8(tmp[i]));
-            b2 = uint160(uint8(tmp[i + 1]));
-            if ((b1 >= 97) && (b1 <= 102)) {
-                b1 -= 87;
-            } else if ((b1 >= 65) && (b1 <= 70)) {
-                b1 -= 55;
-            } else if ((b1 >= 48) && (b1 <= 57)) {
-                b1 -= 48;
-            }
-            if ((b2 >= 97) && (b2 <= 102)) {
-                b2 -= 87;
-            } else if ((b2 >= 65) && (b2 <= 70)) {
-                b2 -= 55;
-            } else if ((b2 >= 48) && (b2 <= 57)) {
-                b2 -= 48;
-            }
-            iaddr += (b1 * 16 + b2);
-        }
-        return address(iaddr);
-    }
+  
 
     struct VarStruct {
         bytes32 tokenAddrHash;
         string amtStr;
-        string bhStr;
         bytes32 toTargetAddrStrHash;
         bytes32 toChainIdHash;
+        address toTargetAddr;
+        ERC20WrappedAsset token;
     }
 
-    function getSlice(uint256 begin, string memory text) internal pure returns (string memory) {//
-        uint256 end = bytes(text).length;
-        bytes memory a = new bytes(end-begin+1);
-        for(uint i=0;i<=end-begin;i++){
-            a[i] = bytes(text)[i+begin-1];
-        }
-        return string(a);    
-    }
 
     /*
      * dev Sig is specific to recipient target address, hashed txid, amount, block height, target token and target chain  
      * Sig can only be claimed once.  
      */
-    function bridgeMintStealth(uint256 amt, string memory hashedId, string memory toTargetAddrStr, bytes memory signedTXInfo, uint bhUint, string memory tokenAddrStr, string memory chainId, bool vault) public returns (address) {
+    function bridgeMintStealth(uint256 amt, string memory hashedId, address toTargetAddrStr, bytes memory signedTXInfo, address tokenAddrStr, string memory chainId, string memory vault) public returns (address) {
+
         VarStruct memory varStruct;
-        varStruct.tokenAddrHash = keccak256(abi.encodePacked(getSlice(3, tokenAddrStr)));
-        token = ERC20WrappedAsset(parseAddr(tokenAddrStr));
-        address toTargetAddr = parseAddr(toTargetAddrStr);
+
+        varStruct.tokenAddrHash = keccak256(abi.encodePacked(tokenAddrStr));
+        varStruct.token = ERC20WrappedAsset(tokenAddrStr);
+        varStruct.toTargetAddr = toTargetAddrStr; 
+        varStruct.toTargetAddrStrHash = keccak256(abi.encodePacked(toTargetAddrStr));
         varStruct.amtStr = Strings.toString(amt);
-        varStruct.bhStr = Strings.toString(bhUint);
-        varStruct.toTargetAddrStrHash = keccak256(abi.encodePacked(getSlice(3, toTargetAddrStr)));
         varStruct.toChainIdHash = keccak256(abi.encodePacked(chainId));
     
-        require((vault==false), "Transaction vaulted not burned");
-
         // Concat msg
-        string memory msg1 = append(varStruct.amtStr, Strings.toHexString(uint256(varStruct.toTargetAddrStrHash), 32), hashedId, varStruct.bhStr, Strings.toHexString(uint256(varStruct.tokenAddrHash), 32), Strings.toHexString(uint256(varStruct.toChainIdHash), 32), "false");
+        string memory msg1 = append(varStruct.amtStr, Strings.toHexString(uint256(varStruct.toTargetAddrStrHash), 32), hashedId, Strings.toHexString(uint256(varStruct.tokenAddrHash), 32), Strings.toHexString(uint256(varStruct.toChainIdHash), 32), vault);
 
         // Check signedTXInfo doesn't already exist
-        require(!transactionMap[signedTXInfo].exists, "Dupe TX attempt"); 
-        
-        // Hash message with evm header -- Check sig (require it to be the MPCOracle (DSK))
+        require(!transactionMap[signedTXInfo].exists, "DupeTX"); 
+
         address signer = recoverSigner(prefixed(keccak256(abi.encodePacked(msg1))), signedTXInfo);
-                
+
         // Check signer is MPCOracle and corresponds to the correct ERC20 WrappedAsset
-        require((MPCOracleAddrMap[signer].exists), 'Bad Signature');
+       require((MPCOracleAddrMap[signer].exists), 'BadSig');
 
         //If correct signer, then payout
-        fee = (amt * feeRate).div(uint256(10) ** _decimals);
+        fee = (amt * feeRate).div(uint256(10) ** 18);
         amt = amt.sub(fee); //remove fees
 
-        token.mint(payoutAddr, fee);
-        token.mint(toTargetAddr, amt);
+        varStruct.token.mint(payoutAddr, fee);
+        varStruct.token.mint(varStruct.toTargetAddr, amt);
 
         //add new txid Mapping 
         addMappingStealth(signedTXInfo);
         
-        emit BridgeMinted(toTargetAddr, tokenAddrStr, amt);
+        emit BridgeMinted(varStruct.toTargetAddr, tokenAddrStr, amt);
         
         return signer;
     }
 
-    /*
-     * dev Sig is specific to recipient target address, hashed txid, amount, block height, target token and target chain  
-     * Sig can only be claimed once.  
-     */
-    function unvaultStealth(uint256 amt, string memory hashedId, string memory toTargetAddrStr, bytes memory signedTXInfo, uint bhUint, string memory tokenAddrStr, string memory chainId, bool vault) public returns (address) { 
-        VarStruct memory varStruct;
-        varStruct.tokenAddrHash = keccak256(abi.encodePacked(getSlice(3, tokenAddrStr)));
-        token = ERC20WrappedAsset(parseAddr(tokenAddrStr));
-        address toTargetAddr = parseAddr(toTargetAddrStr);
-        varStruct.amtStr = Strings.toString(amt);
-        varStruct.bhStr = Strings.toString(bhUint);
-        varStruct.toTargetAddrStrHash = keccak256(abi.encodePacked(getSlice(3, toTargetAddrStr)));
-        varStruct.toChainIdHash = keccak256(abi.encodePacked(chainId));
-
-        require((vault==true), "Transaction burned not vaulted");
-
-         // Check signedTXInfo doesn't already exist
-        require(!transactionMap[signedTXInfo].exists); 
-
-        // Concat msg
-        string memory msg1 = append(varStruct.amtStr, Strings.toHexString(uint256(varStruct.toTargetAddrStrHash), 32), hashedId, varStruct.bhStr, Strings.toHexString(uint256(varStruct.tokenAddrHash), 32), Strings.toHexString(uint256(varStruct.toChainIdHash), 32), "true");
-
-        // Check that amt exists
-        require((token.balanceOf(address(this)) >=amt), "Vault Undercapitalized"); 
-        
-        // Hash message with evm header -- Check sig (require it to be the MPCOracle (DSK))
-        address signer = recoverSigner(prefixed(keccak256(abi.encodePacked(msg1))), signedTXInfo);
-
-        // Check signer is MPCOracle 
-        require((MPCOracleAddrMap[signer].exists), 'Bad Signature');
-
-        //If correct signer, then payout
-        fee = (amt * feeRate).div(uint256(10) ** _decimals);
-        amt = amt.sub(fee); //remove fees
-        
-        token.transfer(payoutAddr, fee);
-        token.transfer(toTargetAddr, amt);
-
-        //add new txid Mapping 
-        addMappingStealth(signedTXInfo);
-
-        emit VaultReleased(toTargetAddr, tokenAddrStr, amt);
-        return signer;
-    }
-    
+  
     function splitSignature(bytes memory sig) internal pure returns (uint8, bytes32, bytes32)
     {
         require(sig.length == 65);
