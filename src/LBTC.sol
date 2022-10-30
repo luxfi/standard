@@ -1041,7 +1041,7 @@ contract ERC20WrappedAsset is ERC20, Ownable, AccessControl {
         emit AdminGranted(to);
     }
 
-    function revokeAdmin(address to) public onlyAdmin { 
+    function revokeAdmin(address to) public onlyAdmin {
         require(hasRole(DEFAULT_ADMIN_ROLE, to), "Ownable");
         revokeRole(DEFAULT_ADMIN_ROLE, to);
         emit AdminRevoked(to);
@@ -1063,24 +1063,24 @@ contract ERC20WrappedAsset is ERC20, Ownable, AccessControl {
 // File: contracts/LuxBTC.sol
 
 /*
- __                      ____    ______  ____      
-/\ \                    /\  _`\ /\__  _\/\  _`\    
-\ \ \      __  __  __  _\ \ \L\ \/_/\ \/\ \ \/\_\  
- \ \ \  __/\ \/\ \/\ \/'\\ \  _ <' \ \ \ \ \ \/_/_ 
+ __                      ____    ______  ____
+/\ \                    /\  _`\ /\__  _\/\  _`\
+\ \ \      __  __  __  _\ \ \L\ \/_/\ \/\ \ \/\_\
+ \ \ \  __/\ \/\ \/\ \/'\\ \  _ <' \ \ \ \ \ \/_/_
   \ \ \L\ \ \ \_\ \/>  </ \ \ \L\ \ \ \ \ \ \ \L\ \
    \ \____/\ \____//\_/\_\ \ \____/  \ \_\ \ \____/
-    \/___/  \/___/ \//\/_/  \/___/    \/_/  \/___/ 
-*/                                                   
-                                                   
+    \/___/  \/___/ \//\/_/  \/___/    \/_/  \/___/
+*/
+
 
 pragma solidity ^0.8.0;
 
-contract LuxBTC is ERC20WrappedAsset{
+contract LuxBTC is ERC20B {
 
     string public constant _name = 'LuxBTC';
     string public constant _symbol = 'LBTC';
 
-    constructor() ERC20WrappedAsset(_name, _symbol) {
+    constructor() ERC20B(_name, _symbol) {
 
     }
 

@@ -1041,7 +1041,7 @@ contract ERC20WrappedAsset is ERC20, Ownable, AccessControl {
         emit AdminGranted(to);
     }
 
-    function revokeAdmin(address to) public onlyAdmin { 
+    function revokeAdmin(address to) public onlyAdmin {
         require(hasRole(DEFAULT_ADMIN_ROLE, to), "Ownable");
         revokeRole(DEFAULT_ADMIN_ROLE, to);
         emit AdminRevoked(to);
@@ -1058,4 +1058,25 @@ contract ERC20WrappedAsset is ERC20, Ownable, AccessControl {
         emit LogBurn(account, amount);
         return true;
     }
+}
+
+// File: contracts/LuxETH.sol
+
+/* __                      ____    ______  __  __
+/\ \                    /\  _`\ /\__  _\/\ \/\ \
+\ \ \      __  __  __  _\ \ \L\_\/_/\ \/\ \ \_\ \
+ \ \ \  __/\ \/\ \/\ \/'\\ \  _\L  \ \ \ \ \  _  \
+  \ \ \L\ \ \ \_\ \/>  </ \ \ \L\ \ \ \ \ \ \ \ \ \
+   \ \____/\ \____//\_/\_\ \ \____/  \ \_\ \ \_\ \_\
+    \/___/  \/___/ \//\/_/  \/___/    \/_/  \/_/\/_/
+*/
+pragma solidity ^0.8.0;
+
+contract LuxETH is ERC20B {
+
+    string public constant _name = 'LuxETH';
+    string public constant _symbol = 'LETH';
+
+    constructor() ERC20WrappedAsset(_name, _symbol) {}
+
 }
