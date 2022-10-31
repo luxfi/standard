@@ -1,5 +1,5 @@
 {
-  "name": "@luxdefi/bridge-contracts",
+  "name": "@luxdefi/standard",
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test"
