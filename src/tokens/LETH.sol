@@ -1015,13 +1015,13 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
     }
 }
 
-// File: contracts/ERC20WrappedAsset.sol
+// File: contracts/ERC20B.sol
 
 pragma solidity ^0.8.0;
 
 
 
-contract ERC20WrappedAsset is ERC20, Ownable, AccessControl {
+contract ERC20B is ERC20, Ownable, AccessControl {
     event LogMint(address indexed account, uint amount);
     event LogBurn(address indexed account, uint amount);
     event AdminGranted(address to);
@@ -1060,28 +1060,23 @@ contract ERC20WrappedAsset is ERC20, Ownable, AccessControl {
     }
 }
 
-// File: contracts/LuxBTC.sol
+// File: contracts/LuxETH.sol
 
-/*
- __                      ____    ______  ____
-/\ \                    /\  _`\ /\__  _\/\  _`\
-\ \ \      __  __  __  _\ \ \L\ \/_/\ \/\ \ \/\_\
- \ \ \  __/\ \/\ \/\ \/'\\ \  _ <' \ \ \ \ \ \/_/_
-  \ \ \L\ \ \ \_\ \/>  </ \ \ \L\ \ \ \ \ \ \ \L\ \
-   \ \____/\ \____//\_/\_\ \ \____/  \ \_\ \ \____/
-    \/___/  \/___/ \//\/_/  \/___/    \/_/  \/___/
+/* __                      ____    ______  __  __
+/\ \                    /\  _`\ /\__  _\/\ \/\ \
+\ \ \      __  __  __  _\ \ \L\_\/_/\ \/\ \ \_\ \
+ \ \ \  __/\ \/\ \/\ \/'\\ \  _\L  \ \ \ \ \  _  \
+  \ \ \L\ \ \ \_\ \/>  </ \ \ \L\ \ \ \ \ \ \ \ \ \
+   \ \____/\ \____//\_/\_\ \ \____/  \ \_\ \ \_\ \_\
+    \/___/  \/___/ \//\/_/  \/___/    \/_/  \/_/\/_/
 */
-
-
 pragma solidity ^0.8.0;
 
-contract LuxBTC is ERC20B {
+contract LuxETH is ERC20B {
 
-    string public constant _name = 'LuxBTC';
-    string public constant _symbol = 'LBTC';
+    string public constant _name = 'LuxETH';
+    string public constant _symbol = 'LETH';
 
-    constructor() ERC20B(_name, _symbol) {
-
-    }
+    constructor() ERC20B(_name, _symbol) {}
 
 }
