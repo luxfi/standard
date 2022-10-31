@@ -14,7 +14,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./ERC20WrappedAsset.sol";
+import "./ERC20B.sol";
 
 contract LUXD is ERC20B {
     string public constant _name = 'Lux Dollar';

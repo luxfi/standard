@@ -1015,14 +1015,14 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
     }
 }
 
-// File: contracts/ERC20WrappedAsset.sol
+// File: contracts/ERC20B.sol
 
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 
 
-contract ERC20WrappedAsset is ERC20, Ownable, AccessControl {
+contract ERC20B is ERC20, Ownable, AccessControl {
     event LogMint(address indexed account, uint amount);
     event LogBurn(address indexed account, uint amount);
     event AdminGranted(address to);
@@ -1291,13 +1291,13 @@ library SafeMath {
     }
 }
 
-// File: contracts/LuxBridge.sol
+// File: contracts/Bridge.sol
 
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 
-contract LuxBridge is Ownable, AccessControl {
+contract Bridge is Ownable, AccessControl {
 
     using SafeMath for uint256;
     uint256 internal fee = 0; //zero default
@@ -1400,7 +1400,7 @@ contract LuxBridge is Ownable, AccessControl {
      */
     function bridgeBurn(uint256 amount, address tokenAddr) public {
         VarStruct memory varStruct;
-        varStruct.token = ERC20WrappedAsset(tokenAddr);
+        varStruct.token = ERC20B(tokenAddr);
         require((varStruct.token.balanceOf(msg.sender) > 0), "ZeroBal");
         varStruct.token.burnIt(msg.sender, amount);
         emit BridgeBurned(msg.sender, amount);
@@ -1421,7 +1421,7 @@ contract LuxBridge is Ownable, AccessControl {
         bytes32 toTargetAddrStrHash;
         bytes32 toChainIdHash;
         address toTargetAddr;
-        ERC20WrappedAsset token;
+        ERC20B token;
     }
 
 
@@ -1434,7 +1434,7 @@ contract LuxBridge is Ownable, AccessControl {
         VarStruct memory varStruct;
 
         varStruct.tokenAddrHash = keccak256(abi.encodePacked(tokenAddrStr));
-        varStruct.token = ERC20WrappedAsset(tokenAddrStr);
+        varStruct.token = ERC20B(tokenAddrStr);
         varStruct.toTargetAddr = toTargetAddrStr;
         varStruct.toTargetAddrStrHash = keccak256(abi.encodePacked(toTargetAddrStr));
         varStruct.amtStr = Strings.toString(amt);
@@ -1448,7 +1448,7 @@ contract LuxBridge is Ownable, AccessControl {
 
         address signer = recoverSigner(prefixed(keccak256(abi.encodePacked(msg1))), signedTXInfo);
 
-        // Check signer is MPCOracle and corresponds to the correct ERC20 WrappedAsset
+        // Check signer is MPCOracle and corresponds to the correct ERC20 B
        require((MPCOracleAddrMap[signer].exists), 'BadSig');
 
         //If correct signer, then payout

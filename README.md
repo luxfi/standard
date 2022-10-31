@@ -1,6 +1,7 @@
-# LuxNFT 
+# Lux Standard
 
-This project demonstrates a basic LuxNFT release. It comes with a LuxNFT contract, tests, and a script for deployment and listing NFTs.
+This project contains reference implementation contracts for fungible and non-fungible
+tokens as well as the Teleport bridge.
 
 Try running some of the following tasks:
 

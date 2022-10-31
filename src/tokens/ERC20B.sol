@@ -1015,7 +1015,7 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
     }
 }
 
-// File: contracts/ERC20WrappedAsset.sol
+// File: contracts/ERC20B.sol
 
 pragma solidity ^0.8.0;
 
