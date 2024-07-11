@@ -1,0 +1,2306 @@
+[
+  {
+    "rarity": "Common",
+    "name": "Puggy",
+    "parentA": "Pug",
+    "parentB": "Pug",
+    "yields": 120,
+    "tokenURI": "https://db.luxlabs.io/puggy.jpg",
+    "metadataURI": "https://db.luxlabs.io/puggy.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Puggerfly",
+    "parentA": "Pug",
+    "parentB": "Butterfly",
+    "yields": 120,
+    "tokenURI": "https://db.luxlabs.io/puggerfly.jpg",
+    "metadataURI": "https://db.luxlabs.io/puggerfly.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Pugitten",
+    "parentA": "Pug",
+    "parentB": "Kitten",
+    "yields": 120,
+    "tokenURI": "https://db.luxlabs.io/pugitten.jpg",
+    "metadataURI": "https://db.luxlabs.io/pugitten.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Pugurtle",
+    "parentA": "Pug",
+    "parentB": "Turtle",
+    "yields": 120,
+    "tokenURI": "https://db.luxlabs.io/pugurtle.jpg",
+    "metadataURI": "https://db.luxlabs.io/pugurtle.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Butterpug",
+    "parentA": "Butterfly",
+    "parentB": "Pug",
+    "yields": 120,
+    "tokenURI": "https://db.luxlabs.io/butterpug.jpg",
+    "metadataURI": "https://db.luxlabs.io/butterpug.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Caterpillar",
+    "parentA": "Butterfly",
+    "parentB": "Butterfly",
+    "yields": 120,
+    "tokenURI": "https://db.luxlabs.io/caterpillar.jpg",
+    "metadataURI": "https://db.luxlabs.io/caterpillar.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Butterflitten",
+    "parentA": "Butterfly",
+    "parentB": "Kitten",
+    "yields": 120,
+    "tokenURI": "https://db.luxlabs.io/butterflitten.jpg",
+    "metadataURI": "https://db.luxlabs.io/butterflitten.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Butturtle",
+    "parentA": "Butterfly",
+    "parentB": "Turtle",
+    "yields": 120,
+    "tokenURI": "https://db.luxlabs.io/butturtle.jpg",
+    "metadataURI": "https://db.luxlabs.io/butturtle.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Kitty Pug",
+    "parentA": "Kitten",
+    "parentB": "Pug",
+    "yields": 120,
+    "tokenURI": "https://db.luxlabs.io/kittypug.jpg",
+    "metadataURI": "https://db.luxlabs.io/kittypug.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Kitterfly",
+    "parentA": "Kitten",
+    "parentB": "Butterfly",
+    "yields": 120,
+    "tokenURI": "https://db.luxlabs.io/kitterfly.jpg",
+    "metadataURI": "https://db.luxlabs.io/kitterfly.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Kitten",
+    "parentA": "Kitten",
+    "parentB": "Kitten",
+    "yields": 120,
+    "tokenURI": "https://db.luxlabs.io/kitten.jpg",
+    "metadataURI": "https://db.luxlabs.io/kitten.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Kitturtle",
+    "parentA": "Kitten",
+    "parentB": "Turtle",
+    "yields": 120,
+    "tokenURI": "https://db.luxlabs.io/kitturtle.jpg",
+    "metadataURI": "https://db.luxlabs.io/kitturtle.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Turtpug",
+    "parentA": "Turtle",
+    "parentB": "Pug",
+    "yields": 120,
+    "tokenURI": "https://db.luxlabs.io/turtpug.jpg",
+    "metadataURI": "https://db.luxlabs.io/turtpug.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Turtterfly",
+    "parentA": "Turtle",
+    "parentB": "Butterfly",
+    "yields": 120,
+    "tokenURI": "https://db.luxlabs.io/turtterfly.jpg",
+    "metadataURI": "https://db.luxlabs.io/turtterfly.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Turkitten",
+    "parentA": "Turtle",
+    "parentB": "Kitten",
+    "yields": 120,
+    "tokenURI": "https://db.luxlabs.io/turkitten.jpg",
+    "metadataURI": "https://db.luxlabs.io/turkitten.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Tiny Turtle",
+    "parentA": "Turtle",
+    "parentB": "Turtle",
+    "yields": 120,
+    "tokenURI": "https://db.luxlabs.io/tinyturtle.jpg",
+    "metadataURI": "https://db.luxlabs.io/tinyturtle.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Pengpug",
+    "parentA": "Penguin",
+    "parentB": "Pug",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/pengpug.jpg",
+    "metadataURI": "https://db.luxlabs.io/pengpug.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Penggerfly",
+    "parentA": "Penguin",
+    "parentB": "Butterfly",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/penggerfly.jpg",
+    "metadataURI": "https://db.luxlabs.io/penggerfly.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Pengkitty",
+    "parentA": "Penguin",
+    "parentB": "Kitten",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/pengkitty.jpg",
+    "metadataURI": "https://db.luxlabs.io/pengkitty.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Pengurtle",
+    "parentA": "Penguin",
+    "parentB": "Turtle",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/pengurtle.jpg",
+    "metadataURI": "https://db.luxlabs.io/pengurtle.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "DuckPug",
+    "parentA": "Duckling",
+    "parentB": "Pug",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/duckpug.jpg",
+    "metadataURI": "https://db.luxlabs.io/duckpug.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Duckerfly",
+    "parentA": "Duckling",
+    "parentB": "Butterfly",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/duckerfly.jpg",
+    "metadataURI": "https://db.luxlabs.io/duckerfly.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Duckitten",
+    "parentA": "Duckling",
+    "parentB": "Kitten",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/duckitten.jpg",
+    "metadataURI": "https://db.luxlabs.io/duckitten.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Durtle",
+    "parentA": "Duckling",
+    "parentB": "Turtle",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/durtle.jpg",
+    "metadataURI": "https://db.luxlabs.io/durtle.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Orcapug",
+    "parentA": "Orca",
+    "parentB": "Pug",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/orcapug.jpg",
+    "metadataURI": "https://db.luxlabs.io/orcapug.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Orcafly",
+    "parentA": "Orca",
+    "parentB": "Butterfly",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/orcafly.jpg",
+    "metadataURI": "https://db.luxlabs.io/orcafly.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Orkitten",
+    "parentA": "Orca",
+    "parentB": "Kitten",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/orkitten.jpg",
+    "metadataURI": "https://db.luxlabs.io/orkitten.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Orcaturtle",
+    "parentA": "Orca",
+    "parentB": "Turtle",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/orcaturtle.jpg",
+    "metadataURI": "https://db.luxlabs.io/orcaturtle.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Elkpug",
+    "parentA": "Elk",
+    "parentB": "Pug",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/elkpug.jpg",
+    "metadataURI": "https://db.luxlabs.io/elkpug.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Elkerfly",
+    "parentA": "Elk",
+    "parentB": "Butterfly",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/elkerfly.jpg",
+    "metadataURI": "https://db.luxlabs.io/elkerfly.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Elkitten",
+    "parentA": "Elk",
+    "parentB": "Kitten",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/elkitten.jpg",
+    "metadataURI": "https://db.luxlabs.io/elkitten.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Elkurtle",
+    "parentA": "Elk",
+    "parentB": "Turtle",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/elkurtle.jpg",
+    "metadataURI": "https://db.luxlabs.io/elkurtle.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Pandapug",
+    "parentA": "Panda",
+    "parentB": "Pug",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/pandapug.jpg",
+    "metadataURI": "https://db.luxlabs.io/pandapug.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Pandafly",
+    "parentA": "Panda",
+    "parentB": "Butterfly",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/pandafly.jpg",
+    "metadataURI": "https://db.luxlabs.io/pandafly.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Pandacat",
+    "parentA": "Panda",
+    "parentB": "Kitten",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/pandacat.jpg",
+    "metadataURI": "https://db.luxlabs.io/pandacat.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Pandaturtle",
+    "parentA": "Panda",
+    "parentB": "Turtle",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/pandaturtle.jpg",
+    "metadataURI": "https://db.luxlabs.io/pandaturtle.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Gug",
+    "parentA": "Gorilla",
+    "parentB": "Pug",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/gug.jpg",
+    "metadataURI": "https://db.luxlabs.io/gug.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Gorillafly",
+    "parentA": "Gorilla",
+    "parentB": "Butterfly",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/gorillafly.jpg",
+    "metadataURI": "https://db.luxlabs.io/gorillafly.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Gorkitten",
+    "parentA": "Gorilla",
+    "parentB": "Kitten",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/gorkitten.jpg",
+    "metadataURI": "https://db.luxlabs.io/gorkitten.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Gorturtle",
+    "parentA": "Gorilla",
+    "parentB": "Turtle",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/gorturtle.jpg",
+    "metadataURI": "https://db.luxlabs.io/gorturtle.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Elepug",
+    "parentA": "Elephant",
+    "parentB": "Pug",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/elepug.jpg",
+    "metadataURI": "https://db.luxlabs.io/elepug.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Elephantterfly",
+    "parentA": "Elephant",
+    "parentB": "Butterfly",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/elephantterfly.jpg",
+    "metadataURI": "https://db.luxlabs.io/elephantterfly.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Elephitten",
+    "parentA": "Elephant",
+    "parentB": "Kitten",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/elephitten.jpg",
+    "metadataURI": "https://db.luxlabs.io/elephitten.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Elephanturtle",
+    "parentA": "Elephant",
+    "parentB": "Turtle",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/elephanturtle.jpg",
+    "metadataURI": "https://db.luxlabs.io/elephanturtle.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Lionpug",
+    "parentA": "Lion",
+    "parentB": "Pug",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/lionpug.jpg",
+    "metadataURI": "https://db.luxlabs.io/lionpug.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Lionfly",
+    "parentA": "Lion",
+    "parentB": "Butterfly",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/lionfly.jpg",
+    "metadataURI": "https://db.luxlabs.io/lionfly.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Litten",
+    "parentA": "Lion",
+    "parentB": "Kitten",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/litten.jpg",
+    "metadataURI": "https://db.luxlabs.io/litten.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Lionturtle",
+    "parentA": "Lion",
+    "parentB": "Turtle",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/lionturtle.jpg",
+    "metadataURI": "https://db.luxlabs.io/lionturtle.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Bearpug",
+    "parentA": "Bear",
+    "parentB": "Pug",
+    "yields": 6100,
+    "tokenURI": "https://db.luxlabs.io/bearpug.jpg",
+    "metadataURI": "https://db.luxlabs.io/bearpug.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Beartterfly",
+    "parentA": "Bear",
+    "parentB": "Butterfly",
+    "yields": 6100,
+    "tokenURI": "https://db.luxlabs.io/beartterfly.jpg",
+    "metadataURI": "https://db.luxlabs.io/beartterfly.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Beartten",
+    "parentA": "Bear",
+    "parentB": "Kitten",
+    "yields": 6100,
+    "tokenURI": "https://db.luxlabs.io/beartten.jpg",
+    "metadataURI": "https://db.luxlabs.io/beartten.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Beartle",
+    "parentA": "Bear",
+    "parentB": "Turtle",
+    "yields": 6100,
+    "tokenURI": "https://db.luxlabs.io/beartle.jpg",
+    "metadataURI": "https://db.luxlabs.io/beartle.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Shug",
+    "parentA": "Shark",
+    "parentB": "Pug",
+    "yields": 6100,
+    "tokenURI": "https://db.luxlabs.io/shug.jpg",
+    "metadataURI": "https://db.luxlabs.io/shug.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Sharkerfly",
+    "parentA": "Shark",
+    "parentB": "Butterfly",
+    "yields": 6100,
+    "tokenURI": "https://db.luxlabs.io/sharkerfly.jpg",
+    "metadataURI": "https://db.luxlabs.io/sharkerfly.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Sharkitten",
+    "parentA": "Shark",
+    "parentB": "Kitten",
+    "yields": 6100,
+    "tokenURI": "https://db.luxlabs.io/sharkitten.jpg",
+    "metadataURI": "https://db.luxlabs.io/sharkitten.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Shurtle",
+    "parentA": "Shark",
+    "parentB": "Turtle",
+    "yields": 6100,
+    "tokenURI": "https://db.luxlabs.io/shurtle.jpg",
+    "metadataURI": "https://db.luxlabs.io/shurtle.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Blobpug",
+    "parentA": "Blobfish",
+    "parentB": "Pug",
+    "yields": 16650,
+    "tokenURI": "https://db.luxlabs.io/blobpug.jpg",
+    "metadataURI": "https://db.luxlabs.io/blobpug.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Blobberfly",
+    "parentA": "Blobfish",
+    "parentB": "Butterfly",
+    "yields": 16650,
+    "tokenURI": "https://db.luxlabs.io/blobberfly.jpg",
+    "metadataURI": "https://db.luxlabs.io/blobberfly.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Blob kitten",
+    "parentA": "Blobfish",
+    "parentB": "Kitten",
+    "yields": 16650,
+    "tokenURI": "https://db.luxlabs.io/blobkitten.jpg",
+    "metadataURI": "https://db.luxlabs.io/blobkitten.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Bloburtle",
+    "parentA": "Blobfish",
+    "parentB": "Turtle",
+    "yields": 16650,
+    "tokenURI": "https://db.luxlabs.io/bloburtle.jpg",
+    "metadataURI": "https://db.luxlabs.io/bloburtle.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Naked Mole Pug",
+    "parentA": "Naked Mole Rat",
+    "parentB": "Pug",
+    "yields": 16650,
+    "tokenURI": "https://db.luxlabs.io/nakedmolepug.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedmolepug.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Naked Butterfly",
+    "parentA": "Naked Mole Rat",
+    "parentB": "Butterfly",
+    "yields": 16650,
+    "tokenURI": "https://db.luxlabs.io/nakedbutterfly.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedbutterfly.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Naked Mole Kitten",
+    "parentA": "Naked Mole Rat",
+    "parentB": "Kitten",
+    "yields": 16650,
+    "tokenURI": "https://db.luxlabs.io/nakedmolekitten.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedmolekitten.json"
+  },
+  {
+    "rarity": "Common",
+    "name": "Naked Turtle",
+    "parentA": "Naked Mole Rat",
+    "parentB": "Turtle",
+    "yields": 16650,
+    "tokenURI": "https://db.luxlabs.io/nakedturtle.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedturtle.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Pugguin",
+    "parentA": "Pug",
+    "parentB": "Penguin",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/pugguin.jpg",
+    "metadataURI": "https://db.luxlabs.io/pugguin.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Pugling",
+    "parentA": "Pug",
+    "parentB": "Duckling",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/pugling.jpg",
+    "metadataURI": "https://db.luxlabs.io/pugling.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Pugorca",
+    "parentA": "Pug",
+    "parentB": "Orca",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/pugorca.jpg",
+    "metadataURI": "https://db.luxlabs.io/pugorca.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Pelk",
+    "parentA": "Pug",
+    "parentB": "Elk",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/pelk.jpg",
+    "metadataURI": "https://db.luxlabs.io/pelk.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Butterflenguin",
+    "parentA": "Butterfly",
+    "parentB": "Penguin",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/butterflenguin.jpg",
+    "metadataURI": "https://db.luxlabs.io/butterflenguin.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Butterfling",
+    "parentA": "Butterfly",
+    "parentB": "Duckling",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/butterfling.jpg",
+    "metadataURI": "https://db.luxlabs.io/butterfling.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Buttorca",
+    "parentA": "Butterfly",
+    "parentB": "Orca",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/buttorca.jpg",
+    "metadataURI": "https://db.luxlabs.io/buttorca.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Butterflelk",
+    "parentA": "Butterfly",
+    "parentB": "Elk",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/butterflelk.jpg",
+    "metadataURI": "https://db.luxlabs.io/butterflelk.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Kittypenguin",
+    "parentA": "Kitten",
+    "parentB": "Penguin",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/kittypenguin.jpg",
+    "metadataURI": "https://db.luxlabs.io/kittypenguin.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Kittyling",
+    "parentA": "Kitten",
+    "parentB": "Duckling",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/kittyling.jpg",
+    "metadataURI": "https://db.luxlabs.io/kittyling.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Kittorca",
+    "parentA": "Kitten",
+    "parentB": "Orca",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/kittorca.jpg",
+    "metadataURI": "https://db.luxlabs.io/kittorca.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Kittelk",
+    "parentA": "Kitten",
+    "parentB": "Elk",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/kittelk.jpg",
+    "metadataURI": "https://db.luxlabs.io/kittelk.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Turtlepeng",
+    "parentA": "Turtle",
+    "parentB": "Penguin",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/turtlepeng.jpg",
+    "metadataURI": "https://db.luxlabs.io/turtlepeng.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Turtling",
+    "parentA": "Turtle",
+    "parentB": "Duckling",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/turtling.jpg",
+    "metadataURI": "https://db.luxlabs.io/turtling.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Turtorca",
+    "parentA": "Turtle",
+    "parentB": "Orca",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/turtorca.jpg",
+    "metadataURI": "https://db.luxlabs.io/turtorca.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Turtelk",
+    "parentA": "Turtle",
+    "parentB": "Elk",
+    "yields": 320,
+    "tokenURI": "https://db.luxlabs.io/turtelk.jpg",
+    "metadataURI": "https://db.luxlabs.io/turtelk.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Penguin Chick",
+    "parentA": "Penguin",
+    "parentB": "Penguin",
+    "yields": 400,
+    "tokenURI": "https://db.luxlabs.io/penguinchick.jpg",
+    "metadataURI": "https://db.luxlabs.io/penguinchick.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Pengling",
+    "parentA": "Penguin",
+    "parentB": "Duckling",
+    "yields": 400,
+    "tokenURI": "https://db.luxlabs.io/pengling.jpg",
+    "metadataURI": "https://db.luxlabs.io/pengling.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Penguorca",
+    "parentA": "Penguin",
+    "parentB": "Orca",
+    "yields": 400,
+    "tokenURI": "https://db.luxlabs.io/penguorca.jpg",
+    "metadataURI": "https://db.luxlabs.io/penguorca.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Penguelk",
+    "parentA": "Penguin",
+    "parentB": "Elk",
+    "yields": 400,
+    "tokenURI": "https://db.luxlabs.io/penguelk.jpg",
+    "metadataURI": "https://db.luxlabs.io/penguelk.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Ducklinguin",
+    "parentA": "Duckling",
+    "parentB": "Penguin",
+    "yields": 400,
+    "tokenURI": "https://db.luxlabs.io/ducklinguin.jpg",
+    "metadataURI": "https://db.luxlabs.io/ducklinguin.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Duckling Chick",
+    "parentA": "Duckling",
+    "parentB": "Duckling",
+    "yields": 400,
+    "tokenURI": "https://db.luxlabs.io/ducklingchick.jpg",
+    "metadataURI": "https://db.luxlabs.io/ducklingchick.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Dorca",
+    "parentA": "Duckling",
+    "parentB": "Orca",
+    "yields": 400,
+    "tokenURI": "https://db.luxlabs.io/dorca.jpg",
+    "metadataURI": "https://db.luxlabs.io/dorca.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Duckelk",
+    "parentA": "Duckling",
+    "parentB": "Elk",
+    "yields": 400,
+    "tokenURI": "https://db.luxlabs.io/duckelk.jpg",
+    "metadataURI": "https://db.luxlabs.io/duckelk.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Orcapeng",
+    "parentA": "Orca",
+    "parentB": "Penguin",
+    "yields": 400,
+    "tokenURI": "https://db.luxlabs.io/orcapeng.jpg",
+    "metadataURI": "https://db.luxlabs.io/orcapeng.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Orcling",
+    "parentA": "Orca",
+    "parentB": "Duckling",
+    "yields": 400,
+    "tokenURI": "https://db.luxlabs.io/orcling.jpg",
+    "metadataURI": "https://db.luxlabs.io/orcling.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Baby Orca",
+    "parentA": "Orca",
+    "parentB": "Orca",
+    "yields": 400,
+    "tokenURI": "https://db.luxlabs.io/babyorca.jpg",
+    "metadataURI": "https://db.luxlabs.io/babyorca.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Orcelk",
+    "parentA": "Orca",
+    "parentB": "Elk",
+    "yields": 400,
+    "tokenURI": "https://db.luxlabs.io/orcelk.jpg",
+    "metadataURI": "https://db.luxlabs.io/orcelk.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Elkenguin",
+    "parentA": "Elk",
+    "parentB": "Penguin",
+    "yields": 400,
+    "tokenURI": "https://db.luxlabs.io/elkenguin.jpg",
+    "metadataURI": "https://db.luxlabs.io/elkenguin.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Elkling",
+    "parentA": "Elk",
+    "parentB": "Duckling",
+    "yields": 400,
+    "tokenURI": "https://db.luxlabs.io/elkling.jpg",
+    "metadataURI": "https://db.luxlabs.io/elkling.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Elka",
+    "parentA": "Elk",
+    "parentB": "Orca",
+    "yields": 400,
+    "tokenURI": "https://db.luxlabs.io/elka.jpg",
+    "metadataURI": "https://db.luxlabs.io/elka.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Baby Elk",
+    "parentA": "Elk",
+    "parentB": "Elk",
+    "yields": 400,
+    "tokenURI": "https://db.luxlabs.io/babyelk.jpg",
+    "metadataURI": "https://db.luxlabs.io/babyelk.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Panduin",
+    "parentA": "Panda",
+    "parentB": "Penguin",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/panduin.jpg",
+    "metadataURI": "https://db.luxlabs.io/panduin.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Pandaling",
+    "parentA": "Panda",
+    "parentB": "Duckling",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/pandaling.jpg",
+    "metadataURI": "https://db.luxlabs.io/pandaling.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Pandorca",
+    "parentA": "Panda",
+    "parentB": "Orca",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/pandorca.jpg",
+    "metadataURI": "https://db.luxlabs.io/pandorca.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Pandelk",
+    "parentA": "Panda",
+    "parentB": "Elk",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/pandelk.jpg",
+    "metadataURI": "https://db.luxlabs.io/pandelk.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Gorillaguin",
+    "parentA": "Gorilla",
+    "parentB": "Penguin",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/gorillaguin.jpg",
+    "metadataURI": "https://db.luxlabs.io/gorillaguin.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Gorilling",
+    "parentA": "Gorilla",
+    "parentB": "Duckling",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/gorilling.jpg",
+    "metadataURI": "https://db.luxlabs.io/gorilling.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Gorca",
+    "parentA": "Gorilla",
+    "parentB": "Orca",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/gorca.jpg",
+    "metadataURI": "https://db.luxlabs.io/gorca.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Gorillelk",
+    "parentA": "Gorilla",
+    "parentB": "Elk",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/gorillelk.jpg",
+    "metadataURI": "https://db.luxlabs.io/gorillelk.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Elepenguin",
+    "parentA": "Elephant",
+    "parentB": "Penguin",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/elepenguin.jpg",
+    "metadataURI": "https://db.luxlabs.io/elepenguin.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Elephling",
+    "parentA": "Elephant",
+    "parentB": "Duckling",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/elephling.jpg",
+    "metadataURI": "https://db.luxlabs.io/elephling.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Elephorca",
+    "parentA": "Elephant",
+    "parentB": "Orca",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/elephorca.jpg",
+    "metadataURI": "https://db.luxlabs.io/elephorca.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Elkephant",
+    "parentA": "Elephant",
+    "parentB": "Elk",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/elkephant.jpg",
+    "metadataURI": "https://db.luxlabs.io/elkephant.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Lionguin",
+    "parentA": "Lion",
+    "parentB": "Penguin",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/lionguin.jpg",
+    "metadataURI": "https://db.luxlabs.io/lionguin.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Lionling",
+    "parentA": "Lion",
+    "parentB": "Duckling",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/lionling.jpg",
+    "metadataURI": "https://db.luxlabs.io/lionling.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Lionorca",
+    "parentA": "Lion",
+    "parentB": "Orca",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/lionorca.jpg",
+    "metadataURI": "https://db.luxlabs.io/lionorca.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Lionelk",
+    "parentA": "Lion",
+    "parentB": "Elk",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/lionelk.jpg",
+    "metadataURI": "https://db.luxlabs.io/lionelk.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Benguin",
+    "parentA": "Bear",
+    "parentB": "Penguin",
+    "yields": 6500,
+    "tokenURI": "https://db.luxlabs.io/benguin.jpg",
+    "metadataURI": "https://db.luxlabs.io/benguin.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Bearling",
+    "parentA": "Bear",
+    "parentB": "Duckling",
+    "yields": 6500,
+    "tokenURI": "https://db.luxlabs.io/bearling.jpg",
+    "metadataURI": "https://db.luxlabs.io/bearling.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Bearca",
+    "parentA": "Bear",
+    "parentB": "Orca",
+    "yields": 6500,
+    "tokenURI": "https://db.luxlabs.io/bearca.jpg",
+    "metadataURI": "https://db.luxlabs.io/bearca.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Belk",
+    "parentA": "Bear",
+    "parentB": "Elk",
+    "yields": 6500,
+    "tokenURI": "https://db.luxlabs.io/belk.jpg",
+    "metadataURI": "https://db.luxlabs.io/belk.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Shanguin",
+    "parentA": "Shark",
+    "parentB": "Penguin",
+    "yields": 6500,
+    "tokenURI": "https://db.luxlabs.io/shanguin.jpg",
+    "metadataURI": "https://db.luxlabs.io/shanguin.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Sharkling",
+    "parentA": "Shark",
+    "parentB": "Duckling",
+    "yields": 6500,
+    "tokenURI": "https://db.luxlabs.io/sharkling.jpg",
+    "metadataURI": "https://db.luxlabs.io/sharkling.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Shorca",
+    "parentA": "Shark",
+    "parentB": "Orca",
+    "yields": 6500,
+    "tokenURI": "https://db.luxlabs.io/shorca.jpg",
+    "metadataURI": "https://db.luxlabs.io/shorca.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Shelk",
+    "parentA": "Shark",
+    "parentB": "Elk",
+    "yields": 6500,
+    "tokenURI": "https://db.luxlabs.io/shelk.jpg",
+    "metadataURI": "https://db.luxlabs.io/shelk.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Blob Penguin",
+    "parentA": "Blobfish",
+    "parentB": "Penguin",
+    "yields": 17250,
+    "tokenURI": "https://db.luxlabs.io/blobpenguin.jpg",
+    "metadataURI": "https://db.luxlabs.io/blobpenguin.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Blobling",
+    "parentA": "Blobfish",
+    "parentB": "Duckling",
+    "yields": 17250,
+    "tokenURI": "https://db.luxlabs.io/blobling.jpg",
+    "metadataURI": "https://db.luxlabs.io/blobling.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Bloborca",
+    "parentA": "Blobfish",
+    "parentB": "Orca",
+    "yields": 17250,
+    "tokenURI": "https://db.luxlabs.io/bloborca.jpg",
+    "metadataURI": "https://db.luxlabs.io/bloborca.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Blobelk",
+    "parentA": "Blobfish",
+    "parentB": "Elk",
+    "yields": 17250,
+    "tokenURI": "https://db.luxlabs.io/blobelk.jpg",
+    "metadataURI": "https://db.luxlabs.io/blobelk.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Naked Penguin",
+    "parentA": "Naked Mole Rat",
+    "parentB": "Penguin",
+    "yields": 17250,
+    "tokenURI": "https://db.luxlabs.io/nakedpenguin.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedpenguin.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Naked Duckling",
+    "parentA": "Naked Mole Rat",
+    "parentB": "Duckling",
+    "yields": 17250,
+    "tokenURI": "https://db.luxlabs.io/nakedduckling.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedduckling.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Naked Mole Orca",
+    "parentA": "Naked Mole Rat",
+    "parentB": "Orca",
+    "yields": 17250,
+    "tokenURI": "https://db.luxlabs.io/nakedmoleorca.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedmoleorca.json"
+  },
+  {
+    "rarity": "Uncommon",
+    "name": "Naked Mole Elk",
+    "parentA": "Naked Mole Rat",
+    "parentB": "Elk",
+    "yields": 17250,
+    "tokenURI": "https://db.luxlabs.io/nakedmoleelk.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedmoleelk.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Pugda",
+    "parentA": "Pug",
+    "parentB": "Panda",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/pugda.jpg",
+    "metadataURI": "https://db.luxlabs.io/pugda.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Pugorilla",
+    "parentA": "Pug",
+    "parentB": "Gorilla",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/pugorilla.jpg",
+    "metadataURI": "https://db.luxlabs.io/pugorilla.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Puggerphant",
+    "parentA": "Pug",
+    "parentB": "Elephant",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/puggerphant.jpg",
+    "metadataURI": "https://db.luxlabs.io/puggerphant.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Puglion",
+    "parentA": "Pug",
+    "parentB": "Lion",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/puglion.jpg",
+    "metadataURI": "https://db.luxlabs.io/puglion.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Butterflanda",
+    "parentA": "Butterfly",
+    "parentB": "Panda",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/butterflanda.jpg",
+    "metadataURI": "https://db.luxlabs.io/butterflanda.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Butterla",
+    "parentA": "Butterfly",
+    "parentB": "Gorilla",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/butterla.jpg",
+    "metadataURI": "https://db.luxlabs.io/butterla.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Butterphant",
+    "parentA": "Butterfly",
+    "parentB": "Elephant",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/butterphant.jpg",
+    "metadataURI": "https://db.luxlabs.io/butterphant.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Butterflion",
+    "parentA": "Butterfly",
+    "parentB": "Lion",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/butterflion.jpg",
+    "metadataURI": "https://db.luxlabs.io/butterflion.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Kittypan",
+    "parentA": "Kitten",
+    "parentB": "Panda",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/kittypan.jpg",
+    "metadataURI": "https://db.luxlabs.io/kittypan.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Kittorilla",
+    "parentA": "Kitten",
+    "parentB": "Gorilla",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/kittorilla.jpg",
+    "metadataURI": "https://db.luxlabs.io/kittorilla.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Kittyphant",
+    "parentA": "Kitten",
+    "parentB": "Elephant",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/kittyphant.jpg",
+    "metadataURI": "https://db.luxlabs.io/kittyphant.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Lion Kitty",
+    "parentA": "Kitten",
+    "parentB": "Lion",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/lionkitty.jpg",
+    "metadataURI": "https://db.luxlabs.io/lionkitty.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Turtanda",
+    "parentA": "Turtle",
+    "parentB": "Panda",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/turtanda.jpg",
+    "metadataURI": "https://db.luxlabs.io/turtanda.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Turtilla",
+    "parentA": "Turtle",
+    "parentB": "Gorilla",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/turtilla.jpg",
+    "metadataURI": "https://db.luxlabs.io/turtilla.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Turtelephant",
+    "parentA": "Turtle",
+    "parentB": "Elephant",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/turtelephant.jpg",
+    "metadataURI": "https://db.luxlabs.io/turtelephant.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Turtlion",
+    "parentA": "Turtle",
+    "parentB": "Lion",
+    "yields": 1050,
+    "tokenURI": "https://db.luxlabs.io/turtlion.jpg",
+    "metadataURI": "https://db.luxlabs.io/turtlion.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Penda",
+    "parentA": "Penguin",
+    "parentB": "Panda",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/penda.jpg",
+    "metadataURI": "https://db.luxlabs.io/penda.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Penguilla",
+    "parentA": "Penguin",
+    "parentB": "Gorilla",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/penguilla.jpg",
+    "metadataURI": "https://db.luxlabs.io/penguilla.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Pelephant",
+    "parentA": "Penguin",
+    "parentB": "Elephant",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/pelephant.jpg",
+    "metadataURI": "https://db.luxlabs.io/pelephant.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Penguilion",
+    "parentA": "Penguin",
+    "parentB": "Lion",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/penguilion.jpg",
+    "metadataURI": "https://db.luxlabs.io/penguilion.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Duckda",
+    "parentA": "Duckling",
+    "parentB": "Panda",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/duckda.jpg",
+    "metadataURI": "https://db.luxlabs.io/duckda.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Duckorilla",
+    "parentA": "Duckling",
+    "parentB": "Gorilla",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/duckorilla.jpg",
+    "metadataURI": "https://db.luxlabs.io/duckorilla.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Ducklephant",
+    "parentA": "Duckling",
+    "parentB": "Elephant",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/ducklephant.jpg",
+    "metadataURI": "https://db.luxlabs.io/ducklephant.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Ducklion",
+    "parentA": "Duckling",
+    "parentB": "Lion",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/ducklion.jpg",
+    "metadataURI": "https://db.luxlabs.io/ducklion.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Orcanda",
+    "parentA": "Orca",
+    "parentB": "Panda",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/orcanda.jpg",
+    "metadataURI": "https://db.luxlabs.io/orcanda.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Orcilla",
+    "parentA": "Orca",
+    "parentB": "Gorilla",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/orcilla.jpg",
+    "metadataURI": "https://db.luxlabs.io/orcilla.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Orcaphant",
+    "parentA": "Orca",
+    "parentB": "Elephant",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/orcaphant.jpg",
+    "metadataURI": "https://db.luxlabs.io/orcaphant.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Orclion",
+    "parentA": "Orca",
+    "parentB": "Lion",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/orclion.jpg",
+    "metadataURI": "https://db.luxlabs.io/orclion.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Elkanda",
+    "parentA": "Elk",
+    "parentB": "Panda",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/elkanda.jpg",
+    "metadataURI": "https://db.luxlabs.io/elkanda.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Elkorilla",
+    "parentA": "Elk",
+    "parentB": "Gorilla",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/elkorilla.jpg",
+    "metadataURI": "https://db.luxlabs.io/elkorilla.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Elkephant",
+    "parentA": "Elk",
+    "parentB": "Elephant",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/elkephant.jpg",
+    "metadataURI": "https://db.luxlabs.io/elkephant.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Elkion",
+    "parentA": "Elk",
+    "parentB": "Lion",
+    "yields": 1250,
+    "tokenURI": "https://db.luxlabs.io/elkion.jpg",
+    "metadataURI": "https://db.luxlabs.io/elkion.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Panda Cub",
+    "parentA": "Panda",
+    "parentB": "Panda",
+    "yields": 1500,
+    "tokenURI": "https://db.luxlabs.io/pandacub.jpg",
+    "metadataURI": "https://db.luxlabs.io/pandacub.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Pandalla",
+    "parentA": "Panda",
+    "parentB": "Gorilla",
+    "yields": 1500,
+    "tokenURI": "https://db.luxlabs.io/pandalla.jpg",
+    "metadataURI": "https://db.luxlabs.io/pandalla.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Pandaphant",
+    "parentA": "Panda",
+    "parentB": "Elephant",
+    "yields": 1500,
+    "tokenURI": "https://db.luxlabs.io/pandaphant.jpg",
+    "metadataURI": "https://db.luxlabs.io/pandaphant.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Pandalion",
+    "parentA": "Panda",
+    "parentB": "Lion",
+    "yields": 1500,
+    "tokenURI": "https://db.luxlabs.io/pandalion.jpg",
+    "metadataURI": "https://db.luxlabs.io/pandalion.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Goranda",
+    "parentA": "Gorilla",
+    "parentB": "Panda",
+    "yields": 1500,
+    "tokenURI": "https://db.luxlabs.io/goranda.jpg",
+    "metadataURI": "https://db.luxlabs.io/goranda.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Baby Gorilla",
+    "parentA": "Gorilla",
+    "parentB": "Gorilla",
+    "yields": 1500,
+    "tokenURI": "https://db.luxlabs.io/babygorilla.jpg",
+    "metadataURI": "https://db.luxlabs.io/babygorilla.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Gorillaphant",
+    "parentA": "Gorilla",
+    "parentB": "Elephant",
+    "yields": 1500,
+    "tokenURI": "https://db.luxlabs.io/gorillaphant.jpg",
+    "metadataURI": "https://db.luxlabs.io/gorillaphant.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Gorillion",
+    "parentA": "Gorilla",
+    "parentB": "Lion",
+    "yields": 1500,
+    "tokenURI": "https://db.luxlabs.io/gorillion.jpg",
+    "metadataURI": "https://db.luxlabs.io/gorillion.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Elepanda",
+    "parentA": "Elephant",
+    "parentB": "Panda",
+    "yields": 1500,
+    "tokenURI": "https://db.luxlabs.io/elepanda.jpg",
+    "metadataURI": "https://db.luxlabs.io/elepanda.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Elephantilla",
+    "parentA": "Elephant",
+    "parentB": "Gorilla",
+    "yields": 1500,
+    "tokenURI": "https://db.luxlabs.io/elephantilla.jpg",
+    "metadataURI": "https://db.luxlabs.io/elephantilla.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Baby Elephant",
+    "parentA": "Elephant",
+    "parentB": "Elephant",
+    "yields": 1500,
+    "tokenURI": "https://db.luxlabs.io/babyelephant.jpg",
+    "metadataURI": "https://db.luxlabs.io/babyelephant.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Elephlion",
+    "parentA": "Elephant",
+    "parentB": "Lion",
+    "yields": 1500,
+    "tokenURI": "https://db.luxlabs.io/elephlion.jpg",
+    "metadataURI": "https://db.luxlabs.io/elephlion.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Lionda",
+    "parentA": "Lion",
+    "parentB": "Panda",
+    "yields": 1500,
+    "tokenURI": "https://db.luxlabs.io/lionda.jpg",
+    "metadataURI": "https://db.luxlabs.io/lionda.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Lionilla",
+    "parentA": "Lion",
+    "parentB": "Gorilla",
+    "yields": 1500,
+    "tokenURI": "https://db.luxlabs.io/lionilla.jpg",
+    "metadataURI": "https://db.luxlabs.io/lionilla.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Lelephant",
+    "parentA": "Lion",
+    "parentB": "Elephant",
+    "yields": 1500,
+    "tokenURI": "https://db.luxlabs.io/lelephant.jpg",
+    "metadataURI": "https://db.luxlabs.io/lelephant.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Lion Cub",
+    "parentA": "Lion",
+    "parentB": "Lion",
+    "yields": 1500,
+    "tokenURI": "https://db.luxlabs.io/lioncub.jpg",
+    "metadataURI": "https://db.luxlabs.io/lioncub.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Banda",
+    "parentA": "Bear",
+    "parentB": "Panda",
+    "yields": 7000,
+    "tokenURI": "https://db.luxlabs.io/banda.jpg",
+    "metadataURI": "https://db.luxlabs.io/banda.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Bearilla",
+    "parentA": "Bear",
+    "parentB": "Gorilla",
+    "yields": 7000,
+    "tokenURI": "https://db.luxlabs.io/bearilla.jpg",
+    "metadataURI": "https://db.luxlabs.io/bearilla.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Belephant",
+    "parentA": "Bear",
+    "parentB": "Elephant",
+    "yields": 7000,
+    "tokenURI": "https://db.luxlabs.io/belephant.jpg",
+    "metadataURI": "https://db.luxlabs.io/belephant.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Bearlion",
+    "parentA": "Bear",
+    "parentB": "Lion",
+    "yields": 7000,
+    "tokenURI": "https://db.luxlabs.io/bearlion.jpg",
+    "metadataURI": "https://db.luxlabs.io/bearlion.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Sharnda",
+    "parentA": "Shark",
+    "parentB": "Panda",
+    "yields": 7000,
+    "tokenURI": "https://db.luxlabs.io/sharnda.jpg",
+    "metadataURI": "https://db.luxlabs.io/sharnda.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Sharkorilla",
+    "parentA": "Shark",
+    "parentB": "Gorilla",
+    "yields": 7000,
+    "tokenURI": "https://db.luxlabs.io/sharkorilla.jpg",
+    "metadataURI": "https://db.luxlabs.io/sharkorilla.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Sharkephant",
+    "parentA": "Shark",
+    "parentB": "Elephant",
+    "yields": 7000,
+    "tokenURI": "https://db.luxlabs.io/sharkephant.jpg",
+    "metadataURI": "https://db.luxlabs.io/sharkephant.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Shlion",
+    "parentA": "Shark",
+    "parentB": "Lion",
+    "yields": 7000,
+    "tokenURI": "https://db.luxlabs.io/shlion.jpg",
+    "metadataURI": "https://db.luxlabs.io/shlion.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Blobda",
+    "parentA": "Blobfish",
+    "parentB": "Panda",
+    "yields": 18000,
+    "tokenURI": "https://db.luxlabs.io/blobda.jpg",
+    "metadataURI": "https://db.luxlabs.io/blobda.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Blobilla",
+    "parentA": "Blobfish",
+    "parentB": "Gorilla",
+    "yields": 18000,
+    "tokenURI": "https://db.luxlabs.io/blobilla.jpg",
+    "metadataURI": "https://db.luxlabs.io/blobilla.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Blobaphant",
+    "parentA": "Blobfish",
+    "parentB": "Elephant",
+    "yields": 18000,
+    "tokenURI": "https://db.luxlabs.io/blobaphant.jpg",
+    "metadataURI": "https://db.luxlabs.io/blobaphant.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Bloblion",
+    "parentA": "Blobfish",
+    "parentB": "Lion",
+    "yields": 18000,
+    "tokenURI": "https://db.luxlabs.io/bloblion.jpg",
+    "metadataURI": "https://db.luxlabs.io/bloblion.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Naked Panda",
+    "parentA": "Naked Mole Rat",
+    "parentB": "Panda",
+    "yields": 18000,
+    "tokenURI": "https://db.luxlabs.io/nakedpanda.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedpanda.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Naked Mole Gorilla",
+    "parentA": "Naked Mole Rat",
+    "parentB": "Gorilla",
+    "yields": 18000,
+    "tokenURI": "https://db.luxlabs.io/nakedmolegorilla.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedmolegorilla.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Naked Elephant",
+    "parentA": "Naked Mole Rat",
+    "parentB": "Elephant",
+    "yields": 18000,
+    "tokenURI": "https://db.luxlabs.io/nakedelephant.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedelephant.json"
+  },
+  {
+    "rarity": "Rare",
+    "name": "Naked Lion",
+    "parentA": "Naked Mole Rat",
+    "parentB": "Lion",
+    "yields": 18000,
+    "tokenURI": "https://db.luxlabs.io/nakedlion.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedlion.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Pugbear",
+    "parentA": "Pug",
+    "parentB": "Bear",
+    "yields": 6100,
+    "tokenURI": "https://db.luxlabs.io/pugbear.jpg",
+    "metadataURI": "https://db.luxlabs.io/pugbear.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Pugshark",
+    "parentA": "Pug",
+    "parentB": "Shark",
+    "yields": 6100,
+    "tokenURI": "https://db.luxlabs.io/pugshark.jpg",
+    "metadataURI": "https://db.luxlabs.io/pugshark.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Butterbear",
+    "parentA": "Butterfly",
+    "parentB": "Bear",
+    "yields": 6100,
+    "tokenURI": "https://db.luxlabs.io/butterbear.jpg",
+    "metadataURI": "https://db.luxlabs.io/butterbear.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Buttershark",
+    "parentA": "Butterfly",
+    "parentB": "Shark",
+    "yields": 6100,
+    "tokenURI": "https://db.luxlabs.io/buttershark.jpg",
+    "metadataURI": "https://db.luxlabs.io/buttershark.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Kittybear",
+    "parentA": "Kitten",
+    "parentB": "Bear",
+    "yields": 6100,
+    "tokenURI": "https://db.luxlabs.io/kittybear.jpg",
+    "metadataURI": "https://db.luxlabs.io/kittybear.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Shark Kitty",
+    "parentA": "Kitten",
+    "parentB": "Shark",
+    "yields": 6100,
+    "tokenURI": "https://db.luxlabs.io/sharkkitty.jpg",
+    "metadataURI": "https://db.luxlabs.io/sharkkitty.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Turtle Bear",
+    "parentA": "Turtle",
+    "parentB": "Bear",
+    "yields": 6100,
+    "tokenURI": "https://db.luxlabs.io/turtlebear.jpg",
+    "metadataURI": "https://db.luxlabs.io/turtlebear.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Turtleshark",
+    "parentA": "Turtle",
+    "parentB": "Shark",
+    "yields": 6100,
+    "tokenURI": "https://db.luxlabs.io/turtleshark.jpg",
+    "metadataURI": "https://db.luxlabs.io/turtleshark.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Pengbear",
+    "parentA": "Penguin",
+    "parentB": "Bear",
+    "yields": 6500,
+    "tokenURI": "https://db.luxlabs.io/pengbear.jpg",
+    "metadataURI": "https://db.luxlabs.io/pengbear.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Penguin Shark",
+    "parentA": "Penguin",
+    "parentB": "Shark",
+    "yields": 6500,
+    "tokenURI": "https://db.luxlabs.io/penguinshark.jpg",
+    "metadataURI": "https://db.luxlabs.io/penguinshark.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Duckbear",
+    "parentA": "Duckling",
+    "parentB": "Bear",
+    "yields": 6500,
+    "tokenURI": "https://db.luxlabs.io/duckbear.jpg",
+    "metadataURI": "https://db.luxlabs.io/duckbear.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Duckshark",
+    "parentA": "Duckling",
+    "parentB": "Shark",
+    "yields": 6500,
+    "tokenURI": "https://db.luxlabs.io/duckshark.jpg",
+    "metadataURI": "https://db.luxlabs.io/duckshark.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Orca Bear",
+    "parentA": "Orca",
+    "parentB": "Bear",
+    "yields": 6500,
+    "tokenURI": "https://db.luxlabs.io/orcabear.jpg",
+    "metadataURI": "https://db.luxlabs.io/orcabear.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Orcashark",
+    "parentA": "Orca",
+    "parentB": "Shark",
+    "yields": 6500,
+    "tokenURI": "https://db.luxlabs.io/orcashark.jpg",
+    "metadataURI": "https://db.luxlabs.io/orcashark.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Elkbear",
+    "parentA": "Elk",
+    "parentB": "Bear",
+    "yields": 6500,
+    "tokenURI": "https://db.luxlabs.io/elkbear.jpg",
+    "metadataURI": "https://db.luxlabs.io/elkbear.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Elkshark",
+    "parentA": "Elk",
+    "parentB": "Shark",
+    "yields": 6500,
+    "tokenURI": "https://db.luxlabs.io/elkshark.jpg",
+    "metadataURI": "https://db.luxlabs.io/elkshark.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Pearda",
+    "parentA": "Panda",
+    "parentB": "Bear",
+    "yields": 7000,
+    "tokenURI": "https://db.luxlabs.io/pearda.jpg",
+    "metadataURI": "https://db.luxlabs.io/pearda.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Pandashark",
+    "parentA": "Panda",
+    "parentB": "Shark",
+    "yields": 7000,
+    "tokenURI": "https://db.luxlabs.io/pandashark.jpg",
+    "metadataURI": "https://db.luxlabs.io/pandashark.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Gorillabear",
+    "parentA": "Gorilla",
+    "parentB": "Bear",
+    "yields": 7000,
+    "tokenURI": "https://db.luxlabs.io/gorillabear.jpg",
+    "metadataURI": "https://db.luxlabs.io/gorillabear.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Gorillark",
+    "parentA": "Gorilla",
+    "parentB": "Shark",
+    "yields": 7000,
+    "tokenURI": "https://db.luxlabs.io/gorillark.jpg",
+    "metadataURI": "https://db.luxlabs.io/gorillark.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Elebear",
+    "parentA": "Elephant",
+    "parentB": "Bear",
+    "yields": 7000,
+    "tokenURI": "https://db.luxlabs.io/elebear.jpg",
+    "metadataURI": "https://db.luxlabs.io/elebear.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Eleshark",
+    "parentA": "Elephant",
+    "parentB": "Shark",
+    "yields": 7000,
+    "tokenURI": "https://db.luxlabs.io/eleshark.jpg",
+    "metadataURI": "https://db.luxlabs.io/eleshark.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Lionbear",
+    "parentA": "Lion",
+    "parentB": "Bear",
+    "yields": 7000,
+    "tokenURI": "https://db.luxlabs.io/lionbear.jpg",
+    "metadataURI": "https://db.luxlabs.io/lionbear.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Lionshark",
+    "parentA": "Lion",
+    "parentB": "Shark",
+    "yields": 7000,
+    "tokenURI": "https://db.luxlabs.io/lionshark.jpg",
+    "metadataURI": "https://db.luxlabs.io/lionshark.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Bear Cub",
+    "parentA": "Bear",
+    "parentB": "Bear",
+    "yields": 11000,
+    "tokenURI": "https://db.luxlabs.io/bearcub.jpg",
+    "metadataURI": "https://db.luxlabs.io/bearcub.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Bearshark",
+    "parentA": "Bear",
+    "parentB": "Shark",
+    "yields": 11000,
+    "tokenURI": "https://db.luxlabs.io/bearshark.jpg",
+    "metadataURI": "https://db.luxlabs.io/bearshark.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Sharkbear",
+    "parentA": "Shark",
+    "parentB": "Bear",
+    "yields": 11000,
+    "tokenURI": "https://db.luxlabs.io/sharkbear.jpg",
+    "metadataURI": "https://db.luxlabs.io/sharkbear.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Baby Shark",
+    "parentA": "Shark",
+    "parentB": "Shark",
+    "yields": 11000,
+    "tokenURI": "https://db.luxlabs.io/babyshark.jpg",
+    "metadataURI": "https://db.luxlabs.io/babyshark.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Blob Bear",
+    "parentA": "Blobfish",
+    "parentB": "Bear",
+    "yields": 24000,
+    "tokenURI": "https://db.luxlabs.io/blobbear.jpg",
+    "metadataURI": "https://db.luxlabs.io/blobbear.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Blobshark",
+    "parentA": "Blobfish",
+    "parentB": "Shark",
+    "yields": 24000,
+    "tokenURI": "https://db.luxlabs.io/blobshark.jpg",
+    "metadataURI": "https://db.luxlabs.io/blobshark.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Naked Mole Bear",
+    "parentA": "Naked Mole Rat",
+    "parentB": "Bear",
+    "yields": 24000,
+    "tokenURI": "https://db.luxlabs.io/nakedmolebear.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedmolebear.json"
+  },
+  {
+    "rarity": "Super Rare",
+    "name": "Naked Mole Shark",
+    "parentA": "Naked Mole Rat",
+    "parentB": "Shark",
+    "yields": 24000,
+    "tokenURI": "https://db.luxlabs.io/nakedmoleshark.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedmoleshark.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Plobfish",
+    "parentA": "Pug",
+    "parentB": "Blobfish",
+    "yields": 16650,
+    "tokenURI": "https://db.luxlabs.io/plobfish.jpg",
+    "metadataURI": "https://db.luxlabs.io/plobfish.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Pugrat",
+    "parentA": "Pug",
+    "parentB": "Naked Mole Rat",
+    "yields": 16650,
+    "tokenURI": "https://db.luxlabs.io/pugrat.jpg",
+    "metadataURI": "https://db.luxlabs.io/pugrat.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Butterblob",
+    "parentA": "Butterfly",
+    "parentB": "Blobfish",
+    "yields": 16650,
+    "tokenURI": "https://db.luxlabs.io/butterblob.jpg",
+    "metadataURI": "https://db.luxlabs.io/butterblob.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Butterrat",
+    "parentA": "Butterfly",
+    "parentB": "Naked Mole Rat",
+    "yields": 16650,
+    "tokenURI": "https://db.luxlabs.io/butterrat.jpg",
+    "metadataURI": "https://db.luxlabs.io/butterrat.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Kitty Blob",
+    "parentA": "Kitten",
+    "parentB": "Blobfish",
+    "yields": 16650,
+    "tokenURI": "https://db.luxlabs.io/kittyblob.jpg",
+    "metadataURI": "https://db.luxlabs.io/kittyblob.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Kitty Rat",
+    "parentA": "Kitten",
+    "parentB": "Naked Mole Rat",
+    "yields": 16650,
+    "tokenURI": "https://db.luxlabs.io/kittyrat.jpg",
+    "metadataURI": "https://db.luxlabs.io/kittyrat.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Turtleblob",
+    "parentA": "Turtle",
+    "parentB": "Blobfish",
+    "yields": 16650,
+    "tokenURI": "https://db.luxlabs.io/turtleblob.jpg",
+    "metadataURI": "https://db.luxlabs.io/turtleblob.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Turtlerat",
+    "parentA": "Turtle",
+    "parentB": "Naked Mole Rat",
+    "yields": 16650,
+    "tokenURI": "https://db.luxlabs.io/turtlerat.jpg",
+    "metadataURI": "https://db.luxlabs.io/turtlerat.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Penguinfish",
+    "parentA": "Penguin",
+    "parentB": "Blobfish",
+    "yields": 17250,
+    "tokenURI": "https://db.luxlabs.io/penguinfish.jpg",
+    "metadataURI": "https://db.luxlabs.io/penguinfish.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Penguinrat",
+    "parentA": "Penguin",
+    "parentB": "Naked Mole Rat",
+    "yields": 17250,
+    "tokenURI": "https://db.luxlabs.io/penguinrat.jpg",
+    "metadataURI": "https://db.luxlabs.io/penguinrat.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Duckblob",
+    "parentA": "Duckling",
+    "parentB": "Blobfish",
+    "yields": 17250,
+    "tokenURI": "https://db.luxlabs.io/duckblob.jpg",
+    "metadataURI": "https://db.luxlabs.io/duckblob.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Duckrat",
+    "parentA": "Duckling",
+    "parentB": "Naked Mole Rat",
+    "yields": 17250,
+    "tokenURI": "https://db.luxlabs.io/duckrat.jpg",
+    "metadataURI": "https://db.luxlabs.io/duckrat.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Orcablob",
+    "parentA": "Orca",
+    "parentB": "Blobfish",
+    "yields": 17250,
+    "tokenURI": "https://db.luxlabs.io/orcablob.jpg",
+    "metadataURI": "https://db.luxlabs.io/orcablob.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Orcarat",
+    "parentA": "Orca",
+    "parentB": "Naked Mole Rat",
+    "yields": 17250,
+    "tokenURI": "https://db.luxlabs.io/orcarat.jpg",
+    "metadataURI": "https://db.luxlabs.io/orcarat.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Elkfish",
+    "parentA": "Elk",
+    "parentB": "Blobfish",
+    "yields": 17250,
+    "tokenURI": "https://db.luxlabs.io/elkfish.jpg",
+    "metadataURI": "https://db.luxlabs.io/elkfish.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Elk Rat",
+    "parentA": "Elk",
+    "parentB": "Naked Mole Rat",
+    "yields": 17250,
+    "tokenURI": "https://db.luxlabs.io/elkrat.jpg",
+    "metadataURI": "https://db.luxlabs.io/elkrat.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Pandablob",
+    "parentA": "Panda",
+    "parentB": "Blobfish",
+    "yields": 18000,
+    "tokenURI": "https://db.luxlabs.io/pandablob.jpg",
+    "metadataURI": "https://db.luxlabs.io/pandablob.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Pandarat",
+    "parentA": "Panda",
+    "parentB": "Naked Mole Rat",
+    "yields": 18000,
+    "tokenURI": "https://db.luxlabs.io/pandarat.jpg",
+    "metadataURI": "https://db.luxlabs.io/pandarat.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Gorillablob",
+    "parentA": "Gorilla",
+    "parentB": "Blobfish",
+    "yields": 18000,
+    "tokenURI": "https://db.luxlabs.io/gorillablob.jpg",
+    "metadataURI": "https://db.luxlabs.io/gorillablob.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Gorilla Rat",
+    "parentA": "Gorilla",
+    "parentB": "Naked Mole Rat",
+    "yields": 18000,
+    "tokenURI": "https://db.luxlabs.io/gorillarat.jpg",
+    "metadataURI": "https://db.luxlabs.io/gorillarat.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Eleblob",
+    "parentA": "Elephant",
+    "parentB": "Blobfish",
+    "yields": 18000,
+    "tokenURI": "https://db.luxlabs.io/eleblob.jpg",
+    "metadataURI": "https://db.luxlabs.io/eleblob.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Elephrat",
+    "parentA": "Elephant",
+    "parentB": "Naked Mole Rat",
+    "yields": 18000,
+    "tokenURI": "https://db.luxlabs.io/elephrat.jpg",
+    "metadataURI": "https://db.luxlabs.io/elephrat.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Lionfish",
+    "parentA": "Lion",
+    "parentB": "Blobfish",
+    "yields": 18000,
+    "tokenURI": "https://db.luxlabs.io/lionfish.jpg",
+    "metadataURI": "https://db.luxlabs.io/lionfish.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Lion Rat",
+    "parentA": "Lion",
+    "parentB": "Naked Mole Rat",
+    "yields": 18000,
+    "tokenURI": "https://db.luxlabs.io/lionrat.jpg",
+    "metadataURI": "https://db.luxlabs.io/lionrat.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Bearblob",
+    "parentA": "Bear",
+    "parentB": "Blobfish",
+    "yields": 24000,
+    "tokenURI": "https://db.luxlabs.io/bearblob.jpg",
+    "metadataURI": "https://db.luxlabs.io/bearblob.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Bearrat",
+    "parentA": "Bear",
+    "parentB": "Naked Mole Rat",
+    "yields": 24000,
+    "tokenURI": "https://db.luxlabs.io/bearrat.jpg",
+    "metadataURI": "https://db.luxlabs.io/bearrat.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Shlobfish",
+    "parentA": "Shark",
+    "parentB": "Blobfish",
+    "yields": 24000,
+    "tokenURI": "https://db.luxlabs.io/shlobfish.jpg",
+    "metadataURI": "https://db.luxlabs.io/shlobfish.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Shark Rat",
+    "parentA": "Shark",
+    "parentB": "Naked Mole Rat",
+    "yields": 24000,
+    "tokenURI": "https://db.luxlabs.io/sharkrat.jpg",
+    "metadataURI": "https://db.luxlabs.io/sharkrat.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Baby Blob",
+    "parentA": "Blobfish",
+    "parentB": "Blobfish",
+    "yields": 31500,
+    "tokenURI": "https://db.luxlabs.io/babyblob.jpg",
+    "metadataURI": "https://db.luxlabs.io/babyblob.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Blobrat",
+    "parentA": "Blobfish",
+    "parentB": "Naked Mole Rat",
+    "yields": 31500,
+    "tokenURI": "https://db.luxlabs.io/blobrat.jpg",
+    "metadataURI": "https://db.luxlabs.io/blobrat.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Naked Blobfish",
+    "parentA": "Naked Mole Rat",
+    "parentB": "Blobfish",
+    "yields": 31500,
+    "tokenURI": "https://db.luxlabs.io/nakedblobfish.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedblobfish.json"
+  },
+  {
+    "rarity": "Epic",
+    "name": "Naked Rat Baby",
+    "parentA": "Naked Mole Rat",
+    "parentB": "Naked Mole Rat",
+    "yields": 31500,
+    "tokenURI": "https://db.luxlabs.io/nakedratbaby.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedratbaby.json"
+  }
+]

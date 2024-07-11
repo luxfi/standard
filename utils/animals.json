@@ -1,0 +1,32 @@
+[
+  { "name": "Pug", "rarity": "Common", "yields": 100, "boost": 1000, "tokenURI": "https://db.luxlabs.io/pug.jpg", "metadataURI": "https://db.luxlabs.io/pug.json" },
+  {
+    "name": "Butterfly",
+    "rarity": "Common",
+    "yields": 100,
+    "boost": 1000,
+    "tokenURI": "https://db.luxlabs.io/butterfly.jpg",
+    "metadataURI": "https://db.luxlabs.io/butterfly.json"
+  },
+  { "name": "Kitten", "rarity": "Common", "yields": 100, "boost": 1000, "tokenURI": "https://db.luxlabs.io/kitten.jpg", "metadataURI": "https://db.luxlabs.io/kitten.json" },
+  { "name": "Turtle", "rarity": "Common", "yields": 100, "boost": 1000, "tokenURI": "https://db.luxlabs.io/turtle.jpg", "metadataURI": "https://db.luxlabs.io/turtle.json" },
+  { "name": "Penguin", "rarity": "Uncommon", "yields": 200, "boost": 5000, "tokenURI": "https://db.luxlabs.io/penguin.jpg", "metadataURI": "https://db.luxlabs.io/penguin.json" },
+  { "name": "Duckling", "rarity": "Uncommon", "yields": 200, "boost": 5000, "tokenURI": "https://db.luxlabs.io/duckling.jpg", "metadataURI": "https://db.luxlabs.io/duckling.json" },
+  { "name": "Orca", "rarity": "Uncommon", "yields": 200, "boost": 5000, "tokenURI": "https://db.luxlabs.io/orca.jpg", "metadataURI": "https://db.luxlabs.io/orca.json" },
+  { "name": "Elk", "rarity": "Uncommon", "yields": 200, "boost": 5000, "tokenURI": "https://db.luxlabs.io/elk.jpg", "metadataURI": "https://db.luxlabs.io/elk.json" },
+  { "name": "Panda", "rarity": "Rare", "yields": 500, "boost": 10000, "tokenURI": "https://db.luxlabs.io/panda.jpg", "metadataURI": "https://db.luxlabs.io/panda.json" },
+  { "name": "Gorilla", "rarity": "Rare", "yields": 500, "boost": 10000, "tokenURI": "https://db.luxlabs.io/gorilla.jpg", "metadataURI": "https://db.luxlabs.io/gorilla.json" },
+  { "name": "Elephant", "rarity": "Rare", "yields": 500, "boost": 10000, "tokenURI": "https://db.luxlabs.io/elephant.jpg", "metadataURI": "https://db.luxlabs.io/elephant.json" },
+  { "name": "Lion", "rarity": "Rare", "yields": 500, "boost": 10000, "tokenURI": "https://db.luxlabs.io/lion.jpg", "metadataURI": "https://db.luxlabs.io/lion.json" },
+  { "name": "Bear", "rarity": "Super Rare", "yields": 1000, "boost": 50000, "tokenURI": "https://db.luxlabs.io/bear.jpg", "metadataURI": "https://db.luxlabs.io/bear.json" },
+  { "name": "Shark", "rarity": "Super Rare", "yields": 1000, "boost": 50000, "tokenURI": "https://db.luxlabs.io/shark.jpg", "metadataURI": "https://db.luxlabs.io/shark.json" },
+  { "name": "Blobfish", "rarity": "Epic", "yields": 1500, "boost": 100000, "tokenURI": "https://db.luxlabs.io/blobfish.jpg", "metadataURI": "https://db.luxlabs.io/blobfish.json" },
+  {
+    "name": "Naked Mole Rat",
+    "rarity": "Epic",
+    "yields": 1500,
+    "boost": 100000,
+    "tokenURI": "https://db.luxlabs.io/nakedmolerat.jpg",
+    "metadataURI": "https://db.luxlabs.io/nakedmolerat.json"
+  }
+]
