@@ -55,7 +55,7 @@ const networks: HardhatUserConfig['networks'] = {
     },
   },
   testnet: {
-    url: `https://eth-goerli.g.alchemy.com/v2/${process.env.GOERLI_ALCHEMY_ID}`,
+    url: `https://eth-sepolia.g.alchemy.com/v2/${process.env.GOERLI_ALCHEMY_ID}`,
     chainId: 5,
     gasPrice: 10e9,
     gas: 10e6,

@@ -70,9 +70,9 @@ module.exports = {
       gasPrice: 50000000000,
       confirmations: 2,    
     },
-    goerli: {
+    sepolia: {
       network_id: 5,
-      provider: () => new HDWalletProvider([process.env.PRIVATE_KEY_2], `https://goerli.infura.io/v3/${process.env.INFURA_KEY}`),
+      provider: () => new HDWalletProvider([process.env.PRIVATE_KEY_2], `https://sepolia.infura.io/v3/${process.env.INFURA_KEY}`),
       gas: 20000000,
       confirmations: 2,    
     },
