@@ -3,7 +3,7 @@ import { OpenSeaSDK, Network } from 'opensea-js'
 
 
 // give me a real provider
-const provider = new Web3.providers.HttpProvider('https://goerli.infura.io/v3/0a9791b1429446f79b38dc6e08efddbd')
+const provider = new Web3.providers.HttpProvider('https://sepolia.infura.io/v3/0a9791b1429446f79b38dc6e08efddbd')
 
 // const openseaSDK = new OpenSeaSDK(provider, {
 //     networkName: Network.Main,

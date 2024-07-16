@@ -5,7 +5,7 @@ require('dotenv').config({ path: '.env' })
 require('@nomiclabs/hardhat-etherscan')
 
 const ALCHEMY_API_KEY_URL = process.env.ALCHEMY_API_KEY_URL
-const GOERLI_PRIVATE_KEY = process.env.GOERLI_PRIVATE_KEY || ''
+const SEPOLIA_PRIVATE_KEY = process.env.SEPOLIA_PRIVATE_KEY || ''
 const ETHERSCAN = process.env.ETHERSCAN || ''
 
 const config: HardhatUserConfig = {
@@ -26,14 +26,14 @@ const config: HardhatUserConfig = {
     ],
   },
   networks: {
-    goerli: {
+    sepolia: {
       url: ALCHEMY_API_KEY_URL,
       accounts: [GOERLI_PRIVATE_KEY],
     },
   },
   etherscan: {
     apiKey: {
-      goerli: ETHERSCAN,
+      sepolia: ETHERSCAN,
     },
   },
 };
