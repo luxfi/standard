@@ -28,7 +28,7 @@ const config: HardhatUserConfig = {
   networks: {
     sepolia: {
       url: ALCHEMY_API_KEY_URL,
-      accounts: [GOERLI_PRIVATE_KEY],
+      accounts: [SEPOLIA_PRIVATE_KEY],
     },
   },
   etherscan: {
