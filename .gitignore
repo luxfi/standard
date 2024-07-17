@@ -3,3 +3,4 @@ node_modules
 src/uniswapv3/artifacts
 src/uniswapv3/cache
 src/uniswapv3/typechain
+src/uniswapv3/typechain-types

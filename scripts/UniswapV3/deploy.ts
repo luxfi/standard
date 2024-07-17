@@ -19,11 +19,9 @@ async function main() {
 
   uniswapV3PoolDeployer = await UniswapV3PoolDeployer.deploy();
 
-  let uniswapV3PoolDeployerAddress = await uniswapV3PoolDeployer.getAddress();
-
   console.log(
     "uniswapV3PoolDeployerAddress deployed to:",
-    uniswapV3PoolDeployerAddress
+    uniswapV3PoolDeployer.address
   );
 
   const UniswapV3Factory = new ContractFactory(
@@ -33,9 +31,7 @@ async function main() {
   );
   uniswapV3Factory = await UniswapV3Factory.deploy();
 
-  let uniswapV3FactoryAddress = await uniswapV3Factory.getAddress();
-
-  console.log("uniswapV3Factory", uniswapV3FactoryAddress);
+  console.log("uniswapV3Factory", uniswapV3Factory.address);
 }
 
 main()
