@@ -1,2 +1,5 @@
 node_modules
 .env
+src/uniswapv3/artifacts
+src/uniswapv3/cache
+src/uniswapv3/typechain
