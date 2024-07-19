@@ -11,7 +11,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deployer } = await getNamedAccounts();
 
-  const deployResult = await deploy('ZooKeeper', {
+  const deployResult = await deploy('LuxKeeper', {
     from: deployer,
     args: [],
     log: true,
@@ -28,7 +28,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bnb = await ethers.getContract('BNB')
 
 
-  const keeper = await ethers.getContractAt('ZooKeeper', deployResult.address)
+  const keeper = await ethers.getContractAt('LuxKeeper', deployResult.address)
 
   const pair = await factory.connect(deployerWallet).getPair(zooAddress.address, bnb.address)
   
@@ -45,5 +45,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 export default func
 func.id = 'zooKeeper'
-func.tags = ['ZooKeeper']
+func.tags = ['LuxKeeper']
 func.dependencies = ['Bridge', 'Media', 'ZOO', 'BNB', 'Market', 'UniswapV2Factory', 'UniswapV2Pair']

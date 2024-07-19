@@ -13,7 +13,7 @@ import { Blockchain } from '../utils/Blockchain'
 import { generatedWallets } from '../utils/generatedWallets'
 
 import { Market } from '../types/Market'
-import { ZOO, Media__factory, Market__factory, ZOO__factory, ZooKeeper__factory } from '../types'
+import { ZOO, Media__factory, Market__factory, ZOO__factory, LuxKeeper__factory } from '../types'
 
 let provider = new JsonRpcProvider()
 let blockchain = new Blockchain(provider)
@@ -79,10 +79,10 @@ describe('Market', () => {
     const market = await (await new Market__factory(deployerWallet).deploy()).deployed()
     marketAddress = market.address
 
-    const media = await (await new Media__factory(deployerWallet).deploy('ZooAnimals', 'ANML')).deployed()
+    const media = await (await new Media__factory(deployerWallet).deploy('LuxAnimals', 'ANML')).deployed()
     mediaAddress = media.address
 
-    const zookeeper = await (await new ZooKeeper__factory(deployerWallet).deploy()).deployed()
+    const zookeeper = await (await new LuxKeeper__factory(deployerWallet).deploy()).deployed()
     zookeeperAddress = zookeeper.address
   }
 

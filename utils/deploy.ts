@@ -70,6 +70,20 @@ export function Deploy(name: string, options: any = {}, fn?: any) {
   return func
 }
 
+export const DeployTestToken = (name: string, decimals: number = 18, mintForFirst: number = 20, mintAmount: number = 1000000) => {
+  return Deploy(name, {}, async ({ hre, deploy, signers }) => {
+    if (hre.network.name == 'mainnet') return
+  
+    const accounts = []
+  
+    for (let i = 0; i < mintForFirst; i++) {
+      accounts.push(signers[i].address)
+    }
+  
+    await deploy([hre.ethers.utils.parseUnits(`${mintAmount}`, decimals), accounts])
+  })
+}
+
 // Tenderly verification
 // let verification = await tenderly.verify({
 //   name: contractName,
