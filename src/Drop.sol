@@ -18,7 +18,7 @@ contract Drop is IDrop, Ownable {
   // Title of drop
   string public override title;
 
-  // Address of ZooKeeper contract
+  // Address of LuxKeeper contract
   address public appAddress;
 
   // mapping of TokenType name to TokenType

@@ -9,7 +9,7 @@ import { IDrop } from './IDrop.sol';
 import { ILux } from './ILux.sol';
 
 /**
- * @title Interface for Zoo Protocol's Market
+ * @title Interface for Lux Protocol's Market
  */
 interface IMarket {
   struct Bid {

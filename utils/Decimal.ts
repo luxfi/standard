@@ -6,8 +6,6 @@ export default class Decimal {
     const difference = 18 - decimalPlaces
     const zeros = BigNumber.from(10).pow(difference)
     const abs = BigNumber.from(`${value.toString().replace('.', '')}`)
-    console.log("Decimal", { value: abs.mul(zeros) });
-    
     return { value: abs.mul(zeros) }
   }
 

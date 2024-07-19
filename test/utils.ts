@@ -1,6 +1,6 @@
 // @ts-ignore
 import { ethers, deployments } from 'hardhat'
-import { Auction, Market, Media, Market__factory, Media__factory, ZOO__factory, ZooKeeper__factory, BadBidder, BadERC721, TestERC721, ZOO  } from '../types'
+import { Auction, Market, Media, Market__factory, Media__factory, ZOO__factory, LuxKeeper__factory, BadBidder, BadERC721, TestERC721, ZOO  } from '../types'
 import { sha256 } from 'ethers/lib/utils'
 import Decimal from '../utils/Decimal'
 import { BigNumber, BigNumberish, Contract } from 'ethers'
@@ -239,10 +239,10 @@ export const deployToken = async () => {
 export const deployProtocol = async (tokenAddress) => {
   const [deployer] = await ethers.getSigners()
   const token = await (await new ZOO__factory(deployer).deploy()).deployed()
-  // const drop = await (await new ZooDrop__factory(deployer).deploy()).deployed();
+  // const drop = await (await new LuxDrop__factory(deployer).deploy()).deployed();
   const market = await (await new Market__factory(deployer).deploy()).deployed()
-  const media = await (await new Media__factory(deployer).deploy('ANML', 'ZooAnimals')).deployed()
-  const zookeeper = await (await new ZooKeeper__factory(deployer).deploy()).deployed()
+  const media = await (await new Media__factory(deployer).deploy('ANML', 'LuxAnimals')).deployed()
+  const zookeeper = await (await new LuxKeeper__factory(deployer).deploy()).deployed()
   await market.configure(media.address)
   await media.configure(market.address)
   // await drop.configure(zookepeer, media);

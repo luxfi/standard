@@ -8,7 +8,7 @@ import { LogDescription } from '@ethersproject/abi'
 import { AddressZero } from '@ethersproject/constants'
 import Decimal from '../utils/Decimal'
 import { BigNumber, BigNumberish, Bytes } from 'ethers'
-import { ZOO__factory, Market__factory, Media__factory, ZooKeeper__factory, Market } from '../types'
+import { ZOO__factory, Market__factory, Media__factory, LuxKeeper__factory, Market } from '../types'
 import { Media } from '../types/Media'
 import { approveCurrency, deployCurrency, EIP712Sig, getBalance, mintCurrency, signMintWithSig, signPermit, toNumWei } from './utils'
 import { arrayify, formatBytes32String, formatUnits, sha256 } from 'ethers/lib/utils'
@@ -102,10 +102,10 @@ describe('Media', () => {
     const market = await (await new Market__factory(deployerWallet).deploy()).deployed()
     marketAddress = market.address
 
-    const media = await (await new Media__factory(deployerWallet).deploy('ANML', 'CryptoZoo')).deployed()
+    const media = await (await new Media__factory(deployerWallet).deploy('ANML', 'CryptoLux')).deployed()
     mediaAddress = media.address
 
-    const keeper = await (await new ZooKeeper__factory(deployerWallet).deploy()).deployed()
+    const keeper = await (await new LuxKeeper__factory(deployerWallet).deploy()).deployed()
     keeperAddress = keeper.address
 
     await market.configure(mediaAddress)

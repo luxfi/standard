@@ -10,7 +10,7 @@ import { ILux } from './ILux.sol';
 import { IDrop } from './IDrop.sol';
 
 /**
- * @title Interface for Zoo Protocol's Media
+ * @title Interface for Lux Protocol's Media
  */
 interface IMedia is IERC721 {
   struct EIP712Signature {

@@ -79,13 +79,13 @@ describe('Test Faucet', () => {
       expect(parseInt(signerBalances)).to.equal(10 * rate)
     }
 
-    // Owner Zoo balance should be 10k
+    // Owner Lux balance should be 10k
     const ownerBal = await zooToken.balanceOf(owner.address)
 
     // Faucet balance should decreased by 200k
     const faucetBalPostFund = await zooToken.balanceOf(zooFaucet.address)
 
-    // Withdraw all Zoo from the Faucet to the owners wallet
+    // Withdraw all Lux from the Faucet to the owners wallet
     await zooFaucet.withdraw()
 
     // Faucet balance after withdrawTok should be 0

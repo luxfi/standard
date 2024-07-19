@@ -1,12 +1,12 @@
 import { deployments, ethers, getNamedAccounts, upgrades } from 'hardhat'
 
-// import { ZooKeeper__factory, Media__factory, Market__factory, Token, ZooDrop } from '../types';
+// import { LuxKeeper__factory, Media__factory, Market__factory, Token, LuxDrop } from '../types';
 
 // import { Media } from '../types/Media';
-// import { ZooToken } from '../types/ZooToken';
+// import { LuxToken } from '../types/LuxToken';
 // import { Faucet } from '../types/Faucet';
 // import { Market } from '../types/Market';
-// import { ZooKeeper } from '../types/ZooKeeper';
+// import { LuxKeeper } from '../types/LuxKeeper';
 // import configureGame from '../utils/configureGame';
 import { Contract, BigNumber, Bytes, BytesLike, utils } from 'ethers'
 
@@ -47,7 +47,7 @@ class Helper {
     await deployments.createFixture(async ({ deployments, getNamedAccounts, ethers }, options) => {
       const {
         signers,
-        tokens: { ZOO, Market, Media, ZooKeeper, Drop },
+        tokens: { ZOO, Market, Media, LuxKeeper, Drop },
       } = await setupTest()
       const contracts = await deployments.fixture() // ensure you start from a fresh deployments
 
@@ -55,7 +55,7 @@ class Helper {
       inst.ZOO = await ethers.getContractAt('ZOO', contracts.ZOO.address, signers[0])
       inst.Market = await ethers.getContractAt('Market', contracts.Market.address, signers[0])
       inst.Media = await ethers.getContractAt('Media', contracts.Media.address, signers[0])
-      inst.zooKeeper = await ethers.getContractAt('ZooKeeper', contracts.ZooKeeper.address, signers[0])
+      inst.zooKeeper = await ethers.getContractAt('LuxKeeper', contracts.LuxKeeper.address, signers[0])
       inst.Drop = await ethers.getContractAt('Drop', contracts.Drop.address, signers[0])
 
       // this mint is executed once and then createFixture will ensure it is snapshotted
@@ -114,13 +114,13 @@ class Helper {
   }
 }
 
-describe('ZooKeeper', () => {
+describe('LuxKeeper', () => {
   describe('upgradable', async () => {
     it('references do not change', async () => {
       const {
         tokens: { ZOO, Market, Media, Bridge },
       } = await setupTest()
-      const ZK = await ethers.getContractFactory('ZooKeeper')
+      const ZK = await ethers.getContractFactory('LuxKeeper')
       const inst = await upgrades.deployProxy(ZK, [])
       await inst.configure(Media.address, ZOO.address, Bridge.address)
 
@@ -129,7 +129,7 @@ describe('ZooKeeper', () => {
       expect(await inst.zoo()).to.equal(ZOO.address)
       expect(await inst.bridge()).to.equal(Bridge.address)
 
-      const ZK2 = await ethers.getContractFactory('ZooKeeperV2')
+      const ZK2 = await ethers.getContractFactory('LuxKeeperV2')
       const upgraded = await upgrades.upgradeProxy(inst.address, ZK2)
 
       expect(await upgraded.market()).to.equal(Market.address)
@@ -143,8 +143,8 @@ describe('ZooKeeper', () => {
       const {
         tokens: { ZOO, Market, Media, Bridge },
       } = await setupTest()
-      const ZK = await ethers.getContractFactory('ZooKeeper')
-      const ZK2 = await ethers.getContractFactory('ZooKeeperV2')
+      const ZK = await ethers.getContractFactory('LuxKeeper')
+      const ZK2 = await ethers.getContractFactory('LuxKeeperV2')
 
       const inst = await upgrades.deployProxy(ZK, [])
       expect(inst.newMethod).to.undefined;
