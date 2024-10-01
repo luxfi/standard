@@ -1,4 +1,6 @@
-[
+{
+  "address": "0xBfCB13c05d41C2EefA14F7c7F1F1fd9B89cB2eEe",
+  "abi": [
     {
       "inputs": [
         {
@@ -562,4 +564,5 @@
       "stateMutability": "payable",
       "type": "receive"
     }
-]
+  ]
+}

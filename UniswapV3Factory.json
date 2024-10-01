@@ -1,4 +1,6 @@
-[
+{
+  "address": "0x7b2958270a40493325c38f1fd695942330cE48A5",
+  "abi": [
     {
       "inputs": [],
       "stateMutability": "nonpayable",
@@ -233,4 +235,5 @@
       "stateMutability": "nonpayable",
       "type": "function"
     }
-]
+  ]
+}
