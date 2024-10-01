@@ -97,8 +97,8 @@ export default {
       sepolia: process.env.ETHERSCAN_API_KEY!,
       bsc: process.env.BSCSCAN_API_KEY!,
       bscTestnet: process.env.BSCSCAN_API_KEY!,
-      lux: "", // Leave empty if not applicable
-      "lux-test": "" // Leave empty if not applicable
+      lux: "NO KEY NEEDED", // Leave empty if not applicable
+      "lux-test": "NO KEY NEEDED" // Leave empty if not applicable
     },
   },
   solidity: {
