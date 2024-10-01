@@ -93,13 +93,7 @@ export default {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
-    apiKey: {
-      sepolia: process.env.ETHERSCAN_API_KEY!,
-      bsc: process.env.BSCSCAN_API_KEY!,
-      bscTestnet: process.env.BSCSCAN_API_KEY!,
-      lux: "15B6F1WNW4Q8YND5TY64I378A36AXT188A", // Leave empty if not applicable
-      // "lux-test": "" // Leave empty if not applicable
-    },
+    apiKey:  "15B6F1WNW4Q8YND5TY64I378A36AXT188A", 
     customChains: [
       {
         network: "lux",
@@ -110,7 +104,7 @@ export default {
         }
       },
       {
-        network: "lux-test",
+        network: "lux_testnet",
         chainId: 8888,
         urls: {
           apiURL: "https://api.explore.lux-test.network/api",

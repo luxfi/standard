@@ -2,14 +2,21 @@ import hre, { ethers } from "hardhat";
 import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 const fs = require('fs');  // Import the File System module
 
-//npx hardhat run --network lux deploy/21_uniswapv3_periphery.ts
+// (mainnet)  npx hardhat run --network lux deploy/21_uniswapv3_periphery.ts
+// (testnet)  npx hardhat run --network lux_testnet deploy/21_uniswapv3_periphery.ts
+// Before start, you should update factory and weth address as same net.
 async function main() {
     let deployer: SignerWithAddress;
 
     [deployer] = await ethers.getSigners();
 
-    const factory = "0x0650683db720c793ff7e609A08b5fc2792c91f39";
-    const weth = "0x53B1aAA5b6DDFD4eD00D0A7b5Ef333dc74B605b5";
+    // factory address (mainnet) 0x0650683db720c793ff7e609A08b5fc2792c91f39
+    // factory address (testnet) 0x036A0AE1D760D7582254059BeBD9e5A34062dE23
+    const factory = "0x036A0AE1D760D7582254059BeBD9e5A34062dE23";
+
+    // mock weth address (mainnet) 0x53B1aAA5b6DDFD4eD00D0A7b5Ef333dc74B605b5
+    // mock weth address (testnet) 0x0650683db720c793ff7e609A08b5fc2792c91f39
+    const weth = "0x0650683db720c793ff7e609A08b5fc2792c91f39";
     {
         const SwapRouter = await ethers.getContractFactory("SwapRouter");
         const swapRouter = await SwapRouter.deploy(factory, weth);
