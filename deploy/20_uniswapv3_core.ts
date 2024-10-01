@@ -18,7 +18,7 @@ async function main() {
     // Verify the contract on Etherscan
     await hre.run("verify:verify", {
         address: factoryv3.address,
-        contract: "src/uni3/core/contracts/UniswapV3Factory.sol:UniswapV3Factory",
+        contract: "src/uni/uni3/core/contracts/UniswapV3Factory.sol:UniswapV3Factory",
         constructorArguments: [],
     });
 
@@ -27,7 +27,7 @@ async function main() {
     const folder = networkName === "lux" ? "mainnet" : "testnet";
 
     // Load the ABI from the compiled contract artifacts
-    const abi = JSON.parse(fs.readFileSync('./artifacts/src/uni3/core/contracts/UniswapV3Factory.sol/UniswapV3Factory.json', 'utf8')).abi;
+    const abi = JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/core/contracts/UniswapV3Factory.sol/UniswapV3Factory.json', 'utf8')).abi;
 
     // Write ABI and address to the corresponding folder
     const outputPath = `deployments/${folder}/UniswapV3Factory.json`;
