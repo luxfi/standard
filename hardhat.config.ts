@@ -36,7 +36,7 @@ const LOWEST_OPTIMIZER_COMPILER_SETTINGS = {
 }
 
 const DEFAULT_COMPILER_SETTINGS = {
-  version: '0.7.6',
+  version: '0.6.12',
   settings: {
     evmVersion: 'istanbul',
     optimizer: {
@@ -114,7 +114,45 @@ export default {
     ]
   },
   solidity: {
-    compilers: [DEFAULT_COMPILER_SETTINGS],
+    compilers: [
+      {
+        version: "0.5.16",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+      {
+        version: "0.6.6",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+      {
+        version: "0.6.12",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+      {
+        version: "0.7.6",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+      DEFAULT_COMPILER_SETTINGS
+    ],
     overrides: {
       'contracts/NonfungiblePositionManager.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
       'contracts/test/MockTimeNonfungiblePositionManager.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
@@ -131,7 +169,7 @@ export default {
     },
   },
   paths: {
-    sources: "./src/uni3", // Change this line to point to your src folder
+    sources: "./src/uni", // Change this line to point to your src folder
     tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts",

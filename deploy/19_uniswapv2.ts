@@ -1,121 +1,159 @@
 // Importing required modules and libraries from the ethers.js library.
 import { Contract, ContractFactory, Wallet } from "ethers";
-import { ethers } from "hardhat";
-import fs from "fs";
+import hre, { ethers } from "hardhat";
+import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
+const fs = require('fs');  // Import the File System module
 import * as dotenv from "dotenv";
 
 // Importing the contract JSON artifacts.
-import WETH9 from "../WETH9.json";
-import factoryArtifact from "@uniswap/v2-core/build/UniswapV2Factory.json";
-import routerArtifact from "@uniswap/v2-periphery/build/UniswapV2Router02.json";
 import pairArtifact from "@uniswap/v2-periphery/build/IUniswapV2Pair.json";
 
 dotenv.config();
-const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
-const RPC_ENDPOINT = process.env.RPC_ENDPOINT || "";
 
 // Main deployment function.
 async function main() {
-    // 1. Retrieve signers from the ethers provider.
-    const wallet = new Wallet(PRIVATE_KEY);
-    const provider = new ethers.JsonRpcProvider(RPC_ENDPOINT);
-    const deployer = wallet.connect(provider);
+    let deployer: SignerWithAddress;
+    [deployer] = await ethers.getSigners();
+
+    // Determine the folder based on the network
+    const networkName = hre.network.name; // "lux" or "lux_testnet"
+    const folder = networkName === "lux" ? "mainnet" : "testnet";
 
     console.log(`Deploying contracts with the account: ${deployer.address}`);
+    const Factory = await ethers.getContractFactory("UniswapV2Factory", deployer);
 
-    // 2. Initialize a new contract factory for the Uniswap V2 Factory.
-    const Factory = new ContractFactory(
-        factoryArtifact.abi,
-        factoryArtifact.bytecode,
-        deployer
-    );
-
-    // 3. Use the initialized factory to deploy a new Factory contract.
     const factory = await Factory.deploy(deployer.address);
 
-    // 4. After deployment, retrieve the address of the newly deployed Factory contract.
-    const factoryAddress = await factory.getAddress();
-    console.log(`Factory deployed to ${factoryAddress}`);
+    console.log(`Factory deployed to ${factory.address}`);
+    try {
+        await hre.run("verify:verify", {
+            address: factory.address,
+            contract: "src/uni/uni2/UniswapV2Factory.sol:UniswapV2Factory",
+        constructorArguments: [deployer.address],
+        });
+    } catch(error) {
+        console.log("already verified");
+    }
 
-    // 5. Initialize a contract factory specifically for the Tether (USDT) token.
+    fs.writeFileSync(`deployments/${folder}/UniswapV2Factory.json`, JSON.stringify({
+        address: factory.address,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni2/UniswapV2Factory.sol/UniswapV2Factory.json', 'utf8')).abi,
+    }, null, 2));
+
+    console.log('Contract ABI and address saved to UniswapV2Factory.json');
+
     const USDT = await ethers.getContractFactory("Tether", deployer);
-
-    // 6. Deploy the USDT contract using the above-initialized factory.
     const usdt = await USDT.deploy();
+    console.log(`USDT deployed to ${usdt.address}`);
+    try {
+        await hre.run("verify:verify", {
+            address: usdt.address,
+            contract: "src/uni/uni2/USDT.sol:Tether",
+        constructorArguments: [],
+        });
+    } catch(error) {
+        console.log("already verified");
+    }
+    fs.writeFileSync(`deployments/${folder}/mockUSDT.json`, JSON.stringify({
+        address: usdt.address,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni2/USDT.sol/Tether.json', 'utf8')).abi,
+    }, null, 2));
+    console.log('Contract ABI and address saved to mockUSDT.json');
 
-    // 7. Get the address of the deployed USDT contract.
-    const usdtAddress = await usdt.getAddress();
-    console.log(`USDT deployed to ${usdtAddress}`);
 
-    // 8. Similarly, initialize a contract factory for the UsdCoin (USDC) token.
     const USDC = await ethers.getContractFactory("UsdCoin", deployer);
 
-    // 9. Deploy the USDC contract.
     const usdc = await USDC.deploy();
-
-    // 10. Get the address of the deployed USDC contract.
-    const usdcAddress = await usdc.getAddress();
-    console.log(`USDC deployed to ${usdcAddress}`);
+    console.log(`USDC deployed to ${usdc.address}`);
+    try {
+        await hre.run("verify:verify", {
+            address: usdc.address,
+            contract: "src/uni/uni2/USDC.sol:UsdCoin",
+        constructorArguments: [],
+        });
+    } catch(error) {
+        console.log("already verified");
+    }
+    fs.writeFileSync(`deployments/${folder}/mockUSDC.json`, JSON.stringify({
+        address: usdc.address,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni2/USDC.sol/UsdCoin.json', 'utf8')).abi,
+    }, null, 2));
+    console.log('Contract ABI and address saved to mockUSDC.json');
 
     /**
      * Now that we have deployed the Factory contract and the two ERC20 tokens,
      * we can deploy the Router contract.
-     * The Router contract requires the address of the Factory contract and the WETH9 contract.
-     * The WETH9 contract is a wrapper for the ETH token.
+     * The Router contract requires the address of the Factory contract and the WETH contract.
+     * The WETH contract is a wrapper for the ETH token.
      * But prior to that, we need to mint some USDT and USDC tokens to the deployer. Lets do that first.
      */
 
-    // 11. Mint 1000 USDT tokens to the deployer.
-    await usdt.connect(deployer).mint(deployer.address, ethers.parseEther("1000"));
+    // Mint 1000 USDT tokens to the deployer.
+    await usdt.connect(deployer).mint(deployer.address, ethers.utils.parseEther("1000"));
 
-    // 12. Mint 1000 USDC tokens to the deployer.
-    await usdc.connect(deployer).mint(deployer.address, ethers.parseEther("1000"));
+    // Mint 1000 USDC tokens to the deployer.
+    await usdc.connect(deployer).mint(deployer.address, ethers.utils.parseEther("1000"));
 
-    // 13. Utilizing the Factory contract, create a trading pair using the addresses of USDT and USDC.
-    const tx1 = await factory.createPair(usdtAddress, usdcAddress);
+    // Utilizing the Factory contract, create a trading pair using the addresses of USDT and USDC.
+    const tx1 = await factory.createPair(usdt.address, usdc.address);
 
-    // 14. Wait for the transaction to be confirmed on the blockchain.
+    // Wait for the transaction to be confirmed on the blockchain.
     await tx1.wait();
 
-    // 15. Retrieve the address of the created trading pair from the Factory contract.
-    const pairAddress = await factory.getPair(usdtAddress, usdcAddress);
+    // Retrieve the address of the created trading pair from the Factory contract.
+    const pairAddress = await factory.getPair(usdt.address, usdc.address);
     console.log(`Pair deployed to ${pairAddress}`);
 
-    // 16. Initialize a new contract instance for the trading pair using its address and ABI.
+    // Initialize a new contract instance for the trading pair using its address and ABI.
     const pair = new Contract(pairAddress, pairArtifact.abi, deployer);
 
-    // 17. Query the reserves of the trading pair to check liquidity.
+    // Query the reserves of the trading pair to check liquidity.
     let reserves = await pair.getReserves();
     console.log(`Reserves: ${reserves[0].toString()}, ${reserves[1].toString()}`);
 
-    // 18. Initialize a new contract factory for the WETH9 contract.
-    const WETH = new ContractFactory(WETH9.abi, WETH9.bytecode, deployer);
+    // Initialize a new contract factory for the WETH9 contract.
+    const WETH = await ethers.getContractFactory("WETH", deployer);
+
     const weth = await WETH.deploy();
-    const wethAddress = await weth.getAddress();
-    console.log(`WETH deployed to ${wethAddress}`);
+    console.log(`WETH deployed to ${weth.address}`);
+    await hre.run("verify:verify", {
+        address: weth.address,
+        contract: "src/uni/uni2/WETH.sol:WETH",
+    constructorArguments: [],
+    });
+    fs.writeFileSync(`deployments/${folder}/mockWETH.json`, JSON.stringify({
+        address: weth.address,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni2/WETH.sol/WETH.json', 'utf8')).abi,
+    }, null, 2));
+    console.log('Contract ABI and address saved to mockWETH.json');
 
-    // 19. Initialize a new contract factory for the Router contract.
-    const Router = new ContractFactory(
-        routerArtifact.abi,
-        routerArtifact.bytecode,
-        deployer
-    );
+    // Initialize a new contract factory for the Router contract.
+    const Router = await ethers.getContractFactory("UniswapV2Router02", deployer);
 
-    // 20. Deploy the Router contract using the above-initialized factory.
-    const router = await Router.deploy(factoryAddress, wethAddress);
-    const routerAddress = await router.getAddress();
-    console.log(`Router deployed to ${routerAddress}`);
+    // Deploy the Router contract using the above-initialized factory.
+    const router = await Router.deploy(factory.address, weth.address);
+    console.log(`Router deployed to ${router.address}`);
+    await hre.run("verify:verify", {
+        address: router.address,
+        contract: "src/uni/uni2/UniswapV2Router02.sol:UniswapV2Router02",
+    constructorArguments: [factory.address, weth.address],
+    });
+    fs.writeFileSync(`deployments/${folder}/UniswapV2Router02.json`, JSON.stringify({
+        address: router.address,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni2/UniswapV2Router02.sol/UniswapV2Router02.json', 'utf8')).abi,
+    }, null, 2));
+    console.log('Contract ABI and address saved to UniswapV2Router02.json');
 
     const MaxUint256 =
         "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 
-    const approveTx1 = await usdt.approve(routerAddress, MaxUint256);
+    const approveTx1 = await usdt.approve(router.address, MaxUint256);
     await approveTx1.wait();
-    const approvalTx2 = await usdc.approve(routerAddress, MaxUint256);
+    const approvalTx2 = await usdc.approve(router.address, MaxUint256);
     await approvalTx2.wait();
 
-    const token0Amount = ethers.parseUnits("100");
-    const token1Amount = ethers.parseUnits("100");
+    const token0Amount = ethers.utils.parseUnits("100");
+    const token1Amount = ethers.utils.parseUnits("100");
 
     const lpTokenBalanceBefore = await pair.balanceOf(deployer.address);
     console.log(
@@ -126,8 +164,8 @@ async function main() {
     const addLiquidityTx = await router
         .connect(deployer)
         .addLiquidity(
-        usdtAddress,
-        usdcAddress,
+        usdt.address,
+        usdc.address,
         token0Amount,
         token1Amount,
         0,
@@ -144,11 +182,11 @@ async function main() {
     reserves = await pair.getReserves();
     console.log(`Reserves: ${reserves[0].toString()}, ${reserves[1].toString()}`);
 
-    console.log("USDT_ADDRESS", usdtAddress);
-    console.log("USDC_ADDRESS", usdcAddress);
-    console.log("WETH_ADDRESS", wethAddress);
-    console.log("FACTORY_ADDRESS", factoryAddress);
-    console.log("ROUTER_ADDRESS", routerAddress);
+    console.log("USDT_ADDRESS", usdt.address);
+    console.log("USDC_ADDRESS", usdc.address);
+    console.log("WETH_ADDRESS", weth.address);
+    console.log("FACTORY_ADDRESS", factory.address);
+    console.log("ROUTER_ADDRESS", router.address);
     console.log("PAIR_ADDRESS", pairAddress);
 }
 

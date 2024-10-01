@@ -26,13 +26,13 @@ async function main() {
 
         await hre.run("verify:verify", {
             address: swapRouter.address,
-            contract: "src/uni3/periphery/contracts/SwapRouter.sol:SwapRouter",
+            contract: "src/uni/uni3/periphery/contracts/SwapRouter.sol:SwapRouter",
         constructorArguments: [factory, weth],
         });
 
         fs.writeFileSync(`deployments/${folder}/SwapRouter.json`, JSON.stringify({
             address: swapRouter.address,
-            abi: JSON.parse(fs.readFileSync('./artifacts/src/uni3/periphery/contracts/SwapRouter.sol/SwapRouter.json', 'utf8')).abi,
+            abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/SwapRouter.sol/SwapRouter.json', 'utf8')).abi,
         }, null, 2));
 
         console.log('Contract ABI and address saved to SwapRouter.json');
@@ -46,13 +46,13 @@ async function main() {
 
         await hre.run("verify:verify", {
             address: quoter.address,
-            contract: "src/uni3/periphery/contracts/lens/Quoter.sol:Quoter",
+            contract: "src/uni/uni3/periphery/contracts/lens/Quoter.sol:Quoter",
         constructorArguments: [factory, weth],
         });
 
         fs.writeFileSync(`deployments/${folder}/Quoter.json`, JSON.stringify({
             address: quoter.address,
-            abi: JSON.parse(fs.readFileSync('./artifacts/src/uni3/periphery/contracts/lens/Quoter.sol/Quoter.json', 'utf8')).abi,
+            abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/lens/Quoter.sol/Quoter.json', 'utf8')).abi,
         }, null, 2));
 
         console.log('Contract ABI and address saved to Quoter.json');
@@ -66,12 +66,12 @@ async function main() {
 
         await hre.run("verify:verify", {
             address: quoter2.address,
-            contract: "src/uni3/periphery/contracts/lens/QuoterV2.sol:QuoterV2",
+            contract: "src/uni/uni3/periphery/contracts/lens/QuoterV2.sol:QuoterV2",
         constructorArguments: [factory, weth],
         });
         fs.writeFileSync(`deployments/${folder}/QuoterV2.json`, JSON.stringify({
             address: quoter2.address,
-            abi: JSON.parse(fs.readFileSync('./artifacts/src/uni3/periphery/contracts/lens/QuoterV2.sol/QuoterV2.json', 'utf8')).abi,
+            abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/lens/QuoterV2.sol/QuoterV2.json', 'utf8')).abi,
         }, null, 2));
     
         console.log('Contract ABI and address saved to QuoterV2.json');
@@ -85,12 +85,12 @@ async function main() {
 
     await hre.run("verify:verify", {
         address: nftDescriptor.address,
-        contract: "src/uni3/periphery/contracts/libraries/NFTDescriptor.sol:NFTDescriptor",
+        contract: "src/uni/uni3/periphery/contracts/libraries/NFTDescriptor.sol:NFTDescriptor",
     constructorArguments: [],
     });
     fs.writeFileSync(`deployments/${folder}/NFTDescriptor.json`, JSON.stringify({
         address: nftDescriptor.address,
-        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni3/periphery/contracts/libraries/NFTDescriptor.sol/NFTDescriptor.json', 'utf8')).abi,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/libraries/NFTDescriptor.sol/NFTDescriptor.json', 'utf8')).abi,
     }, null, 2));
 
     console.log('Contract ABI and address saved to NFTDescriptor.json');
@@ -109,12 +109,12 @@ async function main() {
 
     await hre.run("verify:verify", {
         address: tokenDescriptor.address,
-        contract: "src/uni3/periphery/contracts/NonfungibleTokenPositionDescriptor.sol:NonfungibleTokenPositionDescriptor",
+        contract: "src/uni/uni3/periphery/contracts/NonfungibleTokenPositionDescriptor.sol:NonfungibleTokenPositionDescriptor",
     constructorArguments: [weth, luxBytes32],
     });
     fs.writeFileSync(`deployments/${folder}/NonfungibleTokenPositionDescriptor.json`, JSON.stringify({
         address: tokenDescriptor.address,
-        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni3/periphery/contracts/NonfungibleTokenPositionDescriptor.sol/NonfungibleTokenPositionDescriptor.json', 'utf8')).abi,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/NonfungibleTokenPositionDescriptor.sol/NonfungibleTokenPositionDescriptor.json', 'utf8')).abi,
     }, null, 2));
 
     console.log('Contract ABI and address saved to NonfungibleTokenPositionDescriptor.json');
@@ -127,12 +127,12 @@ async function main() {
 
     await hre.run("verify:verify", {
         address: positonManager.address,
-        contract: "src/uni3/periphery/contracts/NonfungiblePositionManager.sol:NonfungiblePositionManager",
+        contract: "src/uni/uni3/periphery/contracts/NonfungiblePositionManager.sol:NonfungiblePositionManager",
       constructorArguments: [factory, weth, tokenDescriptor.address],
     });
     fs.writeFileSync(`deployments/${folder}/NonfungiblePositionManager.json`, JSON.stringify({
         address: positonManager.address,
-        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni3/periphery/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json', 'utf8')).abi,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json', 'utf8')).abi,
     }, null, 2));
 
     console.log('Contract ABI and address saved to NonfungiblePositionManager.json');
