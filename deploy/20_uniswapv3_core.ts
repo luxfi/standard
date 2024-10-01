@@ -1,6 +1,8 @@
-import { ethers } from "hardhat";
+import hre, { ethers } from "hardhat";
 import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
+const fs = require('fs');  // Import the File System module
 
+//npx hardhat run --network lux deploy/20_uniswapv3_core.ts
 async function main() {
     let deployer: SignerWithAddress;
 
@@ -13,15 +15,22 @@ async function main() {
     await factoryv3.deployed();
     console.log(`Factory v3 deployed at: ${factoryv3.address}`);
 
-    const TokenFactory = await ethers.getContractFactory("TestERC20", deployer);
+    await hre.run("verify:verify", {
+        address: factoryv3.address,
+        contract: "src/uni3/core/contracts/UniswapV3Factory.sol:UniswapV3Factory",
+      constructorArguments: [],
+    });
 
-    const usdt_mock = await TokenFactory.deploy(2000);
-    await usdt_mock.deployed();
-    console.log(`USDT mock deployed at: ${usdt_mock.address}`);
+     // Load the ABI from the compiled contract artifacts
+    const abi = JSON.parse(fs.readFileSync('./artifacts/src/uni3/core/contracts/UniswapV3Factory.sol/UniswapV3Factory.json', 'utf8')).abi;
 
-    const usdc_mock = await TokenFactory.deploy(2000);
-    await usdc_mock.deployed();
-    console.log(`USDC mock deployed at: ${usdc_mock.address}`);
+    fs.writeFileSync('deployments/mainnet/UniswapV3Factory.json', JSON.stringify({
+        address: factoryv3.address,
+        abi: abi,
+    }, null, 2));
+
+    console.log('Contract ABI and address saved to UniswapV3Factory.json');
+    return;
 }
 
 main()

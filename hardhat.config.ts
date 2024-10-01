@@ -1,5 +1,5 @@
 import '@nomiclabs/hardhat-ethers'
-import '@nomiclabs/hardhat-etherscan'
+import '@nomicfoundation/hardhat-verify'
 import '@nomiclabs/hardhat-waffle'
 import 'hardhat-typechain'
 import 'hardhat-watcher'
@@ -13,7 +13,7 @@ const LOW_OPTIMIZER_COMPILER_SETTINGS = {
     evmVersion: 'istanbul',
     optimizer: {
       enabled: true,
-      runs: 2_000,
+      runs: 5,
     },
     metadata: {
       bytecodeHash: 'none',
@@ -27,7 +27,7 @@ const LOWEST_OPTIMIZER_COMPILER_SETTINGS = {
     evmVersion: 'istanbul',
     optimizer: {
       enabled: true,
-      runs: 1_000,
+      runs: 5,
     },
     metadata: {
       bytecodeHash: 'none',
@@ -41,7 +41,7 @@ const DEFAULT_COMPILER_SETTINGS = {
     evmVersion: 'istanbul',
     optimizer: {
       enabled: true,
-      runs: 1_000_000,
+      runs: 5,
     },
     metadata: {
       bytecodeHash: 'none',
@@ -97,9 +97,27 @@ export default {
       sepolia: process.env.ETHERSCAN_API_KEY!,
       bsc: process.env.BSCSCAN_API_KEY!,
       bscTestnet: process.env.BSCSCAN_API_KEY!,
-      lux: "", // Leave empty if not applicable
-      "lux-test": "" // Leave empty if not applicable
+      lux: "15B6F1WNW4Q8YND5TY64I378A36AXT188A", // Leave empty if not applicable
+      // "lux-test": "" // Leave empty if not applicable
     },
+    customChains: [
+      {
+        network: "lux",
+        chainId: 7777,
+        urls: {
+          apiURL: "https://api.explore.lux.network/api",
+          browserURL: "https://explore.lux.network"
+        }
+      },
+      {
+        network: "lux-test",
+        chainId: 8888,
+        urls: {
+          apiURL: "https://api.explore.lux-test.network/api",
+          browserURL: "https://explore.lux-test.network"
+        }
+      },
+    ]
   },
   solidity: {
     compilers: [DEFAULT_COMPILER_SETTINGS],
@@ -118,4 +136,11 @@ export default {
       verbose: true,
     },
   },
+  paths: {
+    sources: "./src/uni3", // Change this line to point to your src folder
+    tests: "./test",
+    cache: "./cache",
+    artifacts: "./artifacts",
+  },
 }
+
