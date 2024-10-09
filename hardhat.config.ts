@@ -174,5 +174,8 @@ export default {
     cache: "./cache",
     artifacts: "./artifacts",
   },
+  sourcify: {
+    enabled: false
+  }
 }
 
