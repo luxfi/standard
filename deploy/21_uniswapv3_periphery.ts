@@ -15,7 +15,27 @@ async function main() {
     const folder = networkName === "lux" ? "mainnet" : "testnet";
     const factory = networkName === "lux" ? "0x0650683db720c793ff7e609A08b5fc2792c91f39" : "0x036A0AE1D760D7582254059BeBD9e5A34062dE23";
     const weth = networkName === "lux" ? "0x53B1aAA5b6DDFD4eD00D0A7b5Ef333dc74B605b5" : "0x0650683db720c793ff7e609A08b5fc2792c91f39";
+    {
+        const TickLens = await ethers.getContractFactory("TickLens");
+        const tickLens = await TickLens.deploy();
+        
 
+        await tickLens.deployed();
+        console.log("TickLens:", tickLens.address);
+
+        await hre.run("verify:verify", {
+            address: tickLens.address,
+            contract: "src/uni/uni3/periphery/contracts/lens/TickLens.sol:TickLens",
+        constructorArguments: [],
+        });
+
+        fs.writeFileSync(`deployments/${folder}/TickLens.json`, JSON.stringify({
+            address: tickLens.address,
+            abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/lens/TickLens.sol/TickLens.json', 'utf8')).abi,
+        }, null, 2));
+
+        console.log('Contract ABI and address saved to TickLens.json');
+    }
     {
         const SwapRouter = await ethers.getContractFactory("SwapRouter");
         const swapRouter = await SwapRouter.deploy(factory, weth);
