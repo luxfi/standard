@@ -1545,7 +1545,7 @@
       ]
     },
     "D:\\Work\\standard\\src\\uni\\uni3\\periphery\\contracts\\base\\Multicall.sol": {
-      "lastModificationDate": 1727740487308,
+      "lastModificationDate": 1729192452169,
       "contentHash": "80f64ac01e3e7fd0512774edae0e646e",
       "sourceName": "src/uni/uni3/periphery/contracts/base/Multicall.sol",
       "solcConfig": {
@@ -7759,6 +7759,2403 @@
       ],
       "artifacts": [
         "UniswapV2Factory"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\base\\ApproveAndCall.sol": {
+      "lastModificationDate": 1728272257429,
+      "contentHash": "9928bad35fcc8740e7d9e07e5a6a15d1",
+      "sourceName": "src/uni/swapRouter/base/ApproveAndCall.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol",
+        "../interfaces/IApproveAndCall.sol",
+        "./ImmutableState.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "ApproveAndCall"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\interfaces\\IApproveAndCall.sol": {
+      "lastModificationDate": 1728272257432,
+      "contentHash": "a0868a4544b7ca31d6e32147de8fd59b",
+      "sourceName": "src/uni/swapRouter/interfaces/IApproveAndCall.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "IApproveAndCall"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\base\\ImmutableState.sol": {
+      "lastModificationDate": 1728272257429,
+      "contentHash": "ddf671f0b3e726f408f1977e3d02b4ef",
+      "sourceName": "src/uni/swapRouter/base/ImmutableState.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IImmutableState.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "ImmutableState"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\interfaces\\INonfungiblePositionManager.sol": {
+      "lastModificationDate": 1728277102527,
+      "contentHash": "2153274e36e94cc4e2c987f098cf5420",
+      "sourceName": "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol",
+        "@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol",
+        "./IPoolInitializer.sol",
+        "./IERC721Permit.sol",
+        "./IPeripheryPayments.sol",
+        "./IPeripheryImmutableState.sol",
+        "../libraries/PoolAddress.sol"
+      ],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "INonfungiblePositionManager"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\interfaces\\IImmutableState.sol": {
+      "lastModificationDate": 1728272257433,
+      "contentHash": "d6471b5f7cd345da6aaa6b0d9682c227",
+      "sourceName": "src/uni/swapRouter/interfaces/IImmutableState.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.5.0"
+      ],
+      "artifacts": [
+        "IImmutableState"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\libraries\\PoolAddress.sol": {
+      "lastModificationDate": 1728277102900,
+      "contentHash": "6cec4f6b237de21ad97bf32c19a2e0d8",
+      "sourceName": "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.5.0"
+      ],
+      "artifacts": [
+        "PoolAddress"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\interfaces\\IPeripheryPayments.sol": {
+      "lastModificationDate": 1728277102570,
+      "contentHash": "8aa07bcaad7779d2bae8089adef235bf",
+      "sourceName": "@uniswap/v3-periphery/contracts/interfaces/IPeripheryPayments.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "IPeripheryPayments"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\interfaces\\IPeripheryImmutableState.sol": {
+      "lastModificationDate": 1728277102557,
+      "contentHash": "e68917661480772223d87a606afb29cd",
+      "sourceName": "@uniswap/v3-periphery/contracts/interfaces/IPeripheryImmutableState.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.5.0"
+      ],
+      "artifacts": [
+        "IPeripheryImmutableState"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\interfaces\\IPoolInitializer.sol": {
+      "lastModificationDate": 1728277102579,
+      "contentHash": "11600b3ed90d17aa07e53a77430a6d6c",
+      "sourceName": "@uniswap/v3-periphery/contracts/interfaces/IPoolInitializer.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "IPoolInitializer"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\interfaces\\IERC721Permit.sol": {
+      "lastModificationDate": 1728277102514,
+      "contentHash": "9073d26f60e6253b2dfbc103c78cf70d",
+      "sourceName": "@uniswap/v3-periphery/contracts/interfaces/IERC721Permit.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC721/IERC721.sol"
+      ],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "IERC721Permit"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\SwapRouter02.sol": {
+      "lastModificationDate": 1728272257425,
+      "contentHash": "bc8af414de1bb5e3e73df18558b11d22",
+      "sourceName": "src/uni/swapRouter/SwapRouter02.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-periphery/contracts/base/SelfPermit.sol",
+        "@uniswap/v3-periphery/contracts/base/PeripheryImmutableState.sol",
+        "./interfaces/ISwapRouter02.sol",
+        "./V2SwapRouter.sol",
+        "./V3SwapRouter.sol",
+        "./base/ApproveAndCall.sol",
+        "./base/MulticallExtended.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "SwapRouter02"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\interfaces\\ISwapRouter02.sol": {
+      "lastModificationDate": 1728272257437,
+      "contentHash": "c3c4c40139201a330988a38c0a58c43e",
+      "sourceName": "src/uni/swapRouter/interfaces/ISwapRouter02.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-periphery/contracts/interfaces/ISelfPermit.sol",
+        "./IV2SwapRouter.sol",
+        "./IV3SwapRouter.sol",
+        "./IApproveAndCall.sol",
+        "./IMulticallExtended.sol"
+      ],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "ISwapRouter02"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\V2SwapRouter.sol": {
+      "lastModificationDate": 1728272257425,
+      "contentHash": "21ca51781677d2673dd91c250ad5e70c",
+      "sourceName": "src/uni/swapRouter/V2SwapRouter.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "./interfaces/IV2SwapRouter.sol",
+        "./base/ImmutableState.sol",
+        "./base/PeripheryPaymentsWithFeeExtended.sol",
+        "./libraries/Constants.sol",
+        "./libraries/UniswapV2Library.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "V2SwapRouter"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\V3SwapRouter.sol": {
+      "lastModificationDate": 1728272257428,
+      "contentHash": "e8e33c8bc108456d67f23a91de56e327",
+      "sourceName": "src/uni/swapRouter/V3SwapRouter.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-core/contracts/libraries/SafeCast.sol",
+        "@uniswap/v3-core/contracts/libraries/TickMath.sol",
+        "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
+        "@uniswap/v3-periphery/contracts/libraries/Path.sol",
+        "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol",
+        "@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "./interfaces/IV3SwapRouter.sol",
+        "./base/PeripheryPaymentsWithFeeExtended.sol",
+        "./base/OracleSlippage.sol",
+        "./libraries/Constants.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "V3SwapRouter"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\base\\MulticallExtended.sol": {
+      "lastModificationDate": 1728272257430,
+      "contentHash": "99e1ef6a945d641b9859b579e93488cc",
+      "sourceName": "src/uni/swapRouter/base/MulticallExtended.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-periphery/contracts/base/Multicall.sol",
+        "../interfaces/IMulticallExtended.sol",
+        "../base/PeripheryValidationExtended.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "MulticallExtended"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\base\\PeripheryImmutableState.sol": {
+      "lastModificationDate": 1728277102735,
+      "contentHash": "38773523d47ab5bdf6e9dfb30ccc0462",
+      "sourceName": "@uniswap/v3-periphery/contracts/base/PeripheryImmutableState.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IPeripheryImmutableState.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "PeripheryImmutableState"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\base\\SelfPermit.sol": {
+      "lastModificationDate": 1728277102996,
+      "contentHash": "f5a28c4a86996c97e107f97a57419728",
+      "sourceName": "@uniswap/v3-periphery/contracts/base/SelfPermit.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts/drafts/IERC20Permit.sol",
+        "../interfaces/ISelfPermit.sol",
+        "../interfaces/external/IERC20PermitAllowed.sol"
+      ],
+      "versionPragmas": [
+        ">=0.5.0"
+      ],
+      "artifacts": [
+        "SelfPermit"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\interfaces\\IV2SwapRouter.sol": {
+      "lastModificationDate": 1728272257438,
+      "contentHash": "fae2684fd37073af5dad3229ab2f858d",
+      "sourceName": "src/uni/swapRouter/interfaces/IV2SwapRouter.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "IV2SwapRouter"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\interfaces\\IV3SwapRouter.sol": {
+      "lastModificationDate": 1728272257438,
+      "contentHash": "4ab1617d46c88054c1ed22cbce85dc0f",
+      "sourceName": "src/uni/swapRouter/interfaces/IV3SwapRouter.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol"
+      ],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "IV3SwapRouter"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\interfaces\\IMulticallExtended.sol": {
+      "lastModificationDate": 1728272257434,
+      "contentHash": "5c162423d06d85bf70534ef2f4b3e2e3",
+      "sourceName": "src/uni/swapRouter/interfaces/IMulticallExtended.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol"
+      ],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "IMulticallExtended"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\interfaces\\ISelfPermit.sol": {
+      "lastModificationDate": 1728277102599,
+      "contentHash": "bb6ee7140c27d283bf7c5f5780c8fcd9",
+      "sourceName": "@uniswap/v3-periphery/contracts/interfaces/ISelfPermit.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "ISelfPermit"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\interfaces\\IMulticall.sol": {
+      "lastModificationDate": 1728277102516,
+      "contentHash": "a2e56a9714654fdbdf3a7bd35ad4ebd1",
+      "sourceName": "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "IMulticall"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\base\\PeripheryPaymentsWithFeeExtended.sol": {
+      "lastModificationDate": 1728272257431,
+      "contentHash": "56ba6f1c7c1b2b97ab3a4ea9f248a621",
+      "sourceName": "src/uni/swapRouter/base/PeripheryPaymentsWithFeeExtended.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-periphery/contracts/base/PeripheryPaymentsWithFee.sol",
+        "../interfaces/IPeripheryPaymentsWithFeeExtended.sol",
+        "./PeripheryPaymentsExtended.sol"
+      ],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "PeripheryPaymentsWithFeeExtended"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\libraries\\Constants.sol": {
+      "lastModificationDate": 1728272257460,
+      "contentHash": "e69eed78b85fae9421aeed8ccd9d3b6f",
+      "sourceName": "src/uni/swapRouter/libraries/Constants.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "Constants"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\libraries\\UniswapV2Library.sol": {
+      "lastModificationDate": 1728272257461,
+      "contentHash": "f6344b2444df2543cd99226165b721bf",
+      "sourceName": "src/uni/swapRouter/libraries/UniswapV2Library.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol",
+        "@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol"
+      ],
+      "versionPragmas": [
+        ">=0.5.0"
+      ],
+      "artifacts": [
+        "UniswapV2Library"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\interfaces\\IPeripheryPaymentsWithFeeExtended.sol": {
+      "lastModificationDate": 1728272257436,
+      "contentHash": "5a1f29ffc97ee6b1cae8d195b71ff5b2",
+      "sourceName": "src/uni/swapRouter/interfaces/IPeripheryPaymentsWithFeeExtended.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-periphery/contracts/interfaces/IPeripheryPaymentsWithFee.sol",
+        "./IPeripheryPaymentsExtended.sol"
+      ],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "IPeripheryPaymentsWithFeeExtended"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\base\\PeripheryPaymentsExtended.sol": {
+      "lastModificationDate": 1728272257431,
+      "contentHash": "4ebf486f996523390b830985702460a7",
+      "sourceName": "src/uni/swapRouter/base/PeripheryPaymentsExtended.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-periphery/contracts/base/PeripheryPayments.sol",
+        "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol",
+        "../interfaces/IPeripheryPaymentsExtended.sol"
+      ],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "PeripheryPaymentsExtended"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\base\\PeripheryPaymentsWithFee.sol": {
+      "lastModificationDate": 1728277102821,
+      "contentHash": "9e2bcc490ef20174cc45020dc62caa55",
+      "sourceName": "@uniswap/v3-periphery/contracts/base/PeripheryPaymentsWithFee.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol",
+        "./PeripheryPayments.sol",
+        "../interfaces/IPeripheryPaymentsWithFee.sol",
+        "../interfaces/external/IWETH9.sol",
+        "../libraries/TransferHelper.sol"
+      ],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "PeripheryPaymentsWithFee"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\interfaces\\IPeripheryPaymentsExtended.sol": {
+      "lastModificationDate": 1728272257436,
+      "contentHash": "4dae33040787a6807946ce6560bbdd60",
+      "sourceName": "src/uni/swapRouter/interfaces/IPeripheryPaymentsExtended.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-periphery/contracts/interfaces/IPeripheryPayments.sol"
+      ],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "IPeripheryPaymentsExtended"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\interfaces\\IPeripheryPaymentsWithFee.sol": {
+      "lastModificationDate": 1728277102574,
+      "contentHash": "cf3d11802bba945da909fcfe2faff853",
+      "sourceName": "@uniswap/v3-periphery/contracts/interfaces/IPeripheryPaymentsWithFee.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./IPeripheryPayments.sol"
+      ],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "IPeripheryPaymentsWithFee"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\base\\PeripheryPayments.sol": {
+      "lastModificationDate": 1728277102794,
+      "contentHash": "0b56335ed00b2716be433b2c78d9fc1f",
+      "sourceName": "@uniswap/v3-periphery/contracts/base/PeripheryPayments.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "../interfaces/IPeripheryPayments.sol",
+        "../interfaces/external/IWETH9.sol",
+        "../libraries/TransferHelper.sol",
+        "./PeripheryImmutableState.sol"
+      ],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "PeripheryPayments"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\libraries\\TransferHelper.sol": {
+      "lastModificationDate": 1728277103161,
+      "contentHash": "f0616d1842da6584f8454c9b323d777f",
+      "sourceName": "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0"
+      ],
+      "artifacts": [
+        "TransferHelper"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\interfaces\\external\\IWETH9.sol": {
+      "lastModificationDate": 1728277102632,
+      "contentHash": "b2db1bd28998866868200957d0d964c5",
+      "sourceName": "@uniswap/v3-periphery/contracts/interfaces/external/IWETH9.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "IWETH9"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\base\\OracleSlippage.sol": {
+      "lastModificationDate": 1728272257430,
+      "contentHash": "1914556996da336380d92f4abfce6fc2",
+      "sourceName": "src/uni/swapRouter/base/OracleSlippage.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IOracleSlippage.sol",
+        "@uniswap/v3-periphery/contracts/base/PeripheryImmutableState.sol",
+        "@uniswap/v3-periphery/contracts/base/BlockTimestamp.sol",
+        "@uniswap/v3-periphery/contracts/libraries/Path.sol",
+        "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol",
+        "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
+        "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "OracleSlippage"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\libraries\\CallbackValidation.sol": {
+      "lastModificationDate": 1728277102386,
+      "contentHash": "f5bc5a752dc549cd04857c14ae0ad40d",
+      "sourceName": "@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
+        "./PoolAddress.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "CallbackValidation"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\libraries\\Path.sol": {
+      "lastModificationDate": 1728277102721,
+      "contentHash": "8c77deefa62a7600476db7122c811951",
+      "sourceName": "@uniswap/v3-periphery/contracts/libraries/Path.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./BytesLib.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0"
+      ],
+      "artifacts": [
+        "Path"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\interfaces\\IOracleSlippage.sol": {
+      "lastModificationDate": 1728272257435,
+      "contentHash": "731d710c2aa33177fd48485082c53b6c",
+      "sourceName": "src/uni/swapRouter/interfaces/IOracleSlippage.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "IOracleSlippage"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\base\\BlockTimestamp.sol": {
+      "lastModificationDate": 1728277102362,
+      "contentHash": "9558ed78048252f933fde4b5320eb84c",
+      "sourceName": "@uniswap/v3-periphery/contracts/base/BlockTimestamp.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "BlockTimestamp"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\libraries\\OracleLibrary.sol": {
+      "lastModificationDate": 1728277102716,
+      "contentHash": "d2d189e9e93fe9b85f599c934384659a",
+      "sourceName": "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-core/contracts/libraries/FullMath.sol",
+        "@uniswap/v3-core/contracts/libraries/TickMath.sol",
+        "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol"
+      ],
+      "versionPragmas": [
+        ">=0.5.0 <0.8.0"
+      ],
+      "artifacts": [
+        "OracleLibrary"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\libraries\\BytesLib.sol": {
+      "lastModificationDate": 1728277102381,
+      "contentHash": "d8d928d03b62efad7c9e282c57a46dc6",
+      "sourceName": "@uniswap/v3-periphery/contracts/libraries/BytesLib.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.5.0 <0.8.0"
+      ],
+      "artifacts": [
+        "BytesLib"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\base\\PeripheryValidationExtended.sol": {
+      "lastModificationDate": 1728272257432,
+      "contentHash": "8e87bf8bcb1a355945b78ffbf59b0916",
+      "sourceName": "src/uni/swapRouter/base/PeripheryValidationExtended.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-periphery/contracts/base/PeripheryValidation.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "PeripheryValidationExtended"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\base\\Multicall.sol": {
+      "lastModificationDate": 1728277102692,
+      "contentHash": "97e35fe1126f33cbfe6e70ba30f14fb8",
+      "sourceName": "@uniswap/v3-periphery/contracts/base/Multicall.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IMulticall.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "Multicall"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\base\\PeripheryValidation.sol": {
+      "lastModificationDate": 1728277102838,
+      "contentHash": "5882d6561b225c611dbecbbe4b60b21f",
+      "sourceName": "@uniswap/v3-periphery/contracts/base/PeripheryValidation.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./BlockTimestamp.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "PeripheryValidation"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v3-periphery\\contracts\\interfaces\\external\\IERC20PermitAllowed.sol": {
+      "lastModificationDate": 1728277102511,
+      "contentHash": "3cad3f665d74d11ab6a79c298d6f27fa",
+      "sourceName": "@uniswap/v3-periphery/contracts/interfaces/external/IERC20PermitAllowed.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.5.0"
+      ],
+      "artifacts": [
+        "IERC20PermitAllowed"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\test\\MockTimeSwapRouter.sol": {
+      "lastModificationDate": 1728272257462,
+      "contentHash": "6e02629713f3404ee93d60acae14ba5d",
+      "sourceName": "src/uni/swapRouter/test/MockTimeSwapRouter.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../SwapRouter02.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "MockTimeSwapRouter02"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\lens\\QuoterV2.sol": {
+      "lastModificationDate": 1728272257458,
+      "contentHash": "1ba744b3a046e6d9b7a8e691b12f2097",
+      "sourceName": "src/uni/swapRouter/lens/QuoterV2.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-periphery/contracts/base/PeripheryImmutableState.sol",
+        "@uniswap/v3-core/contracts/libraries/SafeCast.sol",
+        "@uniswap/v3-core/contracts/libraries/TickMath.sol",
+        "@uniswap/v3-core/contracts/libraries/TickBitmap.sol",
+        "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
+        "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+        "@uniswap/v3-periphery/contracts/libraries/Path.sol",
+        "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol",
+        "@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol",
+        "../interfaces/IQuoterV2.sol",
+        "../libraries/PoolTicksCounter.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "QuoterV2"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\interfaces\\IQuoterV2.sol": {
+      "lastModificationDate": 1728272257437,
+      "contentHash": "f993e8a28959b90b3a5f6eede60e5f4b",
+      "sourceName": "src/uni/swapRouter/interfaces/IQuoterV2.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "IQuoterV2"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\libraries\\PoolTicksCounter.sol": {
+      "lastModificationDate": 1728272257461,
+      "contentHash": "13f2ba748fddb68d8fb1579d0640c14d",
+      "sourceName": "src/uni/swapRouter/libraries/PoolTicksCounter.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0"
+      ],
+      "artifacts": [
+        "PoolTicksCounter"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\lens\\Quoter.sol": {
+      "lastModificationDate": 1728272257458,
+      "contentHash": "85e0bb9bd2118bc8252c0f8e9b68a43e",
+      "sourceName": "src/uni/swapRouter/lens/Quoter.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-periphery/contracts/base/PeripheryImmutableState.sol",
+        "@uniswap/v3-core/contracts/libraries/SafeCast.sol",
+        "@uniswap/v3-core/contracts/libraries/TickMath.sol",
+        "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
+        "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+        "@uniswap/v3-periphery/contracts/libraries/Path.sol",
+        "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol",
+        "@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol",
+        "../interfaces/IQuoter.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "Quoter"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\interfaces\\IQuoter.sol": {
+      "lastModificationDate": 1728272257436,
+      "contentHash": "d1c166c080a7f8ebe652ed0cb195a445",
+      "sourceName": "src/uni/swapRouter/interfaces/IQuoter.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "IQuoter"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\lens\\MixedRouteQuoterV1.sol": {
+      "lastModificationDate": 1728272257457,
+      "contentHash": "34d9e7870f46c420cd28cd582f98e5ab",
+      "sourceName": "src/uni/swapRouter/lens/MixedRouteQuoterV1.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-periphery/contracts/base/PeripheryImmutableState.sol",
+        "@uniswap/v3-core/contracts/libraries/SafeCast.sol",
+        "@uniswap/v3-core/contracts/libraries/TickMath.sol",
+        "@uniswap/v3-core/contracts/libraries/TickBitmap.sol",
+        "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
+        "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+        "@uniswap/v3-periphery/contracts/libraries/Path.sol",
+        "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol",
+        "@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol",
+        "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol",
+        "../base/ImmutableState.sol",
+        "../interfaces/IMixedRouteQuoterV1.sol",
+        "../libraries/PoolTicksCounter.sol",
+        "../libraries/UniswapV2Library.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "MixedRouteQuoterV1"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\interfaces\\IMixedRouteQuoterV1.sol": {
+      "lastModificationDate": 1728272257433,
+      "contentHash": "87dc659daf2282d3b253880df94e1c1b",
+      "sourceName": "src/uni/swapRouter/interfaces/IMixedRouteQuoterV1.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "IMixedRouteQuoterV1"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\test\\ImmutableStateTest.sol": {
+      "lastModificationDate": 1728272257462,
+      "contentHash": "6430c00de8b211ec52b9a51dafc03092",
+      "sourceName": "src/uni/swapRouter/test/ImmutableStateTest.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../base/ImmutableState.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "ImmutableStateTest"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\lens\\TokenValidator.sol": {
+      "lastModificationDate": 1728272257459,
+      "contentHash": "af7c48b4d76a3655f638675a23c2c571",
+      "sourceName": "src/uni/swapRouter/lens/TokenValidator.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@uniswap/v3-periphery/contracts/base/PeripheryImmutableState.sol",
+        "@uniswap/v2-core/contracts/interfaces/IUniswapV2Callee.sol",
+        "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol",
+        "../libraries/UniswapV2Library.sol",
+        "../interfaces/ISwapRouter02.sol",
+        "../interfaces/ITokenValidator.sol",
+        "../base/ImmutableState.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "TokenValidator"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\interfaces\\ITokenValidator.sol": {
+      "lastModificationDate": 1728272257438,
+      "contentHash": "7536bdff164a53b81a6080774060c00d",
+      "sourceName": "src/uni/swapRouter/interfaces/ITokenValidator.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.5"
+      ],
+      "artifacts": [
+        "ITokenValidator"
+      ]
+    },
+    "D:\\Work\\standard\\node_modules\\@uniswap\\v2-core\\contracts\\interfaces\\IUniswapV2Callee.sol": {
+      "lastModificationDate": 1727798085825,
+      "contentHash": "30a4aed15b3fa3ce5588118b7cecfa7f",
+      "sourceName": "@uniswap/v2-core/contracts/interfaces/IUniswapV2Callee.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.5.0"
+      ],
+      "artifacts": [
+        "IUniswapV2Callee"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\test\\TestMulticallExtended.sol": {
+      "lastModificationDate": 1728272257464,
+      "contentHash": "44d2e4b8937005a76145af4633b6730e",
+      "sourceName": "src/uni/swapRouter/test/TestMulticallExtended.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../base/MulticallExtended.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "TestMulticallExtended"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\test\\OracleSlippageTest.sol": {
+      "lastModificationDate": 1728272257463,
+      "contentHash": "4bdf867cfcbef74f38ccb5d683585ec8",
+      "sourceName": "src/uni/swapRouter/test/OracleSlippageTest.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../base/OracleSlippage.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "OracleSlippageTest"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\test\\PoolTicksCounterTest.sol": {
+      "lastModificationDate": 1728272257463,
+      "contentHash": "25036c71bc5c04f6ef5bfffd5932eaaa",
+      "sourceName": "src/uni/swapRouter/test/PoolTicksCounterTest.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
+        "../libraries/PoolTicksCounter.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0"
+      ],
+      "artifacts": [
+        "PoolTicksCounterTest"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\test\\TestUniswapV3Callee.sol": {
+      "lastModificationDate": 1728272257464,
+      "contentHash": "fa34f41ed79fbc253bc043388db010b4",
+      "sourceName": "src/uni/swapRouter/test/TestUniswapV3Callee.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+        "@uniswap/v3-core/contracts/libraries/SafeCast.sol",
+        "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "TestUniswapV3Callee"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\test\\TestERC20.sol": {
+      "lastModificationDate": 1728272257463,
+      "contentHash": "8dd167e45e24c7fd193dc854caf2df7d",
+      "sourceName": "src/uni/swapRouter/test/TestERC20.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/drafts/ERC20Permit.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "TestERC20"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\interfaces\\IWETH.sol": {
+      "lastModificationDate": 1728272257439,
+      "contentHash": "9a3ff6948702900dece8c42737db1396",
+      "sourceName": "src/uni/swapRouter/interfaces/IWETH.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.5.0"
+      ],
+      "artifacts": [
+        "IWETH"
+      ]
+    },
+    "D:\\Work\\standard\\src\\uni\\swapRouter\\test\\MockObservations.sol": {
+      "lastModificationDate": 1728272257462,
+      "contentHash": "11ade4c9773715bba93b866147c0b3ac",
+      "sourceName": "src/uni/swapRouter/test/MockObservations.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@uniswap/v3-core/contracts/libraries/Oracle.sol"
+      ],
+      "versionPragmas": [
+        "=0.7.6"
+      ],
+      "artifacts": [
+        "MockObservations"
       ]
     }
   }
