@@ -2,8 +2,8 @@ import hre, { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 const fs = require('fs');  // Import the File System module
 
-// (mainnet) npx hardhat run --network lux deploy/20_uniswapv3_core.ts
-// (testnet) npx hardhat run --network lux_testnet deploy/20_uniswapv3_core.ts
+// (mainnet) npx hardhat run --network lux deploy/22_uniswapRouter.ts
+// (testnet) npx hardhat run --network lux_testnet deploy/22_uniswapRouter.ts
 
 async function main() {
     let deployer: SignerWithAddress;

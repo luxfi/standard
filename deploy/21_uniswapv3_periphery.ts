@@ -16,6 +16,28 @@ async function main() {
     const factory = networkName === "lux" ? "0x0650683db720c793ff7e609A08b5fc2792c91f39" : "0x036A0AE1D760D7582254059BeBD9e5A34062dE23";
     const weth = networkName === "lux" ? "0x53B1aAA5b6DDFD4eD00D0A7b5Ef333dc74B605b5" : "0x0650683db720c793ff7e609A08b5fc2792c91f39";
     {
+        const Multi_Call = await ethers.getContractFactory("UniswapInterfaceMulticall");
+        const multi_call = await Multi_Call.deploy();
+        
+
+        await multi_call.deployed();
+        console.log("Multicall:", multi_call.address);
+
+        await hre.run("verify:verify", {
+            address: multi_call.address,
+            contract: "src/uni/uni3/periphery/contracts/lens/UniswapInterfaceMulticall.sol:UniswapInterfaceMulticall",
+        constructorArguments: [],
+        });
+
+        fs.writeFileSync(`deployments/${folder}/Multicall.json`, JSON.stringify({
+            address: multi_call.address,
+            abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/lens/UniswapInterfaceMulticall.sol/UniswapInterfaceMulticall.json', 'utf8')).abi,
+        }, null, 2));
+
+        console.log('Contract ABI and address saved to Multicall.json');
+    }
+    
+    {
         const TickLens = await ethers.getContractFactory("TickLens");
         const tickLens = await TickLens.deploy();
         
