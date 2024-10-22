@@ -5,8 +5,12 @@ import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 const fs = require('fs');  // Import the File System module
 import * as dotenv from "dotenv";
 
+//(testnet) npx hardhat run --network lux_testnet deploy/19_uniswapv2.ts
+//(mainnet) npx hardhat run --network lux deploy/19_uniswapv2.ts
+
 // Importing the contract JSON artifacts.
 import pairArtifact from "@uniswap/v2-periphery/build/IUniswapV2Pair.json";
+import factoryArtifact from "@uniswap/v2-core/build/UniswapV2Factory.json";
 
 dotenv.config();
 
@@ -20,7 +24,11 @@ async function main() {
     const folder = networkName === "lux" ? "mainnet" : "testnet";
 
     console.log(`Deploying contracts with the account: ${deployer.address}`);
-    const Factory = await ethers.getContractFactory("UniswapV2Factory", deployer);
+    const Factory = new ContractFactory(
+        factoryArtifact.abi,
+        factoryArtifact.bytecode,
+        deployer
+    );
 
     const factory = await Factory.deploy(deployer.address);
 
@@ -28,7 +36,7 @@ async function main() {
     try {
         await hre.run("verify:verify", {
             address: factory.address,
-            contract: "src/uni/uni2/UniswapV2Factory.sol:UniswapV2Factory",
+            contract: "src/uni/uni2/v2-core/contracts/UniswapV2Factory.sol:UniswapV2Factory",
         constructorArguments: [deployer.address],
         });
     } catch(error) {
@@ -37,7 +45,7 @@ async function main() {
 
     fs.writeFileSync(`deployments/${folder}/UniswapV2Factory.json`, JSON.stringify({
         address: factory.address,
-        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni2/UniswapV2Factory.sol/UniswapV2Factory.json', 'utf8')).abi,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni2/v2-core/contracts/UniswapV2Factory.sol/UniswapV2Factory.json', 'utf8')).abi,
     }, null, 2));
 
     console.log('Contract ABI and address saved to UniswapV2Factory.json');
@@ -83,8 +91,8 @@ async function main() {
     /**
      * Now that we have deployed the Factory contract and the two ERC20 tokens,
      * we can deploy the Router contract.
-     * The Router contract requires the address of the Factory contract and the WETH contract.
-     * The WETH contract is a wrapper for the ETH token.
+     * The Router contract requires the address of the Factory contract and the WLUX contract.
+     * The WLUX contract is a wrapper for the ETH token.
      * But prior to that, we need to mint some USDT and USDC tokens to the deployer. Lets do that first.
      */
 
@@ -111,36 +119,43 @@ async function main() {
     let reserves = await pair.getReserves();
     console.log(`Reserves: ${reserves[0].toString()}, ${reserves[1].toString()}`);
 
-    // Initialize a new contract factory for the WETH9 contract.
-    const WETH = await ethers.getContractFactory("WETH", deployer);
-
-    const weth = await WETH.deploy();
-    console.log(`WETH deployed to ${weth.address}`);
+    // Initialize a new contract factory for the WLUX contract.
+    const WLUX = await ethers.getContractFactory("WLUX", deployer);
+    const wlux = await WLUX.deploy();
+    console.log(`WLUX deployed to ${wlux.address}`);
+    try {
     await hre.run("verify:verify", {
-        address: weth.address,
-        contract: "src/uni/uni2/WETH.sol:WETH",
+        address: wlux.address,
+        contract: "src/uni/uni2/v2-periphery/contracts/test/WLUX.sol:WLUX",
     constructorArguments: [],
     });
-    fs.writeFileSync(`deployments/${folder}/mockWETH.json`, JSON.stringify({
-        address: weth.address,
-        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni2/WETH.sol/WETH.json', 'utf8')).abi,
+    } catch(error) {
+        console.log("already verified");
+    }
+    fs.writeFileSync(`deployments/${folder}/WLUX.json`, JSON.stringify({
+        address: wlux.address,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni2/v2-periphery/contracts/test/WLUX.sol/WLUX.json', 'utf8')).abi,
     }, null, 2));
-    console.log('Contract ABI and address saved to mockWETH.json');
+    console.log('Contract ABI and address saved to WLUX.json');
 
     // Initialize a new contract factory for the Router contract.
     const Router = await ethers.getContractFactory("UniswapV2Router02", deployer);
 
     // Deploy the Router contract using the above-initialized factory.
-    const router = await Router.deploy(factory.address, weth.address);
+    const router = await Router.deploy(factory.address, wlux.address);
     console.log(`Router deployed to ${router.address}`);
+    try {
     await hre.run("verify:verify", {
         address: router.address,
-        contract: "src/uni/uni2/UniswapV2Router02.sol:UniswapV2Router02",
-    constructorArguments: [factory.address, weth.address],
+        contract: "src/uni/uni2/v2-periphery/contracts/UniswapV2Router02.sol:UniswapV2Router02",
+    constructorArguments: [factory.address, wlux.address],
     });
+    } catch(error) {
+        console.log("already verified");
+    }
     fs.writeFileSync(`deployments/${folder}/UniswapV2Router02.json`, JSON.stringify({
         address: router.address,
-        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni2/UniswapV2Router02.sol/UniswapV2Router02.json', 'utf8')).abi,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni2/v2-periphery/contracts/UniswapV2Router02.sol/UniswapV2Router02.json', 'utf8')).abi,
     }, null, 2));
     console.log('Contract ABI and address saved to UniswapV2Router02.json');
 
@@ -161,6 +176,7 @@ async function main() {
     );
 
     const deadline = Math.floor(Date.now() / 1000) + 10 * 60;
+    try {
     const addLiquidityTx = await router
         .connect(deployer)
         .addLiquidity(
@@ -173,7 +189,11 @@ async function main() {
         deployer.address,
         deadline
         );
-    await addLiquidityTx.wait();
+        await addLiquidityTx.wait();
+
+    } catch (error) {
+        console.log('Transaction reverted with error:', error.reason);
+      }
 
     // Check LP token balance for the deployer
     const lpTokenBalance = await pair.balanceOf(deployer.address);
@@ -184,8 +204,8 @@ async function main() {
 
     console.log("USDT_ADDRESS", usdt.address);
     console.log("USDC_ADDRESS", usdc.address);
-    console.log("WETH_ADDRESS", weth.address);
-    console.log("FACTORY_ADDRESS", factory.address);
+    console.log("WLUX_ADDRESS", wlux.address);
+    console.log("V2FACTORY_ADDRESS", factory.address);
     console.log("ROUTER_ADDRESS", router.address);
     console.log("PAIR_ADDRESS", pairAddress);
 }
