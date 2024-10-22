@@ -9,6 +9,7 @@ import { WRAPPED_NATIVE_CURRENCY } from "../pool-gen/model/token";
 import { mintV2AndCreatePoolIfNeeded, mintV3AndCreatePoolIfNeeded, poolSettingsToArgs } from "../pool-gen/pool/pool";
 import { publicClients, walletClients } from "../pool-gen/rpc";
 
+// (mainnet)  npx hardhat run --network lux deploy/23_uniswapPools.ts
 // (testnet)  npx hardhat run --network lux_testnet deploy/23_uniswapPools.ts
 
 async function main() {
