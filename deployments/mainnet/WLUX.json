@@ -1,30 +1,25 @@
 {
-  "address": "0x9fe2A4405f1c1278c1F2f6150A1B2dd58e041E41",
+  "address": "0x87D0C4B3F5138BBB28c61606F8e0e97F69780858",
   "abi": [
-    {
-      "inputs": [],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
     {
       "anonymous": false,
       "inputs": [
         {
           "indexed": true,
           "internalType": "address",
-          "name": "owner",
+          "name": "src",
           "type": "address"
         },
         {
           "indexed": true,
           "internalType": "address",
-          "name": "spender",
+          "name": "guy",
           "type": "address"
         },
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "value",
+          "name": "wad",
           "type": "uint256"
         }
       ],
@@ -37,17 +32,17 @@
         {
           "indexed": true,
           "internalType": "address",
-          "name": "previousOwner",
+          "name": "dst",
           "type": "address"
         },
         {
-          "indexed": true,
-          "internalType": "address",
-          "name": "newOwner",
-          "type": "address"
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "wad",
+          "type": "uint256"
         }
       ],
-      "name": "OwnershipTransferred",
+      "name": "Deposit",
       "type": "event"
     },
     {
@@ -56,19 +51,19 @@
         {
           "indexed": true,
           "internalType": "address",
-          "name": "from",
+          "name": "src",
           "type": "address"
         },
         {
           "indexed": true,
           "internalType": "address",
-          "name": "to",
+          "name": "dst",
           "type": "address"
         },
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "value",
+          "name": "wad",
           "type": "uint256"
         }
       ],
@@ -76,15 +71,34 @@
       "type": "event"
     },
     {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "src",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "wad",
+          "type": "uint256"
+        }
+      ],
+      "name": "Withdrawal",
+      "type": "event"
+    },
+    {
       "inputs": [
         {
           "internalType": "address",
-          "name": "owner",
+          "name": "",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "spender",
+          "name": "",
           "type": "address"
         }
       ],
@@ -103,12 +117,12 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "spender",
+          "name": "guy",
           "type": "address"
         },
         {
           "internalType": "uint256",
-          "name": "amount",
+          "name": "wad",
           "type": "uint256"
         }
       ],
@@ -127,7 +141,7 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "account",
+          "name": "",
           "type": "address"
         }
       ],
@@ -156,69 +170,10 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "spender",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "subtractedValue",
-          "type": "uint256"
-        }
-      ],
-      "name": "decreaseAllowance",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "spender",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "addedValue",
-          "type": "uint256"
-        }
-      ],
-      "name": "increaseAllowance",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "mint",
+      "inputs": [],
+      "name": "deposit",
       "outputs": [],
-      "stateMutability": "nonpayable",
+      "stateMutability": "payable",
       "type": "function"
     },
     {
@@ -232,26 +187,6 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "owner",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "renounceOwnership",
-      "outputs": [],
-      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -284,12 +219,12 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "recipient",
+          "name": "dst",
           "type": "address"
         },
         {
           "internalType": "uint256",
-          "name": "amount",
+          "name": "wad",
           "type": "uint256"
         }
       ],
@@ -308,17 +243,17 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "sender",
+          "name": "src",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "recipient",
+          "name": "dst",
           "type": "address"
         },
         {
           "internalType": "uint256",
-          "name": "amount",
+          "name": "wad",
           "type": "uint256"
         }
       ],
@@ -336,12 +271,12 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "newOwner",
-          "type": "address"
+          "internalType": "uint256",
+          "name": "wad",
+          "type": "uint256"
         }
       ],
-      "name": "transferOwnership",
+      "name": "withdraw",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

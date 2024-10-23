@@ -1,5 +1,7 @@
 import hre, { ethers } from "hardhat";
+import { Contract, ContractFactory, Wallet } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import factoryArtifact from "@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json";
 const fs = require('fs');  // Import the File System module
 
 // (mainnet) npx hardhat run --network lux deploy/20_uniswapv3_core.ts
@@ -10,17 +12,27 @@ async function main() {
     [deployer] = await ethers.getSigners();
 
     // Deploy UniswapV3Factory contract
-    const univ3FactoryFactory = await ethers.getContractFactory("UniswapV3Factory", deployer);
+    const univ3FactoryFactory = new ContractFactory(
+        factoryArtifact.abi,
+        factoryArtifact.bytecode,
+        deployer
+    );
+    // const univ3FactoryFactory = await ethers.getContractFactory("UniswapV3Factory", deployer);
+    
     const factoryv3 = await univ3FactoryFactory.deploy();
     await factoryv3.deployed();
     console.log(`Factory v3 deployed at: ${factoryv3.address}`);
 
     // Verify the contract on Etherscan
+    try {
     await hre.run("verify:verify", {
         address: factoryv3.address,
         contract: "src/uni/uni3/core/contracts/UniswapV3Factory.sol:UniswapV3Factory",
         constructorArguments: [],
     });
+    } catch(error) {
+        console.log(error);
+    }
 
     // Determine the folder based on the network
     const networkName = hre.network.name; // "lux" or "lux_testnet"
@@ -37,6 +49,7 @@ async function main() {
     }, null, 2));
 
     console.log(`Contract ABI and address saved to ${outputPath}`);
+    console.log("V3 FACTORY ADDRESS", factoryv3.address);
     return;
 }
 

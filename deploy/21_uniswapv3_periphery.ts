@@ -13,123 +13,136 @@ async function main() {
     // Determine the folder based on the network
     const networkName = hre.network.name; // "lux" or "lux_testnet"
     const folder = networkName === "lux" ? "mainnet" : "testnet";
-    const factory = networkName === "lux" ? "0x0650683db720c793ff7e609A08b5fc2792c91f39" : "0x036A0AE1D760D7582254059BeBD9e5A34062dE23";
-    const weth = networkName === "lux" ? "0x53B1aAA5b6DDFD4eD00D0A7b5Ef333dc74B605b5" : "0x0650683db720c793ff7e609A08b5fc2792c91f39";
-    {
-        const Multi_Call = await ethers.getContractFactory("UniswapInterfaceMulticall");
-        const multi_call = await Multi_Call.deploy();
-        
+    const v3factory = networkName === "lux" ? "0xD1A37eF464c6679A0989775E1fAC54E1598FeD18" : "0x373Ea8ad7C0259910033ED91b511336D091b5680";
+    const wlux = networkName === "lux" ? "0xFbad1306A6b306b1b673ACa75a1CC78C4375e4Dc" : "0x1B3DBA2d66c18a15a6F88B0751366C01bC8CBdd3";
+    const Multi_Call = await ethers.getContractFactory("UniswapInterfaceMulticall");
+    const multi_call = await Multi_Call.deploy();
+    
 
-        await multi_call.deployed();
-        console.log("Multicall:", multi_call.address);
+    await multi_call.deployed();
+    console.log("Multicall:", multi_call.address);
 
+    try {
         await hre.run("verify:verify", {
             address: multi_call.address,
             contract: "src/uni/uni3/periphery/contracts/lens/UniswapInterfaceMulticall.sol:UniswapInterfaceMulticall",
         constructorArguments: [],
-        });
-
-        fs.writeFileSync(`deployments/${folder}/Multicall.json`, JSON.stringify({
-            address: multi_call.address,
-            abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/lens/UniswapInterfaceMulticall.sol/UniswapInterfaceMulticall.json', 'utf8')).abi,
-        }, null, 2));
-
-        console.log('Contract ABI and address saved to Multicall.json');
+        }); 
+    } catch(error) {
+        console.log(error);
     }
+
+    fs.writeFileSync(`deployments/${folder}/Multicall.json`, JSON.stringify({
+        address: multi_call.address,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/lens/UniswapInterfaceMulticall.sol/UniswapInterfaceMulticall.json', 'utf8')).abi,
+    }, null, 2));
+
+    console.log('Contract ABI and address saved to Multicall.json');
+
+    const TickLens = await ethers.getContractFactory("TickLens");
+    const tickLens = await TickLens.deploy();
     
-    {
-        const TickLens = await ethers.getContractFactory("TickLens");
-        const tickLens = await TickLens.deploy();
-        
 
-        await tickLens.deployed();
-        console.log("TickLens:", tickLens.address);
-
+    await tickLens.deployed();
+    console.log("TickLens:", tickLens.address);
+    try {
         await hre.run("verify:verify", {
             address: tickLens.address,
             contract: "src/uni/uni3/periphery/contracts/lens/TickLens.sol:TickLens",
         constructorArguments: [],
         });
-
-        fs.writeFileSync(`deployments/${folder}/TickLens.json`, JSON.stringify({
-            address: tickLens.address,
-            abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/lens/TickLens.sol/TickLens.json', 'utf8')).abi,
-        }, null, 2));
-
-        console.log('Contract ABI and address saved to TickLens.json');
+    } catch(error) {
+        console.log(error);
     }
-    {
-        const SwapRouter = await ethers.getContractFactory("SwapRouter");
-        const swapRouter = await SwapRouter.deploy(factory, weth);
-        
 
-        await swapRouter.deployed();
-        console.log("Swap router:", swapRouter.address);
+    fs.writeFileSync(`deployments/${folder}/TickLens.json`, JSON.stringify({
+        address: tickLens.address,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/lens/TickLens.sol/TickLens.json', 'utf8')).abi,
+    }, null, 2));
 
+    console.log('Contract ABI and address saved to TickLens.json');
+
+    const SwapRouter = await ethers.getContractFactory("SwapRouter");
+    const swapRouter = await SwapRouter.deploy(v3factory, wlux);
+    
+
+    await swapRouter.deployed();
+    console.log("Swap router:", swapRouter.address);
+    try {
         await hre.run("verify:verify", {
             address: swapRouter.address,
             contract: "src/uni/uni3/periphery/contracts/SwapRouter.sol:SwapRouter",
-        constructorArguments: [factory, weth],
+        constructorArguments: [v3factory, wlux],
         });
-
-        fs.writeFileSync(`deployments/${folder}/SwapRouter.json`, JSON.stringify({
-            address: swapRouter.address,
-            abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/SwapRouter.sol/SwapRouter.json', 'utf8')).abi,
-        }, null, 2));
-
-        console.log('Contract ABI and address saved to SwapRouter.json');
+    } catch(error) {
+        console.log(error);
     }
-    {
-        const Quoter = await ethers.getContractFactory("Quoter");
-        const quoter = await Quoter.deploy(factory, weth);
 
-        await quoter.deployed();
-        console.log("Quoter:", quoter.address);
+    fs.writeFileSync(`deployments/${folder}/SwapRouter.json`, JSON.stringify({
+        address: swapRouter.address,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/SwapRouter.sol/SwapRouter.json', 'utf8')).abi,
+    }, null, 2));
 
+    console.log('Contract ABI and address saved to SwapRouter.json');
+
+    const Quoter = await ethers.getContractFactory("src/uni/uni3/periphery/contracts/lens/Quoter.sol:Quoter");
+    const quoter = await Quoter.deploy(v3factory, wlux);
+
+    await quoter.deployed();
+    console.log("Quoter:", quoter.address);
+    try {
         await hre.run("verify:verify", {
             address: quoter.address,
             contract: "src/uni/uni3/periphery/contracts/lens/Quoter.sol:Quoter",
-        constructorArguments: [factory, weth],
+        constructorArguments: [v3factory, wlux],
         });
-
-        fs.writeFileSync(`deployments/${folder}/Quoter.json`, JSON.stringify({
-            address: quoter.address,
-            abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/lens/Quoter.sol/Quoter.json', 'utf8')).abi,
-        }, null, 2));
-
-        console.log('Contract ABI and address saved to Quoter.json');
+    } catch(error) {
+        console.log(error);
     }
-    {
-        const Quoter2 = await ethers.getContractFactory("QuoterV2");
-        const quoter2 = await Quoter2.deploy(factory, weth);
 
-        await quoter2.deployed();
-        console.log("Quoter v2:", quoter2.address);
+    fs.writeFileSync(`deployments/${folder}/Quoter.json`, JSON.stringify({
+        address: quoter.address,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/lens/Quoter.sol/Quoter.json', 'utf8')).abi,
+    }, null, 2));
 
+    console.log('Contract ABI and address saved to Quoter.json');
+
+    const Quoter2 = await ethers.getContractFactory("src/uni/uni3/periphery/contracts/lens/QuoterV2.sol:QuoterV2");
+    const quoter2 = await Quoter2.deploy(v3factory, wlux);
+
+    await quoter2.deployed();
+    console.log("Quoter v2:", quoter2.address);
+
+    try {
         await hre.run("verify:verify", {
             address: quoter2.address,
             contract: "src/uni/uni3/periphery/contracts/lens/QuoterV2.sol:QuoterV2",
-        constructorArguments: [factory, weth],
+        constructorArguments: [v3factory, wlux],
         });
-        fs.writeFileSync(`deployments/${folder}/QuoterV2.json`, JSON.stringify({
-            address: quoter2.address,
-            abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/lens/QuoterV2.sol/QuoterV2.json', 'utf8')).abi,
-        }, null, 2));
-    
-        console.log('Contract ABI and address saved to QuoterV2.json');
+    } catch(error) {
+        console.log(error);
     }
+    fs.writeFileSync(`deployments/${folder}/QuoterV2.json`, JSON.stringify({
+        address: quoter2.address,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/lens/QuoterV2.sol/QuoterV2.json', 'utf8')).abi,
+    }, null, 2));
+
+    console.log('Contract ABI and address saved to QuoterV2.json');
 
     const NFTDescriptor = await ethers.getContractFactory("NFTDescriptor");
     const nftDescriptor = await NFTDescriptor.deploy();
 
     console.log("NFT DEscriptor:", nftDescriptor.address);
     await nftDescriptor.deployed();
-
-    await hre.run("verify:verify", {
-        address: nftDescriptor.address,
-        contract: "src/uni/uni3/periphery/contracts/libraries/NFTDescriptor.sol:NFTDescriptor",
-    constructorArguments: [],
-    });
+    try {
+        await hre.run("verify:verify", {
+            address: nftDescriptor.address,
+            contract: "src/uni/uni3/periphery/contracts/libraries/NFTDescriptor.sol:NFTDescriptor",
+        constructorArguments: [],
+        });
+    } catch(error) {
+        console.log(error);
+    } 
     fs.writeFileSync(`deployments/${folder}/NFTDescriptor.json`, JSON.stringify({
         address: nftDescriptor.address,
         abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/libraries/NFTDescriptor.sol/NFTDescriptor.json', 'utf8')).abi,
@@ -144,16 +157,19 @@ async function main() {
             NFTDescriptor: nftDescriptor.address,
         }
     });
-    const tokenDescriptor = await TokenDescriptor.deploy(weth, luxBytes32);
+    const tokenDescriptor = await TokenDescriptor.deploy(wlux, luxBytes32);
 
     await tokenDescriptor.deployed();
     console.log("Token descriptor:", tokenDescriptor.address);
-
-    await hre.run("verify:verify", {
-        address: tokenDescriptor.address,
-        contract: "src/uni/uni3/periphery/contracts/NonfungibleTokenPositionDescriptor.sol:NonfungibleTokenPositionDescriptor",
-    constructorArguments: [weth, luxBytes32],
-    });
+    try {
+        await hre.run("verify:verify", {
+            address: tokenDescriptor.address,
+            contract: "src/uni/uni3/periphery/contracts/NonfungibleTokenPositionDescriptor.sol:NonfungibleTokenPositionDescriptor",
+        constructorArguments: [wlux, luxBytes32],
+        });
+    } catch(error) {
+        console.log(error);
+    }
     fs.writeFileSync(`deployments/${folder}/NonfungibleTokenPositionDescriptor.json`, JSON.stringify({
         address: tokenDescriptor.address,
         abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/NonfungibleTokenPositionDescriptor.sol/NonfungibleTokenPositionDescriptor.json', 'utf8')).abi,
@@ -162,22 +178,34 @@ async function main() {
     console.log('Contract ABI and address saved to NonfungibleTokenPositionDescriptor.json');
 
     const PositonManager = await ethers.getContractFactory("NonfungiblePositionManager");
-    const positonManager = await PositonManager.deploy(factory, weth, tokenDescriptor.address);
+    const positonManager = await PositonManager.deploy(v3factory, wlux, tokenDescriptor.address);
 
     await positonManager.deployed();
     console.log(`Position manager: ${positonManager.address}`);
-
-    await hre.run("verify:verify", {
-        address: positonManager.address,
-        contract: "src/uni/uni3/periphery/contracts/NonfungiblePositionManager.sol:NonfungiblePositionManager",
-      constructorArguments: [factory, weth, tokenDescriptor.address],
-    });
+    try {
+        await hre.run("verify:verify", {
+            address: positonManager.address,
+            contract: "src/uni/uni3/periphery/contracts/NonfungiblePositionManager.sol:NonfungiblePositionManager",
+        constructorArguments: [v3factory, wlux, tokenDescriptor.address],
+        });
+    } catch(error) {
+        console.log(error);
+    }
     fs.writeFileSync(`deployments/${folder}/NonfungiblePositionManager.json`, JSON.stringify({
         address: positonManager.address,
         abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni3/periphery/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json', 'utf8')).abi,
     }, null, 2));
 
     console.log('Contract ABI and address saved to NonfungiblePositionManager.json');
+
+    console.log("Multicall", multi_call.address);
+    console.log("TickLens", tickLens.address);
+    console.log("SwapRouter", swapRouter.address);
+    console.log("Quoter", quoter.address);
+    console.log("Quoterv2", quoter2.address);
+    console.log("NFT DEscriptor", nftDescriptor.address);
+    console.log("Token descriptor:", tokenDescriptor.address);
+    console.log(`Position manager: ${positonManager.address}`);
 }
 
 main()
