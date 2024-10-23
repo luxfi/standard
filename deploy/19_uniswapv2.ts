@@ -9,6 +9,7 @@ import * as dotenv from "dotenv";
 //(mainnet) npx hardhat run --network lux deploy/19_uniswapv2.ts
 
 // Importing the contract JSON artifacts.
+import WETH9 from "./WETH9.json";
 import pairArtifact from "@uniswap/v2-periphery/build/IUniswapV2Pair.json";
 import factoryArtifact from "@uniswap/v2-core/build/UniswapV2Factory.json";
 
@@ -121,6 +122,7 @@ async function main() {
 
     // Initialize a new contract factory for the WLUX contract.
     const WLUX = await ethers.getContractFactory("WLUX", deployer);
+    // const WLUX = new ContractFactory(WETH9.abi, WETH9.bytecode, deployer);
     const wlux = await WLUX.deploy();
     console.log(`WLUX deployed to ${wlux.address}`);
     try {

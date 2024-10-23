@@ -11,10 +11,10 @@ async function main() {
     // Determine the folder based on the network
     const networkName = hre.network.name; // "lux" or "lux_testnet"
     const folder = networkName === "lux" ? "mainnet" : "testnet";
-    const factoryv3 = networkName === "lux" ? "0x0650683db720c793ff7e609A08b5fc2792c91f39" : "0x036A0AE1D760D7582254059BeBD9e5A34062dE23";
-    const weth = networkName === "lux" ? "0x53B1aAA5b6DDFD4eD00D0A7b5Ef333dc74B605b5" : "0x0650683db720c793ff7e609A08b5fc2792c91f39";
-    const factoryv2 = networkName === "lux" ? "0x759a82c704bb751977F8A31AD682090c29108d6d" : "0xBf6440a627907022D2bb7c57FD20196772935F83";
-    const positionManager = networkName === "lux" ? "0xD736808D0cbcC3237b5d8caE10B30FcDcaFf0fEF" : "0x99D5296C6dfADF96f4C51D2c7f93bBEEEe331ec1";
+    const factoryv3 = networkName === "lux" ? "0xD1A37eF464c6679A0989775E1fAC54E1598FeD18" : "0x373Ea8ad7C0259910033ED91b511336D091b5680";
+    const weth = networkName === "lux" ? "0xFbad1306A6b306b1b673ACa75a1CC78C4375e4Dc" : "0x1B3DBA2d66c18a15a6F88B0751366C01bC8CBdd3";
+    const factoryv2 = networkName === "lux" ? "0x42c426364d36C2b3aF20F1F498277e6b777132c5" : "0x462e816749A08Adb0085E6257D37E2cab4574273";
+    const positionManager = networkName === "lux" ? "0xFb931FDd8bCef71b8101812c2e482C5A465D73DB" : "0xB9983C194fd9731052BF6a7B1A0A2f9A48D6f036";
 
     // Deploy UniswapV3Factory contract
     const uniSwapRouter02 = await ethers.getContractFactory("SwapRouter02", deployer);
@@ -23,11 +23,15 @@ async function main() {
     console.log(`SwapRouter02 deployed at: ${swapRouterv2.address}`);
 
     // Verify the contract on Etherscan
+    try {
     await hre.run("verify:verify", {
         address: swapRouterv2.address,
         contract: "src/uni/swapRouter/SwapRouter02.sol:SwapRouter02",
         constructorArguments: [factoryv2, factoryv3, positionManager, weth],
     });
+    } catch(error) {
+        console.log(error);
+    }
 
     // Load the ABI from the compiled contract artifacts
     const abi = JSON.parse(fs.readFileSync('./artifacts/src/uni/swapRouter/SwapRouter02.sol/SwapRouter02.json', 'utf8')).abi;

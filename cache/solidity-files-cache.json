@@ -10986,6 +10986,41 @@
       "artifacts": [
         "WLUX"
       ]
+    },
+    "D:\\Work\\standard\\src\\uni\\WLUX.sol": {
+      "lastModificationDate": 1729705109502,
+      "contentHash": "452c5c9825086b9d723e5c9f3db3f742",
+      "sourceName": "src/uni/WLUX.sol",
+      "solcConfig": {
+        "version": "0.4.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.4.18"
+      ],
+      "artifacts": [
+        "WETH9"
+      ]
     }
   }
 }

@@ -37,7 +37,7 @@ export const WRAPPED_NATIVE_CURRENCY: { [chainId: number]: Token | undefined } =
     ),
     [CHAINS.TESTNET]: new Token(
         CHAINS.TESTNET,
-        '0x0650683db720c793ff7e609A08b5fc2792c91f39',
+        '0xCfa08d54d3d76289ef88717b921Ce8C3203789e9',
         18,
         'WLUX',
         'Lux native asset'
