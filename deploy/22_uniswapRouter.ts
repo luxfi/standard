@@ -11,10 +11,10 @@ async function main() {
     // Determine the folder based on the network
     const networkName = hre.network.name; // "lux" or "lux_testnet"
     const folder = networkName === "lux" ? "mainnet" : "testnet";
-    const factoryv3 = networkName === "lux" ? "0xD1A37eF464c6679A0989775E1fAC54E1598FeD18" : "0x373Ea8ad7C0259910033ED91b511336D091b5680";
-    const weth = networkName === "lux" ? "0xFbad1306A6b306b1b673ACa75a1CC78C4375e4Dc" : "0x1B3DBA2d66c18a15a6F88B0751366C01bC8CBdd3";
-    const factoryv2 = networkName === "lux" ? "0x42c426364d36C2b3aF20F1F498277e6b777132c5" : "0x462e816749A08Adb0085E6257D37E2cab4574273";
-    const positionManager = networkName === "lux" ? "0xFb931FDd8bCef71b8101812c2e482C5A465D73DB" : "0xB9983C194fd9731052BF6a7B1A0A2f9A48D6f036";
+    const factoryv3 = networkName === "lux" ? "0xa12792DeB2eE726d1b163ba54c876c69ACa41d89" : "0x196CEb9CDE6e804403dFEB16dC91dCFC2bE6cF7d";
+    const weth = networkName === "lux" ? "0xd4b2F0435faca8959A7D2e096C2A3Ce9697Ee9fc" : "0xA01c406bC54aD9363704E9D26522a4629b5E6263";
+    const factoryv2 = networkName === "lux" ? "0xCfa08d54d3d76289ef88717b921Ce8C3203789e9" : "0xd3CC2350b9CFe15d6e1Ed826dF3150eF3CBb0A47";
+    const positionManager = networkName === "lux" ? "0x2f9bB9665c0579B0449E495852F683464d35103B" : "0x59D662ce2682Bb9F98C1B856B99FB9a3E38cd521";
 
     // Deploy UniswapV3Factory contract
     const uniSwapRouter02 = await ethers.getContractFactory("SwapRouter02", deployer);
