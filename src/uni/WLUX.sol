@@ -19,7 +19,7 @@
 
 pragma solidity ^0.4.18;
 
-contract WETH9 {
+contract WLUX {
     string public name     = "Wrapped LUX";
     string public symbol   = "WLUX";
     uint8  public decimals = 18;

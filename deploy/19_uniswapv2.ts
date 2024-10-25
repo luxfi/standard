@@ -128,7 +128,7 @@ async function main() {
     try {
     await hre.run("verify:verify", {
         address: wlux.address,
-        contract: "src/uni/uni2/v2-periphery/contracts/test/WLUX.sol:WLUX",
+        contract: "src/uni/WLUX.sol:WLUX",
     constructorArguments: [],
     });
     } catch(error) {
@@ -136,7 +136,7 @@ async function main() {
     }
     fs.writeFileSync(`deployments/${folder}/WLUX.json`, JSON.stringify({
         address: wlux.address,
-        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/uni2/v2-periphery/contracts/test/WLUX.sol/WLUX.json', 'utf8')).abi,
+        abi: JSON.parse(fs.readFileSync('./artifacts/src/uni/WLUX.sol/WLUX.json', 'utf8')).abi,
     }, null, 2));
     console.log('Contract ABI and address saved to WLUX.json');
 
