@@ -13,8 +13,8 @@ async function main() {
     // Determine the folder based on the network
     const networkName = hre.network.name; // "lux" or "lux_testnet"
     const folder = networkName === "lux" ? "mainnet" : "testnet";
-    const v3factory = networkName === "lux" ? "0xa12792DeB2eE726d1b163ba54c876c69ACa41d89" : "0x196CEb9CDE6e804403dFEB16dC91dCFC2bE6cF7d";
-    const wlux = networkName === "lux" ? "0xd4b2F0435faca8959A7D2e096C2A3Ce9697Ee9fc" : "0xA01c406bC54aD9363704E9D26522a4629b5E6263";
+    const v3factory = networkName === "lux" ? "0x80bBc7C4C7a59C899D1B37BC14539A22D5830a84" : "0x80bBc7C4C7a59C899D1B37BC14539A22D5830a84";
+    const wlux = networkName === "lux" ? "0x4888E4a2Ee0F03051c72D2BD3ACf755eD3498B3E" : "0x4888E4a2Ee0F03051c72D2BD3ACf755eD3498B3E";
     const Multi_Call = await ethers.getContractFactory("UniswapInterfaceMulticall");
     const multi_call = await Multi_Call.deploy();
     

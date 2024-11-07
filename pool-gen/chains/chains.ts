@@ -4,8 +4,8 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const CHAINS = {
-    MAINNET: 7777,
-    TESTNET: 8888,
+    MAINNET: 96369,
+    TESTNET: 96368,
 }
 
 const lux = defineChain({

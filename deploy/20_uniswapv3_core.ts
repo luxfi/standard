@@ -12,12 +12,12 @@ async function main() {
     [deployer] = await ethers.getSigners();
 
     // Deploy UniswapV3Factory contract
-    const univ3FactoryFactory = new ContractFactory(
-        factoryArtifact.abi,
-        factoryArtifact.bytecode,
-        deployer
-    );
-    // const univ3FactoryFactory = await ethers.getContractFactory("UniswapV3Factory", deployer);
+    // const univ3FactoryFactory = new ContractFactory(
+    //     factoryArtifact.abi,
+    //     factoryArtifact.bytecode,
+    //     deployer
+    // );
+    const univ3FactoryFactory = await ethers.getContractFactory("UniswapV3Factory", deployer);
     
     const factoryv3 = await univ3FactoryFactory.deploy();
     await factoryv3.deployed();
