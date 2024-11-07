@@ -93,7 +93,7 @@ export default {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
-    apiKey:  "15B6F1WNW4Q8YND5TY64I378A36AXT188A", 
+    apiKey:  "15B6F1WNW4Q8YND5TY64I378A36AXT188A",
     customChains: [
       {
         network: "lux",
@@ -107,7 +107,7 @@ export default {
         network: "lux_testnet",
         chainId: 96368,
         urls: {
-          apiURL: "https://api.explore.lux-test.network/api",
+          apiURL: "https://api-explore.lux-test.network",
           browserURL: "https://explore.lux-test.network"
         }
       },
