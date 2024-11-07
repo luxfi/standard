@@ -55,7 +55,7 @@ const networks: HardhatUserConfig['networks'] = {
     accounts: {
       mnemonic: mnemonic(),
     },
-    chainId: 7777,
+    chainId: 96369,
     live: true,
     saveDeployments: true,
     //gasPrice: ethers.utils.parseUnits(`155`, 'gwei').toNumber(),

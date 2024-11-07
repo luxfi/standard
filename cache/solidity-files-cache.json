@@ -10986,6 +10986,41 @@
       "artifacts": [
         "WLUX"
       ]
+    },
+    "D:\\Work\\standard\\src\\uni\\MockAggregator.sol": {
+      "lastModificationDate": 1730838527288,
+      "contentHash": "b245f88eef08923560a98f057fd07d64",
+      "sourceName": "src/uni/MockAggregator.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.7.6"
+      ],
+      "artifacts": [
+        "MockAggregator"
+      ]
     }
   }
 }
