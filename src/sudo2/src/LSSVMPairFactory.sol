@@ -25,8 +25,8 @@ import {ISettings} from "./settings/ISettings.sol";
 /**
  * @notice Imports for authAllowedForToken (forked from manifold.xyz Royalty Registry)
  */
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import "@openzeppelin/standard/utils/introspection/ERC165.sol";
+import "@openzeppelin/standard/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";

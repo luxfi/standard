@@ -1057,7 +1057,7 @@ export const contracts: Array<ContractConfig> = [
   {
     id: "dao-artifacts",
     name: "DaoArtifacts",
-    path: "../../contracts/utils/DaoArtifacts",
+    path: "../../standard/utils/DaoArtifacts",
     enabled: true,
     skipAutoDeploy: true,
     version: "1.0.0",
@@ -1070,7 +1070,7 @@ export const contracts: Array<ContractConfig> = [
   {
     id: "multicall",
     name: "Multicall",
-    path: "../../contracts/utils/Multicall",
+    path: "../../standard/utils/Multicall",
     enabled: true,
     version: "1.0.0",
     type: ContractType.Util,

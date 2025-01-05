@@ -6,7 +6,7 @@ import "./interfaces/IReimbursement.sol";
 import "../core/DaoRegistry.sol";
 import "../extensions/bank/Bank.sol";
 import "../guards/AdapterGuard.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/standard/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../helpers/DaoHelper.sol";

@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "GlobalReentrancyGuard",
-  "sourceName": "contracts/utils/GlobalReentrancyGuard.sol",
+  "sourceName": "standard/utils/GlobalReentrancyGuard.sol",
   "abi": [
     {
       "inputs": [],

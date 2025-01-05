@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "Bits",
-  "sourceName": "contracts/utils/Bits.sol",
+  "sourceName": "standard/utils/Bits.sol",
   "abi": [
     {
       "inputs": [],

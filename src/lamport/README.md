@@ -1,4 +1,4 @@
-# @luxdefi/lamport
+# @luxfi/lamport
 
 A library for verifying Lamport Signatures from within an Ethereum EVM smart
 contract. Written in Solidity. This library is part of an ongoing effort by

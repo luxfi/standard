@@ -4,10 +4,10 @@ pragma solidity ^0.8.0;
 
 import "../../core/DaoRegistry.sol";
 import "../IExtension.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/standard/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/standard/utils/structs/EnumerableSet.sol";
 
 /**
 MIT License

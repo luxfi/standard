@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "Whitelist",
-  "sourceName": "contracts/utils/Whitelist.sol",
+  "sourceName": "standard/utils/Whitelist.sol",
   "abi": [
     {
       "inputs": [],

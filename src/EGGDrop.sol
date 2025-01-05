@@ -2,10 +2,10 @@
 
 pragma solidity >=0.8.4;
 
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import { SafeMath } from "@openzeppelin/standard/utils/math/SafeMath.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IDrop } from "./interfaces/IDrop.sol";
-import { Counters } from "@openzeppelin/contracts/utils/Counters.sol";
+import { Counters } from "@openzeppelin/standard/utils/Counters.sol";
 import { IDAO } from "./interfaces/IDAO.sol";
 
 contract DropNFTs is Ownable {

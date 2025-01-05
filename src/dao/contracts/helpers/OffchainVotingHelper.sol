@@ -14,9 +14,9 @@ import "../adapters/voting/SnapshotProposalContract.sol";
 
 import "./GovernanceHelper.sol";
 
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "@openzeppelin/standard/utils/cryptography/MerkleProof.sol";
 
-import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import "@openzeppelin/standard/utils/cryptography/SignatureChecker.sol";
 
 /**
 MIT License

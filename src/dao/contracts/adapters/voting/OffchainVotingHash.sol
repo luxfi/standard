@@ -12,8 +12,8 @@ import "./SnapshotProposalContract.sol";
 import "../../helpers/DaoHelper.sol";
 import "../../helpers/GovernanceHelper.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import "@openzeppelin/standard/utils/cryptography/MerkleProof.sol";
+import "@openzeppelin/standard/utils/cryptography/SignatureChecker.sol";
 
 /**
 MIT License

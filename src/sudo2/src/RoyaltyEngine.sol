@@ -11,7 +11,7 @@ pragma solidity ^0.8.0;
  * - _getRoyaltyAndSpec converted to an internal function
  */
 
-import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {ERC165, IERC165} from "@openzeppelin/standard/utils/introspection/ERC165.sol";
 
 import {SuperRareContracts} from "manifoldxyz/libraries/SuperRareContracts.sol";
 import {IManifold} from "manifoldxyz/specs/IManifold.sol";

@@ -10,7 +10,7 @@ pragma solidity >=0.8.4;
 */
 
 import "./ERC721.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/standard/utils/Context.sol";
 
 /**
  * @title ERC721 Burnable Token

@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "BasicMulticall",
-  "sourceName": "contracts/utils/BasicMulticall.sol",
+  "sourceName": "standard/utils/BasicMulticall.sol",
   "abi": [
     {
       "inputs": [

@@ -15,18 +15,18 @@ import "./console.sol";
  *  - `_approve` visibility was changed from private to internal to support EIP-2612 flavored permits and approval revocation by an approved address
  */
 
-import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/standard/utils/Context.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/standard/utils/introspection/ERC165Storage.sol";
+import "@openzeppelin/standard/utils/introspection/ERC165.sol";
+import "@openzeppelin/standard/utils/math/SafeMath.sol";
+import "@openzeppelin/standard/utils/Address.sol";
+import "@openzeppelin/standard/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/standard/utils/structs/EnumerableMap.sol";
+import "@openzeppelin/standard/utils/Strings.sol";
 
 /**
  * @title ERC721 Non-Fungible Token Standard basic implementation

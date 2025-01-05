@@ -1,6 +1,6 @@
 // 05_v2factory.ts
 
-import { Deploy } from '@zoolabs/contracts/utils/deploy'
+import { Deploy } from '@zoolabs/standard/utils/deploy'
 
 export default Deploy('UniswapV2Factory', {}, async({ getNamedAccounts, hre, deploy, deployments, deps }) => {
   const { deployer, dao } = await getNamedAccounts()
