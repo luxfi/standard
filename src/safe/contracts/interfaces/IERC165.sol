@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity >=0.7.0 <0.9.0;
 
-/// @notice More details at https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/introspection/IERC165.sol
+/// @notice More details at https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/standard/utils/introspection/IERC165.sol
 interface IERC165 {
     /**
      * @dev Returns true if this contract implements the interface defined by `interfaceId`.

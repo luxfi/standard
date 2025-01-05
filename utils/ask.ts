@@ -1,4 +1,4 @@
-import { ChainId, Token, getSymbolCurrencyMap } from '@luxdefi/sdk'
+import { ChainId, Token, getSymbolCurrencyMap } from '@luxfi/sdk'
 import { ethers } from 'hardhat'
 import contracts from '../contracts.json'
 

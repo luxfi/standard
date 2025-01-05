@@ -5,7 +5,7 @@ import {IRoyaltyEngineV1} from "manifoldxyz/IRoyaltyEngineV1.sol";
 
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {Address} from "@openzeppelin/standard/utils/Address.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
@@ -675,7 +675,7 @@ abstract contract LSSVMPair is OwnableWithTransferCallback, ERC721Holder, ERC115
 
     /**
      * @notice Allows owner to batch multiple calls, forked from: https://github.com/boringcrypto/BoringSolidity/blob/master/contracts/BoringBatchable.sol
-     * @notice The revert handling is forked from: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/c239e1af8d1a1296577108dd6989a17b57434f8e/contracts/utils/Address.sol#L201
+     * @notice The revert handling is forked from: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/c239e1af8d1a1296577108dd6989a17b57434f8e/standard/utils/Address.sol#L201
      * @dev Intended for withdrawing/altering pool pricing in one tx, only callable by owner, cannot change owner
      * @param calls The calldata for each call to make
      * @param revertOnFail Whether or not to revert the entire tx if any of the calls fail. Calls to transferOwnership will revert regardless.

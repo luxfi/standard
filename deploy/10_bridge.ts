@@ -1,6 +1,6 @@
 // 10_bridge.ts
 
-import { Deploy } from '@zoolabs/contracts/utils/deploy'
+import { Deploy } from '@zoolabs/standard/utils/deploy'
 
 export default Deploy('Bridge', { dependencies: ['DAO'] }, async ({ ethers, deploy, deployments, deps, hre }) => {
   const { DAO } = deps

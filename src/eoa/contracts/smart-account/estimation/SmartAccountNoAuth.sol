@@ -11,7 +11,7 @@ import {ISignatureValidator} from "../interfaces/ISignatureValidator.sol";
 import {IERC165} from "../interfaces/IERC165.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 import {SmartAccountErrors} from "../common/Errors.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {ECDSA} from "@openzeppelin/standard/utils/cryptography/ECDSA.sol";
 import {IAuthorizationModule} from "../interfaces/IAuthorizationModule.sol";
 
 /**

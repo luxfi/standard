@@ -12,7 +12,7 @@ import {Math} from "../../../libs/Math.sol";
 import {IERC165} from "../../../interfaces/IERC165.sol";
 import {ReentrancyGuard} from "../../../common/ReentrancyGuard.sol";
 import {SmartAccountErrorsV1} from "./ErrorsV1.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {ECDSA} from "@openzeppelin/standard/utils/cryptography/ECDSA.sol";
 import {IModule} from "./IModuleV1.sol";
 
 /**

@@ -32,13 +32,13 @@ importers:
       '@ethersproject/wallet':
         specifier: ^5.4.0
         version: 5.7.0
-      '@luxdefi/hardhat':
+      '@luxfi/hardhat':
         specifier: ^2.0.2
         version: 2.0.2(@ethersproject/abi@5.7.0)(@ethersproject/providers@5.7.2(bufferutil@4.0.8)(utf-8-validate@5.0.10))(@nomicfoundation/hardhat-ethers@3.0.8(ethers@5.7.2(bufferutil@4.0.8)(utf-8-validate@5.0.10))(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.3.1(@types/node@18.19.54)(typescript@5.6.3))(typescript@5.6.3)(utf-8-validate@5.0.10)))(bufferutil@4.0.8)(eslint-plugin-n@16.6.2(eslint@8.57.1))(utf-8-validate@5.0.10)
-      '@luxdefi/sdk':
+      '@luxfi/sdk':
         specifier: ^1.0.5
         version: 1.0.5(@ethersproject/abi@5.7.0)(@ethersproject/abstract-signer@5.7.0)(@ethersproject/address@5.7.0)(@ethersproject/bignumber@5.7.0)(@ethersproject/bytes@5.7.0)(@ethersproject/contracts@5.7.0)(@ethersproject/experimental@5.7.0(bufferutil@4.0.8)(utf-8-validate@5.0.10))(@ethersproject/networks@5.7.1)(@ethersproject/providers@5.7.2(bufferutil@4.0.8)(utf-8-validate@5.0.10))(@ethersproject/signing-key@5.7.0)(@ethersproject/solidity@5.7.0)(@ethersproject/transactions@5.7.0)(eip-712@0.4.3)(encoding@0.1.13)
-      '@luxdefi/solidity':
+      '@luxfi/solidity':
         specifier: ^2.0.4
         version: 2.0.4
       '@nomiclabs/hardhat-ethers':
@@ -621,11 +621,11 @@ packages:
     resolution: {integrity: sha512-/gKJun8NNiWGZJkGzI/Ragc53cOdcLNdzjLaIa+GEjguQs0ulsurx8WN0jijdK9yPqDvziX995sMRLyLt1uZMQ==}
     engines: {node: '>= 0.4'}
 
-  '@luxdefi/hardhat@2.0.2':
+  '@luxfi/hardhat@2.0.2':
     resolution: {integrity: sha512-oIWckt/0uR9iTr0Lqk/OQNRzyM9cKO4A8DjFMUpnPN258c/rx0PEJD7uFV2dPBL8dUks6XTqU8lRhF7rYHIniQ==}
     hasBin: true
 
-  '@luxdefi/sdk@1.0.5':
+  '@luxfi/sdk@1.0.5':
     resolution: {integrity: sha512-POIJiVRD/Pyrp216NVqRUsdlziOa885L4T50Mf90Iztf7YicZ29BjfXWfdc8hWiOh05qRXWSSUifgeyVnbM11w==}
     engines: {node: '>=12'}
     peerDependencies:
@@ -643,7 +643,7 @@ packages:
       '@ethersproject/transactions': ^5.4.0
       eip-712: ^0.4.3
 
-  '@luxdefi/solidity@2.0.4':
+  '@luxfi/solidity@2.0.4':
     resolution: {integrity: sha512-g82Sw/j6nlZnthYVv8DboC1ck5vq68vx3axK4NTSIU/s2tNqyviGOTgpwrSiTl7GnrzvTbu/2+LPXghVfIhJ3Q==}
 
   '@metamask/eth-sig-util@4.0.1':
@@ -7637,7 +7637,7 @@ snapshots:
     dependencies:
       call-bind: 1.0.7
 
-  '@luxdefi/hardhat@2.0.2(@ethersproject/abi@5.7.0)(@ethersproject/providers@5.7.2(bufferutil@4.0.8)(utf-8-validate@5.0.10))(@nomicfoundation/hardhat-ethers@3.0.8(ethers@5.7.2(bufferutil@4.0.8)(utf-8-validate@5.0.10))(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.3.1(@types/node@18.19.54)(typescript@5.6.3))(typescript@5.6.3)(utf-8-validate@5.0.10)))(bufferutil@4.0.8)(eslint-plugin-n@16.6.2(eslint@8.57.1))(utf-8-validate@5.0.10)':
+  '@luxfi/hardhat@2.0.2(@ethersproject/abi@5.7.0)(@ethersproject/providers@5.7.2(bufferutil@4.0.8)(utf-8-validate@5.0.10))(@nomicfoundation/hardhat-ethers@3.0.8(ethers@5.7.2(bufferutil@4.0.8)(utf-8-validate@5.0.10))(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.3.1(@types/node@18.19.54)(typescript@5.6.3))(typescript@5.6.3)(utf-8-validate@5.0.10)))(bufferutil@4.0.8)(eslint-plugin-n@16.6.2(eslint@8.57.1))(utf-8-validate@5.0.10)':
     dependencies:
       '@nomiclabs/hardhat-ethers': hardhat-deploy-ethers@0.4.2(@nomicfoundation/hardhat-ethers@3.0.8(ethers@5.7.2(bufferutil@4.0.8)(utf-8-validate@5.0.10))(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.3.1(@types/node@18.19.54)(typescript@5.6.3))(typescript@5.6.3)(utf-8-validate@5.0.10)))(hardhat-deploy@0.11.45(bufferutil@4.0.8)(utf-8-validate@5.0.10))(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.3.1(@types/node@18.19.54)(typescript@5.6.3))(typescript@5.6.3)(utf-8-validate@5.0.10))
       '@nomiclabs/hardhat-etherscan': 3.1.8(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.3.1(@types/node@18.19.54)(typescript@5.6.3))(typescript@5.6.3)(utf-8-validate@5.0.10))
@@ -7698,7 +7698,7 @@ snapshots:
       - terser
       - utf-8-validate
 
-  '@luxdefi/sdk@1.0.5(@ethersproject/abi@5.7.0)(@ethersproject/abstract-signer@5.7.0)(@ethersproject/address@5.7.0)(@ethersproject/bignumber@5.7.0)(@ethersproject/bytes@5.7.0)(@ethersproject/contracts@5.7.0)(@ethersproject/experimental@5.7.0(bufferutil@4.0.8)(utf-8-validate@5.0.10))(@ethersproject/networks@5.7.1)(@ethersproject/providers@5.7.2(bufferutil@4.0.8)(utf-8-validate@5.0.10))(@ethersproject/signing-key@5.7.0)(@ethersproject/solidity@5.7.0)(@ethersproject/transactions@5.7.0)(eip-712@0.4.3)(encoding@0.1.13)':
+  '@luxfi/sdk@1.0.5(@ethersproject/abi@5.7.0)(@ethersproject/abstract-signer@5.7.0)(@ethersproject/address@5.7.0)(@ethersproject/bignumber@5.7.0)(@ethersproject/bytes@5.7.0)(@ethersproject/contracts@5.7.0)(@ethersproject/experimental@5.7.0(bufferutil@4.0.8)(utf-8-validate@5.0.10))(@ethersproject/networks@5.7.1)(@ethersproject/providers@5.7.2(bufferutil@4.0.8)(utf-8-validate@5.0.10))(@ethersproject/signing-key@5.7.0)(@ethersproject/solidity@5.7.0)(@ethersproject/transactions@5.7.0)(eip-712@0.4.3)(encoding@0.1.13)':
     dependencies:
       '@ethersproject/abi': 5.7.0
       '@ethersproject/abstract-signer': 5.7.0
@@ -7725,7 +7725,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@luxdefi/solidity@2.0.4': {}
+  '@luxfi/solidity@2.0.4': {}
 
   '@metamask/eth-sig-util@4.0.1':
     dependencies:

@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "PayableMulticall",
-  "sourceName": "contracts/utils/PayableMulticall.sol",
+  "sourceName": "standard/utils/PayableMulticall.sol",
   "abi": [
     {
       "inputs": [

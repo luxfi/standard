@@ -1,5 +1,5 @@
 // 14_drop.ts
-import { Deploy } from '@luxdefi/contracts/utils/deploy'
+import { Deploy } from '@luxfi/standard/utils/deploy'
 // import mint from '../utils/mint'
 
 export default Deploy('Drop', {}, async ({ hre, ethers, deploy }) => {

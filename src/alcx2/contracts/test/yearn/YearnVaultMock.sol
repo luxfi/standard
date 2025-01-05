@@ -2,7 +2,7 @@
 pragma solidity 0.8.11;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/standard/utils/math/Math.sol";
 
 import {TokenUtils, IERC20Minimal} from "../../libraries/TokenUtils.sol";
 

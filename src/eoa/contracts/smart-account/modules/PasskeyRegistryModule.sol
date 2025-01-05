@@ -3,7 +3,7 @@ pragma solidity >=0.8.17;
 
 import {BaseAuthorizationModule} from "./BaseAuthorizationModule.sol";
 import {UserOperation} from "@account-abstraction/contracts/interfaces/UserOperation.sol";
-import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
+import {Base64} from "@openzeppelin/standard/utils/Base64.sol";
 import {Secp256r1, PassKeyId} from "./PasskeyValidationModules/Secp256r1.sol";
 
 /**

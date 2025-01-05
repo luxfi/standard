@@ -1,4 +1,4 @@
-import { ChainId } from '@luxdefi/sdk'
+import { ChainId } from '@luxfi/sdk'
 import { BigNumberish } from '@ethersproject/bignumber'
 import { getAsk } from './ask'
 import queryString from 'query-string'

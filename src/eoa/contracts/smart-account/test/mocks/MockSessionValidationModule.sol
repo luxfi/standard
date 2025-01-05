@@ -3,7 +3,7 @@ pragma solidity 0.8.17;
 
 import {ISessionValidationModule} from "../../modules/SessionValidationModules/ISessionValidationModule.sol";
 import {UserOperation} from "@account-abstraction/contracts/interfaces/UserOperation.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {ECDSA} from "@openzeppelin/standard/utils/cryptography/ECDSA.sol";
 
 contract MockSessionValidationModule is ISessionValidationModule {
     function validateSessionUserOp(

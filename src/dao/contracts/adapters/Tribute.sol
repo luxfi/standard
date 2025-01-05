@@ -7,7 +7,7 @@ import "../extensions/bank/Bank.sol";
 import "../helpers/DaoHelper.sol";
 import "../adapters/interfaces/IVoting.sol";
 import "./modifiers/Reimbursable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/standard/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 

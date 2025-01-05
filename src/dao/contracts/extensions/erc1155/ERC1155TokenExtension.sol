@@ -4,10 +4,10 @@ import "../../core/DaoRegistry.sol";
 import "../../guards/MemberGuard.sol";
 import "../../helpers/DaoHelper.sol";
 import "../IExtension.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/standard/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/standard/utils/structs/EnumerableSet.sol";
 
 /**
 MIT License
