@@ -1,6 +1,6 @@
 //// 07_pair.ts
 
-import { Deploy } from '@zoolabs/standard/utils/deploy'
+import { Deploy } from '../utils/deploy'
 
 export default Deploy('UniswapV2Pair', { dependencies: ['BNB', 'ZOO', 'UniswapV2Factory', 'UniswapV2Router02'] }, async ({ ethers, hre, deploy, deployments, deps, signers }) => {
   // Import so we have the JSON

@@ -1,6 +1,6 @@
 // 14_drop.ts
 
-import { Deploy } from '@zoolabs/standard/utils/deploy'
+import { Deploy } from '../utils/deploy'
 
 import configureGame from '../utils/configureGame'
 

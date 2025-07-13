@@ -3,6 +3,7 @@ import '@nomicfoundation/hardhat-verify'
 import '@nomiclabs/hardhat-waffle'
 import 'hardhat-typechain'
 import 'hardhat-watcher'
+import 'hardhat-deploy'
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -54,6 +55,10 @@ export default {
     hardhat: {
       allowUnlimitedContractSize: false,
     },
+    localhost: {
+      url: "http://localhost:8545",
+      accounts: ["0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"],
+    },
     mainnet: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
     },
@@ -83,11 +88,11 @@ export default {
     },
     lux: {
       url: "https://api.lux.network/",
-      accounts: [process.env.PK ?? ""],
+      accounts: process.env.PK ? [process.env.PK] : [],
     },
     lux_testnet: {
       url: "https://api.lux-test.network",
-      accounts: [process.env.PK ?? ""],
+      accounts: process.env.PK ? [process.env.PK] : [],
     }
   },
   etherscan: {
@@ -160,6 +165,15 @@ export default {
           },
         },
       },
+      {
+        version: "0.8.20",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
       DEFAULT_COMPILER_SETTINGS
     ],
     overrides: {
@@ -178,13 +192,23 @@ export default {
     },
   },
   paths: {
-    sources: "./src/uni", // Change this line to point to your src folder
+    sources: "./src/uni", // Focus on Uniswap contracts
     tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts",
   },
   sourcify: {
     enabled: false
-  }
+  },
+  namedAccounts: {
+    deployer: {
+      default: 0,
+      localhost: 0,
+    },
+    dao: {
+      default: 1,
+      localhost: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8', // Second account from hardhat
+    },
+  },
 }
 

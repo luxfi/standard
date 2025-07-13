@@ -1,6 +1,6 @@
 // 13_app.ts
 
-import { Deploy } from '@luxfi/standard/utils/deploy'
+import { Deploy } from '../utils/deploy'
 
 export default Deploy(
   'App',

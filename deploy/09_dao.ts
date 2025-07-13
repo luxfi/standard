@@ -1,6 +1,6 @@
 // 09_dao.ts
 
-import { Deploy } from '@zoolabs/standard/utils/deploy'
+import { Deploy } from '../utils/deploy'
 
 export default Deploy('DAO', {
     proxy: { kind: 'uups' }
