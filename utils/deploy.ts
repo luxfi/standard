@@ -76,7 +76,9 @@ export const DeployTestToken = (name: string, decimals: number = 18, mintForFirs
   
     const accounts = []
   
-    for (let i = 0; i < mintForFirst; i++) {
+    // Only mint to available signers
+    const signersToMint = Math.min(mintForFirst, signers.length)
+    for (let i = 0; i < signersToMint; i++) {
       accounts.push(signers[i].address)
     }
   

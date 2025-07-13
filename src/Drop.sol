@@ -2,7 +2,7 @@
 
 pragma solidity >=0.8.4;
 
-import { SafeMath } from '@openzeppelin/standard/utils/math/SafeMath.sol';
+import { SafeMath } from '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
 import { Decimal } from './Decimal.sol';
 import { IMarket } from './interfaces/IMarket.sol';

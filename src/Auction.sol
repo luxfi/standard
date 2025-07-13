@@ -4,14 +4,14 @@
 pragma solidity >=0.8.4;
 pragma experimental ABIEncoderV2;
 
-import { Counters } from "@openzeppelin/standard/utils/Counters.sol";
-import { IERC165 } from "@openzeppelin/standard/utils/introspection/IERC165.sol";
+import { Counters } from "@openzeppelin/contracts/utils/Counters.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/standard/utils/math/SafeMath.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { IMarket, Decimal } from "./interfaces/IMarket.sol";
 import { IMedia } from "./interfaces/IMedia.sol";
 import { IAuctionHouse } from "./interfaces/IAuctionHouse.sol";
