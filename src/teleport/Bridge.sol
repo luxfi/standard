@@ -112,7 +112,7 @@ interface IERC20Metadata is IERC20 {
     function decimals() external view returns (uint8);
 }
 
-// File: @openzeppelin/standard/utils/Context.sol
+// File: @openzeppelin/contracts/utils/Context.sol
 
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
@@ -663,7 +663,7 @@ interface IAccessControl {
     function renounceRole(bytes32 role, address account) external;
 }
 
-// File: @openzeppelin/standard/utils/Strings.sol
+// File: @openzeppelin/contracts/utils/Strings.sol
 
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/Strings.sol)
@@ -733,7 +733,7 @@ library Strings {
     }
 }
 
-// File: @openzeppelin/standard/utils/introspection/IERC165.sol
+// File: @openzeppelin/contracts/utils/introspection/IERC165.sol
 
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/introspection/IERC165.sol)
@@ -761,7 +761,7 @@ interface IERC165 {
     function supportsInterface(bytes4 interfaceId) external view returns (bool);
 }
 
-// File: @openzeppelin/standard/utils/introspection/ERC165.sol
+// File: @openzeppelin/contracts/utils/introspection/ERC165.sol
 
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/introspection/ERC165.sol)
@@ -1061,7 +1061,7 @@ contract ERC20B is ERC20, Ownable, AccessControl {
     }
 }
 
-// File: @openzeppelin/standard/utils/math/SafeMath.sol
+// File: @openzeppelin/contracts/utils/math/SafeMath.sol
 
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/math/SafeMath.sol)

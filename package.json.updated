@@ -1,0 +1,48 @@
+{
+  "name": "@luxfi/standard",
+  "version": "1.0.5",
+  "license": "BSD-3-Clause",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
+    "@nomicfoundation/hardhat-ethers": "^3.0.0",
+    "@nomicfoundation/hardhat-foundry": "^1.1.0",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomicfoundation/hardhat-verify": "^2.0.0",
+    "@typechain/ethers-v6": "^0.5.0",
+    "@typechain/hardhat": "^9.0.0",
+    "@types/chai": "^4.3.0",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^20.0.0",
+    "chai": "^4.3.0",
+    "ethers": "^6.9.0",
+    "hardhat": "^2.19.0",
+    "hardhat-gas-reporter": "^1.0.9",
+    "solidity-coverage": "^0.8.0",
+    "ts-node": "^10.9.0",
+    "typechain": "^8.3.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.1",
+    "@openzeppelin/contracts-upgradeable": "^5.0.1"
+  },
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test",
+    "test:hardhat": "hardhat test",
+    "test:gas": "forge test --gas-report",
+    "coverage": "forge coverage",
+    "snapshot": "forge snapshot",
+    "anvil": "anvil",
+    "deploy:local": "forge script script/Deploy.s.sol:DeployScript --rpc-url localhost --broadcast",
+    "deploy:testnet": "forge script script/Deploy.s.sol:DeployTestnet --rpc-url testnet --broadcast --verify",
+    "deploy:mainnet": "forge script script/Deploy.s.sol:DeployMainnet --rpc-url mainnet --broadcast --verify",
+    "format": "forge fmt",
+    "lint": "forge fmt --check",
+    "clean": "forge clean && rm -rf artifacts && rm -rf cache && rm -rf types",
+    "compile": "forge build",
+    "install:foundry": "curl -L https://foundry.paradigm.xyz | bash && foundryup",
+    "install:deps": "forge install foundry-rs/forge-std --no-commit && forge install OpenZeppelin/openzeppelin-contracts@v5.0.1 --no-commit"
+  }
+}

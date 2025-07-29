@@ -9,7 +9,7 @@ import "../helpers/DaoHelper.sol";
 import "../guards/AdapterGuard.sol";
 import "../adapters/interfaces/IConfiguration.sol";
 import "./ProxToken.sol";
-import "@openzeppelin/standard/utils/Address.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
 /**
 MIT License

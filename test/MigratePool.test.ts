@@ -9,13 +9,13 @@ import { IERC20 } from '../types'
 const { expect } = requireDependencies()
 const { deployContract, deployMockContract } = waffle
 
-const setupTest = setupTestFactory(['UniswapV2Factory', 'UniswapV2Router02', 'Savage', 'Z1', 'BNB', 'ZOO'])
+const setupTest = setupTestFactory(['UniswapV2Factory', 'UniswapV2Router02', 'Savage', 'Z1', 'BNB', 'LUX'])
 
 describe('Savage', function () {
   let savage: Contract
   let factory: Contract
   let router: Contract
-  let zoo: Contract
+  let lux: Contract
   let bnb: Contract
   let z1: Contract
   let signers: Signer[]
@@ -32,7 +32,7 @@ describe('Savage', function () {
     const {
       signers,
       deployments,
-      tokens: { UniswapV2Factory, UniswapV2Router02, Savage, Z1, BNB, ZOO },
+      tokens: { UniswapV2Factory, UniswapV2Router02, Savage, Z1, BNB, LUX },
     } = await setupTest()
     sender = signers[0]
     factory = UniswapV2Factory
@@ -40,7 +40,7 @@ describe('Savage', function () {
     bnb = BNB
     savage = Savage
     z1 = Z1
-    zoo = ZOO
+    lux = LUX
   })
 
   it('can be deployed', async () => {

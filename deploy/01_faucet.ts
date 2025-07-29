@@ -1,6 +1,6 @@
 // 01_faucet.ts
 
-import { Deploy } from '@zoolabs/standard/utils/deploy'
+import { Deploy } from '@luxfi/standard/utils/deploy'
 
 export default Deploy('Faucet', { dependencies: ['ZOO'] }, async ({ ethers, deploy, deployments, deps, hre }) => {
 

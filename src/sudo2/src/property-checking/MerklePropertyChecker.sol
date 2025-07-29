@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IPropertyChecker} from "./IPropertyChecker.sol";
 import {Clone} from "clones-with-immutable-args/Clone.sol";
-import {MerkleProof} from "@openzeppelin/standard/utils/cryptography/MerkleProof.sol";
+import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract MerklePropertyChecker is IPropertyChecker, Clone {
     error MerklePropertyChecker__InputMismatch();

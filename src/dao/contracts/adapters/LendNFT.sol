@@ -10,7 +10,7 @@ import "../adapters/interfaces/IVoting.sol";
 import "../helpers/DaoHelper.sol";
 import "../guards/AdapterGuard.sol";
 import "./modifiers/Reimbursable.sol";
-import "@openzeppelin/standard/utils/Address.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 /**

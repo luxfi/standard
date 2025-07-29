@@ -1,0 +1,6 @@
+forge-std/=lib/forge-std/src/
+@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
+@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/
+@uniswap/=node_modules/@uniswap/
+@luxfi/=node_modules/@luxfi/
+ds-test/=lib/forge-std/lib/ds-test/src/
