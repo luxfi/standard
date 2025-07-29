@@ -1,5 +1,5 @@
 // 00_token.ts
 
-import { Deploy } from '@zoolabs/standard/utils/deploy'
+import { Deploy } from '@luxfi/standard/utils/deploy'
 
-export default Deploy('ZOO', {}, async ({ deploy }) => { await deploy([]) })
+export default Deploy('LUX', {}, async ({ deploy }) => { await deploy([]) })

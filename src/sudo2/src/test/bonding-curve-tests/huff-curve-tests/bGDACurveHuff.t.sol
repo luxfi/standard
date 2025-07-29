@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 import "foundry-huff/HuffDeployer.sol";
 
-import {Strings} from "@openzeppelin/standard/utils/Strings.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {UD60x18, convert, ud, unwrap, PRBMath_UD60x18_Exp2_InputTooBig} from "@prb/math/UD60x18.sol";
 
 import {GDACurve} from "../../../bonding-curves/GDACurve.sol";

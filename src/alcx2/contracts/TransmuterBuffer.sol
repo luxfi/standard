@@ -3,8 +3,8 @@ pragma solidity ^0.8.11;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/standard/utils/math/Math.sol";
-import "@openzeppelin/standard/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "./base/Errors.sol";
 

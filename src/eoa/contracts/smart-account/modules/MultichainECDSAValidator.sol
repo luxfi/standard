@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import {UserOperation} from "@account-abstraction/contracts/interfaces/UserOperation.sol";
 import {EcdsaOwnershipRegistryModule} from "./EcdsaOwnershipRegistryModule.sol";
 import {UserOperationLib} from "@account-abstraction/contracts/interfaces/UserOperation.sol";
-import {MerkleProof} from "@openzeppelin/standard/utils/cryptography/MerkleProof.sol";
+import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {_packValidationData} from "@account-abstraction/contracts/core/Helpers.sol";
 
 /**

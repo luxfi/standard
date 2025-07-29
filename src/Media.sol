@@ -6,10 +6,10 @@ pragma experimental ABIEncoderV2;
 
 import { ERC721Burnable } from './ERC721Burnable.sol';
 import { ERC721 } from './ERC721.sol';
-import { EnumerableSet } from '@openzeppelin/standard/utils/structs/EnumerableSet.sol';
-import { Counters } from '@openzeppelin/standard/utils/Counters.sol';
-import { SafeMath } from '@openzeppelin/standard/utils/math/SafeMath.sol';
-import { Math } from '@openzeppelin/standard/utils/math/Math.sol';
+import { EnumerableSet } from '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
+import { Counters } from '@openzeppelin/contracts/utils/Counters.sol';
+import { SafeMath } from '@openzeppelin/contracts/utils/math/SafeMath.sol';
+import { Math } from '@openzeppelin/contracts/utils/math/Math.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { ReentrancyGuard } from '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';

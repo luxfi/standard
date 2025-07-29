@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.7.6;
 
-import '@openzeppelin/standard/utils/Strings.sol';
+import '@openzeppelin/contracts/utils/Strings.sol';
 import '@uniswap/v3-core/contracts/libraries/BitMath.sol';
 import 'base64-sol/base64.sol';
 
