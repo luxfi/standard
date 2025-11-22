@@ -49,3 +49,10 @@ yarn-error.log*
 .openzeppelin/
 .history/
 *.orig
+
+
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+GROK.md
+QWEN.md
