@@ -75,7 +75,9 @@ Created comprehensive LP-326 documenting blockchain regenesis process with **cri
 - ❌ **No Scripts**: Scripts like `export-state-to-genesis.go` do NOT exist
 - ❌ **No Direct APIs**: Don't use blockchain.Export() - use VM interfaces
 
-**File**: `/Users/z/work/lux/lps/LPs/lp-326.md` (747 lines) - Commit `f79efa8`
+**File**: `/Users/z/work/lux/lps/LPs/lp-326.md` (761 lines) - Commit `aef4117`
+
+**Terminology**: Moving away from "subnet" language - use **EVM** (not SubnetEVM)
 
 **Chain ID History** (7777 → 96369):
 - Original Chain ID: 7777 (Lux mainnet launch)
