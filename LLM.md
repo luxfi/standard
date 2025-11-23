@@ -35,21 +35,32 @@ This repository contains the standard Solidity contracts and EVM precompiles for
 
 ### ✅ LP-326 Regenesis Documentation - COMPLETE
 
-**Status**: Committed and pushed - commit `0d4572f`
+**Status**: Committed and pushed - commits `0d4572f` + `f129ed6` (corrected)
 
 Created comprehensive LP-326 documenting blockchain regenesis process:
 - State export from database (PebbleDB/BadgerDB)
 - Genesis file creation and structure
 - Network initialization and validator migration
 - Integration with LP-181 epoch boundaries
-- 6-chain regenesis architecture (A, B, C, D, Y, Z)
+- **4-chain initial architecture** (P, C, X, Q) with future expansion (B, Z, M)
 - Operational procedures and security considerations
+
+**Chain Configuration**:
+- ✅ **P-Chain**: Platform/Validators (Linear Consensus)
+- ✅ **C-Chain**: EVM Smart Contracts (BFT Consensus) - Chain ID 96369
+- ✅ **X-Chain**: Asset Exchange (DAG Consensus)
+- ✅ **Q-Chain**: Quantum-Resistant Operations (Hybrid PQ Consensus)
+- 🔄 **B-Chain**: Cross-Chain Bridges (Planned)
+- 🔄 **Z-Chain**: Zero-Knowledge Proofs (Planned)
+- 🔄 **M-Chain**: TBD (Planned)
 
 **Tools Documented**:
 - `/Users/z/work/lux/state/scripts/export-state-to-genesis.go` - State export tool
 - `/Users/z/work/lux/evm/core/blockchain.go` - Export APIs (Export, ExportN, ExportCallback)
 
 **File**: `/Users/z/work/lux/lps/LPs/lp-326.md` (566 lines)
+
+**Note**: C-Chain imports finalized blocks from previous run (Chain ID 96369)
 
 ---
 
