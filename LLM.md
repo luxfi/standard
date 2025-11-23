@@ -35,32 +35,46 @@ This repository contains the standard Solidity contracts and EVM precompiles for
 
 ### ✅ LP-326 Regenesis Documentation - COMPLETE
 
-**Status**: Committed and pushed - commits `0d4572f` + `f129ed6` (corrected)
+**Status**: Committed and pushed - commits `0d4572f` + `f129ed6` + `90d02df` (final corrected version)
 
-Created comprehensive LP-326 documenting blockchain regenesis process:
+Created comprehensive LP-326 documenting blockchain regenesis process with **critical scope clarifications**:
+
+**Mainnet Regenesis Scope** (applies ONLY to P, C, X chains):
+- ⚠️ **ONLY P, C, X chains undergo regenesis** (original Avalanche-based chains)
+- ⚠️ **ONLY C-Chain EVM state is migrated** (full state preservation)
+- ⚠️ **P-Chain**: Minimal state (validators only)
+- ⚠️ **X-Chain**: Minimal state (if any)
+- ❌ **Q-Chain**: NEW deployment, NOT part of regenesis
+- ❌ **B, Z, M chains**: NEW deployments (future)
+- 📝 **Non-mainnet networks**: All chains deploy fresh (no regenesis)
+
+**Chain Launch Configuration** (4 initial + 3 planned):
+- ✅ **P-Chain**: Platform/Validators (Linear Consensus) - Regenesis
+- ✅ **C-Chain**: EVM Smart Contracts (BFT Consensus, Chain ID 96369) - Regenesis + State Migration
+- ✅ **X-Chain**: Asset Exchange (DAG Consensus) - Regenesis
+- ✅ **Q-Chain**: Quantum-Resistant Operations (Hybrid PQ) - NEW Deployment
+- 🔄 **B-Chain**: Cross-Chain Bridges - NEW Deployment (Planned)
+- 🔄 **Z-Chain**: Zero-Knowledge Proofs - NEW Deployment (Planned)
+- 🔄 **M-Chain**: TBD - NEW Deployment (Planned)
+
+**Documentation Includes**:
 - State export from database (PebbleDB/BadgerDB)
 - Genesis file creation and structure
 - Network initialization and validator migration
 - Integration with LP-181 epoch boundaries
-- **4-chain initial architecture** (P, C, X, Q) with future expansion (B, Z, M)
 - Operational procedures and security considerations
-
-**Chain Configuration**:
-- ✅ **P-Chain**: Platform/Validators (Linear Consensus)
-- ✅ **C-Chain**: EVM Smart Contracts (BFT Consensus) - Chain ID 96369
-- ✅ **X-Chain**: Asset Exchange (DAG Consensus)
-- ✅ **Q-Chain**: Quantum-Resistant Operations (Hybrid PQ Consensus)
-- 🔄 **B-Chain**: Cross-Chain Bridges (Planned)
-- 🔄 **Z-Chain**: Zero-Knowledge Proofs (Planned)
-- 🔄 **M-Chain**: TBD (Planned)
+- **Clear distinction**: Regenesis (P,C,X) vs New Deployments (Q,B,Z,M)
 
 **Tools Documented**:
 - `/Users/z/work/lux/state/scripts/export-state-to-genesis.go` - State export tool
 - `/Users/z/work/lux/evm/core/blockchain.go` - Export APIs (Export, ExportN, ExportCallback)
 
-**File**: `/Users/z/work/lux/lps/LPs/lp-326.md` (566 lines)
+**File**: `/Users/z/work/lux/lps/LPs/lp-326.md` (590 lines)
 
-**Note**: C-Chain imports finalized blocks from previous run (Chain ID 96369)
+**Critical Notes**:
+- C-Chain imports finalized blocks from Chain ID 96369
+- Mainnet: P,C,X regenesis; Q,B,Z,M new deployments
+- Other networks: All chains deploy fresh
 
 ---
 
