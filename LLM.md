@@ -66,11 +66,16 @@ Created comprehensive LP-326 documenting blockchain regenesis process with **cri
 - Operational procedures and security considerations
 - **Clear distinction**: Regenesis (P,C,X) vs New Deployments (Q,B,Z,M)
 
-**Tools Documented**:
-- `/Users/z/work/lux/state/scripts/export-state-to-genesis.go` - State export tool
-- `/Users/z/work/lux/evm/core/blockchain.go` - Export APIs (Export, ExportN, ExportCallback)
+**Implementation** (VM Interfaces, NOT Scripts):
+- ✅ **Chain Migration Framework**: `/Users/z/work/lux/node/chainmigrate/`
+  - `ChainExporter` interface - VM-specific export
+  - `ChainImporter` interface - VM-specific import
+  - `ChainMigrator` interface - Orchestration
+- ✅ **lux-cli Commands**: `lux network import`, `lux network start`
+- ❌ **No Scripts**: Scripts like `export-state-to-genesis.go` do NOT exist
+- ❌ **No Direct APIs**: Don't use blockchain.Export() - use VM interfaces
 
-**File**: `/Users/z/work/lux/lps/LPs/lp-326.md` (638 lines)
+**File**: `/Users/z/work/lux/lps/LPs/lp-326.md` (747 lines) - Commit `f79efa8`
 
 **Chain ID History** (7777 → 96369):
 - Original Chain ID: 7777 (Lux mainnet launch)
