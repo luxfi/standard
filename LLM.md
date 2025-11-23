@@ -41,9 +41,10 @@ Created comprehensive LP-326 documenting blockchain regenesis process with **cri
 
 **Mainnet Regenesis Scope** (applies ONLY to P, C, X chains):
 - ⚠️ **ONLY P, C, X chains undergo regenesis** (original Avalanche-based chains)
-- ⚠️ **ONLY C-Chain EVM state is migrated** (full state preservation)
-- ⚠️ **P-Chain**: Minimal state (validators only)
-- ⚠️ **X-Chain**: Minimal state (if any)
+- ⚠️ **ALL THREE chains migrate FULL state** (comprehensive preservation)
+- ✅ **P-Chain**: Full genesis state (100 validators × 1B LUX, 100-year vesting)
+- ✅ **C-Chain**: Full EVM state (accounts, contracts, storage)
+- ✅ **X-Chain**: Full genesis state (LUX allocations, UTXO set)
 - ❌ **Q-Chain**: NEW deployment, NOT part of regenesis
 - ❌ **B, Z, M chains**: NEW deployments (future)
 - 📝 **Non-mainnet networks**: All chains deploy fresh (no regenesis)
@@ -69,7 +70,7 @@ Created comprehensive LP-326 documenting blockchain regenesis process with **cri
 - `/Users/z/work/lux/state/scripts/export-state-to-genesis.go` - State export tool
 - `/Users/z/work/lux/evm/core/blockchain.go` - Export APIs (Export, ExportN, ExportCallback)
 
-**File**: `/Users/z/work/lux/lps/LPs/lp-326.md` (624 lines)
+**File**: `/Users/z/work/lux/lps/LPs/lp-326.md` (638 lines)
 
 **Chain ID History** (7777 → 96369):
 - Original Chain ID: 7777 (Lux mainnet launch)
