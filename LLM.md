@@ -69,10 +69,18 @@ Created comprehensive LP-326 documenting blockchain regenesis process with **cri
 - `/Users/z/work/lux/state/scripts/export-state-to-genesis.go` - State export tool
 - `/Users/z/work/lux/evm/core/blockchain.go` - Export APIs (Export, ExportN, ExportCallback)
 
-**File**: `/Users/z/work/lux/lps/LPs/lp-326.md` (590 lines)
+**File**: `/Users/z/work/lux/lps/LPs/lp-326.md` (624 lines)
+
+**Chain ID History** (7777 → 96369):
+- Original Chain ID: 7777 (Lux mainnet launch)
+- 2024 Reboot: Changed to 96369 due to EIP overlap
+- Historical Data: Preserved at [github.com/luxfi/state](https://github.com/luxfi/state)
+- **Regenesis migrates Chain ID 96369** (continuation of 7777 lineage)
+- EIP-155 compliance for replay attack protection
 
 **Critical Notes**:
 - C-Chain imports finalized blocks from Chain ID 96369
+- Chain ID 96369 = legitimate continuation of original 7777 lineage
 - Mainnet: P,C,X regenesis; Q,B,Z,M new deployments
 - Other networks: All chains deploy fresh
 
