@@ -9,6 +9,12 @@ solc = "0.8.19"
 via_ir = true
 optimizer = true
 optimizer_runs = 200
+# Ignore legacy uni v3 contracts that require 0.7.6
+ignored_error_codes = []
+deny_warnings = false
+fs_permissions = [{ access = "read-write", path = "./" }]
+# Skip problematic external contracts
+skip = ["src/uni/uni3/periphery/**/*.sol", "src/alcx2/**/*.sol"]
 remappings = [
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
     "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/"

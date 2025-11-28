@@ -110,8 +110,14 @@ func (p *mldsaVerifyPrecompile) Run(
 	// Extract message
 	message := input[MinInputSize:expectedSize]
 
-	// Verify signature using our ML-DSA implementation
-	valid := mldsa.Verify(publicKey, message, signature)
+	// Parse public key from bytes (ML-DSA-65 mode)
+	pub, err := mldsa.PublicKeyFromBytes(publicKey, mldsa.MLDSA65)
+	if err != nil {
+		return nil, suppliedGas - gasCost, fmt.Errorf("invalid public key: %w", err)
+	}
+
+	// Verify signature using public key method
+	valid := pub.Verify(message, signature, nil)
 
 	// Return result as 32-byte word (1 = valid, 0 = invalid)
 	result := make([]byte, 32)

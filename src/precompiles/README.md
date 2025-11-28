@@ -20,6 +20,10 @@ Precompiles are located at deterministic addresses starting from `0x020000000000
 | `0x0200000000000000000000000000000000000008` | **Warp** | Cross-chain messaging and attestation | LP-313 |
 | `0x0200000000000000000000000000000000000009` | **PQCrypto** | General post-quantum cryptography operations | LP-310 |
 | `0x020000000000000000000000000000000000000A` | **Quasar** | Advanced consensus operations | LP-99 |
+| `0x020000000000000000000000000000000000000B` | **Ringtail** | Lattice-based threshold signatures (LWE) | LP-320 |
+| `0x020000000000000000000000000000000000000C` | **FROST** | Schnorr/EdDSA threshold signatures | LP-321 |
+| `0x020000000000000000000000000000000000000D` | **CGGMP21** | ECDSA threshold signatures with aborts | LP-322 |
+| `0x020000000000000000000000000000000000000E` | **Bridge** | Cross-chain bridge verification | LP-323 (Reserved) |
 
 ## Categories
 
@@ -84,19 +88,20 @@ These precompiles provide quantum-resistant cryptographic operations per NIST FI
 
 #### SLH-DSA (`0x...0007`)
 - **Purpose**: Verify SLH-DSA signatures (FIPS 205 - SPHINCS+)
-- **Security Level**: NIST Level 3 (192-bit equivalent) 
-- **Key Sizes** (SLH-DSA-192s):
-  - Public Key: 48 bytes
-  - Signature: 16,224 bytes
-- **Performance**: ~15ms verification on Apple M1
-- **Gas Cost**: 500,000 base + 50 gas/byte of message
+- **Security Level**: NIST Level 1-5 (128-256 bit)
+- **Key Sizes** (SLH-DSA-128s):
+  - Public Key: 32 bytes
+  - Signature: 7,856 bytes
+- **Performance**: ~286μs verification on Apple M1
+- **Gas Cost**: 15,000 base + 10 gas/byte of message
 - **Use Cases**:
   - Hash-based quantum-safe signatures
-  - Long-term signature validity
-  - Stateless post-quantum authentication
-- **Documentation**: [slhdsa/](./slhdsa/) *(to be created)*
-- **LP**: [LP-312](../../lps/LPs/lp-312.md) *(to be created)*
-- **Solidity Interface**: [slhdsa/ISLHDSA.sol](./slhdsa/ISLHDSA.sol) *(to be created)*
+  - Long-term signature validity (archival)
+  - Conservative post-quantum security
+  - Firmware update verification
+- **Documentation**: [slhdsa/](./slhdsa/)
+- **LP**: [LP-312](../../lps/LPs/lp-312.md)
+- **Solidity Interface**: [slhdsa/ISLHDSA.sol](./slhdsa/ISLHDSA.sol)
 
 #### PQCrypto (`0x...0009`)
 - **Purpose**: General post-quantum cryptography operations
@@ -126,7 +131,52 @@ These precompiles enable cross-chain communication and messaging:
 - **Documentation**: [warp/](./warp/)
 - **LP**: [LP-313](../../lps/LPs/lp-313.md) *(to be created)*
 
-### 5. Consensus Precompiles
+### 5. Threshold Signature Precompiles
+
+Multi-party computation and threshold signatures for custody and consensus:
+
+#### Ringtail (`0x...000B`)
+- **Purpose**: Lattice-based threshold signature verification
+- **Algorithm**: LWE-based two-round threshold scheme
+- **Security**: Post-quantum (Ring Learning With Errors)
+- **Gas Cost**: 150,000 base + 10,000 per party
+- **Use Cases**:
+  - Quantum-safe threshold wallets
+  - Distributed validator signing
+  - Post-quantum consensus
+  - Multi-party custody
+- **Documentation**: [ringtail/](./ringtail/)
+- **LP**: [LP-320](../../lps/LPs/lp-320.md)
+
+#### FROST (`0x...000C`)
+- **Purpose**: Schnorr/EdDSA threshold signature verification
+- **Algorithm**: FROST (Flexible Round-Optimized Schnorr Threshold)
+- **Standards**: IETF FROST, BIP-340/341 (Taproot)
+- **Gas Cost**: 50,000 base + 5,000 per signer
+- **Signature Size**: 64 bytes (compact Schnorr)
+- **Use Cases**:
+  - Bitcoin Taproot multisig
+  - Ed25519 threshold (Solana, Cardano, TON)
+  - Schnorr aggregate signatures
+  - Lightweight threshold custody
+- **Documentation**: [frost/](./frost/)
+- **LP**: [LP-321](../../lps/LPs/lp-321.md)
+
+#### CGGMP21 (`0x...000D`)
+- **Purpose**: Modern ECDSA threshold signature verification
+- **Algorithm**: CGGMP21 with identifiable aborts
+- **Security**: Detects malicious parties
+- **Gas Cost**: 75,000 base + 10,000 per signer
+- **Signature Size**: 65 bytes (standard ECDSA)
+- **Use Cases**:
+  - Ethereum threshold wallets
+  - Bitcoin threshold multisig
+  - MPC custody solutions
+  - Enterprise key management
+- **Documentation**: [cggmp21/](./cggmp21/)
+- **LP**: [LP-322](../../lps/LPs/lp-322.md)
+
+### 6. Consensus Precompiles
 
 Advanced consensus and validation operations:
 
@@ -134,8 +184,9 @@ Advanced consensus and validation operations:
 - **Purpose**: Advanced consensus operations for Quasar hybrid consensus
 - **Features**:
   - Dual certificate verification (classical + PQ)
-  - Ringtail ring signature verification
-  - Threshold signature operations
+  - BLS signature aggregation
+  - Hybrid BLS+ML-DSA verification
+  - Verkle witness verification
 - **Documentation**: [quasar/](./quasar/)
 - **LP**: [LP-99](../../lps/LPs/lp-99.md)
 
