@@ -36,7 +36,7 @@ contract Drop is IDrop, Ownable {
     _;
   }
 
-  constructor(string memory _title) {
+  constructor(string memory _title) Ownable(msg.sender) {
     title = _title;
   }
 
@@ -70,7 +70,7 @@ contract Drop is IDrop, Ownable {
     tokenType.timestamp = block.timestamp;
     tokenTypes[name] = tokenType;
     tokenNames.push(name);
-    console.log('Drop: Added token type:', tokenType.name);
+    hconsole.log('Drop: Added token type:', tokenType.name);
     emit TokenTypeAdded(tokenType);
     emit TokenTypeAskUpdated(name, ask);
     return tokenType;

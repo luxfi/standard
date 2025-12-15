@@ -68,7 +68,7 @@ contract Farm is Ownable {
         uint256 _rewardPerBlock,
         uint256 _startBlock,
         uint256 _bonusEndBlock
-    ) {
+    ) Ownable(msg.sender) {
         daoAddress = _daoAddress;
         daoShare = _daoShare;
         token = IERC20Mintable(_tokenAddress);

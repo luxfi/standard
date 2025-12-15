@@ -3,8 +3,9 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 import "./AIToken.sol";
 import "./ChainConfig.sol";
@@ -137,7 +138,7 @@ contract AIMining is Ownable, ReentrancyGuard {
     constructor(
         address _aiToken,
         address _chainConfig
-    ) {
+    ) Ownable(msg.sender) {
         aiToken = AIToken(_aiToken);
         chainConfig = ChainConfig(_chainConfig);
         CHAIN_ID = block.chainid;
@@ -392,7 +393,7 @@ contract AIMining is Ownable, ReentrancyGuard {
         bytes32 proofHash,
         bytes calldata signature
     ) internal pure returns (address signer) {
-        bytes32 ethSignedHash = ECDSA.toEthSignedMessageHash(proofHash);
+        bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(proofHash);
         return ECDSA.recover(ethSignedHash, signature);
     }
 

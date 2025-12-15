@@ -4,20 +4,30 @@ pragma solidity ^0.8.0;
 
 /**
  * @title AIDeployConfig
- * @notice Configuration for AI Token deployment across top 20 EVMs
- * @dev Each chain gets 1B AI supply cap with halving schedule
+ * @notice Configuration for AI Token deployment across 10 launch chains
+ * @dev Each chain gets 1B AI supply cap with Bitcoin-aligned halving schedule
+ *
+ * TOKENOMICS (Per Chain):
+ * - 100M AI (10%) - LP seeding allocation
+ * - 900M AI (90%) - Mining allocation (79.4 AI/block, 6.3M block halving)
+ * - 1B AI total supply cap per chain
  *
  * LAUNCH STRATEGY:
- * 1. Deploy AITokenTeleport to each chain
- * 2. Safe multi-sig mints 10% (100M) for LP seeding
- * 3. Setup one-sided LP at 0.0001 BTC price
- * 4. Enable Teleport bridge between chains
- * 5. Mining contracts deployed, genesis block set
- * 6. 90% (900M) mineable via GPU attestation
+ * 1. Deploy AIToken to each chain via CREATE2 (same address)
+ * 2. Safe multi-sig mints 100M AI for LP seeding
+ * 3. Setup LP pools at $0.10/AI (~$10M depth)
+ * 4. Enable Teleport bridge between chains (CGGMP21)
+ * 5. Deploy mining contracts, set genesis block
+ * 6. 900M AI mineable via NVTrust GPU attestation
+ *
+ * PRICING:
+ * - Initial: $0.10/AI (96% discount from $2.50 market)
+ * - Target LP depth: $10M per chain
+ * - Each chain competes on price/compute
  *
  * GOVERNANCE TRANSITION:
- * - Phase 1: Lux Safe multi-sig (MPC managed)
- * - Phase 2: DAO governance on Lux chain
+ * - Phase 1: Lux Safe multi-sig (MPC managed, CGGMP21)
+ * - Phase 2: DAO governance on Lux chain (AI voting)
  * - Phase 3: Cross-chain governance via Teleport
  */
 library AIDeployConfig {
@@ -228,22 +238,45 @@ library SafeAddresses {
 /**
  * @title InitialLPConfig
  * @notice Configuration for initial LP seeding
+ *
+ * LP STRATEGY:
+ * - 100M AI per chain for LP seeding (10% of supply)
+ * - Initial price: $0.10/AI (96% discount from $2.50 market)
+ * - Target depth: $10M per chain
+ * - One-sided liquidity: AI tokens provided, native tokens from swappers
  */
 library InitialLPConfig {
     /// @notice Initial AI allocation for LP (10% = 100M per chain)
     uint256 constant LP_ALLOCATION = 100_000_000 ether;
 
-    /// @notice Target initial price in USD (0.0001 BTC ~ $10 at BTC=$100k)
-    uint256 constant TARGET_PRICE_USD = 10e18; // $10 per AI
+    /// @notice Target initial price in USD ($0.10 per AI)
+    uint256 constant TARGET_PRICE_USD = 100_000_000_000_000_000; // 0.1 ether = $0.10
 
-    /// @notice Calculate LUX needed for one-sided LP
-    /// @dev One-sided LP: provide only AI tokens, price set by initial swap
+    /// @notice Target LP depth in USD per chain
+    uint256 constant TARGET_DEPTH_USD = 10_000_000 ether; // $10M
+
+    /// @notice AI amount for LP pool (50M AI = $5M at $0.10)
+    uint256 constant LP_AI_AMOUNT = 50_000_000 ether; // 50M for pool, 50M reserve
+
+    /// @notice Calculate native token needed for balanced LP
+    /// @dev For balanced pool: 50M AI ($5M) + native token ($5M) = $10M depth
     function calculateLPSetup(
         uint256 aiAmount,
-        uint256 luxPriceUsd
-    ) internal pure returns (uint256 luxEquivalent) {
-        // AI at $10, calculate LUX needed for balanced pool
-        // For one-sided: we only provide AI, LUX comes from first swappers
-        luxEquivalent = (aiAmount * TARGET_PRICE_USD) / luxPriceUsd;
+        uint256 nativeTokenPriceUsd
+    ) internal pure returns (uint256 nativeTokenAmount) {
+        // AI at $0.10, calculate native token needed
+        uint256 aiValueUsd = (aiAmount * TARGET_PRICE_USD) / 1 ether;
+        nativeTokenAmount = (aiValueUsd * 1 ether) / nativeTokenPriceUsd;
+    }
+
+    /// @notice Calculate initial price from pool reserves
+    /// @dev Constant product AMM: k = AI * Native
+    function calculatePrice(
+        uint256 aiReserve,
+        uint256 nativeReserve,
+        uint256 nativeTokenPriceUsd
+    ) internal pure returns (uint256 aiPriceUsd) {
+        // Price = (Native reserve / AI reserve) * Native USD price
+        aiPriceUsd = (nativeReserve * nativeTokenPriceUsd) / aiReserve;
     }
 }

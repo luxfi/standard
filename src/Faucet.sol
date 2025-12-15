@@ -4,11 +4,8 @@ pragma solidity >=0.8.4;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract Faucet is Ownable {
-    using SafeMath for uint256;
-
     uint256 public rate = 10000;
 
     IERC20 token;
@@ -18,7 +15,7 @@ contract Faucet is Ownable {
         uint256 indexed _amount
     );
 
-    constructor(address luxAddress) {
+    constructor(address luxAddress) Ownable(msg.sender) {
         token = IERC20(luxAddress);
     }
 

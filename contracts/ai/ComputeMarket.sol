@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 /**
@@ -190,7 +190,7 @@ contract ComputeMarket is Ownable, ReentrancyGuard {
      * @param _paymentToken AI token address
      * @param _treasury Treasury address for fees
      */
-    constructor(address _paymentToken, address _treasury) {
+    constructor(address _paymentToken, address _treasury) Ownable(msg.sender) {
         if (_paymentToken == address(0)) revert ZeroAddress();
         if (_treasury == address(0)) revert ZeroAddress();
 

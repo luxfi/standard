@@ -14,8 +14,8 @@ contract TestHelpers is Test {
     uint256 constant HUNDRED_TOKENS = 100e18;
     uint256 constant THOUSAND_TOKENS = 1000e18;
     
-    // Generate deterministic addresses
-    function makeAddr(string memory name) internal returns (address) {
+    // Generate deterministic addresses (override forge-std implementation)
+    function makeAddr(string memory name) internal override returns (address) {
         address addr = address(uint160(uint256(keccak256(abi.encodePacked(name)))));
         vm.label(addr, name);
         return addr;

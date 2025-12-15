@@ -48,6 +48,8 @@ contract Auction is IAuctionHouse, ReentrancyGuard, Ownable {
 
     Counters.Counter private _auctionIDTracker;
 
+    constructor() Ownable(msg.sender) {}
+
     /**
      * @notice Require that the specified auction exists
      */

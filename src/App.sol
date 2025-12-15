@@ -92,7 +92,7 @@ contract App is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeable 
 
     token = media.mintToken(msg.sender, token);
 
-    console.log('mint', msg.sender, token.name, token.id);
+    hconsole.log('mint', msg.sender, token.name, token.id);
 
     tokens[token.id] = token;
 
@@ -110,7 +110,7 @@ contract App is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeable 
     require(media.ownerOf(tokenId) == msg.sender, 'App: msg sender must be owner of token');
     tokens[tokenId].name = name;
     emit UpdatedTokenName(tokenId, name);
-    console.log('Updated token name:', name);
+    hconsole.log('Updated token name:', name);
   }
 
   // Set Bid with ETH

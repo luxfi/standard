@@ -43,7 +43,7 @@ interface IFROST {
  */
 library FROSTLib {
     /// @dev Address of the FROST precompile
-    address constant FROST_PRECOMPILE = 0x020000000000000000000000000000000000000C;
+    address constant FROST_PRECOMPILE = 0x020000000000000000000000000000000000000c;
 
     /// @dev Gas cost constants
     uint256 constant BASE_GAS = 50_000;

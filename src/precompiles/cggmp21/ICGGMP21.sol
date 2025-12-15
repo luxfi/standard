@@ -175,6 +175,41 @@ abstract contract CGGMP21Verifier {
         verifyCGGMP21Signature(threshold, totalSigners, publicKey, messageHash, signature);
         emit CGGMP21SignatureVerified(threshold, totalSigners, publicKey, messageHash);
     }
+
+    /**
+     * @notice Verify CGGMP21 signature with event emission (memory version)
+     * @dev Use this when passing storage data that has been copied to memory
+     */
+    function verifyCGGMP21SignatureWithEventMem(
+        uint32 threshold,
+        uint32 totalSigners,
+        bytes memory publicKey,
+        bytes32 messageHash,
+        bytes calldata signature
+    ) internal {
+        // Encode input for precompile
+        bytes memory input = abi.encodePacked(
+            threshold,
+            totalSigners,
+            publicKey,
+            messageHash,
+            signature
+        );
+
+        // Call precompile
+        (bool success, bytes memory result) = CGGMP21Lib.CGGMP21_PRECOMPILE.staticcall(input);
+
+        if (!success || result.length != 32) {
+            revert CGGMP21Lib.SignatureVerificationFailed();
+        }
+
+        bool verified = abi.decode(result, (bool));
+        if (!verified) {
+            revert CGGMP21Lib.InvalidSignature();
+        }
+
+        emit CGGMP21SignatureVerified(threshold, totalSigners, publicKey, messageHash);
+    }
 }
 
 /**
@@ -245,11 +280,12 @@ contract ThresholdWallet is CGGMP21Verifier {
         // Ensure not already executed
         require(!executedTxs[txHash], "Transaction already executed");
 
-        // Verify threshold signature
-        verifyCGGMP21SignatureWithEvent(
+        // Verify threshold signature (copy storage to memory for internal call)
+        bytes memory pubKey = config.publicKey;
+        verifyCGGMP21SignatureWithEventMem(
             config.threshold,
             config.totalSigners,
-            config.publicKey,
+            pubKey,
             txHash,
             signature
         );
