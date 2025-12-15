@@ -189,7 +189,7 @@ contract OmnichainLPRouter is ReentrancyGuard {
         address[] calldata path,
         address to,
         uint256 deadline
-    ) external nonReentrant ensure(deadline) returns (uint256[] memory amounts) {
+    ) public nonReentrant ensure(deadline) returns (uint256[] memory amounts) {
         require(path.length >= 2, "OmnichainLPRouter: Invalid path");
         amounts = _getAmountsOut(amountIn, path);
         require(amounts[amounts.length - 1] >= amountOutMin, "OmnichainLPRouter: Insufficient output");

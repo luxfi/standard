@@ -23,7 +23,7 @@ contract LUXVoting is IVoting, Ownable {
 
     bool proposingLive;
 
-    constructor(IERC20 coinAddress) {
+    constructor(IERC20 coinAddress) Ownable(msg.sender) {
         LUX = coinAddress;
         withdrawAddress = msg.sender;
         proposalFee = 100;

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pragma solidity >=0.8.4;
-pragma experimental ABIEncoderV2;
 
 // Copyright 2019 dYdX Trading Inc.
 //
@@ -19,10 +18,9 @@ pragma experimental ABIEncoderV2;
  * NOTE: This file is a clone of the dydx protocol's Decimal.sol contract. It was forked from https://github.com/dydxprotocol/solo
  * at commit 2d8454e02702fe5bc455b848556660629c3cad36
  *
- * It has not been modified other than to use a newer solidity in the pragma to match the rest of the contract suite of this project
+ * Updated for Solidity 0.8+ with native overflow checks (SafeMath no longer needed).
  */
 
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { Math } from "./Math.sol";
 
 /**
@@ -31,8 +29,6 @@ import { Math } from "./Math.sol";
  * Library that defines a fixed-point number with 18 decimal places.
  */
 library Decimal {
-    using SafeMath for uint256;
-
     // ============ Constants ============
 
     uint256 constant BASE_POW = 18;
@@ -51,7 +47,7 @@ library Decimal {
     }
 
     function onePlus(D256 memory d) internal pure returns (D256 memory) {
-        return D256({value: d.value.add(BASE)});
+        return D256({value: d.value + BASE});
     }
 
     function mul(uint256 target, D256 memory d)

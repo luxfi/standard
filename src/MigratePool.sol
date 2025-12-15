@@ -70,19 +70,19 @@ contract MigratePool {
         // Calculate deadline
         uint deadline = block.timestamp + 15;
 
-        console.log('swapTokens', amountIn, amountOutMin);
-        console.log('balanceOf msg.sender', A.balanceOf(msg.sender));
-        console.log('balanceOf this', A.balanceOf(address(this)));
-        console.log('balanceOf router', A.balanceOf(router));
+        hconsole.log('swapTokens', amountIn, amountOutMin);
+        hconsole.log('balanceOf msg.sender', A.balanceOf(msg.sender));
+        hconsole.log('balanceOf this', A.balanceOf(address(this)));
+        hconsole.log('balanceOf router', A.balanceOf(router));
 
-        console.log('safeTransferFrom', msg.sender, amountIn);
+        hconsole.log('safeTransferFrom', msg.sender, amountIn);
         TransferHelper.safeTransferFrom(a, msg.sender, address(this), amountIn);
 
-        console.log('balanceOf msg.sender', A.balanceOf(msg.sender));
-        console.log('balanceOf this', A.balanceOf(address(this)));
-        console.log('balanceOf router', A.balanceOf(router));
+        hconsole.log('balanceOf msg.sender', A.balanceOf(msg.sender));
+        hconsole.log('balanceOf this', A.balanceOf(address(this)));
+        hconsole.log('balanceOf router', A.balanceOf(router));
 
-        console.log('safeApprove', router, amountIn);
+        hconsole.log('safeApprove', router, amountIn);
         TransferHelper.safeApprove(a, router, amountIn);
 
         Router.swapExactTokensForTokens(
@@ -93,12 +93,12 @@ contract MigratePool {
             deadline
         );
 
-        console.log('Z1 balanceOf msg.sender', A.balanceOf(msg.sender));
-        console.log('Z1 balanceOf this', A.balanceOf(address(this)));
-        console.log('Z1 balanceOf router', A.balanceOf(router));
-        console.log('BNB balanceOf msg.sender', B.balanceOf(msg.sender));
-        console.log('BNB balanceOf this', B.balanceOf(address(this)));
-        console.log('BNB balanceOf router', B.balanceOf(router));
+        hconsole.log('Z1 balanceOf msg.sender', A.balanceOf(msg.sender));
+        hconsole.log('Z1 balanceOf this', A.balanceOf(address(this)));
+        hconsole.log('Z1 balanceOf router', A.balanceOf(router));
+        hconsole.log('BNB balanceOf msg.sender', B.balanceOf(msg.sender));
+        hconsole.log('BNB balanceOf this', B.balanceOf(address(this)));
+        hconsole.log('BNB balanceOf router', B.balanceOf(router));
 
         emit SwapTokens(amountIn, amountOutMin);
     }
@@ -114,11 +114,11 @@ contract MigratePool {
     // Launch new pair and add liquidity
     function launchPool() public onlyOwner returns (address) {
         Factory.createPair(b, c);
-        console.log('Factory.createPair', b, c);
+        hconsole.log('Factory.createPair', b, c);
 
         address pair = Factory.getPair(b, c);
 
-        console.log('Factory.getPair', pair);
+        hconsole.log('Factory.getPair', pair);
         emit Pair(pair, b, c);
 
         uint amountB = B.balanceOf(address(this));
@@ -136,7 +136,7 @@ contract MigratePool {
             msg.sender,
             deadline
         );
-        console.log('Router.addLiquidity', amountB, amountC);
+        hconsole.log('Router.addLiquidity', amountB, amountC);
 
         emit Liquidity(b, amountB, c, amountC);
         return pair;
@@ -150,22 +150,22 @@ contract MigratePool {
         uint256 amountB = B.balanceOf(address(this));
         uint256 amountC = C.balanceOf(address(this));
 
-        console.log(amountA, amountB, amountC);
+        hconsole.log(amountA, amountB, amountC);
 
         if (amountA > 0) {
-            console.log('transferFrom A', receiver, amountA);
+            hconsole.log('transferFrom A', receiver, amountA);
             A.approve(receiver, amountA);
             A.transfer(receiver, amountA);
         }
 
         if (amountB > 0) {
-            console.log('transferFrom B', receiver, amountB);
+            hconsole.log('transferFrom B', receiver, amountB);
             B.approve(receiver, amountB);
             B.transfer(receiver, amountB);
         }
 
         if (amountC > 0) {
-            console.log('transferFrom C', receiver, amountC);
+            hconsole.log('transferFrom C', receiver, amountC);
             C.approve(receiver, amountC);
             C.transfer(receiver, amountC);
         }
@@ -207,7 +207,7 @@ contract MigratePool {
     // Helper to show the init code for the UniswapV2Pair
     function getInitHash() public view returns(bytes32) {
         bytes memory bytecode = type(UniswapV2Pair).creationCode;
-        console.logBytes32(keccak256(abi.encodePacked(bytecode)));
+        hconsole.logBytes32(keccak256(abi.encodePacked(bytecode)));
         return keccak256(abi.encodePacked(bytecode));
     }
 }

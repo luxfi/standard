@@ -95,7 +95,7 @@ contract ChainConfig is Ownable {
 
     // ============ Constructor ============
 
-    constructor() {
+    constructor() Ownable(msg.sender) {
         // Initialize GPU tier multipliers (basis points)
         gpuMultipliers[GPUTier.Consumer] = 5000;       // 0.5x
         gpuMultipliers[GPUTier.Professional] = 10000;  // 1.0x

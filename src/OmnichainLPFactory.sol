@@ -30,10 +30,10 @@ contract OmnichainLPFactory is Ownable {
     event BridgeUpdated(address indexed newBridge);
     event FeeRecipientUpdated(address indexed newRecipient);
     
-    constructor(address _bridge, address _feeRecipient) {
+    constructor(address _bridge, address _feeRecipient) Ownable(msg.sender) {
         require(_bridge != address(0), "OmnichainLPFactory: Invalid bridge");
         require(_feeRecipient != address(0), "OmnichainLPFactory: Invalid fee recipient");
-        
+
         bridge = Bridge(_bridge);
         feeRecipient = _feeRecipient;
     }

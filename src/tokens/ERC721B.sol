@@ -35,8 +35,15 @@ contract ERC721B is ERC721Enumerable, Ownable {
      * name in our case is `LUXTokens` and symbol is `LW3P`.
      * Constructor for LW3P takes in the baseURI to set _baseTokenURI for the collection.
      */
-    constructor (string memory baseURI) ERC721("LUX", "LUX") {
+    constructor (string memory baseURI) ERC721("LUX", "LUX") Ownable(msg.sender) {
         _baseTokenURI = baseURI;
+    }
+
+    /**
+     * @dev OZ 5.x compatibility - _exists was removed, use _ownerOf instead
+     */
+    function _exists(uint256 tokenId) internal view returns (bool) {
+        return _ownerOf(tokenId) != address(0);
     }
 
     function addDrop() public onlyOwner {

@@ -1,0 +1,4 @@
+import type * as safeProxySol from "./SafeProxy.sol";
+export type { safeProxySol };
+export type { IProxyCreationCallback } from "./IProxyCreationCallback";
+export type { SafeProxyFactory } from "./SafeProxyFactory";

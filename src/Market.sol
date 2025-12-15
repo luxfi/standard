@@ -271,7 +271,7 @@ contract Market is IMarket, Ownable {
     emit BidRemoved(tokenId, bid);
     delete _tokenBidders[tokenId][bidder];
 
-    console.log('Market.removeBid', tokenId, bidCurrency, bidOffline);
+    hconsole.log('Market.removeBid', tokenId, bidCurrency, bidOffline);
 
     if (bidCurrency != address(0) && !bidOffline) {
       IERC20 token = IERC20(bidCurrency);
@@ -295,7 +295,7 @@ contract Market is IMarket, Ownable {
     emit LazyBidRemoved(dropId, name, bid);
     delete _lazyTokenBidders[dropTokenTypeName][bidder];
 
-    console.log('Market.removeLazyBidFromApp', dropTokenTypeName, bidCurrency, bidOffline);
+    hconsole.log('Market.removeLazyBidFromApp', dropTokenTypeName, bidCurrency, bidOffline);
 
     if (bidCurrency != address(0) && !bidOffline) {
       IERC20 token = IERC20(bidCurrency);

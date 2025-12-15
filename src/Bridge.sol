@@ -3,7 +3,7 @@
 pragma solidity >=0.8.4;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { DLUX } from "./DLUX.sol";
+// import { DLUX } from "./DLUX.sol";  // Commented: uses legacy ILux interface
 import { IERC20Bridgable } from "./interfaces/IERC20Bridgable.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -12,6 +12,7 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "./console.sol";
 
+// Use hconsole (renamed from console to avoid forge-std conflict)
 contract Bridge is Ownable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -61,7 +62,7 @@ contract Bridge is Ownable {
     // DAO share
     uint256 public daoShare;
 
-    constructor(address _daoAddress, uint _daoShare) {
+    constructor(address _daoAddress, uint _daoShare) Ownable(msg.sender) {
         daoAddress = _daoAddress;
         daoShare = _daoShare;
     }
@@ -88,7 +89,7 @@ contract Bridge is Ownable {
 
     // Enable swapping a new ERC20 token
     function setToken(Token memory token) public onlyOwner {
-        console.log("setToken", token.chainId, token.tokenAddress);
+        hconsole.log("setToken", token.chainId, token.tokenAddress);
         require(token.tokenAddress != address(0), "Token address must not be zero");
 
         require(token.chainId != 0, "Chain ID must not be zero");
@@ -96,14 +97,14 @@ contract Bridge is Ownable {
         // Update token configuration save ID
         token.id = tokenID(token);
         tokens[token.id] = token;
-        console.log("Save token");
+        hconsole.log("Save token");
 
-        console.log("Check enabled Token");
+        hconsole.log("Check enabled Token");
         if (enabledToken(token)) {
-            console.log("AddToken");
+            hconsole.log("AddToken");
             emit AddToken(token.chainId, token.tokenAddress);
         } else {
-            console.log("RemoveToken");
+            hconsole.log("RemoveToken");
             emit RemoveToken(token.chainId, token.tokenAddress);
         }
     }
@@ -111,7 +112,7 @@ contract Bridge is Ownable {
     // Swap from tokenA to tokenB on another chain. User initiated function, relies on msg.sender
     function swap(Token memory tokenA, Token memory tokenB, address recipient, uint256 amount, uint256 nonce) public {
         require(currentChain(tokenA.chainId) || currentChain(tokenB.chainId), "Wrong chain");
-        console.log("swap", msg.sender, recipient, nonce);
+        hconsole.log("swap", msg.sender, recipient, nonce);
         require(enabledToken(tokenA), "Swap from token not enabled");
         require(enabledToken(tokenB), "Swap to token not enabled");
         require(amount > 0, "Amount must be greater than zero");
@@ -133,20 +134,20 @@ contract Bridge is Ownable {
 
         // Burn original tokens
         if (currentChain(tokenA.chainId)) {
-            console.log("burn", msg.sender, amount);
+            hconsole.log("burn", msg.sender, amount);
             burn(tokenA, msg.sender, amount);
         } else
 
         // Mint new tokens
         if (currentChain(tokenB.chainId)) {
-            console.log("mint", msg.sender, amount);
+            hconsole.log("mint", msg.sender, amount);
             mint(tokenB, msg.sender, amount);
         }
     }
 
     // Internal function to burn token + emit event
     function burn(Token memory token, address owner, uint256 amount) internal {
-        console.log("burn", token.tokenAddress, owner, amount);
+        hconsole.log("burn", token.tokenAddress, owner, amount);
 
         if (token.kind == Type.ERC20) {
             IERC20Bridgable(token.tokenAddress).bridgeBurn(owner, amount);
