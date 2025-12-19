@@ -1,5 +1,6 @@
 import '@nomicfoundation/hardhat-ethers'
 import '@nomicfoundation/hardhat-verify'
+import 'hardhat-deploy'
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -60,6 +61,11 @@ export default {
     },
     lux_testnet: {
       url: "https://api.lux-test.network",
+      accounts: process.env.PK ? [process.env.PK] : [],
+    },
+    lux_local: {
+      url: "http://localhost:9630/ext/bc/C/rpc",
+      chainId: 96369,
       accounts: process.env.PK ? [process.env.PK] : [],
     }
   },
@@ -159,5 +165,13 @@ export default {
   },
   sourcify: {
     enabled: false
-  }
+  },
+  namedAccounts: {
+    deployer: {
+      default: 0,
+    },
+    dao: {
+      default: 0,
+    },
+  },
 }
