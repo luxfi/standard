@@ -9,7 +9,7 @@ import { UUPSUpgradeable } from '@openzeppelin/contracts-upgradeable/proxy/utils
 contract GoveranceToken is UUPSUpgradeable, OwnableUpgradeable {
   function _authorizeUpgrade(address newImplementation) internal override onlyOwner { }
 
-  function initialize() public initializer {
-    __Ownable_init_unchained();
+  function initialize(address initialOwner) public initializer {
+    __Ownable_init_unchained(initialOwner);
   }
 }

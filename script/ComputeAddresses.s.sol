@@ -1,0 +1,215 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.28;
+
+import "forge-std/Script.sol";
+import "./Create2Deployer.sol";
+
+// Token imports
+import {WLUX} from "../contracts/tokens/WLUX.sol";
+import {USDC as BridgeUSDC} from "../contracts/bridge/USDC.sol";
+import {USDT as BridgeUSDT} from "../contracts/bridge/USDT.sol";
+import {DAI as BridgeDAI} from "../contracts/bridge/DAI.sol";
+import {WETH as BridgeWETH} from "../contracts/bridge/WETH.sol";
+import {AIToken} from "../contracts/ai/AIToken.sol";
+import {AlchemicTokenV2} from "../contracts/synths/AlchemicTokenV2.sol";
+import {Whitelist} from "../contracts/synths/utils/Whitelist.sol";
+import {AlchemistV2} from "../contracts/synths/AlchemistV2.sol";
+import {TransmuterV2} from "../contracts/synths/TransmuterV2.sol";
+import {TransmuterBuffer} from "../contracts/synths/TransmuterBuffer.sol";
+import {Vault} from "../contracts/perps/core/Vault.sol";
+import {VaultPriceFeed} from "../contracts/perps/core/VaultPriceFeed.sol";
+import {Router} from "../contracts/perps/core/Router.sol";
+import {PositionRouter} from "../contracts/perps/core/PositionRouter.sol";
+import {ShortsTracker} from "../contracts/perps/core/ShortsTracker.sol";
+import {USDG} from "../contracts/perps/tokens/USDG.sol";
+import {GMX} from "../contracts/perps/gmx/GMX.sol";
+import {GLP} from "../contracts/perps/gmx/GLP.sol";
+import {GlpManager} from "../contracts/perps/core/GlpManager.sol";
+
+/// @title ComputeAddresses
+/// @notice Compute all deterministic addresses before deployment
+/// @dev Run this before mainnet deployment to verify expected addresses
+contract ComputeAddresses is Script {
+    // Protocol version for salt generation (must match DeployCreate2)
+    bytes32 constant PROTOCOL_VERSION = keccak256("LUX_STANDARD_V1");
+
+    function salt(string memory name) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(PROTOCOL_VERSION, name));
+    }
+
+    /// @notice Compute address that CREATE2 would produce
+    function computeAddress(
+        address factory,
+        bytes32 _salt,
+        bytes memory bytecode
+    ) internal pure returns (address) {
+        bytes32 bytecodeHash = keccak256(bytecode);
+        return address(uint160(uint256(keccak256(abi.encodePacked(
+            bytes1(0xff),
+            factory,
+            _salt,
+            bytecodeHash
+        )))));
+    }
+
+    function run() public view {
+        // Get the Create2Deployer address (either from env or compute first deployment)
+        address factory = vm.envOr("CREATE2_FACTORY", address(0));
+
+        console.log("");
+        console.log("+====================================================================+");
+        console.log("|          LUX STANDARD - PREDICTED CONTRACT ADDRESSES              |");
+        console.log("+====================================================================+");
+        console.log("");
+
+        if (factory == address(0)) {
+            console.log("NOTE: CREATE2_FACTORY env var not set.");
+            console.log("      Set it after deploying Create2Deployer to compute addresses.");
+            console.log("");
+            console.log("Example:");
+            console.log("  CREATE2_FACTORY=0x... forge script script/ComputeAddresses.s.sol");
+            console.log("");
+            return;
+        }
+
+        console.log("Create2Deployer:", factory);
+        console.log("");
+
+        // Treasury address for AIToken (use placeholder if not set)
+        address treasury = vm.envOr("TREASURY", address(0x9011E888251AB053B7bD1cdB598Db4f9DEd94714));
+
+        // ═══════════════════════════════════════════════════════════════════
+        // TOKENS
+        // ═══════════════════════════════════════════════════════════════════
+
+        console.log("TOKENS:");
+
+        address wlux = computeAddress(factory, salt("WLUX"), type(WLUX).creationCode);
+        console.log("  WLUX:    ", wlux);
+
+        address usdc = computeAddress(factory, salt("USDC"), type(BridgeUSDC).creationCode);
+        console.log("  USDC:    ", usdc);
+
+        address usdt = computeAddress(factory, salt("USDT"), type(BridgeUSDT).creationCode);
+        console.log("  USDT:    ", usdt);
+
+        address dai = computeAddress(factory, salt("DAI"), type(BridgeDAI).creationCode);
+        console.log("  DAI:     ", dai);
+
+        address weth = computeAddress(factory, salt("WETH"), type(BridgeWETH).creationCode);
+        console.log("  WETH:    ", weth);
+
+        bytes memory aiTokenBytecode = abi.encodePacked(
+            type(AIToken).creationCode,
+            abi.encode(treasury, treasury)
+        );
+        address aiToken = computeAddress(factory, salt("AIToken"), aiTokenBytecode);
+        console.log("  AIToken: ", aiToken);
+
+        console.log("");
+
+        // ═══════════════════════════════════════════════════════════════════
+        // SYNTHS
+        // ═══════════════════════════════════════════════════════════════════
+
+        console.log("SYNTHS:");
+
+        address whitelist = computeAddress(factory, salt("Whitelist"), type(Whitelist).creationCode);
+        console.log("  Whitelist:     ", whitelist);
+
+        bytes memory alUSDBytecode = abi.encodePacked(
+            type(AlchemicTokenV2).creationCode,
+            abi.encode("Alchemic USD", "alUSD", uint256(0))
+        );
+        address alUSD = computeAddress(factory, salt("alUSD"), alUSDBytecode);
+        console.log("  alUSD:         ", alUSD);
+
+        bytes memory alETHBytecode = abi.encodePacked(
+            type(AlchemicTokenV2).creationCode,
+            abi.encode("Alchemic ETH", "alETH", uint256(0))
+        );
+        address alETH = computeAddress(factory, salt("alETH"), alETHBytecode);
+        console.log("  alETH:         ", alETH);
+
+        bytes memory alBTCBytecode = abi.encodePacked(
+            type(AlchemicTokenV2).creationCode,
+            abi.encode("Alchemic BTC", "alBTC", uint256(0))
+        );
+        address alBTC = computeAddress(factory, salt("alBTC"), alBTCBytecode);
+        console.log("  alBTC:         ", alBTC);
+
+        address transmuterBuffer = computeAddress(factory, salt("TransmuterBufferUSD"), type(TransmuterBuffer).creationCode);
+        console.log("  TransmuterBuffer:", transmuterBuffer);
+
+        address transmuter = computeAddress(factory, salt("TransmuterUSD"), type(TransmuterV2).creationCode);
+        console.log("  TransmuterV2:  ", transmuter);
+
+        address alchemistUSD = computeAddress(factory, salt("AlchemistUSD"), type(AlchemistV2).creationCode);
+        console.log("  AlchemistUSD:  ", alchemistUSD);
+
+        address alchemistETH = computeAddress(factory, salt("AlchemistETH"), type(AlchemistV2).creationCode);
+        console.log("  AlchemistETH:  ", alchemistETH);
+
+        console.log("");
+
+        // ═══════════════════════════════════════════════════════════════════
+        // PERPS
+        // ═══════════════════════════════════════════════════════════════════
+
+        console.log("PERPS:");
+
+        bytes memory usdgBytecode = abi.encodePacked(
+            type(USDG).creationCode,
+            abi.encode(address(0))
+        );
+        address usdg = computeAddress(factory, salt("USDG"), usdgBytecode);
+        console.log("  USDG:          ", usdg);
+
+        address vaultPriceFeed = computeAddress(factory, salt("VaultPriceFeed"), type(VaultPriceFeed).creationCode);
+        console.log("  VaultPriceFeed:", vaultPriceFeed);
+
+        address vault = computeAddress(factory, salt("Vault"), type(Vault).creationCode);
+        console.log("  Vault:         ", vault);
+
+        address gmx = computeAddress(factory, salt("GMX"), type(GMX).creationCode);
+        console.log("  GMX:           ", gmx);
+
+        address glp = computeAddress(factory, salt("GLP"), type(GLP).creationCode);
+        console.log("  GLP:           ", glp);
+
+        bytes memory shortsTrackerBytecode = abi.encodePacked(
+            type(ShortsTracker).creationCode,
+            abi.encode(vault)
+        );
+        address shortsTracker = computeAddress(factory, salt("ShortsTracker"), shortsTrackerBytecode);
+        console.log("  ShortsTracker: ", shortsTracker);
+
+        bytes memory routerBytecode = abi.encodePacked(
+            type(Router).creationCode,
+            abi.encode(vault, usdg, weth)
+        );
+        address router = computeAddress(factory, salt("Router"), routerBytecode);
+        console.log("  Router:        ", router);
+
+        bytes memory positionRouterBytecode = abi.encodePacked(
+            type(PositionRouter).creationCode,
+            abi.encode(vault, router, weth, shortsTracker, 30, 1e16)
+        );
+        address positionRouter = computeAddress(factory, salt("PositionRouter"), positionRouterBytecode);
+        console.log("  PositionRouter:", positionRouter);
+
+        bytes memory glpManagerBytecode = abi.encodePacked(
+            type(GlpManager).creationCode,
+            abi.encode(vault, usdg, glp, shortsTracker, 15 minutes)
+        );
+        address glpManager = computeAddress(factory, salt("GlpManager"), glpManagerBytecode);
+        console.log("  GlpManager:    ", glpManager);
+
+        console.log("");
+        console.log("+====================================================================+");
+        console.log("");
+        console.log("These addresses will be the same on ALL chains when deployed through");
+        console.log("the same Create2Deployer at:", factory);
+        console.log("");
+    }
+}

@@ -135,10 +135,9 @@ contract HanzoRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeabl
         address shinToken_,
         address hanzoNft_
     ) public initializer {
-        __Ownable_init();
+        __Ownable_init(owner_);
         __Ownable2Step_init();
         __UUPSUpgradeable_init();
-        _transferOwnership(owner_);
 
         shinToken = HanzoTokenInterface(shinToken_);
         hanzoNft = HanzoNftInterface(hanzoNft_);
