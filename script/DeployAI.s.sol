@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Script.sol";
-import "../src/tokens/AI.sol";
+import "../contracts/ai/AIToken.sol";
 
 /**
  * @title DeployAI

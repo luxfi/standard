@@ -1,4 +1,13 @@
 {
+  "lib/aave-v3": {
+    "rev": "782f51917056a53a2c228701058a6c3fb233684a"
+  },
+  "lib/account-abstraction": {
+    "rev": "b36a1ed52ae00da6f8a4c8d50181e2877e4fa410"
+  },
+  "lib/alchemix-v2": {
+    "rev": "8915ef7b1714c16f9e260a4ef41c5f254d5b7f58"
+  },
   "lib/base64": {
     "tag": {
       "name": "v1.1.0",
@@ -10,6 +19,39 @@
       "name": "v2.7.0",
       "rev": "e8d8a6040e7b1736d1527344c500a8fb37abbc61"
     }
+  },
+  "lib/chainlink-contracts": {
+    "rev": "67887b84d3add02a25ef4145fc014e2f549509da"
+  },
+  "lib/clones-with-immutable-args": {
+    "rev": "196f1ecc6485c1bf2d41677fa01d3df4927ff9ce"
+  },
+  "lib/compound": {
+    "rev": "80d38c945a36c6d686960a0d5293514b5e7f7419"
+  },
+  "lib/forge-std": {
+    "rev": "3f999523613ab5454a5c4ae4abeaa8ea2ba7bcae"
+  },
+  "lib/gmx-contracts": {
+    "rev": "fe55c4ba8911ae2378b50bfb9bece5ee50cf2af8"
+  },
+  "lib/gmx-synthetics": {
+    "rev": "3b9e1399ecae352814a2602650d21721e1e03693"
+  },
+  "lib/layerzero-v2": {
+    "rev": "ab9b083410b9359285a5756807e1b6145d4711a7"
+  },
+  "lib/lssvm2": {
+    "rev": "1b18945b6c8f3e74052ffae0385bd2640d167e81"
+  },
+  "lib/manifoldxyz": {
+    "rev": "8e3ade55bc2390353145f656bb2785e46edcb970"
+  },
+  "lib/openzeppelin-contracts": {
+    "rev": "69c8def5f222ff96f2b5beff05dfba996368aa79"
+  },
+  "lib/openzeppelin-contracts-upgradeable": {
+    "rev": "fa525310e45f91eb20a6d3baa2644be8e0adba31"
   },
   "lib/prb-math": {
     "tag": {
@@ -29,7 +71,22 @@
       "rev": "dc437e8fba8b4805d76bcbd1c668c9fd3d1e83be"
     }
   },
+  "lib/seaport": {
+    "rev": "080133906585660f6a76b82984f3fb690ff4b2a9"
+  },
   "lib/solmate": {
     "rev": "89365b880c4f3c786bdd453d4b8e8fe410344a69"
+  },
+  "lib/uniswap-lib": {
+    "rev": "c01640b0f0f1d8a85cba8de378cc48469fcfd9a6"
+  },
+  "lib/v2-core": {
+    "rev": "ee547b17853e71ed4e0101ccfd52e70d5acded58"
+  },
+  "lib/v3-core": {
+    "rev": "d8b1c635c275d2a9450bd6a78f3fa2484fef73eb"
+  },
+  "lib/v3-periphery": {
+    "rev": "0682387198a24c7cd63566a2c58398533860a5d1"
   }
 }
