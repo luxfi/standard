@@ -8,12 +8,12 @@ import "./LamportLib.sol";
  * @notice Test contract for Lamport signature verification
  */
 contract LamportTest {
-    bytes32[256][2] public pubKey;
+    bytes32[2][256] public pubKey;
     bool public pubKeySet;
 
     event SignatureVerified(bytes32 message);
 
-    function setPubKey(bytes32[256][2] memory _pubKey) external {
+    function setPubKey(bytes32[2][256] memory _pubKey) external {
         pubKey = _pubKey;
         pubKeySet = true;
     }

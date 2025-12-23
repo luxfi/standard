@@ -8,9 +8,10 @@ import "../../contracts/crypto/lamport/LamportLib.sol";
 contract LamportFoundryTest is Test {
     LamportTest public lamportContract;
     
-    // Test keys (normally generated off-chain)
-    bytes32[256][2] public testPrivateKey;
-    bytes32[256][2] public testPublicKey;
+    // Keys for testing (normally generated off-chain)
+    // bytes32[2][256] means 256 pairs of 2 bytes32 values each
+    bytes32[2][256] internal privKey;
+    bytes32[2][256] internal pubKey;
     
     function setUp() public {
         lamportContract = new LamportTest();
@@ -18,11 +19,11 @@ contract LamportFoundryTest is Test {
         // Generate a test key pair
         // In production, this would be done off-chain
         for (uint i = 0; i < 256; i++) {
-            testPrivateKey[i][0] = keccak256(abi.encode("private", i, 0));
-            testPrivateKey[i][1] = keccak256(abi.encode("private", i, 1));
+            privKey[i][0] = keccak256(abi.encode("private", i, 0));
+            privKey[i][1] = keccak256(abi.encode("private", i, 1));
             
-            testPublicKey[i][0] = keccak256(abi.encode(testPrivateKey[i][0]));
-            testPublicKey[i][1] = keccak256(abi.encode(testPrivateKey[i][1]));
+            pubKey[i][0] = keccak256(abi.encode(privKey[i][0]));
+            pubKey[i][1] = keccak256(abi.encode(privKey[i][1]));
         }
     }
     
@@ -33,11 +34,11 @@ contract LamportFoundryTest is Test {
         // Generate signature
         for (uint i = 0; i < 256; i++) {
             uint8 bit = uint8((uint256(message) >> (255 - i)) & 1);
-            signature[i] = testPrivateKey[i][bit];
+            signature[i] = privKey[i][bit];
         }
         
         // Verify signature
-        bool isValid = LamportLib.verify(message, signature, testPublicKey);
+        bool isValid = LamportLib.verify(message, signature, pubKey);
         assertTrue(isValid);
     }
     
@@ -49,11 +50,11 @@ contract LamportFoundryTest is Test {
         for (uint i = 0; i < 256; i++) {
             uint8 bit = uint8((uint256(message) >> (255 - i)) & 1);
             // Intentionally use wrong key half
-            signature[i] = testPrivateKey[i][1 - bit];
+            signature[i] = privKey[i][1 - bit];
         }
         
         // Verification should fail
-        bool isValid = LamportLib.verify(message, signature, testPublicKey);
+        bool isValid = LamportLib.verify(message, signature, pubKey);
         assertFalse(isValid);
     }
     
@@ -65,19 +66,19 @@ contract LamportFoundryTest is Test {
         // Generate signature for message1
         for (uint i = 0; i < 256; i++) {
             uint8 bit = uint8((uint256(message1) >> (255 - i)) & 1);
-            signature[i] = testPrivateKey[i][bit];
+            signature[i] = privKey[i][bit];
         }
         
         // Verify with message1 - should pass
-        assertTrue(LamportLib.verify(message1, signature, testPublicKey));
+        assertTrue(LamportLib.verify(message1, signature, pubKey));
         
         // Verify with message2 - should fail
-        assertFalse(LamportLib.verify(message2, signature, testPublicKey));
+        assertFalse(LamportLib.verify(message2, signature, pubKey));
     }
     
     function testLamportContract() public {
         // Set public key in contract
-        lamportContract.setPubKey(testPublicKey);
+        lamportContract.setPubKey(pubKey);
         
         // Generate a message and signature
         bytes32 message = keccak256("Contract test message");
@@ -85,7 +86,7 @@ contract LamportFoundryTest is Test {
         
         for (uint i = 0; i < 256; i++) {
             uint8 bit = uint8((uint256(message) >> (255 - i)) & 1);
-            signature[i] = testPrivateKey[i][bit];
+            signature[i] = privKey[i][bit];
         }
         
         // Call the contract with valid signature
@@ -103,14 +104,14 @@ contract LamportFoundryTest is Test {
     
     function testGasUsage() public {
         // Set up contract with public key
-        lamportContract.setPubKey(testPublicKey);
+        lamportContract.setPubKey(pubKey);
         
         bytes32 message = keccak256("Gas test message");
         bytes32[] memory signature = new bytes32[](256);
         
         for (uint i = 0; i < 256; i++) {
             uint8 bit = uint8((uint256(message) >> (255 - i)) & 1);
-            signature[i] = testPrivateKey[i][bit];
+            signature[i] = privKey[i][bit];
         }
         
         // Measure gas for verification
@@ -131,14 +132,14 @@ contract LamportFoundryTest is Test {
         
         for (uint i = 0; i < 256; i++) {
             uint8 bit = uint8((uint256(message) >> (255 - i)) & 1);
-            signature[i] = testPrivateKey[i][bit];
+            signature[i] = privKey[i][bit];
         }
         
         // Verification should always pass with correct signature
-        assertTrue(LamportLib.verify(message, signature, testPublicKey));
+        assertTrue(LamportLib.verify(message, signature, pubKey));
         
         // Modify one bit of signature - should fail
-        signature[0] = testPrivateKey[0][1 - uint8(uint256(message) >> 255 & 1)];
-        assertFalse(LamportLib.verify(message, signature, testPublicKey));
+        signature[0] = privKey[0][1 - uint8(uint256(message) >> 255 & 1)];
+        assertFalse(LamportLib.verify(message, signature, pubKey));
     }
 }
