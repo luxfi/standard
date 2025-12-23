@@ -1,0 +1,77 @@
+---
+title: Bridge & Teleport
+description: Cross-chain asset transfers using MPC oracles and Warp messaging
+---
+
+# Bridge & Teleport
+
+Cross-chain bridge infrastructure for transferring assets between Lux Network and external chains.
+
+## Contracts
+
+<Cards>
+  <Card title="Bridge" href="/docs/bridge/bridge">
+    MPC-oracle bridge for cross-chain token transfers
+  </Card>
+  <Card title="Warp Messaging" href="/docs/bridge/warp">
+    Native Lux cross-subnet messaging
+  </Card>
+</Cards>
+
+## Architecture
+
+```
+┌───────────────────┐                    ┌───────────────────┐
+│   Source Chain    │                    │   Dest Chain      │
+│   (Ethereum)      │                    │   (Lux)           │
+├───────────────────┤                    ├───────────────────┤
+│                   │                    │                   │
+│  1. User burns    │                    │  4. User claims   │
+│     tokens        │─────────────────▶  │     minted tokens │
+│                   │     MPC Oracle     │                   │
+│  2. Event logged  │     Validation     │  3. MPC signs     │
+│                   │                    │     mint tx       │
+└───────────────────┘                    └───────────────────┘
+```
+
+## Bridge Flow
+
+1. **Burn** - User burns tokens on source chain
+2. **Sign** - MPC oracle network validates and signs
+3. **Mint** - User submits signed message to mint on destination
+4. **Claim** - Tokens minted to recipient
+
+## Quick Start
+
+```solidity
+import "@luxfi/standard/src/teleport/Bridge.sol";
+import "@luxfi/standard/src/tokens/ERC20B.sol";
+
+// Burn tokens on source chain
+bridge.bridgeBurn(amount, tokenAddress);
+
+// Claim on destination chain (with MPC signature)
+bridge.bridgeMintStealth(
+    amount,
+    hashedTxId,
+    recipient,
+    mpcSignature,
+    tokenAddress,
+    chainId,
+    vault
+);
+```
+
+## Security
+
+- **MPC Oracle**: Threshold signatures from distributed validators
+- **Replay Protection**: Transaction IDs prevent double-minting
+- **Admin Controls**: Pause/unpause, fee management
+
+## Supported Tokens
+
+All ERC20B tokens can be bridged:
+- LUX
+- LUXD
+- AI
+- Custom tokens inheriting ERC20B

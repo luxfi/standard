@@ -1,0 +1,290 @@
+---
+title: Liquidity Pools
+description: V2 constant-product and V3 concentrated liquidity pools
+---
+
+# Liquidity Pools
+
+AMM liquidity pools enable decentralized token swaps. V2 pools use constant-product (x*y=k), while V3 pools offer concentrated liquidity for higher capital efficiency.
+
+## V2 Pools (Constant Product)
+
+### UniswapV2Factory
+
+Creates and manages V2 trading pairs.
+
+```solidity
+interface IUniswapV2Factory {
+    function createPair(address tokenA, address tokenB) external returns (address pair);
+    function getPair(address tokenA, address tokenB) external view returns (address pair);
+    function allPairs(uint256) external view returns (address pair);
+    function allPairsLength() external view returns (uint256);
+    function feeTo() external view returns (address);
+    function feeToSetter() external view returns (address);
+}
+```
+
+### UniswapV2Pair
+
+Individual trading pair with constant-product invariant.
+
+```solidity
+interface IUniswapV2Pair {
+    // Get reserves
+    function getReserves() external view returns (
+        uint112 reserve0,
+        uint112 reserve1,
+        uint32 blockTimestampLast
+    );
+
+    // Swap tokens
+    function swap(
+        uint256 amount0Out,
+        uint256 amount1Out,
+        address to,
+        bytes calldata data
+    ) external;
+
+    // Add liquidity
+    function mint(address to) external returns (uint256 liquidity);
+
+    // Remove liquidity
+    function burn(address to) external returns (uint256 amount0, uint256 amount1);
+
+    // Price oracle
+    function price0CumulativeLast() external view returns (uint256);
+    function price1CumulativeLast() external view returns (uint256);
+}
+```
+
+### V2 Math
+
+```
+Constant Product: x * y = k
+
+Swap Output:
+  amountOut = (amountIn * 997 * reserveOut) / (reserveIn * 1000 + amountIn * 997)
+
+LP Token Value:
+  liquidity = sqrt(amount0 * amount1)
+```
+
+## V3 Pools (Concentrated Liquidity)
+
+### UniswapV3Factory
+
+Creates V3 pools with multiple fee tiers.
+
+```solidity
+interface IUniswapV3Factory {
+    function createPool(
+        address tokenA,
+        address tokenB,
+        uint24 fee
+    ) external returns (address pool);
+
+    function getPool(
+        address tokenA,
+        address tokenB,
+        uint24 fee
+    ) external view returns (address pool);
+
+    function feeAmountTickSpacing(uint24 fee) external view returns (int24);
+}
+```
+
+### UniswapV3Pool
+
+Concentrated liquidity pool with tick-based positions.
+
+```solidity
+interface IUniswapV3Pool {
+    // Current state
+    function slot0() external view returns (
+        uint160 sqrtPriceX96,
+        int24 tick,
+        uint16 observationIndex,
+        uint16 observationCardinality,
+        uint16 observationCardinalityNext,
+        uint8 feeProtocol,
+        bool unlocked
+    );
+
+    // Liquidity
+    function liquidity() external view returns (uint128);
+
+    // Swap
+    function swap(
+        address recipient,
+        bool zeroForOne,
+        int256 amountSpecified,
+        uint160 sqrtPriceLimitX96,
+        bytes calldata data
+    ) external returns (int256 amount0, int256 amount1);
+
+    // Flash loan
+    function flash(
+        address recipient,
+        uint256 amount0,
+        uint256 amount1,
+        bytes calldata data
+    ) external;
+
+    // Price oracle
+    function observe(uint32[] calldata secondsAgos)
+        external view returns (
+            int56[] memory tickCumulatives,
+            uint160[] memory secondsPerLiquidityCumulativeX128s
+        );
+}
+```
+
+### Concentrated Liquidity
+
+Unlike V2's full-range liquidity, V3 allows LPs to concentrate liquidity in specific price ranges:
+
+```
+Price Range: [tickLower, tickUpper]
+
+Example: ETH/USDC pool
+- Full range V2: $0 to ∞
+- Concentrated V3: $1,800 to $2,200 (4x capital efficiency)
+
+Tick Math:
+  price = 1.0001^tick
+  tick = log₁.₀₀₀₁(price)
+```
+
+### Position NFT
+
+V3 positions are represented as NFTs:
+
+```solidity
+interface INonfungiblePositionManager {
+    function mint(MintParams calldata params)
+        external payable returns (
+            uint256 tokenId,
+            uint128 liquidity,
+            uint256 amount0,
+            uint256 amount1
+        );
+
+    function increaseLiquidity(IncreaseLiquidityParams calldata params)
+        external payable returns (
+            uint128 liquidity,
+            uint256 amount0,
+            uint256 amount1
+        );
+
+    function decreaseLiquidity(DecreaseLiquidityParams calldata params)
+        external payable returns (uint256 amount0, uint256 amount1);
+
+    function collect(CollectParams calldata params)
+        external payable returns (uint256 amount0, uint256 amount1);
+}
+```
+
+## Creating a Pool
+
+### V2 Pool
+
+```solidity
+// Create pair
+address pair = factory.createPair(tokenA, tokenB);
+
+// Add initial liquidity
+tokenA.transfer(pair, amountA);
+tokenB.transfer(pair, amountB);
+IUniswapV2Pair(pair).mint(lpRecipient);
+```
+
+### V3 Pool
+
+```solidity
+// Create pool with 0.3% fee
+address pool = factory.createPool(tokenA, tokenB, 3000);
+
+// Initialize price
+IUniswapV3Pool(pool).initialize(sqrtPriceX96);
+
+// Add liquidity via position manager
+positionManager.mint(MintParams({
+    token0: tokenA,
+    token1: tokenB,
+    fee: 3000,
+    tickLower: -887220,
+    tickUpper: 887220,
+    amount0Desired: amountA,
+    amount1Desired: amountB,
+    amount0Min: 0,
+    amount1Min: 0,
+    recipient: msg.sender,
+    deadline: block.timestamp
+}));
+```
+
+## Events
+
+### V2 Events
+
+```solidity
+event Mint(address indexed sender, uint256 amount0, uint256 amount1);
+event Burn(address indexed sender, uint256 amount0, uint256 amount1, address indexed to);
+event Swap(
+    address indexed sender,
+    uint256 amount0In,
+    uint256 amount1In,
+    uint256 amount0Out,
+    uint256 amount1Out,
+    address indexed to
+);
+event Sync(uint112 reserve0, uint112 reserve1);
+```
+
+### V3 Events
+
+```solidity
+event Mint(
+    address sender,
+    address indexed owner,
+    int24 indexed tickLower,
+    int24 indexed tickUpper,
+    uint128 amount,
+    uint256 amount0,
+    uint256 amount1
+);
+
+event Burn(
+    address indexed owner,
+    int24 indexed tickLower,
+    int24 indexed tickUpper,
+    uint128 amount,
+    uint256 amount0,
+    uint256 amount1
+);
+
+event Swap(
+    address indexed sender,
+    address indexed recipient,
+    int256 amount0,
+    int256 amount1,
+    uint160 sqrtPriceX96,
+    uint128 liquidity,
+    int24 tick
+);
+
+event Flash(
+    address indexed sender,
+    address indexed recipient,
+    uint256 amount0,
+    uint256 amount1,
+    uint256 paid0,
+    uint256 paid1
+);
+```
+
+## Related
+
+- [Router](/docs/amm/router) - SwapRouter02 for executing swaps
+- [WLUX](/docs/amm/wlux) - Wrapped LUX for pool compatibility
+- [Lending](/docs/defi/lending) - Flash loans from V3 pools

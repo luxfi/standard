@@ -1,0 +1,239 @@
+---
+title: Margin Vault
+description: Central liquidity pool for margin trading with DEX precompile access
+---
+
+# Margin Vault
+
+The Vault is the central contract that holds all liquidity and manages margin trading positions. It handles deposits, withdrawals, swaps, and leveraged positions.
+
+**See also:** [Lux DEX](https://github.com/luxfi/dex) for the full CLOB trading infrastructure.
+
+## DEX Precompile Integration
+
+Margin trading accesses the Lux DEX via EVM precompiles for high-performance order matching:
+
+| Precompile | Address | Purpose |
+|------------|---------|---------|
+| DEX Router | `0x0200...0010` | Order routing and matching |
+| Price Oracle | `0x0200...0011` | Real-time price feeds |
+| Liquidation | `0x0200...0012` | Automated position liquidation |
+
+### DEX Performance
+
+The underlying [Lux DEX](https://github.com/luxfi/dex) provides:
+- **434M orders/sec** throughput (GPU/MLX)
+- **1ms finality** via FPC consensus
+- **Sub-microsecond** matching latency
+- **Full on-chain CLOB** (Central Limit Order Book)
+
+### Precompile Usage
+
+```solidity
+// Access DEX precompile for order submission
+interface IDEXPrecompile {
+    function submitOrder(
+        bytes32 market,
+        bool isBuy,
+        uint256 price,
+        uint256 amount
+    ) external returns (bytes32 orderId);
+
+    function cancelOrder(bytes32 orderId) external returns (bool);
+
+    function getOrderBook(bytes32 market, uint8 depth)
+        external view returns (uint256[] memory bids, uint256[] memory asks);
+}
+
+IDEXPrecompile constant DEX = IDEXPrecompile(0x0200000000000000000000000000000000000010);
+
+// Submit a limit order via precompile
+bytes32 orderId = DEX.submitOrder(
+    keccak256("LUX/LUXD"),  // market
+    true,                   // buy
+    1500e18,                // price
+    10e18                   // amount
+);
+```
+
+## Constants
+
+| Name | Value | Description |
+|------|-------|-------------|
+| `BASIS_POINTS_DIVISOR` | 10000 | Base for fee calculations |
+| `PRICE_PRECISION` | 10^30 | Price precision |
+| `MIN_LEVERAGE` | 10000 | Minimum leverage (1x) |
+| `MAX_LEVERAGE` | 500000 | Maximum leverage (50x) |
+| `MAX_FEE_BASIS_POINTS` | 500 | Max fee (5%) |
+
+## Key Functions
+
+### Position Management
+
+#### increasePosition
+
+```solidity
+function increasePosition(
+    address _account,
+    address _collateralToken,
+    address _indexToken,
+    uint256 _sizeDelta,
+    bool _isLong
+) external override nonReentrant
+```
+
+Opens or increases a leveraged position.
+
+#### decreasePosition
+
+```solidity
+function decreasePosition(
+    address _account,
+    address _collateralToken,
+    address _indexToken,
+    uint256 _collateralDelta,
+    uint256 _sizeDelta,
+    bool _isLong,
+    address _receiver
+) external override nonReentrant returns (uint256)
+```
+
+Closes or decreases a position.
+
+#### liquidatePosition
+
+```solidity
+function liquidatePosition(
+    address _account,
+    address _collateralToken,
+    address _indexToken,
+    bool _isLong,
+    address _feeReceiver
+) external override nonReentrant
+```
+
+Liquidates an undercollateralized position.
+
+### Swaps
+
+#### swap
+
+```solidity
+function swap(
+    address _tokenIn,
+    address _tokenOut,
+    address _receiver
+) external override nonReentrant returns (uint256)
+```
+
+Swaps tokens through the vault liquidity.
+
+### View Functions
+
+```solidity
+function getPosition(
+    address _account,
+    address _collateralToken,
+    address _indexToken,
+    bool _isLong
+) public view returns (
+    uint256 size,
+    uint256 collateral,
+    uint256 averagePrice,
+    uint256 entryFundingRate,
+    uint256 reserveAmount,
+    uint256 realisedPnl,
+    bool hasProfit,
+    uint256 lastIncreasedTime
+)
+```
+
+## Position Struct
+
+```solidity
+struct Position {
+    uint256 size;             // Position size in USD
+    uint256 collateral;       // Collateral amount in USD
+    uint256 averagePrice;     // Average entry price
+    uint256 entryFundingRate; // Funding rate at entry
+    uint256 reserveAmount;    // Reserved liquidity
+    int256 realisedPnl;       // Realized profit/loss
+    uint256 lastIncreasedTime;
+}
+```
+
+## Fee Structure
+
+| Fee Type | Default | Description |
+|----------|---------|-------------|
+| Margin Fee | 0.1% (10 bps) | Fee on position size changes |
+| Swap Fee | 0.3% (30 bps) | Fee on token swaps |
+| Stable Swap Fee | 0.04% (4 bps) | Fee on stablecoin swaps |
+| Tax | 0.5% (50 bps) | Dynamic tax based on pool balance |
+| Liquidation Fee | $5 | Fixed fee for liquidations |
+
+## Events
+
+```solidity
+event IncreasePosition(
+    bytes32 key,
+    address account,
+    address collateralToken,
+    address indexToken,
+    uint256 collateralDelta,
+    uint256 sizeDelta,
+    bool isLong,
+    uint256 price,
+    uint256 fee
+);
+
+event DecreasePosition(
+    bytes32 key,
+    address account,
+    address collateralToken,
+    address indexToken,
+    uint256 collateralDelta,
+    uint256 sizeDelta,
+    bool isLong,
+    uint256 price,
+    uint256 fee
+);
+
+event LiquidatePosition(
+    bytes32 key,
+    address account,
+    address collateralToken,
+    address indexToken,
+    bool isLong,
+    uint256 size,
+    uint256 collateral,
+    uint256 reserveAmount,
+    int256 realisedPnl,
+    uint256 markPrice
+);
+```
+
+## Usage Example
+
+```solidity
+import "@luxfi/standard/src/margin/Vault.sol";
+
+// Check if position can be liquidated
+(uint256 liquidationState, uint256 marginFee) = vault.validateLiquidation(
+    account,
+    collateralToken,
+    indexToken,
+    isLong,
+    false // don't raise error
+);
+
+// Get current position
+(
+    uint256 size,
+    uint256 collateral,
+    uint256 avgPrice,
+    ,,,
+    bool hasProfit,
+    uint256 delta
+) = vault.getPosition(account, collateralToken, indexToken, isLong);
+```

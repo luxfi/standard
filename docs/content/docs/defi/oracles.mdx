@@ -1,0 +1,310 @@
+---
+title: Oracles
+description: Price feeds and oracle integration for DeFi protocols
+---
+
+# Oracles
+
+Decentralized price feeds and oracle infrastructure for Lux DeFi protocols.
+
+## Overview
+
+The oracle system provides:
+
+- **Multi-Source Aggregation**: Chainlink, Pyth, TWAP combined
+- **Manipulation Resistance**: Time-weighted and median pricing
+- **Cross-Chain Prices**: Unified pricing across all Lux chains
+- **Real-Time Updates**: Sub-second price updates via Warp
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    ORACLE AGGREGATOR                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│   ┌──────────┐   ┌──────────┐   ┌──────────┐               │
+│   │Chainlink │   │   Pyth   │   │   TWAP   │               │
+│   │  Feed    │   │  Feed    │   │  (AMM)   │               │
+│   └────┬─────┘   └────┬─────┘   └────┬─────┘               │
+│        │              │              │                      │
+│        └──────────────┼──────────────┘                      │
+│                       │                                      │
+│              ┌────────▼────────┐                            │
+│              │  Median Price   │                            │
+│              │  + Deviation    │                            │
+│              │    Check        │                            │
+│              └────────┬────────┘                            │
+│                       │                                      │
+│              ┌────────▼────────┐                            │
+│              │  Final Price    │                            │
+│              └─────────────────┘                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Oracle Contracts
+
+| Contract | Purpose |
+|----------|---------|
+| **PriceOracle** | Multi-source price aggregation |
+| **TWAPOracle** | Time-weighted average from AMM |
+| **ChainlinkAdapter** | Chainlink feed integration |
+| **PythAdapter** | Pyth Network integration |
+
+## PriceOracle
+
+Aggregates prices from multiple sources with deviation checks.
+
+```solidity
+interface IPriceOracle {
+    /// @notice Get the latest price for an asset
+    /// @param asset The asset address
+    /// @return price The price in USD (18 decimals)
+    /// @return timestamp When the price was updated
+    function getPrice(address asset) external view returns (
+        uint256 price,
+        uint256 timestamp
+    );
+
+    /// @notice Get price with validation
+    /// @param asset The asset address
+    /// @param maxAge Maximum age in seconds
+    /// @return price The validated price
+    function getPriceValidated(address asset, uint256 maxAge)
+        external view returns (uint256 price);
+
+    /// @notice Check if price is fresh
+    function isPriceFresh(address asset, uint256 maxAge)
+        external view returns (bool);
+}
+```
+
+### Usage
+
+```solidity
+import "@luxfi/standard/src/oracles/PriceOracle.sol";
+
+contract LendingPool {
+    IPriceOracle public oracle;
+
+    function getCollateralValue(
+        address asset,
+        uint256 amount
+    ) public view returns (uint256) {
+        (uint256 price,) = oracle.getPrice(asset);
+        return (amount * price) / 1e18;
+    }
+
+    function isPositionHealthy(
+        address user,
+        address collateral,
+        address debt
+    ) public view returns (bool) {
+        uint256 collateralValue = getCollateralValue(
+            collateral,
+            userCollateral[user]
+        );
+        uint256 debtValue = getCollateralValue(debt, userDebt[user]);
+
+        return collateralValue * 100 >= debtValue * 150; // 150% collateral ratio
+    }
+}
+```
+
+## TWAP Oracle
+
+Time-weighted average price from AMM pools.
+
+```solidity
+interface ITWAPOracle {
+    /// @notice Get TWAP over a period
+    /// @param tokenA First token
+    /// @param tokenB Second token
+    /// @param period TWAP period in seconds
+    /// @return price Time-weighted average price
+    function getTWAP(
+        address tokenA,
+        address tokenB,
+        uint256 period
+    ) external view returns (uint256 price);
+
+    /// @notice Update price accumulator
+    function update(address tokenA, address tokenB) external;
+
+    /// @notice Get current spot price
+    function getSpotPrice(address tokenA, address tokenB)
+        external view returns (uint256);
+}
+```
+
+### TWAP Calculation
+
+```solidity
+// Get 30-minute TWAP for LUX/USDC
+uint256 twap = twapOracle.getTWAP(WLUX, USDC, 30 minutes);
+
+// Compare with spot for manipulation detection
+uint256 spot = twapOracle.getSpotPrice(WLUX, USDC);
+
+// Deviation check
+uint256 deviation = spot > twap
+    ? ((spot - twap) * 100) / twap
+    : ((twap - spot) * 100) / twap;
+
+require(deviation < 5, "Price manipulation detected");
+```
+
+## Chainlink Integration
+
+```solidity
+import "@luxfi/standard/src/oracles/ChainlinkAdapter.sol";
+
+contract ChainlinkAdapter is IPriceSource {
+    mapping(address => address) public feeds; // asset => Chainlink feed
+
+    function getPrice(address asset) external view returns (
+        uint256 price,
+        uint256 timestamp
+    ) {
+        AggregatorV3Interface feed = AggregatorV3Interface(feeds[asset]);
+
+        (
+            ,
+            int256 answer,
+            ,
+            uint256 updatedAt,
+
+        ) = feed.latestRoundData();
+
+        require(answer > 0, "Invalid price");
+
+        // Normalize to 18 decimals
+        uint8 decimals = feed.decimals();
+        price = uint256(answer) * 10**(18 - decimals);
+        timestamp = updatedAt;
+    }
+}
+```
+
+## Pyth Integration
+
+```solidity
+import "@luxfi/standard/src/oracles/PythAdapter.sol";
+
+contract PythAdapter is IPriceSource {
+    IPyth public pyth;
+    mapping(address => bytes32) public priceIds;
+
+    function getPrice(address asset) external view returns (
+        uint256 price,
+        uint256 timestamp
+    ) {
+        bytes32 priceId = priceIds[asset];
+        PythStructs.Price memory pythPrice = pyth.getPriceUnsafe(priceId);
+
+        // Convert Pyth price format to 18 decimals
+        int64 rawPrice = pythPrice.price;
+        int32 expo = pythPrice.expo;
+
+        if (expo >= 0) {
+            price = uint256(int256(rawPrice)) * 10**(18 + uint32(expo));
+        } else {
+            price = uint256(int256(rawPrice)) * 10**18 / 10**uint32(-expo);
+        }
+
+        timestamp = pythPrice.publishTime;
+    }
+
+    function updatePrice(bytes[] calldata updateData) external payable {
+        uint fee = pyth.getUpdateFee(updateData);
+        pyth.updatePriceFeeds{value: fee}(updateData);
+    }
+}
+```
+
+## Cross-Chain Oracle
+
+Propagate prices across chains via Warp.
+
+```solidity
+contract CrossChainOracle {
+    IWarpMessenger constant WARP = IWarpMessenger(0x0200000000000000000000000000000000000008);
+
+    mapping(address => uint256) public prices;
+    mapping(address => uint256) public timestamps;
+
+    bytes32 public trustedSourceChain;
+    address public trustedPriceRelayer;
+
+    /// @notice Receive price update from another chain
+    function receivePriceUpdate(uint32 warpIndex) external {
+        WarpMessage memory message = WARP.getVerifiedWarpMessage(warpIndex);
+
+        require(message.sourceChainID == trustedSourceChain, "Untrusted chain");
+        require(message.originSenderAddress == trustedPriceRelayer, "Untrusted relayer");
+
+        (address[] memory assets, uint256[] memory newPrices, uint256 timestamp) =
+            abi.decode(message.payload, (address[], uint256[], uint256));
+
+        for (uint i = 0; i < assets.length; i++) {
+            prices[assets[i]] = newPrices[i];
+            timestamps[assets[i]] = timestamp;
+        }
+    }
+
+    /// @notice Broadcast prices to other chains
+    function broadcastPrices(address[] calldata assets) external {
+        uint256[] memory currentPrices = new uint256[](assets.length);
+
+        for (uint i = 0; i < assets.length; i++) {
+            (currentPrices[i],) = mainOracle.getPrice(assets[i]);
+        }
+
+        bytes memory payload = abi.encode(assets, currentPrices, block.timestamp);
+        WARP.sendWarpMessage(payload);
+    }
+}
+```
+
+## Supported Assets
+
+| Asset | Sources | Update Frequency |
+|-------|---------|------------------|
+| LUX | Chainlink, TWAP | 1 min |
+| LUXD | Chainlink, Pyth | 1 min |
+| WETH | Chainlink, Pyth, TWAP | 10 sec |
+| WBTC | Chainlink, Pyth | 10 sec |
+| USDC | Chainlink, Pyth | 1 min |
+| USDT | Chainlink, Pyth | 1 min |
+| AI | TWAP | 1 min |
+
+## Price Feed Addresses
+
+```solidity
+// C-Chain Price Feeds
+address constant ORACLE = 0x...;
+address constant LUX_USD_FEED = 0x...;
+address constant ETH_USD_FEED = 0x...;
+address constant BTC_USD_FEED = 0x...;
+```
+
+## Best Practices
+
+1. **Always validate freshness**: Check `timestamp` against `maxAge`
+2. **Use multiple sources**: Aggregate Chainlink + TWAP for resilience
+3. **Deviation checks**: Compare sources, reject if deviation > 5%
+4. **Fallback handling**: Have backup sources if primary fails
+5. **Gas optimization**: Cache prices when possible
+
+## Security Considerations
+
+| Risk | Mitigation |
+|------|------------|
+| Stale prices | Freshness checks with maxAge |
+| Flash loan manipulation | TWAP over 30+ minutes |
+| Single source failure | Multi-source aggregation |
+| Front-running | Commit-reveal for sensitive ops |
+
+## Related
+
+- [Lending](/docs/defi/lending) - Uses oracles for collateral valuation
+- [Perpetuals](/docs/defi/perps) - Uses oracles for mark price
+- [Liquidations](/docs/defi/lending#liquidation) - Oracle-triggered liquidations

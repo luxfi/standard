@@ -1,0 +1,90 @@
+---
+title: LETH
+description: Bridgeable Ethereum representation on Lux Network
+---
+
+# LETH (LuxETH)
+
+Bridgeable Ethereum representation on the Lux Network. LETH is an ERC20B token with admin-controlled minting and burning for cross-chain bridge operations.
+
+**Inherits:** [ERC20B](/docs/tokens/erc20b)
+
+## Token Details
+
+| Property | Value |
+|----------|-------|
+| Name | LuxETH |
+| Symbol | LETH |
+| Decimals | 18 |
+| Type | Bridgeable ERC20 |
+
+## Use Cases
+
+1. **Cross-Chain Bridge**: Represents ETH from Ethereum network on Lux
+2. **DeFi Integration**: Use ETH in Lux DeFi protocols (margin, loans, etc.)
+3. **Gas Token Alternative**: Trade and hold ETH exposure on Lux
+4. **Collateral**: Provide LETH as collateral for lending protocols
+
+## Functions
+
+Inherits all functions from [ERC20B](/docs/tokens/erc20b):
+
+```solidity
+function mint(address account, uint256 amount) public onlyAdmin returns (bool)
+function burnIt(address account, uint256 amount) public onlyAdmin returns (bool)
+function grantAdmin(address to) public onlyAdmin
+function revokeAdmin(address to) public onlyAdmin
+```
+
+## Bridge Flow
+
+```
+Ethereum Network                   Lux Network
+┌────────────┐                     ┌────────────┐
+│    ETH     │ ──Lock──────────────│   LETH     │
+│            │                     │   mint()   │
+│            │ ◄─Unlock────────────│   burn()   │
+└────────────┘                     └────────────┘
+         ▲                               │
+         │      MPC Oracle Bridge        │
+         └───────────────────────────────┘
+```
+
+## Deployment
+
+```solidity
+import "@luxfi/standard/src/tokens/LETH.sol";
+
+// Deploy LETH token
+LuxETH leth = new LuxETH();
+
+// Grant bridge contract admin rights
+leth.grantAdmin(bridgeContract);
+```
+
+## Usage
+
+```solidity
+// Bridge mints LETH when ETH is locked
+leth.mint(user, 1e18); // 1 LETH
+
+// Bridge burns LETH when ETH is released
+leth.burnIt(user, 1e18);
+
+// Standard ERC20 operations
+leth.transfer(recipient, amount);
+leth.approve(spender, amount);
+```
+
+## Security
+
+- **Admin-Only Minting**: Only authorized bridge contracts can mint
+- **Admin-Only Burning**: Only authorized bridge contracts can burn
+- **Role-Based Access**: AccessControl for admin management
+- **Ownable**: Owner can transfer ownership
+
+## Related
+
+- [ERC20B](/docs/tokens/erc20b) - Base bridgeable ERC20
+- [LBTC](/docs/tokens/lbtc) - Bridgeable BTC
+- [Bridge](/docs/bridge) - Cross-chain bridge contracts

@@ -1,22 +1,18 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
+import './globals.css';
+import { RootProvider } from 'fumadocs-ui/provider/next';
+import type { ReactNode } from 'react';
 
-const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "Lux Standard Library",
-  description: "Comprehensive smart contract library for Lux Network - DeFi, NFT, DAO, Precompiles, and more",
+export const metadata = {
+  title: 'Lux Standard Library',
+  description: 'Smart contract documentation for Lux Network',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>{children}</body>
+      <body>
+        <RootProvider>{children}</RootProvider>
+      </body>
     </html>
   );
 }

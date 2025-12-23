@@ -1,0 +1,45 @@
+---
+title: Governance
+description: DAO, voting, and on-chain governance contracts
+---
+
+# Governance
+
+On-chain governance infrastructure for the Lux Network ecosystem.
+
+## Contracts
+
+<Cards>
+  <Card title="DAO" href="/docs/governance/dao">
+    Upgradeable DAO contract
+  </Card>
+  <Card title="Voting" href="/docs/governance/voting">
+    Token-weighted voting system
+  </Card>
+</Cards>
+
+## Overview
+
+The governance system enables token holders to:
+- Create and vote on proposals
+- Execute on-chain governance decisions
+- Manage protocol parameters
+
+## Quick Start
+
+```solidity
+import "@luxdao/DAO.sol";
+import "@luxdao/Vote.sol";
+
+// Create voting contract
+LUXVoting voting = new LUXVoting(IERC20(luxToken));
+
+// Create proposal
+voting.addProposals("LIP-001: Increase staking rewards", startTime, endTime);
+
+// Vote
+voting.voteProposal("LIP-001: Increase staking rewards", true);
+
+// Check results
+Proposal memory prop = voting.proposals("LIP-001: Increase staking rewards");
+```

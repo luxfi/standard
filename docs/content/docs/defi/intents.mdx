@@ -1,0 +1,418 @@
+---
+title: Intent-Based Swaps
+description: Submit swap intents and let solvers find optimal execution
+---
+
+# Intent-Based Swaps
+
+Intent-based trading system where users submit desired outcomes and solvers compete to fill them optimally.
+
+## Overview
+
+Instead of executing trades directly, users submit **intents**:
+
+- **Better Execution**: Solvers compete for best price
+- **MEV Protection**: No front-running, solvers bear execution risk
+- **Cross-Chain Native**: Intents work across any chain
+- **Gas Abstraction**: Solvers pay gas, users sign messages
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                    INTENT-BASED SWAP FLOW                         │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   User                    Solver Network              Settlement │
+│   ┌─────┐                 ┌──────────┐               ┌─────────┐│
+│   │Sign │ ──Intent──────► │ Compete  │ ──Execute───► │ Verify  ││
+│   │Only │                 │ for Fill │               │ & Settle││
+│   └─────┘                 └──────────┘               └─────────┘│
+│                                                                   │
+│   "Swap 1 ETH for        Multiple solvers            On-chain    │
+│    best USDC"            find optimal route          settlement  │
+│                                                                   │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+## Contracts
+
+| Contract | Purpose |
+|----------|---------|
+| **IntentRouter** | Submit and manage intents |
+| **SolverRegistry** | Register and stake solvers |
+| **SettlementContract** | Verify and settle fills |
+| **CrossChainResolver** | Resolve cross-chain intents |
+
+## Intent Structure
+
+```solidity
+struct SwapIntent {
+    // What user wants
+    address tokenIn;
+    address tokenOut;
+    uint256 amountIn;
+    uint256 minAmountOut;
+
+    // Where
+    uint256 sourceChainId;
+    uint256 destChainId;
+
+    // Who
+    address sender;
+    address recipient;
+
+    // When
+    uint256 deadline;
+    uint256 nonce;
+
+    // Signature
+    bytes signature;
+}
+```
+
+## Submitting Intents
+
+### EIP-712 Signed Intent
+
+```solidity
+import "@luxfi/standard/src/intents/IntentRouter.sol";
+
+// User signs off-chain, solver submits on-chain
+bytes32 constant INTENT_TYPEHASH = keccak256(
+    "SwapIntent(address tokenIn,address tokenOut,uint256 amountIn,uint256 minAmountOut,uint256 sourceChainId,uint256 destChainId,address sender,address recipient,uint256 deadline,uint256 nonce)"
+);
+
+function createSignedIntent(
+    SwapIntent memory intent
+) internal view returns (bytes memory signature) {
+    bytes32 structHash = keccak256(abi.encode(
+        INTENT_TYPEHASH,
+        intent.tokenIn,
+        intent.tokenOut,
+        intent.amountIn,
+        intent.minAmountOut,
+        intent.sourceChainId,
+        intent.destChainId,
+        intent.sender,
+        intent.recipient,
+        intent.deadline,
+        intent.nonce
+    ));
+
+    bytes32 digest = keccak256(abi.encodePacked(
+        "\x19\x01",
+        DOMAIN_SEPARATOR,
+        structHash
+    ));
+
+    // Sign with user's private key
+    return sign(digest);
+}
+```
+
+### On-Chain Submission
+
+```solidity
+IntentRouter router = IntentRouter(INTENT_ROUTER);
+
+// Submit intent (user pays no gas if solver submits)
+bytes32 intentId = router.submitIntent(
+    SwapIntent({
+        tokenIn: WETH,
+        tokenOut: USDC,
+        amountIn: 1 ether,
+        minAmountOut: 3000 * 1e6,
+        sourceChainId: 96369,
+        destChainId: 96369,
+        sender: msg.sender,
+        recipient: msg.sender,
+        deadline: block.timestamp + 1 hours,
+        nonce: router.nonces(msg.sender),
+        signature: ""  // Self-submission
+    })
+);
+```
+
+## Solver Integration
+
+### Registering as Solver
+
+```solidity
+SolverRegistry registry = SolverRegistry(SOLVER_REGISTRY);
+
+// Stake to become solver (slashable for bad fills)
+registry.registerSolver{value: 10 ether}(
+    "solver-name",
+    supportedChains,
+    supportedTokens
+);
+```
+
+### Filling Intents
+
+```solidity
+contract MySolver {
+    IntentRouter public router;
+    SettlementContract public settlement;
+
+    function fillIntent(
+        SwapIntent calldata intent,
+        bytes calldata fillData
+    ) external {
+        // Verify intent is valid and unfilled
+        require(router.isValidIntent(intent), "Invalid intent");
+        require(!router.isFilled(intent), "Already filled");
+
+        // Decode solver's execution path
+        (address[] memory path, address dex) = abi.decode(
+            fillData,
+            (address[], address)
+        );
+
+        // Pull tokens from user (requires approval or permit)
+        IERC20(intent.tokenIn).transferFrom(
+            intent.sender,
+            address(this),
+            intent.amountIn
+        );
+
+        // Execute swap via optimal route
+        uint256 amountOut = _executeSwap(
+            intent.tokenIn,
+            intent.tokenOut,
+            intent.amountIn,
+            path,
+            dex
+        );
+
+        // Verify minimum output
+        require(amountOut >= intent.minAmountOut, "Insufficient output");
+
+        // Send to recipient
+        IERC20(intent.tokenOut).transfer(intent.recipient, amountOut);
+
+        // Mark as filled
+        settlement.settleFill(intent, amountOut);
+
+        // Solver keeps the spread (if any)
+        emit IntentFilled(intentId, msg.sender, amountOut);
+    }
+}
+```
+
+### Cross-Chain Filling
+
+```solidity
+function fillCrossChainIntent(
+    SwapIntent calldata intent,
+    bytes calldata fillData
+) external {
+    require(
+        intent.sourceChainId != intent.destChainId,
+        "Use single-chain fill"
+    );
+
+    // 1. Lock tokens on source chain
+    IERC20(intent.tokenIn).transferFrom(
+        intent.sender,
+        address(this),
+        intent.amountIn
+    );
+
+    // 2. Execute swap on source if needed
+    uint256 bridgeAmount = intent.amountIn;
+    if (needsSwapOnSource(intent)) {
+        bridgeAmount = _swapOnSource(intent, fillData);
+    }
+
+    // 3. Bridge to destination chain via Warp
+    bytes32 messageId = bridge.send(
+        intent.destChainId,
+        intent.tokenOut,
+        bridgeAmount,
+        intent.recipient
+    );
+
+    // 4. Initiate settlement on destination
+    crossChainResolver.initiateCrossChainSettlement(
+        intent,
+        messageId,
+        bridgeAmount
+    );
+}
+```
+
+## Permit2 Integration
+
+Gasless approvals for intents:
+
+```solidity
+import "@luxfi/standard/src/intents/Permit2Intent.sol";
+
+// User signs permit + intent together
+struct PermitIntent {
+    // Permit2 data
+    IPermit2.PermitSingle permit;
+    bytes permitSignature;
+
+    // Intent data
+    SwapIntent intent;
+    bytes intentSignature;
+}
+
+// Solver executes both atomically
+function fillWithPermit(PermitIntent calldata pi) external {
+    // Execute permit
+    permit2.permit(
+        pi.intent.sender,
+        pi.permit,
+        pi.permitSignature
+    );
+
+    // Transfer via permit2
+    permit2.transferFrom(
+        pi.intent.sender,
+        address(this),
+        pi.intent.amountIn,
+        pi.intent.tokenIn
+    );
+
+    // Fill intent
+    _fillIntent(pi.intent);
+}
+```
+
+## Auction Mechanisms
+
+### Dutch Auction
+
+```solidity
+struct DutchIntent {
+    SwapIntent base;
+    uint256 startAmountOut;    // Best case output
+    uint256 endAmountOut;      // Minimum acceptable
+    uint256 decayStartTime;
+    uint256 decayEndTime;
+}
+
+function getCurrentMinOutput(DutchIntent memory intent)
+    public view returns (uint256)
+{
+    if (block.timestamp <= intent.decayStartTime) {
+        return intent.startAmountOut;
+    }
+    if (block.timestamp >= intent.decayEndTime) {
+        return intent.endAmountOut;
+    }
+
+    uint256 elapsed = block.timestamp - intent.decayStartTime;
+    uint256 duration = intent.decayEndTime - intent.decayStartTime;
+    uint256 decay = ((intent.startAmountOut - intent.endAmountOut) * elapsed) / duration;
+
+    return intent.startAmountOut - decay;
+}
+```
+
+### Batch Auctions
+
+```solidity
+// Collect intents over a period, settle together
+struct BatchAuction {
+    uint256 batchId;
+    uint256 settlementTime;
+    SwapIntent[] intents;
+    uint256 clearingPrice;  // Uniform clearing price
+}
+
+function settleBatch(uint256 batchId) external onlySolver {
+    BatchAuction storage batch = batches[batchId];
+    require(block.timestamp >= batch.settlementTime, "Too early");
+
+    // Calculate uniform clearing price
+    uint256 clearingPrice = _calculateClearingPrice(batch.intents);
+
+    // Settle all intents at clearing price
+    for (uint i = 0; i < batch.intents.length; i++) {
+        _settleAtPrice(batch.intents[i], clearingPrice);
+    }
+}
+```
+
+## Intent Statuses
+
+```solidity
+enum IntentStatus {
+    Pending,      // Submitted, awaiting fill
+    Filled,       // Successfully filled
+    Cancelled,    // Cancelled by user
+    Expired,      // Past deadline
+    PartialFill   // Partially filled (if allowed)
+}
+
+// Check intent status
+function getIntentStatus(bytes32 intentId) external view returns (IntentStatus);
+
+// Cancel pending intent
+function cancelIntent(bytes32 intentId) external;
+```
+
+## TypeScript SDK
+
+```typescript
+import { IntentSDK, SwapIntent } from '@luxfi/intent-sdk';
+
+const sdk = new IntentSDK({
+  chainId: 96369,
+  signer: wallet,
+});
+
+// Create and sign intent
+const intent: SwapIntent = await sdk.createIntent({
+  tokenIn: WETH_ADDRESS,
+  tokenOut: USDC_ADDRESS,
+  amountIn: parseEther('1'),
+  slippage: 0.5, // 0.5%
+  recipient: wallet.address,
+  deadline: Math.floor(Date.now() / 1000) + 3600,
+});
+
+// Submit to solver network
+const intentId = await sdk.submitIntent(intent);
+
+// Monitor status
+sdk.on('intentFilled', (id, result) => {
+  console.log(`Intent ${id} filled: ${result.amountOut} received`);
+});
+
+// Or wait for fill
+const result = await sdk.waitForFill(intentId);
+```
+
+## Gas Savings
+
+| Method | User Gas | Solver Gas | MEV Risk |
+|--------|----------|------------|----------|
+| Direct Swap | ~150,000 | - | High |
+| Intent (gasless) | 0 | ~200,000 | None |
+| Intent (on-chain) | ~50,000 | ~150,000 | None |
+
+## Security
+
+| Protection | Description |
+|------------|-------------|
+| **Solver Staking** | Solvers stake collateral, slashed for bad fills |
+| **Signature Verification** | EIP-712 typed data signatures |
+| **Deadline Enforcement** | Intents expire automatically |
+| **Minimum Output** | On-chain verification of fill quality |
+
+## Best Practices
+
+1. **Set reasonable deadlines**: 1-24 hours typical
+2. **Account for gas costs**: Solver needs profit margin
+3. **Use Permit2**: Avoid separate approval transactions
+4. **Monitor fills**: Track solver performance
+
+## Related
+
+- [Omnichain](/docs/defi/omnichain) - Cross-chain unified liquidity
+- [AMM](/docs/amm) - Direct DEX swaps
+- [Bridge](/docs/bridge) - Cross-chain asset transfers

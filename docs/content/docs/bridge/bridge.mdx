@@ -1,0 +1,153 @@
+---
+title: Bridge
+description: MPC-oracle cross-chain bridge for token transfers
+---
+
+# Bridge
+
+MPC-oracle based bridge for cross-chain token transfers using threshold signatures.
+
+**Inherits:** Ownable, AccessControl
+
+## State Variables
+
+```solidity
+uint256 internal fee = 0;                                    // Bridge fee
+uint256 public feeRate = 10 * (uint256(10) ** 15);          // Fee rate
+address internal payoutAddr;                                 // Fee recipient
+mapping(address => MPCOracleAddrInfo) internal MPCOracleAddrMap;  // MPC oracles
+mapping(bytes => TransactionInfo) internal transactionMap;  // Processed txs
+```
+
+## Structs
+
+### MPCOracleAddrInfo
+
+```solidity
+struct MPCOracleAddrInfo {
+    bool exists;
+}
+```
+
+### TransactionInfo
+
+```solidity
+struct TransactionInfo {
+    string txid;
+    bool exists;
+}
+```
+
+## Functions
+
+### bridgeBurn
+
+```solidity
+function bridgeBurn(uint256 amount, address tokenAddr) public
+```
+
+Burns tokens on the source chain to initiate a bridge transfer.
+
+**Parameters:**
+- `amount`: Amount of tokens to burn
+- `tokenAddr`: Address of the ERC20B token
+
+### bridgeMintStealth
+
+```solidity
+function bridgeMintStealth(
+    uint256 amt,
+    string memory hashedId,
+    address toTargetAddrStr,
+    bytes memory signedTXInfo,
+    address tokenAddrStr,
+    string memory chainId,
+    string memory vault
+) public returns (address)
+```
+
+Mints tokens on the destination chain using MPC signature.
+
+**Parameters:**
+- `amt`: Amount to mint
+- `hashedId`: Hashed transaction ID for replay protection
+- `toTargetAddrStr`: Recipient address
+- `signedTXInfo`: MPC oracle signature
+- `tokenAddrStr`: Token address to mint
+- `chainId`: Source chain ID
+- `vault`: Vault identifier
+
+### Admin Functions
+
+```solidity
+function grantAdmin(address to) public onlyAdmin
+function revokeAdmin(address to) public onlyAdmin
+function setPayoutAddress(address addr, uint256 feeR) public onlyAdmin
+function setMPCOracle(address MPCO) public onlyAdmin
+```
+
+### View Functions
+
+```solidity
+function getMPCMapDataTx(address _key) public view returns (bool)
+function keyExistsTx(bytes memory _key) public view returns (bool)
+```
+
+## Events
+
+```solidity
+event BridgeBurned(address caller, uint256 amt);
+event BridgeMinted(address recipient, address token, uint256 amt);
+event SigMappingAdded(bytes _key);
+event NewMPCOracleSet(address MPCOracle);
+event AdminGranted(address to);
+event AdminRevoked(address to);
+```
+
+## Usage Example
+
+```solidity
+import "@luxfi/standard/src/teleport/Bridge.sol";
+
+// Deploy bridge
+Bridge bridge = new Bridge();
+
+// Set MPC oracle
+bridge.setMPCOracle(mpcOracleAddress);
+
+// User burns tokens to bridge
+myToken.approve(address(bridge), amount);
+bridge.bridgeBurn(amount, address(myToken));
+
+// On destination chain, MPC signs and user claims
+bridge.bridgeMintStealth(
+    amount,
+    hashedTxId,
+    recipient,
+    mpcSignature,
+    address(destToken),
+    "1",  // source chain ID
+    "main" // vault
+);
+```
+
+## MPC Signature Verification
+
+The bridge verifies MPC signatures using ECDSA recovery:
+
+```solidity
+function recoverSigner(bytes32 message, bytes memory sig) internal pure returns (address) {
+    (uint8 v, bytes32 r, bytes32 s) = splitSignature(sig);
+    return ecrecover(prefixed(message), v, r, s);
+}
+
+function prefixed(bytes32 hash) internal pure returns (bytes32) {
+    return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+}
+```
+
+## Security
+
+- **Replay Protection**: Each transaction ID can only be used once
+- **MPC Validation**: Only registered MPC oracles can authorize mints
+- **Admin Controls**: Granular access control for management functions

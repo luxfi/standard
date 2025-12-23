@@ -1,0 +1,182 @@
+---
+title: DeFi Contracts
+description: Complete DeFi stack - perps, lending, omnichain, and yield
+---
+
+# DeFi Contracts
+
+Complete decentralized finance infrastructure for Lux Network. One canonical implementation for each protocol - composable, omnichain, and secure.
+
+## Unified Liquidity
+
+<Cards>
+  <Card title="Universal Liquidity Engine" href="/docs/defi/liquidity-engine">
+    Unified router for 30+ DeFi protocols across EVM, Solana, and TON
+  </Card>
+</Cards>
+
+## Perpetual Trading
+
+<Cards>
+  <Card title="Perpetuals" href="/docs/defi/perps">
+    Decentralized perpetual futures with up to 1111x leverage
+  </Card>
+  <Card title="Vault" href="/docs/defi/vault">
+    Central liquidity pool and leveraged position management
+  </Card>
+  <Card title="Router" href="/docs/defi/router">
+    User-facing interface for margin trades and positions
+  </Card>
+  <Card title="Intent Swaps" href="/docs/defi/intents">
+    Intent-based trading with solver competition
+  </Card>
+</Cards>
+
+## Lending & Borrowing
+
+<Cards>
+  <Card title="Lending Pools" href="/docs/defi/lending">
+    Over-collateralized borrowing, flash loans, and dynamic rates
+  </Card>
+  <Card title="Self-Repaying Loans" href="/docs/defi/loans">
+    Alchemix-style loans using yield-bearing collateral
+  </Card>
+  <Card title="Minimal Lending" href="/docs/defi/minimal-lending">
+    Permissionless, gas-efficient lending architecture
+  </Card>
+</Cards>
+
+## Omnichain Infrastructure
+
+<Cards>
+  <Card title="Omnichain DeFi" href="/docs/defi/omnichain">
+    Unified cross-chain liquidity and swaps
+  </Card>
+  <Card title="Oracles" href="/docs/defi/oracles">
+    Multi-source price feeds with manipulation resistance
+  </Card>
+</Cards>
+
+## Markets & Yield
+
+<Cards>
+  <Card title="NFT Market" href="/docs/defi/nft-market">
+    Bonding curve AMM for instant NFT liquidity
+  </Card>
+  <Card title="Farm" href="/docs/defi/farm">
+    LP token staking with emission rewards
+  </Card>
+</Cards>
+
+## Complete Stack Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         LUX DEFI COMPLETE STACK                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                 UNIVERSAL LIQUIDITY ENGINE (30+ Protocols)           │   │
+│  │   EVM: Uniswap, Aave, Compound, Curve, 1inch, Aster (1001x Perps)   │   │
+│  │   Solana: Jupiter, Raydium, Meteora, Orca, Solend, Kamino           │   │
+│  │   TON: STON.fi, DeDust, Evaa, Omniston                              │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                    │                                        │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                    OMNICHAIN LAYER (Warp + Intents)                  │   │
+│  │   C-Chain ◄──────► Hanzo ◄──────► Zoo ◄──────► Solana ◄──► Bitcoin  │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                    │                                        │
+│  ┌──────────────┬─────────────────┼─────────────────┬──────────────────┐   │
+│  │   TRADING    │     LENDING     │    YIELD        │    MARKETS       │   │
+│  ├──────────────┼─────────────────┼─────────────────┼──────────────────┤   │
+│  │ • Perpetuals │ • Lending Pools │ • Farm          │ • NFT AMM        │   │
+│  │ • 1111x Lvg  │ • Flash Loans   │ • LP Staking    │ • Bonding Curves │   │
+│  │ • Intents    │ • Self-Repaying │ • Rewards       │ • Royalties      │   │
+│  │ • LLP Pool   │ • Liquidations  │ • Auto-Compound │ • Property NFTs  │   │
+│  └──────────────┴─────────────────┴─────────────────┴──────────────────┘   │
+│                                    │                                        │
+│  ┌─────────────────────────────────┼───────────────────────────────────┐   │
+│  │              INFRASTRUCTURE (Oracles + DEX Precompiles)              │   │
+│  │   Chainlink + Pyth + TWAP  │  434M orders/sec CLOB  │  1ms finality │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Protocol Matrix
+
+| Protocol | Type | Leverage | Cross-Chain | Key Feature |
+|----------|------|----------|-------------|-------------|
+| **Perpetuals** | Derivatives | 1111x | ✅ | LLP liquidity pool |
+| **Intents** | Trading | - | ✅ | Solver competition |
+| **Lending** | Borrowing | - | ✅ | Flash loans (ERC-3156) |
+| **Loans** | Synthetics | - | ✅ | Self-repaying debt |
+| **Omnichain** | Liquidity | - | ✅ | Unified reserves |
+| **NFT Market** | Trading | - | ❌ | Bonding curves |
+| **Farm** | Yield | - | ❌ | Emission rewards |
+
+## Quick Start
+
+```solidity
+// ===== PERPETUALS =====
+import "@luxfi/standard/src/gmx2/Router.sol";
+
+// Open 10x long ETH position
+router.increasePosition{value: 1 ether}(
+    [WETH], WETH, 0, 10 ether * 1e30, true, type(uint256).max
+);
+
+// ===== LENDING =====
+import "@luxfi/standard/src/lending/LendingPool.sol";
+
+// Deposit collateral and borrow
+lendingPool.deposit(LETH, 10 ether, msg.sender);
+lendingPool.borrow(LUXD, 5000e18, 2, msg.sender);
+
+// Flash loan
+lendingPool.flashLoan(receiver, LUXD, 1_000_000e18, data);
+
+// ===== OMNICHAIN SWAP =====
+import "@luxfi/standard/src/OmnichainLPRouter.sol";
+
+// Cross-chain swap: C-Chain ETH → Hanzo USDC
+router.crossChainSwap(
+    Route({path: [WETH, USDC], chainIds: [96369, 36963], bridges: [warp]}),
+    amountIn, minOut, recipient, deadline
+);
+
+// ===== INTENT-BASED SWAP =====
+import "@luxfi/standard/src/intents/IntentRouter.sol";
+
+// Submit intent - solvers compete for best execution
+intentRouter.submitIntent(SwapIntent({
+    tokenIn: WETH, tokenOut: USDC,
+    amountIn: 1 ether, minAmountOut: 3000e6,
+    sourceChainId: 96369, destChainId: 36963,
+    recipient: msg.sender, deadline: block.timestamp + 1 hours
+}));
+
+// ===== SELF-REPAYING LOAN =====
+import "@luxfi/standard/src/Loans.sol";
+
+// Deposit yield-bearing collateral, mint synthetic
+loans.deposit(yLUX, 100 ether, msg.sender);
+loans.mint(50 ether, msg.sender);  // Debt repays itself from yield
+```
+
+## Chain Support
+
+| Chain | Perps | Lending | Omnichain | Intents |
+|-------|-------|---------|-----------|---------|
+| C-Chain (96369) | ✅ | ✅ | ✅ | ✅ |
+| Hanzo (36963) | ✅ | ✅ | ✅ | ✅ |
+| Zoo (200200) | ✅ | ✅ | ✅ | ✅ |
+| A-Chain | ❌ | ✅ | ✅ | ✅ |
+| Solana | 🔄 | 🔄 | 🔄 | ✅ |
+| Bitcoin | ❌ | ❌ | 🔄 | ✅ |
+
+## Related
+
+- [AMM](/docs/amm) - Uniswap V2/V3 pools
+- [Bridge](/docs/bridge) - Cross-chain transfers
+- [Smart Accounts](/docs/accounts) - Gasless transactions

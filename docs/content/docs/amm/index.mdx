@@ -1,0 +1,119 @@
+---
+title: AMM
+description: Automated Market Maker pools for token swaps and liquidity provision
+---
+
+# AMM (Automated Market Maker)
+
+Uniswap-compatible AMM infrastructure for token swaps and liquidity provision. Includes v2 constant-product pools and v3 concentrated liquidity pools.
+
+## Overview
+
+<Cards>
+  <Card title="Pools" href="/docs/amm/pools">
+    Liquidity pools for token swaps (v2 and v3)
+  </Card>
+  <Card title="Router" href="/docs/amm/router">
+    Unified swap interface for v2 and v3 pools
+  </Card>
+  <Card title="WLUX" href="/docs/amm/wlux">
+    Wrapped LUX for ERC20 compatibility
+  </Card>
+</Cards>
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           AMM Infrastructure                             │
+├────────────────────────────┬────────────────────────────────────────────┤
+│         V2 Pools           │              V3 Pools                      │
+│   (Constant Product)       │        (Concentrated Liquidity)            │
+├────────────────────────────┼────────────────────────────────────────────┤
+│ • UniswapV2Factory         │ • UniswapV3Factory                         │
+│ • UniswapV2Pair            │ • UniswapV3Pool                            │
+│ • UniswapV2Router          │ • NonfungiblePositionManager               │
+│ • x * y = k invariant      │ • Tick-based liquidity                     │
+│ • 0.3% swap fee            │ • Multiple fee tiers (0.01-1%)             │
+└────────────────────────────┴────────────────────────────────────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │         SwapRouter02          │
+                    │   Unified v2 + v3 interface   │
+                    └───────────────────────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │            WLUX               │
+                    │   Wrapped LUX (ERC20)         │
+                    └───────────────────────────────┘
+```
+
+## Quick Start
+
+```solidity
+import "@luxfi/standard/src/uni/swapRouter/SwapRouter02.sol";
+import "@luxfi/standard/src/uni/WLUX.sol";
+
+// Wrap LUX to WLUX
+wlux.deposit{value: 1 ether}();
+
+// Swap WLUX for LUXD via v2
+router.swapExactTokensForTokens(
+    amountIn,
+    amountOutMin,
+    [WLUX, LUXD],
+    recipient,
+    deadline
+);
+
+// Swap via v3 with exact input
+router.exactInputSingle(
+    ISwapRouter.ExactInputSingleParams({
+        tokenIn: WLUX,
+        tokenOut: LUXD,
+        fee: 3000, // 0.3%
+        recipient: msg.sender,
+        amountIn: 1e18,
+        amountOutMinimum: 0,
+        sqrtPriceLimitX96: 0
+    })
+);
+```
+
+## V2 vs V3 Comparison
+
+| Feature | V2 | V3 |
+|---------|----|----|
+| **Liquidity** | Full range | Concentrated |
+| **Capital Efficiency** | Low | High (up to 4000x) |
+| **Fee Tiers** | 0.3% fixed | 0.01%, 0.05%, 0.3%, 1% |
+| **LP Tokens** | ERC20 | NFT (ERC721) |
+| **Price Oracle** | TWAP | Enhanced TWAP |
+| **Complexity** | Simple | Advanced |
+
+## Fee Tiers (V3)
+
+| Tier | Fee | Use Case |
+|------|-----|----------|
+| 0.01% | 100 | Stablecoin pairs (LUXD/USDC) |
+| 0.05% | 500 | Correlated pairs (LETH/WLUX) |
+| 0.3% | 3000 | Standard pairs |
+| 1% | 10000 | Exotic/volatile pairs |
+
+## Integration with DeFi
+
+The AMM pools power other DeFi protocols:
+
+- **Lending Pools**: Swap collateral to debt assets
+- **Flash Loans**: Arbitrage between pools
+- **Margin Trading**: Swap execution for leveraged positions
+- **Loans**: Swap yield tokens for synthetic assets
+
+## Related
+
+- [Pools](/docs/amm/pools) - V2 and V3 pool contracts
+- [Router](/docs/amm/router) - SwapRouter02 interface
+- [WLUX](/docs/amm/wlux) - Wrapped LUX token
+- [Lending](/docs/defi/lending) - Lending pools that use AMM swaps

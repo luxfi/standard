@@ -1,0 +1,294 @@
+---
+title: Swap Router
+description: Unified swap interface for V2 and V3 pools
+---
+
+# Swap Router
+
+SwapRouter02 provides a unified interface for executing swaps across both V2 and V3 pools. It handles routing, slippage protection, and multi-hop swaps.
+
+## SwapRouter02
+
+Unified router supporting V2 constant-product and V3 concentrated liquidity swaps.
+
+```solidity
+import "@luxfi/standard/src/uni/swapRouter/SwapRouter02.sol";
+
+contract SwapRouter02 is
+    V2SwapRouter,
+    V3SwapRouter,
+    ApproveAndCall,
+    MulticallExtended,
+    SelfPermit
+{
+    constructor(
+        address _factoryV2,
+        address factoryV3,
+        address _positionManager,
+        address _WETH9
+    );
+}
+```
+
+## V2 Swap Functions
+
+### swapExactTokensForTokens
+
+Swap exact input for minimum output.
+
+```solidity
+function swapExactTokensForTokens(
+    uint256 amountIn,
+    uint256 amountOutMin,
+    address[] calldata path,
+    address to
+) external payable returns (uint256 amountOut);
+```
+
+### swapTokensForExactTokens
+
+Swap maximum input for exact output.
+
+```solidity
+function swapTokensForExactTokens(
+    uint256 amountOut,
+    uint256 amountInMax,
+    address[] calldata path,
+    address to
+) external payable returns (uint256 amountIn);
+```
+
+### Usage
+
+```solidity
+// Approve router
+IERC20(WLUX).approve(address(router), amountIn);
+
+// Swap WLUX -> LUXD (single hop)
+uint256 amountOut = router.swapExactTokensForTokens(
+    1e18,           // amountIn: 1 WLUX
+    950e18,         // amountOutMin: 950 LUXD (5% slippage)
+    [WLUX, LUXD],   // path
+    msg.sender      // recipient
+);
+
+// Multi-hop: WLUX -> LETH -> LUXD
+uint256 amountOut = router.swapExactTokensForTokens(
+    1e18,
+    0,
+    [WLUX, LETH, LUXD],
+    msg.sender
+);
+```
+
+## V3 Swap Functions
+
+### exactInputSingle
+
+Single-hop swap with exact input.
+
+```solidity
+struct ExactInputSingleParams {
+    address tokenIn;
+    address tokenOut;
+    uint24 fee;
+    address recipient;
+    uint256 amountIn;
+    uint256 amountOutMinimum;
+    uint160 sqrtPriceLimitX96;
+}
+
+function exactInputSingle(ExactInputSingleParams calldata params)
+    external payable returns (uint256 amountOut);
+```
+
+### exactInput
+
+Multi-hop swap with exact input.
+
+```solidity
+struct ExactInputParams {
+    bytes path;      // Encoded path: token0, fee, token1, fee, token2...
+    address recipient;
+    uint256 amountIn;
+    uint256 amountOutMinimum;
+}
+
+function exactInput(ExactInputParams calldata params)
+    external payable returns (uint256 amountOut);
+```
+
+### exactOutputSingle
+
+Single-hop swap with exact output.
+
+```solidity
+struct ExactOutputSingleParams {
+    address tokenIn;
+    address tokenOut;
+    uint24 fee;
+    address recipient;
+    uint256 amountOut;
+    uint256 amountInMaximum;
+    uint160 sqrtPriceLimitX96;
+}
+
+function exactOutputSingle(ExactOutputSingleParams calldata params)
+    external payable returns (uint256 amountIn);
+```
+
+### exactOutput
+
+Multi-hop swap with exact output.
+
+```solidity
+struct ExactOutputParams {
+    bytes path;      // Encoded path (reversed): tokenOut, fee, ..., tokenIn
+    address recipient;
+    uint256 amountOut;
+    uint256 amountInMaximum;
+}
+
+function exactOutput(ExactOutputParams calldata params)
+    external payable returns (uint256 amountIn);
+```
+
+### Usage
+
+```solidity
+// Single-hop V3 swap
+uint256 amountOut = router.exactInputSingle(
+    ISwapRouter.ExactInputSingleParams({
+        tokenIn: WLUX,
+        tokenOut: LUXD,
+        fee: 3000,              // 0.3%
+        recipient: msg.sender,
+        amountIn: 1e18,
+        amountOutMinimum: 950e18,
+        sqrtPriceLimitX96: 0    // No price limit
+    })
+);
+
+// Multi-hop V3 swap: WLUX -> LETH -> LUXD
+bytes memory path = abi.encodePacked(
+    WLUX,
+    uint24(3000),   // WLUX-LETH 0.3%
+    LETH,
+    uint24(500),    // LETH-LUXD 0.05%
+    LUXD
+);
+
+uint256 amountOut = router.exactInput(
+    ISwapRouter.ExactInputParams({
+        path: path,
+        recipient: msg.sender,
+        amountIn: 1e18,
+        amountOutMinimum: 0
+    })
+);
+```
+
+## Native LUX Swaps
+
+### Swap LUX for Tokens
+
+```solidity
+// Swap native LUX for tokens (wraps automatically)
+router.exactInputSingle{value: 1 ether}(
+    ISwapRouter.ExactInputSingleParams({
+        tokenIn: WLUX,
+        tokenOut: LUXD,
+        fee: 3000,
+        recipient: msg.sender,
+        amountIn: 1 ether,
+        amountOutMinimum: 0,
+        sqrtPriceLimitX96: 0
+    })
+);
+```
+
+### Swap Tokens for LUX
+
+```solidity
+// Swap tokens for native LUX (unwraps automatically)
+router.exactInputSingle(
+    ISwapRouter.ExactInputSingleParams({
+        tokenIn: LUXD,
+        tokenOut: WLUX,
+        fee: 3000,
+        recipient: address(0), // Router unwraps
+        amountIn: 1000e18,
+        amountOutMinimum: 0,
+        sqrtPriceLimitX96: 0
+    })
+);
+router.unwrapWETH9(0, msg.sender); // Receive native LUX
+```
+
+## Multicall
+
+Execute multiple operations in a single transaction:
+
+```solidity
+bytes[] memory calls = new bytes[](2);
+
+// First swap
+calls[0] = abi.encodeWithSelector(
+    router.exactInputSingle.selector,
+    ExactInputSingleParams({...})
+);
+
+// Second swap
+calls[1] = abi.encodeWithSelector(
+    router.exactInputSingle.selector,
+    ExactInputSingleParams({...})
+);
+
+// Execute all
+router.multicall(calls);
+```
+
+## Permit Support
+
+Gasless approvals with EIP-2612:
+
+```solidity
+// Combine permit + swap in single tx
+bytes[] memory calls = new bytes[](2);
+
+calls[0] = abi.encodeWithSelector(
+    router.selfPermit.selector,
+    token, amount, deadline, v, r, s
+);
+
+calls[1] = abi.encodeWithSelector(
+    router.exactInputSingle.selector,
+    params
+);
+
+router.multicall(calls);
+```
+
+## Slippage Protection
+
+Always set appropriate `amountOutMinimum` or `amountInMaximum`:
+
+```solidity
+// Calculate with 0.5% slippage tolerance
+uint256 amountOutMin = expectedOut * 995 / 1000;
+
+// Use in swap
+router.exactInputSingle(
+    ISwapRouter.ExactInputSingleParams({
+        // ...
+        amountOutMinimum: amountOutMin,
+        // ...
+    })
+);
+```
+
+## Related
+
+- [Pools](/docs/amm/pools) - Liquidity pool contracts
+- [WLUX](/docs/amm/wlux) - Wrapped LUX for swaps
+- [Lending](/docs/defi/lending) - Flash loans for arbitrage

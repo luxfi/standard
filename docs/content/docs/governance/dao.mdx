@@ -1,0 +1,74 @@
+---
+title: DAO
+description: Upgradeable DAO contract for on-chain governance
+---
+
+# DAO
+
+Upgradeable DAO contract using UUPS proxy pattern.
+
+**Inherits:** UUPSUpgradeable, OwnableUpgradeable
+
+## Overview
+
+The DAO contract provides:
+- Upgradeable governance logic
+- Owner-controlled upgrades
+- Initializable state
+
+## Functions
+
+### initialize
+
+```solidity
+function initialize() public initializer
+```
+
+Initializes the DAO contract. Must be called once after deployment.
+
+### _authorizeUpgrade
+
+```solidity
+function _authorizeUpgrade(address newImplementation) internal override onlyOwner
+```
+
+Authorizes an upgrade to a new implementation. Only callable by owner.
+
+## Deployment
+
+The DAO uses the UUPS (Universal Upgradeable Proxy Standard) pattern:
+
+```solidity
+import "@luxdao/DAO.sol";
+import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+
+// Deploy implementation
+DAO implementation = new DAO();
+
+// Deploy proxy
+ERC1967Proxy proxy = new ERC1967Proxy(
+    address(implementation),
+    abi.encodeCall(DAO.initialize, ())
+);
+
+// Use proxy as DAO
+DAO dao = DAO(address(proxy));
+```
+
+## Upgrading
+
+To upgrade the DAO:
+
+```solidity
+// Deploy new implementation
+DAOV2 newImplementation = new DAOV2();
+
+// Upgrade (only owner)
+dao.upgradeToAndCall(address(newImplementation), "");
+```
+
+## Security
+
+- **UUPS Pattern**: Upgrade logic in implementation, not proxy
+- **Owner-Only Upgrades**: Only owner can authorize upgrades
+- **Initializer Guard**: `initialize()` can only be called once

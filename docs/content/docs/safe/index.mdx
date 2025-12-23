@@ -1,0 +1,194 @@
+---
+title: Safe (Multisig)
+description: Multi-signature wallet with threshold confirmations
+---
+
+# Safe (Multisig)
+
+Multi-signature wallet with support for confirmations using signed messages based on EIP-712.
+
+## Overview
+
+Safe is a secure multi-signature wallet that requires multiple owners to confirm transactions before execution. It supports:
+
+- Configurable threshold (m-of-n signatures)
+- Module extensions
+- Transaction guards
+- Fallback handlers
+
+## Key Concepts
+
+| Concept | Description |
+|---------|-------------|
+| **Threshold** | Number of required confirmations for a transaction |
+| **Owners** | Addresses that control the Safe and approve transactions |
+| **Nonce** | Each transaction has unique nonce to prevent replay attacks |
+| **Guards** | Pre/post transaction checks |
+| **Modules** | Extensions for additional functionality |
+
+## Core Functions
+
+### setup
+
+```solidity
+function setup(
+    address[] calldata _owners,
+    uint256 _threshold,
+    address to,
+    bytes calldata data,
+    address fallbackHandler,
+    address paymentToken,
+    uint256 payment,
+    address payable paymentReceiver
+) external
+```
+
+Initialize the Safe with owners and threshold.
+
+### execTransaction
+
+```solidity
+function execTransaction(
+    address to,
+    uint256 value,
+    bytes calldata data,
+    Enum.Operation operation,
+    uint256 safeTxGas,
+    uint256 baseGas,
+    uint256 gasPrice,
+    address gasToken,
+    address payable refundReceiver,
+    bytes memory signatures
+) public payable returns (bool success)
+```
+
+Execute a Safe transaction with collected signatures.
+
+### approveHash
+
+```solidity
+function approveHash(bytes32 hashToApprove) external
+```
+
+Approve a transaction hash (for on-chain signing).
+
+### getTransactionHash
+
+```solidity
+function getTransactionHash(
+    address to,
+    uint256 value,
+    bytes calldata data,
+    Enum.Operation operation,
+    uint256 safeTxGas,
+    uint256 baseGas,
+    uint256 gasPrice,
+    address gasToken,
+    address refundReceiver,
+    uint256 _nonce
+) public view returns (bytes32)
+```
+
+Get the transaction hash for signing.
+
+## Owner Management
+
+```solidity
+function addOwnerWithThreshold(address owner, uint256 _threshold) public
+function removeOwner(address prevOwner, address owner, uint256 _threshold) public
+function swapOwner(address prevOwner, address oldOwner, address newOwner) public
+function changeThreshold(uint256 _threshold) public
+```
+
+## Module Management
+
+```solidity
+function enableModule(address module) public
+function disableModule(address prevModule, address module) public
+function execTransactionFromModule(
+    address to,
+    uint256 value,
+    bytes memory data,
+    Enum.Operation operation
+) public returns (bool success)
+```
+
+## Deployment
+
+```solidity
+import "@luxfi/standard/src/safe/contracts/Safe.sol";
+import "@luxfi/standard/src/safe/contracts/proxies/SafeProxyFactory.sol";
+
+// Deploy factory
+SafeProxyFactory factory = new SafeProxyFactory();
+
+// Create Safe with 2-of-3 threshold
+address[] memory owners = new address[](3);
+owners[0] = owner1;
+owners[1] = owner2;
+owners[2] = owner3;
+
+bytes memory initializer = abi.encodeCall(
+    Safe.setup,
+    (
+        owners,
+        2,                  // threshold
+        address(0),         // to
+        "",                 // data
+        address(0),         // fallbackHandler
+        address(0),         // paymentToken
+        0,                  // payment
+        payable(address(0)) // paymentReceiver
+    )
+);
+
+SafeProxy proxy = factory.createProxyWithNonce(
+    address(safeSingleton),
+    initializer,
+    salt
+);
+
+Safe safe = Safe(payable(address(proxy)));
+```
+
+## Usage Example
+
+```solidity
+// 1. Get transaction hash
+bytes32 txHash = safe.getTransactionHash(
+    to,
+    value,
+    data,
+    Enum.Operation.Call,
+    0,          // safeTxGas
+    0,          // baseGas
+    0,          // gasPrice
+    address(0), // gasToken
+    address(0), // refundReceiver
+    safe.nonce()
+);
+
+// 2. Collect signatures off-chain (EIP-712)
+bytes memory signatures = collectSignatures(txHash);
+
+// 3. Execute transaction
+safe.execTransaction(
+    to,
+    value,
+    data,
+    Enum.Operation.Call,
+    0,
+    0,
+    0,
+    address(0),
+    payable(address(0)),
+    signatures
+);
+```
+
+## Security
+
+- **Threshold Enforcement**: All transactions require threshold confirmations
+- **EIP-712 Signatures**: Typed structured data for secure signing
+- **Guards**: Optional pre/post execution checks
+- **Replay Protection**: Nonce prevents transaction replay

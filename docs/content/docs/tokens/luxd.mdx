@@ -1,0 +1,70 @@
+---
+title: LUXD Token
+description: Lux Dollar - stable dollar-pegged token for the Lux ecosystem
+---
+
+# LUXD Token
+
+Lux Dollar is a stable dollar-pegged token for the Lux ecosystem with cross-chain bridge support.
+
+**Inherits:** ERC20B
+
+## State Variables
+
+### _name
+
+```solidity
+string public constant _name = "Lux Dollar"
+```
+
+### _symbol
+
+```solidity
+string public constant _symbol = "LUXD"
+```
+
+## Functions
+
+### constructor
+
+```solidity
+constructor() ERC20B(_name, _symbol)
+```
+
+Initializes the LUXD token with name "Lux Dollar" and symbol "LUXD".
+
+## Usage
+
+```solidity
+import "@luxfi/standard/src/tokens/LUXD.sol";
+
+// Deploy
+LUXD luxd = new LUXD();
+
+// Mint (admin only)
+luxd.mint(recipient, 1000 ether);
+
+// Transfer
+luxd.transfer(to, 100 ether);
+```
+
+## Integration
+
+LUXD inherits all functionality from [ERC20B](/docs/tokens/erc20b), including:
+
+- Admin-controlled minting and burning
+- Access control for administrative functions
+- Standard ERC20 compatibility
+
+## Cross-Chain Support
+
+LUXD is designed to work with the Lux Teleport bridge for cross-chain transfers:
+
+```solidity
+// On source chain
+luxd.approve(bridgeAddress, amount);
+bridge.teleport(destChainId, recipient, amount);
+
+// On destination chain
+bridge.claim(warpProof);
+```

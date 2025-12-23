@@ -1,0 +1,148 @@
+---
+title: AI Token
+description: Hardware-attested GPU compute mining token for AI workloads
+---
+
+# AI Token
+
+AI Token is the reward token for hardware-attested GPU compute on the Lux Network. Miners earn AI by providing verified GPU compute with TEE (Trusted Execution Environment) attestation.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Q-Chain (Quantum Finality) - Shared quantum safety via Quasar │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────┼───────────────────────────────────┐
+│  Source Chains: C-Chain, Hanzo EVM, Zoo EVM                     │
+│  ┌───────────┐    ┌───────────┐    ┌───────────┐               │
+│  │ Pay with  │ -> │ Swap to   │ -> │ Bridge to │               │
+│  │ AI/ETH/   │    │ LUX (DEX) │    │ A-Chain   │               │
+│  └───────────┘    └───────────┘    └───────────┘               │
+└─────────────────────────────┼───────────────────────────────────┘
+                              │ Warp
+┌─────────────────────────────┼───────────────────────────────────┐
+│  A-Chain (Attestation Chain)                                    │
+│  ┌───────────┐    ┌───────────┐    ┌───────────┐               │
+│  │ GPU       │ -> │ TEE Quote │ -> │ AI Mint   │               │
+│  │ Compute   │    │ Verified  │    │ (Native)  │               │
+│  └───────────┘    └───────────┘    └───────────┘               │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Contracts
+
+### AINative (A-Chain)
+
+The native AI token contract on A-Chain with attestation-based minting.
+
+```solidity
+constructor() ERC20B("AI", "AI")
+```
+
+#### State Variables
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `ATTESTATION_PRECOMPILE` | `address` | `0x0300` - Attestation precompile |
+| `WARP_PRECOMPILE` | `address` | `0x0200...0005` - Warp messaging |
+| `CREDITS_PER_MINUTE` | `uint256` | 1 AI per minute base rate |
+
+#### Functions
+
+##### startSession
+
+```solidity
+function startSession(bytes32 sessionId, bytes calldata teeQuote) external
+```
+
+Start a new GPU compute session with TEE attestation quote.
+
+##### heartbeat
+
+```solidity
+function heartbeat(bytes32 sessionId) external returns (uint256 reward)
+```
+
+Submit per-minute proof of compute. Returns AI reward minted.
+
+##### completeSession
+
+```solidity
+function completeSession(bytes32 sessionId) external returns (uint256 totalReward)
+```
+
+Complete session and claim final rewards.
+
+##### teleport
+
+```solidity
+function teleport(bytes32 destChainId, address recipient, uint256 amount) external returns (bytes32)
+```
+
+Teleport AI tokens to destination chain via Warp.
+
+### AIRemote (C-Chain, Hanzo, Zoo)
+
+Remote AI token for claiming teleported tokens.
+
+```solidity
+function claimTeleport(uint32 warpIndex) external returns (uint256 amount)
+```
+
+### AIPaymentRouter
+
+Multi-token payment router for attestation fees.
+
+```solidity
+function payForAttestation(address token, uint256 amount, uint256 minLuxOut, bytes32 sessionId) external payable
+function payWithAI(uint256 aiAmount, uint256 minLuxOut, bytes32 sessionId) external
+function payWithETH(uint256 minLuxOut, bytes32 sessionId) external payable
+```
+
+## Privacy Levels
+
+| Level | Hardware | Multiplier | Credits/Min |
+|-------|----------|------------|-------------|
+| Sovereign (4) | Blackwell | 1.5x | 1.5 AI |
+| Confidential (3) | H100/TDX/SEV | 1.0x | 1.0 AI |
+| Private (2) | SGX/A100 | 0.5x | 0.5 AI |
+| Public (1) | Consumer GPU | 0.25x | 0.25 AI |
+
+## Usage
+
+```solidity
+import "@luxfi/standard/src/tokens/AI.sol";
+
+// On A-Chain - Start mining session
+bytes32 sessionId = keccak256(abi.encodePacked(msg.sender, block.timestamp));
+ai.startSession(sessionId, teeQuote);
+
+// Submit heartbeats every minute
+ai.heartbeat(sessionId);
+
+// Complete session
+uint256 rewards = ai.completeSession(sessionId);
+
+// Teleport to C-Chain
+ai.teleport(C_CHAIN_ID, recipient, amount);
+```
+
+## Chain IDs
+
+| Chain | ID | Contract |
+|-------|-----|----------|
+| A-Chain | Attestation | AINative |
+| C-Chain | 96369 | AIRemote |
+| Hanzo | 36963 | AIRemote |
+| Zoo | 200200 | AIRemote |
+
+## Events
+
+```solidity
+event SessionStarted(bytes32 indexed sessionId, address indexed miner, bytes32 gpuId, PrivacyLevel privacy);
+event HeartbeatReceived(bytes32 indexed sessionId, address indexed miner, uint64 timestamp, uint256 reward);
+event SessionCompleted(bytes32 indexed sessionId, address indexed miner, uint64 totalMinutes, uint256 totalReward);
+event Teleported(bytes32 indexed teleportId, bytes32 indexed destChainId, address indexed recipient, uint256 amount);
+```

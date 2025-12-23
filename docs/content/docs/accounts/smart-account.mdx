@@ -1,0 +1,266 @@
+---
+title: Smart Account
+description: Core ERC-4337 smart account implementation
+---
+
+# Smart Account
+
+The core smart account contract implementing ERC-4337 account abstraction. Supports modular validation, batch execution, and upgradeable logic.
+
+## Contract Hierarchy
+
+```
+BaseSmartAccount (ERC-4337 interface)
+    └── SmartAccount
+        ├── Executor (call/delegatecall)
+        ├── ModuleManager (modules)
+        ├── FallbackManager (fallback handling)
+        └── UUPS Proxy (upgradeability)
+```
+
+## Core Functions
+
+### validateUserOp
+
+Validates a UserOperation before execution.
+
+```solidity
+function validateUserOp(
+    UserOperation calldata userOp,
+    bytes32 userOpHash,
+    uint256 missingAccountFunds
+) external returns (uint256 validationData);
+```
+
+**Parameters:**
+- `userOp`: The user operation to validate
+- `userOpHash`: Hash of the user operation
+- `missingAccountFunds`: Amount to pay EntryPoint
+
+**Returns:**
+- `validationData`: Packed (validAfter, validUntil, aggregator)
+
+### execute
+
+Execute a single transaction.
+
+```solidity
+function execute(
+    address dest,
+    uint256 value,
+    bytes calldata func
+) external;
+```
+
+### executeBatch
+
+Execute multiple transactions atomically.
+
+```solidity
+function executeBatch(
+    address[] calldata dest,
+    uint256[] calldata value,
+    bytes[] calldata func
+) external;
+```
+
+### execute_ncC (Optimized)
+
+Gas-optimized execution for common cases.
+
+```solidity
+function execute_ncC(
+    address dest,
+    uint256 value,
+    bytes calldata func
+) external;
+```
+
+## Signature Validation
+
+### ECDSA Signature
+
+```solidity
+// Standard EOA signature
+bytes memory signature = abi.encodePacked(r, s, v);
+
+// Hash format (EIP-191)
+bytes32 hash = keccak256(abi.encodePacked(
+    "\x19\x01",
+    domainSeparator,
+    userOpHash
+));
+```
+
+### Module Signature
+
+```solidity
+// Module-based validation
+bytes memory signature = abi.encodePacked(
+    bytes1(0x00),           // Signature type
+    address(module),        // Validation module
+    moduleSignature         // Module-specific signature
+);
+```
+
+## Initialization
+
+```solidity
+function init(
+    address _owner,
+    address _handler
+) external;
+```
+
+**Parameters:**
+- `_owner`: Initial EOA owner
+- `_handler`: Default callback handler
+
+## Module Management
+
+### enableModule
+
+Enable a module for extended functionality.
+
+```solidity
+function enableModule(address module) external;
+```
+
+### disableModule
+
+Disable a previously enabled module.
+
+```solidity
+function disableModule(
+    address prevModule,
+    address module
+) external;
+```
+
+### isModuleEnabled
+
+Check if a module is enabled.
+
+```solidity
+function isModuleEnabled(address module) external view returns (bool);
+```
+
+## Fallback Management
+
+### setFallbackHandler
+
+Set handler for fallback calls.
+
+```solidity
+function setFallbackHandler(address handler) external;
+```
+
+## Upgradeability
+
+### updateImplementation
+
+Upgrade to new implementation (UUPS).
+
+```solidity
+function updateImplementation(address _implementation) external;
+```
+
+## Events
+
+```solidity
+event ImplementationUpdated(
+    address indexed oldImplementation,
+    address indexed newImplementation
+);
+
+event ExecutionSuccess(bytes32 indexed txHash, uint256 payment);
+event ExecutionFailure(bytes32 indexed txHash, uint256 payment);
+event ModuleEnabled(address indexed module);
+event ModuleDisabled(address indexed module);
+event ChangedFallbackHandler(address indexed handler);
+```
+
+## Usage Examples
+
+### Basic Execution
+
+```solidity
+SmartAccount account = SmartAccount(accountAddress);
+
+// Single call
+account.execute(
+    tokenAddress,
+    0,
+    abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
+);
+```
+
+### Batch Execution
+
+```solidity
+address[] memory targets = new address[](3);
+uint256[] memory values = new uint256[](3);
+bytes[] memory calldatas = new bytes[](3);
+
+// Approve token
+targets[0] = token;
+values[0] = 0;
+calldatas[0] = abi.encodeWithSignature("approve(address,uint256)", spender, amount);
+
+// Deposit to lending
+targets[1] = lendingPool;
+values[1] = 0;
+calldatas[1] = abi.encodeWithSignature("deposit(address,uint256)", token, amount);
+
+// Borrow
+targets[2] = lendingPool;
+values[2] = 0;
+calldatas[2] = abi.encodeWithSignature("borrow(address,uint256)", borrowToken, borrowAmount);
+
+account.executeBatch(targets, values, calldatas);
+```
+
+### With UserOperation
+
+```solidity
+UserOperation memory userOp = UserOperation({
+    sender: address(account),
+    nonce: account.nonce(),
+    initCode: bytes(""),
+    callData: abi.encodeWithSignature(
+        "execute(address,uint256,bytes)",
+        target, value, data
+    ),
+    callGasLimit: 200000,
+    verificationGasLimit: 100000,
+    preVerificationGas: 21000,
+    maxFeePerGas: block.basefee + 1 gwei,
+    maxPriorityFeePerGas: 1 gwei,
+    paymasterAndData: bytes(""),
+    signature: bytes("")
+});
+
+// Sign the UserOperation
+bytes32 userOpHash = entryPoint.getUserOpHash(userOp);
+(uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerKey, userOpHash);
+userOp.signature = abi.encodePacked(r, s, v);
+
+// Submit via bundler or directly
+UserOperation[] memory ops = new UserOperation[](1);
+ops[0] = userOp;
+entryPoint.handleOps(ops, payable(beneficiary));
+```
+
+## Security Considerations
+
+- Only owner or enabled modules can execute
+- Signature replay protection via nonces
+- EntryPoint is the only external caller for validateUserOp
+- UUPS upgrade requires owner authorization
+- Module enable/disable is owner-only
+
+## Related
+
+- [Factory](/docs/accounts/factory) - Deploy smart accounts
+- [Modules](/docs/accounts/modules) - Session keys and validation
+- [Paymasters](/docs/accounts/paymasters) - Gas sponsorship

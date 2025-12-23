@@ -1,0 +1,73 @@
+---
+title: Lux Standard Library
+description: Smart contract library for Lux Network - tokens, DeFi, AMM, accounts, and security
+---
+
+# Lux Standard Library
+
+Comprehensive smart contract library for the Lux Network ecosystem. One canonical implementation for each protocol - composable, orthogonal, and secure.
+
+## Core Contracts
+
+<Cards>
+  <Card title="Tokens" href="/docs/tokens">
+    LUX, LUXD, AI, LBTC, LETH tokens and bridgeable ERC20/ERC721
+  </Card>
+  <Card title="AMM" href="/docs/amm">
+    Uniswap V2/V3 pools, swap router, and WLUX
+  </Card>
+  <Card title="DeFi" href="/docs/defi">
+    Margin trading, lending pools, self-repaying loans, and yield farming
+  </Card>
+  <Card title="Smart Accounts" href="/docs/accounts">
+    ERC-4337 account abstraction, session keys, and paymasters
+  </Card>
+</Cards>
+
+## Infrastructure
+
+<Cards>
+  <Card title="Governance" href="/docs/governance">
+    DAO, voting, and on-chain governance
+  </Card>
+  <Card title="Bridge" href="/docs/bridge">
+    Cross-chain bridge with MPC oracle validation
+  </Card>
+  <Card title="Utilities" href="/docs/utils">
+    Multicall, batch operations, and helpers
+  </Card>
+</Cards>
+
+## Security
+
+<Cards>
+  <Card title="Safe" href="/docs/safe">
+    Multi-signature wallet with threshold confirmations
+  </Card>
+  <Card title="Lamport" href="/docs/lamport">
+    Post-quantum signatures for contract ownership
+  </Card>
+</Cards>
+
+## Quick Start
+
+```bash
+# Install with Foundry
+forge install luxfi/standard
+
+# Or add to remappings
+echo "@luxfi/standard/=lib/standard/src/" >> remappings.txt
+```
+
+## Architecture
+
+The standard library follows these principles:
+
+- **Composable**: Contracts work together seamlessly
+- **Orthogonal**: Each contract does one thing well
+- **Secure**: Audited and battle-tested implementations
+- **Post-Quantum Ready**: Lamport signatures and threshold cryptography
+
+## License
+
+MIT License - see [LICENSE](https://github.com/luxfi/standard/blob/main/LICENSE)

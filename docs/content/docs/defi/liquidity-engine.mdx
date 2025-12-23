@@ -1,0 +1,350 @@
+---
+title: Universal Liquidity Engine
+description: Unified access to DeFi liquidity across EVM, Solana, and TON
+---
+
+# Universal Liquidity Engine
+
+Unified router for accessing liquidity from 30+ DeFi protocols across multiple chains.
+
+## Overview
+
+The Universal Liquidity Engine provides:
+
+- **Cross-Chain Swaps**: Best route across all connected DEXes
+- **Lending Aggregation**: Best rates across Aave, Compound, etc.
+- **Perps Routing**: Access GMX, Aster, and native LuxPerps
+- **Multi-Chain**: EVM, Solana, and TON support
+- **Single Interface**: One API for all protocols
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      UNIVERSAL LIQUIDITY ENGINE                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                    UniversalLiquidityRouter                           │  │
+│  │         getBestQuote() | swap() | supplyBest() | borrow()             │  │
+│  └─────────────────────────────────┬─────────────────────────────────────┘  │
+│                                    │                                         │
+│  ┌─────────────────────────────────┴─────────────────────────────────────┐  │
+│  │                          ADAPTER LAYER                                │  │
+│  ├───────────────┬───────────────┬───────────────┬───────────────────────┤  │
+│  │     EVM       │    SOLANA     │      TON      │      BRIDGES          │  │
+│  ├───────────────┼───────────────┼───────────────┼───────────────────────┤  │
+│  │ • Uniswap V3  │ • Jupiter     │ • STON.fi     │ • Warp (Lux)          │  │
+│  │ • Aave V3     │ • Raydium     │ • DeDust      │ • Stargate            │  │
+│  │ • Compound    │ • Meteora     │ • Evaa        │ • Across              │  │
+│  │ • Curve       │ • Orca        │ • Omniston    │ • Hop                 │  │
+│  │ • 1inch       │ • Solend      │               │                       │  │
+│  │ • Balancer    │ • Marinade    │               │                       │  │
+│  │ • PancakeSwap │ • Kamino      │               │                       │  │
+│  │ • GMX/Aster   │               │               │                       │  │
+│  └───────────────┴───────────────┴───────────────┴───────────────────────┘  │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Supported Protocols
+
+### EVM DEXes
+
+| Protocol | Chains | Type | Contract |
+|----------|--------|------|----------|
+| Uniswap V3 | ETH, ARB, OP, BASE | AMM | `0xE592427A0AEce92De3Edee1F18E0157C05861564` |
+| Uniswap V2 | ETH | AMM | `0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D` |
+| PancakeSwap | BSC | AMM | `0x13f4EA83D0bd40E75C8222255bc855a974568Dd4` |
+| Curve | ETH | Stableswap | `0x99a58482BD75cbab83b27EC03CA68fF489b5788f` |
+| Balancer | ETH | Weighted | `0xBA12222222228d8Ba445958a75a0704d566BF2C8` |
+| 1inch | Multi | Aggregator | `0x1111111254EEB25477B68fb85Ed929f73A960582` |
+| Velodrome | OP | AMM | `0xa062aE8A9c5e11aaA026fc2670B0D65cCc8B2858` |
+| Aerodrome | BASE | AMM | `0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43` |
+| Camelot | ARB | AMM | `0xc873fEcbd354f5A56E00E710B90EF4201db2448d` |
+| TraderJoe | AVAX | AMM | `0x60aE616a2155Ee3d9A68541Ba4544862310933d4` |
+
+### EVM Lending
+
+| Protocol | Chains | Type | Contract |
+|----------|--------|------|----------|
+| Aave V3 | ETH, ARB, OP, POLY, BASE | Lending | `0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2` |
+| Compound V3 | ETH, ARB, BASE | Lending | `0xc3d688B66703497DAA19211EEdff47f25384cdc3` |
+| Spark | ETH | Lending | `0xC13e21B648A5Ee794902342038FF3aDAB66BE987` |
+| Morpho | ETH | Lending | `0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb` |
+| Venus | BSC | Lending | `0xfD36E2c2a6789Db23113685031d7F16329158384` |
+| Radiant | ARB | Lending | `0xF4B1486DD74D07706052A33d31d7c0AAFD0659E1` |
+
+### EVM Perps
+
+| Protocol | Chains | Max Leverage | Contract |
+|----------|--------|--------------|----------|
+| Aster | BSC, ARB | 1001x | `0x1b6F2d3844C6ae7D56ceb3C3643b9060ba28FEb0` |
+| GMX V2 | ARB, AVAX | 100x | `0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8` |
+| Gains | ARB, POLY | 150x | `0xFF162c694eAA571f685030649814282eA457f169` |
+| Kwenta | OP | 50x | `0x1aF06C904F7d7b8957A0A3b0FD4b1F0Cf4F29551` |
+
+### Solana
+
+| Protocol | Type | Program ID |
+|----------|------|------------|
+| Jupiter | Aggregator | `JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4` |
+| Raydium | AMM | `675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8` |
+| Meteora | DLMM | `LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo` |
+| Orca | Whirlpool | `whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc` |
+| Marinade | Staking | `MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD` |
+| Solend | Lending | `So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo` |
+| Kamino | Lending | `KLend2g3cP87ber41GXWsSZQq8pKd8Xvw5p2xJrg9` |
+
+### TON
+
+| Protocol | Type | Address |
+|----------|------|---------|
+| STON.fi | DEX | `EQB3ncyBUTjZUA5EnFKR5_EnOMI9V1tTEAAPaiU71gc4TiUt` |
+| DeDust | DEX | `EQDa4VOnTYlLvDJ0gZjNYm5PXfSmmtL6Vs6A_CZEtXCNICq_` |
+| Evaa | Lending | `EQC8rUZqR_pWV1BylWUlPNBzyiTYVoBEmQkMIQDZXICfnuRr` |
+
+## EVM Usage
+
+### Router Contract
+
+```solidity
+import "@luxfi/standard/src/liquidity/UniversalLiquidityRouter.sol";
+
+UniversalLiquidityRouter router = UniversalLiquidityRouter(ROUTER_ADDRESS);
+
+// Get best swap quote
+(ILiquidityEngine.SwapQuote memory quote, bytes32 protocol) =
+    router.getBestQuote(WETH, USDC, 1 ether);
+
+console.log("Best output:", quote.amountOut);
+console.log("Via protocol:", protocol); // e.g., "UNISWAP_V3"
+
+// Execute swap with best route
+uint256 amountOut = router.swap(
+    WETH,           // tokenIn
+    USDC,           // tokenOut
+    1 ether,        // amountIn
+    990e6,          // minAmountOut (1% slippage)
+    msg.sender,     // recipient
+    block.timestamp + 300 // deadline
+);
+```
+
+### Multi-Hop Routing
+
+```solidity
+// Build custom route
+UniversalLiquidityRouter.RouteStep[] memory steps = new RouteStep[](2);
+
+// Step 1: WETH → USDC via Uniswap
+steps[0] = RouteStep({
+    adapter: uniswapAdapter,
+    tokenIn: WETH,
+    tokenOut: USDC,
+    amountIn: 1 ether,
+    extraData: ""
+});
+
+// Step 2: USDC → DAI via Curve
+steps[1] = RouteStep({
+    adapter: curveAdapter,
+    tokenIn: USDC,
+    tokenOut: DAI,
+    amountIn: 0, // Use output from step 1
+    extraData: ""
+});
+
+uint256 finalAmount = router.swapMultiHop(
+    steps,
+    990e18,         // minAmountOut
+    msg.sender,
+    block.timestamp + 300
+);
+```
+
+### Lending Aggregation
+
+```solidity
+// Get best supply rate
+(ILiquidityEngine.LendingQuote memory quote, bytes32 protocol) =
+    router.getBestLendingRate(USDC, 1000e6, true);
+
+console.log("Best APY:", quote.apy);
+console.log("Via:", protocol); // e.g., "AAVE_V3"
+
+// Supply to best protocol
+(uint256 shares, bytes32 usedProtocol) = router.supplyBest(USDC, 1000e6);
+```
+
+## TypeScript SDK
+
+```typescript
+import { LuxLiquidityEngine } from '@luxfi/liquidity-sdk';
+
+const engine = new LuxLiquidityEngine({
+  // EVM chains
+  ethereum: { rpc: 'https://eth.llamarpc.com', signer },
+  bsc: { rpc: 'https://bsc-dataseed.binance.org', signer },
+  arbitrum: { rpc: 'https://arb1.arbitrum.io/rpc', signer },
+  lux: { rpc: 'https://api.lux.network/rpc', signer },
+
+  // Solana
+  solana: { connection, wallet },
+
+  // TON
+  ton: { endpoint: 'https://toncenter.com/api/v2/jsonRPC', wallet },
+});
+
+// Cross-chain swap: ETH (Ethereum) → SOL (Solana)
+const quote = await engine.getCrossChainQuote({
+  sourceChain: 'ethereum',
+  destChain: 'solana',
+  tokenIn: 'ETH',
+  tokenOut: 'SOL',
+  amount: parseEther('1'),
+});
+
+console.log({
+  amountOut: quote.amountOut,
+  route: quote.route, // [ETH → USDC via Uniswap] → [Bridge] → [USDC → SOL via Jupiter]
+  estimatedTime: quote.estimatedTime,
+  totalFees: quote.fees,
+});
+
+// Execute
+const txs = await engine.executeCrossChainSwap(quote);
+for (const tx of txs) {
+  console.log(`${tx.chain}: ${tx.hash}`);
+}
+```
+
+## Solana Integration
+
+```typescript
+import { LuxSolanaRouter } from '@luxfi/solana-liquidity';
+
+const router = new LuxSolanaRouter({ connection, wallet });
+
+// Swap via Jupiter (aggregates all Solana DEXes)
+const { txId } = await router.swap({
+  inputMint: 'So11111111111111111111111111111111111111112', // SOL
+  outputMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
+  amount: 1_000_000_000, // 1 SOL
+  slippageBps: 50,
+});
+
+// Supply to Solend
+const { txId } = await router.supply({
+  protocol: 'SOLEND',
+  token: 'USDC',
+  amount: 100_000_000,
+});
+
+// Add liquidity to Meteora DLMM
+const { txId } = await router.addLiquidity({
+  protocol: 'METEORA',
+  pool: 'SOL-USDC',
+  amountA: 1_000_000_000,
+  amountB: 100_000_000,
+});
+```
+
+## TON Integration
+
+```typescript
+import { LuxTonRouter } from '@luxfi/ton-liquidity';
+
+const router = new LuxTonRouter({ endpoint, wallet });
+
+// Swap via STON.fi
+const { txHash } = await router.swap({
+  protocol: 'STONFI',
+  tokenIn: 'TON',
+  tokenOut: 'USDT',
+  amount: toNano('10'),
+  slippage: 0.01,
+});
+
+// Cross-chain via Omniston
+const { txHash } = await router.crossChainSwap({
+  srcChain: 'TON',
+  dstChain: 'ETHEREUM',
+  tokenIn: 'TON',
+  tokenOut: 'ETH',
+  amount: toNano('100'),
+});
+```
+
+## Adapter Development
+
+### Creating New Adapters
+
+```solidity
+// SPDX-License-Identifier: BSD-3-Clause
+// Copyright (c) 2025 Lux Industries Inc.
+pragma solidity ^0.8.24;
+
+import {ILiquidityEngine} from "../interfaces/ILiquidityEngine.sol";
+
+contract MyProtocolAdapter is ILiquidityEngine {
+    // Implement required functions
+    function getSwapQuote(address tokenIn, address tokenOut, uint256 amountIn)
+        external view returns (SwapQuote memory);
+
+    function swap(address tokenIn, address tokenOut, uint256 amountIn,
+        uint256 minAmountOut, address recipient, uint256 deadline)
+        external payable returns (uint256);
+
+    // ... other required functions
+}
+```
+
+### Registering Adapters
+
+```solidity
+// Admin registers new adapter
+router.registerAdapter(
+    keccak256("MY_PROTOCOL"),  // protocolId
+    myAdapterAddress,          // adapter
+    10                         // priority (lower = higher)
+);
+
+// Enable/disable
+router.setAdapterEnabled(keccak256("MY_PROTOCOL"), true);
+```
+
+## File Structure
+
+```
+src/liquidity/
+├── interfaces/
+│   └── ILiquidityEngine.sol      # Universal adapter interface
+├── UniversalLiquidityRouter.sol  # Main aggregator router
+├── ProtocolRegistry.sol          # All protocol addresses
+├── evm/
+│   ├── UniswapV3Adapter.sol      # Uniswap V3 integration
+│   ├── AaveV3Adapter.sol         # Aave V3 lending
+│   ├── OneInchAdapter.sol        # 1inch aggregator
+│   └── ...
+├── solana/
+│   └── README.md                 # Solana SDK documentation
+└── ton/
+    └── README.md                 # TON SDK documentation
+```
+
+## Fee Structure
+
+| Operation | Fee |
+|-----------|-----|
+| Swap (same chain) | 0.05% |
+| Cross-chain swap | 0.1% + bridge fees |
+| Lending supply/withdraw | 0% |
+| Borrow | 0% |
+
+Fees are configurable by governance (max 1%).
+
+## Related
+
+- [Perps](/docs/defi/perps) - Perpetual futures with Aster integration
+- [Omnichain](/docs/defi/omnichain) - Cross-chain infrastructure
+- [Minimal Lending](/docs/defi/minimal-lending) - LuxLend architecture
+- [Intents](/docs/defi/intents) - Intent-based execution

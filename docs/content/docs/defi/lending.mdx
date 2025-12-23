@@ -1,0 +1,380 @@
+---
+title: Lending Pools
+description: Over-collateralized lending and flash loans with dynamic interest rates
+---
+
+# Lending Pools
+
+Lending pools provide over-collateralized borrowing and flash loans with dynamic interest rate models. Deposit assets to earn yield, borrow against collateral, or use flash loans for arbitrage and liquidations.
+
+## Overview
+
+| Feature | Description |
+|---------|-------------|
+| Collateralized Loans | Borrow against deposited collateral |
+| Flash Loans | Borrow any amount, repay in same transaction |
+| Dynamic Rates | Interest rates adjust based on utilization |
+| Liquidations | Unhealthy positions can be liquidated for profit |
+| lTokens | Receipt tokens representing pool deposits |
+
+## Core Functions
+
+### Deposits
+
+```solidity
+/// @notice Deposit assets to earn yield
+/// @param asset The address of the underlying asset to deposit
+/// @param amount The amount to be deposited
+/// @param onBehalfOf The address that will receive the lTokens
+function deposit(
+    address asset,
+    uint256 amount,
+    address onBehalfOf
+) external;
+
+/// @notice Withdraw deposited assets
+/// @param asset The address of the underlying asset to withdraw
+/// @param amount The underlying amount to be withdrawn
+/// @param to Address that will receive the underlying
+/// @return amountWithdrawn The final amount withdrawn
+function withdraw(
+    address asset,
+    uint256 amount,
+    address to
+) external returns (uint256 amountWithdrawn);
+```
+
+### Borrowing
+
+```solidity
+/// @notice Borrow assets against deposited collateral
+/// @param asset The address of the underlying asset to borrow
+/// @param amount The amount to be borrowed
+/// @param interestRateMode 1 for Stable, 2 for Variable
+/// @param onBehalfOf Address that will receive the debt
+function borrow(
+    address asset,
+    uint256 amount,
+    uint256 interestRateMode,
+    address onBehalfOf
+) external;
+
+/// @notice Repay borrowed assets
+/// @param asset The address of the borrowed underlying asset
+/// @param amount The amount to repay
+/// @param rateMode The interest rate mode of the debt (1 = Stable, 2 = Variable)
+/// @param onBehalfOf Address of the user whose debt is being repaid
+/// @return amountRepaid The final amount repaid
+function repay(
+    address asset,
+    uint256 amount,
+    uint256 rateMode,
+    address onBehalfOf
+) external returns (uint256 amountRepaid);
+```
+
+### Flash Loans (ERC-3156)
+
+Flash loans allow borrowing any amount without collateral, as long as the loan plus fee is repaid within the same transaction.
+
+```solidity
+/// @notice Initiate a flash loan
+/// @param receiver The contract receiving the funds (must implement IERC3156FlashBorrower)
+/// @param token The loan currency
+/// @param amount The amount of tokens to borrow
+/// @param data Arbitrary data passed to the receiver
+/// @return success True if the flash loan was successful
+function flashLoan(
+    IERC3156FlashBorrower receiver,
+    address token,
+    uint256 amount,
+    bytes calldata data
+) external returns (bool success);
+
+/// @notice The fee charged for a flash loan
+/// @param token The loan currency
+/// @param amount The amount of tokens to borrow
+/// @return fee The fee in token units
+function flashFee(
+    address token,
+    uint256 amount
+) external view returns (uint256 fee);
+
+/// @notice Maximum amount available for flash loan
+/// @param token The loan currency
+/// @return amount The maximum flashable amount
+function maxFlashLoan(address token) external view returns (uint256 amount);
+```
+
+### Flash Loan Receiver
+
+```solidity
+interface IERC3156FlashBorrower {
+    /// @notice Receive a flash loan
+    /// @param initiator The initiator of the loan
+    /// @param token The loan currency
+    /// @param amount The amount of tokens borrowed
+    /// @param fee The additional amount to repay
+    /// @param data Arbitrary data passed from the lender
+    /// @return The keccak256 hash of "ERC3156FlashBorrower.onFlashLoan"
+    function onFlashLoan(
+        address initiator,
+        address token,
+        uint256 amount,
+        uint256 fee,
+        bytes calldata data
+    ) external returns (bytes32);
+}
+```
+
+### Liquidations
+
+```solidity
+/// @notice Liquidate an undercollateralized position
+/// @param collateralAsset The collateral asset to receive
+/// @param debtAsset The debt asset to repay
+/// @param user The borrower being liquidated
+/// @param debtToCover The amount of debt to repay
+/// @param receivelToken True to receive lTokens, false for underlying
+function liquidationCall(
+    address collateralAsset,
+    address debtAsset,
+    address user,
+    uint256 debtToCover,
+    bool receivelToken
+) external;
+```
+
+## Interest Rate Model
+
+Interest rates are dynamic based on pool utilization:
+
+```
+Utilization Rate = Total Borrows / Total Deposits
+
+Variable Rate:
+  if utilization < optimal:
+    rate = baseRate + (utilization / optimal) × slope1
+  else:
+    rate = baseRate + slope1 + ((utilization - optimal) / (1 - optimal)) × slope2
+
+Stable Rate:
+  A fixed rate set at borrow time, can be rebalanced under extreme conditions
+```
+
+### Rate Parameters
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| Optimal Utilization | 80% | Target utilization rate |
+| Base Rate | 0% | Rate at 0% utilization |
+| Slope 1 | 4% | Rate increase below optimal |
+| Slope 2 | 75% | Rate increase above optimal |
+| Flash Fee | 0.09% | Fee for flash loans |
+
+## Health Factor
+
+```
+Health Factor = (Collateral × Liquidation Threshold) / Debt
+
+- Health Factor > 1: Position is healthy
+- Health Factor < 1: Position can be liquidated
+- Liquidation Threshold: 80-90% depending on asset
+```
+
+## lTokens (Receipt Tokens)
+
+When you deposit assets, you receive lTokens representing your share of the pool:
+
+```solidity
+// Deposit 1000 USDC
+lendingPool.deposit(USDC, 1000e6, msg.sender);
+// Receive ~1000 lUSDC (may vary based on interest accrued)
+
+// lTokens accrue interest automatically
+// Balance grows over time without transactions
+uint256 balance = lUSDC.balanceOf(msg.sender);
+
+// Withdraw with accrued interest
+lendingPool.withdraw(USDC, type(uint256).max, msg.sender);
+```
+
+## Flash Loan Use Cases
+
+### Arbitrage
+
+```solidity
+contract FlashArbitrage is IERC3156FlashBorrower {
+    function executeArbitrage(
+        address token,
+        uint256 amount,
+        address poolA,
+        address poolB
+    ) external {
+        bytes memory data = abi.encode(poolA, poolB);
+        lendingPool.flashLoan(this, token, amount, data);
+    }
+
+    function onFlashLoan(
+        address initiator,
+        address token,
+        uint256 amount,
+        uint256 fee,
+        bytes calldata data
+    ) external returns (bytes32) {
+        (address poolA, address poolB) = abi.decode(data, (address, address));
+
+        // Buy low on poolA
+        uint256 received = swapOnPool(poolA, token, amount);
+
+        // Sell high on poolB
+        uint256 profit = swapOnPool(poolB, received, token);
+
+        // Repay flash loan + fee
+        IERC20(token).approve(msg.sender, amount + fee);
+
+        return keccak256("ERC3156FlashBorrower.onFlashLoan");
+    }
+}
+```
+
+### Self-Liquidation
+
+```solidity
+contract SelfLiquidator is IERC3156FlashBorrower {
+    function selfLiquidate(
+        address debtAsset,
+        uint256 debtAmount,
+        address collateralAsset
+    ) external {
+        bytes memory data = abi.encode(msg.sender, collateralAsset);
+        lendingPool.flashLoan(this, debtAsset, debtAmount, data);
+    }
+
+    function onFlashLoan(
+        address initiator,
+        address token,
+        uint256 amount,
+        uint256 fee,
+        bytes calldata data
+    ) external returns (bytes32) {
+        (address user, address collateral) = abi.decode(data, (address, address));
+
+        // Repay debt to release collateral
+        IERC20(token).approve(address(lendingPool), amount);
+        lendingPool.repay(token, amount, 2, user);
+
+        // Withdraw collateral
+        lendingPool.withdraw(collateral, type(uint256).max, address(this));
+
+        // Swap collateral to repay flash loan
+        uint256 repayAmount = amount + fee;
+        // ... swap logic
+
+        IERC20(token).approve(msg.sender, repayAmount);
+        return keccak256("ERC3156FlashBorrower.onFlashLoan");
+    }
+}
+```
+
+## Collateral Parameters
+
+| Asset | LTV | Liquidation Threshold | Liquidation Bonus |
+|-------|-----|----------------------|-------------------|
+| LETH | 80% | 85% | 5% |
+| LBTC | 75% | 80% | 5% |
+| LUX | 70% | 75% | 10% |
+| LUXD | 80% | 85% | 4% |
+
+## Events
+
+```solidity
+event Deposit(
+    address indexed reserve,
+    address user,
+    address indexed onBehalfOf,
+    uint256 amount
+);
+
+event Withdraw(
+    address indexed reserve,
+    address indexed user,
+    address indexed to,
+    uint256 amount
+);
+
+event Borrow(
+    address indexed reserve,
+    address user,
+    address indexed onBehalfOf,
+    uint256 amount,
+    uint256 borrowRateMode,
+    uint256 borrowRate
+);
+
+event Repay(
+    address indexed reserve,
+    address indexed user,
+    address indexed repayer,
+    uint256 amount
+);
+
+event FlashLoan(
+    address indexed target,
+    address indexed initiator,
+    address indexed asset,
+    uint256 amount,
+    uint256 premium
+);
+
+event LiquidationCall(
+    address indexed collateralAsset,
+    address indexed debtAsset,
+    address indexed user,
+    uint256 debtToCover,
+    uint256 liquidatedCollateralAmount,
+    address liquidator
+);
+```
+
+## Usage Example
+
+```solidity
+import "@luxfi/standard/src/lending/LendingPool.sol";
+import "@luxfi/standard/src/lending/interfaces/IERC3156FlashLender.sol";
+
+// Deposit collateral
+IERC20(LETH).approve(address(lendingPool), 10e18);
+lendingPool.deposit(LETH, 10e18, msg.sender);
+
+// Enable as collateral
+lendingPool.setUserUseReserveAsCollateral(LETH, true);
+
+// Borrow with variable rate
+lendingPool.borrow(LUXD, 5000e18, 2, msg.sender);
+
+// Check health factor
+(,,,,,uint256 healthFactor) = lendingPool.getUserAccountData(msg.sender);
+require(healthFactor > 1e18, "Position unhealthy");
+
+// Repay loan
+IERC20(LUXD).approve(address(lendingPool), 5000e18);
+lendingPool.repay(LUXD, 5000e18, 2, msg.sender);
+
+// Withdraw collateral
+lendingPool.withdraw(LETH, type(uint256).max, msg.sender);
+```
+
+## Security
+
+- **Over-Collateralization**: All loans require excess collateral
+- **Liquidation Mechanism**: Unhealthy positions are liquidated to protect lenders
+- **Flash Loan Protection**: Funds must be returned in same transaction
+- **Interest Rate Caps**: Maximum rates prevent extreme borrowing costs
+- **Pause Mechanism**: Pool can be paused in emergencies
+
+## Related
+
+- [Loans](/docs/defi/loans) - Self-repaying loans using yield-bearing collateral
+- [Margin](/docs/defi/vault) - Leveraged trading with up to 50x
+- [Bridge](/docs/bridge) - Cross-chain asset bridging

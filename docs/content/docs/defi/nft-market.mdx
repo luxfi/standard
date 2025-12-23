@@ -1,0 +1,193 @@
+---
+title: NFT Market
+description: Automated market maker for NFTs with bonding curves
+---
+
+# NFT Market
+
+NFT AMM with customizable bonding curves for instant NFT liquidity.
+
+## Overview
+
+Unlike traditional NFT marketplaces that use order books, the NFT Market uses bonding curves to provide instant liquidity for buying and selling NFTs.
+
+## Pool Types
+
+| Type | Description | Use Case |
+|------|-------------|----------|
+| `TOKEN` | Sell NFTs for tokens | Exit NFT position |
+| `NFT` | Buy NFTs with tokens | Accumulate NFTs |
+| `TRADE` | Two-way trading with spread | Market making |
+
+## Bonding Curves
+
+### Linear Curve
+
+```
+Price = spotPrice + delta * numItems
+```
+
+Price increases/decreases linearly with each trade.
+
+### Exponential Curve
+
+```
+Price = spotPrice * (1 + delta)^numItems
+```
+
+Price grows/shrinks exponentially.
+
+### XYK Curve
+
+```
+Price follows x * y = k constant product formula
+```
+
+Classic AMM curve for NFTs.
+
+### GDA Curve (Gradual Dutch Auction)
+
+Prices decay over time, useful for NFT launches.
+
+## NFTPair
+
+The core pair contract that holds NFTs and tokens.
+
+### State Variables
+
+```solidity
+uint128 public spotPrice;     // Current spot price
+uint128 public delta;         // Curve parameter
+uint96 public fee;            // Trade fee (for TRADE pools)
+address payable assetRecipient; // Where assets go
+```
+
+### Key Functions
+
+#### swapTokenForSpecificNFTs
+
+```solidity
+function swapTokenForSpecificNFTs(
+    uint256[] calldata nftIds,
+    uint256 maxExpectedTokenInput,
+    address nftRecipient,
+    bool isRouter,
+    address routerCaller
+) external payable returns (uint256 inputAmount)
+```
+
+Buy specific NFTs from the pool.
+
+#### swapNFTsForToken
+
+```solidity
+function swapNFTsForToken(
+    uint256[] calldata nftIds,
+    uint256 minExpectedTokenOutput,
+    address payable tokenRecipient,
+    bool isRouter,
+    address routerCaller
+) external returns (uint256 outputAmount)
+```
+
+Sell NFTs to the pool.
+
+#### getBuyNFTQuote
+
+```solidity
+function getBuyNFTQuote(
+    uint256 assetId,
+    uint256 numItems
+) external view returns (
+    CurveErrorCodes.Error error,
+    uint256 newSpotPrice,
+    uint256 newDelta,
+    uint256 inputAmount,
+    uint256 protocolFee,
+    uint256 royaltyAmount
+)
+```
+
+Get quote for buying NFTs.
+
+## NFTRouter
+
+Aggregates swaps across multiple pools.
+
+```solidity
+function swapLUXForSpecificNFTs(
+    PairSwapSpecific[] calldata swapList,
+    address payable luxRecipient,
+    address nftRecipient,
+    uint256 deadline
+) external payable returns (uint256 remainingValue)
+```
+
+## Factory
+
+```solidity
+function createPairERC721LUX(
+    IERC721 _nft,
+    ICurve _bondingCurve,
+    address payable _assetRecipient,
+    NFTPair.PoolType _poolType,
+    uint128 _delta,
+    uint96 _fee,
+    uint128 _spotPrice,
+    address _propertyChecker,
+    uint256[] calldata _initialNFTIDs
+) external returns (NFTPairERC721LUX pair)
+```
+
+## NFT Lending
+
+Borrow against NFTs held in liquidity pools.
+
+```solidity
+function borrow(
+    address pair,
+    uint256[] calldata nftIds,
+    address swapPool,
+    uint256 minOutput
+) external payable
+```
+
+Borrow LUX against NFTs held in a pool.
+
+## Usage Example
+
+```solidity
+import "@luxfi/standard/src/nft/NFTRouter.sol";
+import "@luxfi/standard/src/nft/NFTPairFactory.sol";
+
+// Create a TRADE pool for my NFT collection
+NFTPairERC721LUX pair = factory.createPairERC721LUX(
+    myNFT,
+    linearCurve,
+    address(this),
+    NFTPair.PoolType.TRADE,
+    0.01 ether,    // delta (price increment)
+    0.05e18,       // 5% fee
+    0.1 ether,     // starting price
+    address(0),    // no property checker
+    initialNFTIds
+);
+
+// Buy NFTs through router
+router.swapLUXForSpecificNFTs{value: 1 ether}(
+    swapList,
+    msg.sender,     // LUX recipient (for refund)
+    msg.sender,     // NFT recipient
+    block.timestamp + 1 hours
+);
+```
+
+## Events
+
+```solidity
+event SwapNFTInPair(uint256 amountOut, uint256[] ids);
+event SwapNFTOutPair(uint256 amountIn, uint256[] ids);
+event SpotPriceUpdate(uint128 newSpotPrice);
+event DeltaUpdate(uint128 newDelta);
+event FeeUpdate(uint96 newFee);
+```

@@ -1,0 +1,250 @@
+---
+title: Paymasters
+description: Gas sponsorship and ERC20 gas payment
+---
+
+# Paymasters
+
+Paymasters enable gasless transactions by sponsoring gas fees or accepting ERC20 tokens as payment.
+
+## Types of Paymasters
+
+| Type | Description |
+|------|-------------|
+| **Verifying Paymaster** | Off-chain signature verification for sponsorship |
+| **ERC20 Paymaster** | Accept ERC20 tokens as gas payment |
+| **Depositor Paymaster** | Prepaid deposit-based sponsorship |
+
+## Verifying Paymaster
+
+Sponsors transactions after verifying an off-chain signature.
+
+### Contract
+
+```solidity
+import "@luxfi/standard/src/eoa/contracts/smart-account/paymasters/verifying/VerifyingSingletonPaymaster.sol";
+
+contract VerifyingSingletonPaymaster {
+    function validatePaymasterUserOp(
+        UserOperation calldata userOp,
+        bytes32 userOpHash,
+        uint256 maxCost
+    ) external returns (bytes memory context, uint256 validationData);
+
+    function postOp(
+        PostOpMode mode,
+        bytes calldata context,
+        uint256 actualGasCost
+    ) external;
+}
+```
+
+### Paymaster Data Format
+
+```solidity
+// paymasterAndData = paymaster address + signature data
+bytes memory paymasterAndData = abi.encodePacked(
+    paymasterAddress,           // 20 bytes
+    uint48(validUntil),         // 6 bytes
+    uint48(validAfter),         // 6 bytes
+    signature                   // 65 bytes (r, s, v)
+);
+```
+
+### Usage Flow
+
+```
+1. User creates UserOperation
+2. Sends to paymaster backend for signature
+3. Paymaster signs if policy allows
+4. User includes signature in paymasterAndData
+5. Bundler submits to EntryPoint
+6. Paymaster validates signature on-chain
+7. Paymaster pays gas, optionally charges user
+```
+
+## ERC20 Paymaster
+
+Accept ERC20 tokens instead of native gas.
+
+### Configuration
+
+```solidity
+struct TokenPaymasterConfig {
+    address token;          // Payment token
+    uint256 priceMarkup;    // Price markup (e.g., 110% = 1.1e18)
+    address priceOracle;    // Token price oracle
+    uint256 minDeposit;     // Minimum token deposit
+}
+```
+
+### Usage
+
+```solidity
+// User approves paymaster to spend tokens
+IERC20(token).approve(paymasterAddress, type(uint256).max);
+
+// Include in UserOperation
+UserOperation memory userOp = UserOperation({
+    // ...
+    paymasterAndData: abi.encodePacked(
+        erc20PaymasterAddress,
+        token,          // Payment token
+        maxTokenCost    // Max tokens to spend
+    ),
+    // ...
+});
+```
+
+## Deposit Management
+
+### Stake Deposit
+
+Paymasters must stake ETH with EntryPoint.
+
+```solidity
+// Deposit stake
+paymaster.deposit{value: 1 ether}();
+
+// Add stake (for reputation)
+paymaster.addStake{value: 0.1 ether}(unstakeDelaySec);
+
+// Withdraw stake (after delay)
+paymaster.unlockStake();
+// ... wait unstakeDelaySec ...
+paymaster.withdrawStake(recipient);
+```
+
+### Check Balance
+
+```solidity
+// Get paymaster deposit
+uint256 deposit = entryPoint.balanceOf(paymasterAddress);
+
+// Get stake info
+(uint256 stake, uint256 unstakeDelaySec) = entryPoint.getStakeInfo(paymasterAddress);
+```
+
+## Sponsorship Policies
+
+### Whitelist Policy
+
+```solidity
+// Only sponsor whitelisted accounts
+mapping(address => bool) public whitelist;
+
+function validatePaymasterUserOp(...) external {
+    require(whitelist[userOp.sender], "Not whitelisted");
+    // ... validate signature
+}
+```
+
+### Rate Limiting
+
+```solidity
+// Limit sponsorship per account per day
+mapping(address => uint256) public dailySpent;
+uint256 public dailyLimit = 0.1 ether;
+
+function validatePaymasterUserOp(...) external {
+    require(dailySpent[userOp.sender] + maxCost <= dailyLimit, "Daily limit");
+    // ... validate and track
+}
+```
+
+### Contract Restrictions
+
+```solidity
+// Only sponsor calls to specific contracts
+mapping(address => bool) public allowedTargets;
+
+function validatePaymasterUserOp(...) external {
+    (address target,,) = abi.decode(userOp.callData[4:], (address, uint256, bytes));
+    require(allowedTargets[target], "Target not allowed");
+    // ...
+}
+```
+
+## Integration Example
+
+### Backend Signature Service
+
+```typescript
+// Off-chain paymaster service
+async function signPaymasterRequest(userOp: UserOperation): Promise<string> {
+    // Check sponsorship policy
+    if (!await checkPolicy(userOp)) {
+        throw new Error("Policy rejected");
+    }
+
+    // Create paymaster hash
+    const hash = ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(
+            ["address", "uint256", "bytes32", "uint48", "uint48"],
+            [userOp.sender, userOp.nonce, hashCallData(userOp), validUntil, validAfter]
+        )
+    );
+
+    // Sign with paymaster key
+    const signature = await paymasterSigner.signMessage(ethers.utils.arrayify(hash));
+
+    return ethers.utils.solidityPack(
+        ["uint48", "uint48", "bytes"],
+        [validUntil, validAfter, signature]
+    );
+}
+```
+
+### Client Integration
+
+```typescript
+// Build UserOperation with paymaster
+const userOp = await smartAccount.buildUserOp([{
+    to: targetContract,
+    value: 0,
+    data: calldata
+}]);
+
+// Get paymaster signature
+const paymasterData = await paymaster.signUserOp(userOp);
+userOp.paymasterAndData = ethers.utils.hexConcat([
+    paymasterAddress,
+    paymasterData
+]);
+
+// Submit via bundler
+await bundler.sendUserOperation(userOp, entryPointAddress);
+```
+
+## Events
+
+```solidity
+event GasSponsored(
+    address indexed account,
+    uint256 actualGasCost,
+    uint256 actualUserOpFee
+);
+
+event TokensCharged(
+    address indexed account,
+    address indexed token,
+    uint256 amount
+);
+
+event Deposited(address indexed account, uint256 amount);
+event Withdrawn(address indexed account, uint256 amount);
+```
+
+## Security
+
+- Paymaster signs off-chain to control sponsorship
+- On-chain validation prevents unauthorized use
+- Stake requirement prevents DoS attacks
+- Rate limiting prevents abuse
+- Post-op accounting ensures accurate charging
+
+## Related
+
+- [Smart Account](/docs/accounts/smart-account) - Core account contract
+- [Modules](/docs/accounts/modules) - Session keys
+- [Factory](/docs/accounts/factory) - Account deployment
