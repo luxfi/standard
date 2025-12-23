@@ -18,4 +18,26 @@ library LamportLib {
             return true;
         }
     }
+
+    /// @notice Verify a Lamport signature (bytes32[] format)
+    /// @param message The message hash that was signed
+    /// @param signature Array of 256 bytes32 values (the revealed private key halves)
+    /// @param publicKey 256x2 array of bytes32 (the public key hashes)
+    function verify(
+        bytes32 message,
+        bytes32[] memory signature,
+        bytes32[256][2] memory publicKey
+    ) internal pure returns (bool) {
+        require(signature.length == 256, "Invalid signature length");
+        
+        uint256 bits = uint256(message);
+        for (uint256 i = 0; i < 256; i++) {
+            uint256 bit = (bits >> (255 - i)) & 1;
+            // Check that hash of revealed private key matches public key
+            if (keccak256(abi.encode(signature[i])) != publicKey[i][bit]) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

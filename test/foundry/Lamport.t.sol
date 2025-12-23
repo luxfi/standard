@@ -2,8 +2,8 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "../../src/lamport/contracts/LamportTest.sol";
-import "../../src/lamport/contracts/LamportLib.sol";
+import "../../contracts/crypto/lamport/LamportTest.sol";
+import "../../contracts/crypto/lamport/LamportLib.sol";
 
 contract LamportFoundryTest is Test {
     LamportTest public lamportContract;

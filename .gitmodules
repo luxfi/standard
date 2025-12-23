@@ -7,9 +7,6 @@
 [submodule "lib/prb-math"]
 	path = lib/prb-math
 	url = https://github.com/PaulRBerg/prb-math
-[submodule "lib/chainlink"]
-	path = lib/chainlink
-	url = https://github.com/smartcontractkit/chainlink
 [submodule "lib/solmate"]
 	path = lib/solmate
 	url = https://github.com/rari-capital/solmate
@@ -64,3 +61,9 @@
 [submodule "lib/manifoldxyz"]
 	path = lib/manifoldxyz
 	url = https://github.com/manifoldxyz/royalty-registry-solidity
+[submodule "lib/chainlink-contracts"]
+	path = lib/chainlink-contracts
+	url = https://github.com/smartcontractkit/chainlink-brownie-contracts
+[submodule "lib/layerzero-v2"]
+	path = lib/layerzero-v2
+	url = https://github.com/LayerZero-Labs/LayerZero-v2.git

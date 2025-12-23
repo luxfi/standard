@@ -2,8 +2,8 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "../../src/LUX.sol";
-import "../../src/Bridge.sol";
+import "../../contracts/tokens/LUX.sol";
+import "../../contracts/bridge/Bridge.sol";
 
 contract LUXTest is Test {
     LUX public token;
