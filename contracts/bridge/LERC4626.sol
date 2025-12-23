@@ -1,7 +1,8 @@
 /***
  *Submitted for verification at basescan.org on 2024-03-20
  */
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BSD-3-Clause
+// Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.20;
 
 import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";

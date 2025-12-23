@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BSD-3-Clause
+// Copyright (c) 2025 Lux Industries Inc.
 // Flattened OpenZeppelin Contracts v4.4.1 (ERC20, Ownable, AccessControl)
 // File: @openzeppelin/contracts/token/ERC20/IERC20.sol
 
