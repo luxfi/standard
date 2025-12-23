@@ -1,0 +1,339 @@
+---
+title: Omnichain DeFi
+description: Unified cross-chain liquidity, swaps, and DeFi operations
+---
+
+# Omnichain DeFi
+
+Unified liquidity and cross-chain DeFi operations across all Lux chains and external networks.
+
+## Overview
+
+The omnichain stack enables:
+
+- **Unified Liquidity**: Single liquidity pool accessible from any chain
+- **Cross-Chain Swaps**: Atomic swaps across chains without bridges
+- **Intent-Based Execution**: Submit intents, solvers find optimal routes
+- **Chain-Agnostic**: EVM, Solana, Bitcoin all supported natively
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                        OMNICHAIN LIQUIDITY LAYER                      │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                       │
+│   C-Chain        Hanzo          Zoo           Solana      Bitcoin    │
+│   ┌─────┐       ┌─────┐       ┌─────┐       ┌─────┐      ┌─────┐    │
+│   │ LP  │◄─────►│ LP  │◄─────►│ LP  │◄─────►│ LP  │◄────►│ LP  │    │
+│   └─────┘       └─────┘       └─────┘       └─────┘      └─────┘    │
+│      │             │             │             │            │        │
+│      └─────────────┴─────────────┴─────────────┴────────────┘        │
+│                              │                                        │
+│                    ┌─────────▼─────────┐                             │
+│                    │  Warp Messaging   │                             │
+│                    │  + Intent Solver  │                             │
+│                    └───────────────────┘                             │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+## Contracts
+
+| Contract | Purpose |
+|----------|---------|
+| **OmnichainLP** | Cross-chain liquidity pool with unified reserves |
+| **OmnichainLPFactory** | Deploy omnichain LP pairs |
+| **OmnichainLPRouter** | Route swaps across chains |
+| **IntentRouter** | Intent-based swap execution |
+
+## OmnichainLP
+
+Liquidity pool that maintains synchronized state across all chains.
+
+### Core Functions
+
+```solidity
+interface IOmnichainLP {
+    /// @notice Add liquidity to the pool
+    function addLiquidity(
+        uint256 amount0Desired,
+        uint256 amount1Desired,
+        uint256 amount0Min,
+        uint256 amount1Min,
+        address to,
+        uint256 deadline
+    ) external returns (uint256 amount0, uint256 amount1, uint256 liquidity);
+
+    /// @notice Remove liquidity from the pool
+    function removeLiquidity(
+        uint256 liquidity,
+        uint256 amount0Min,
+        uint256 amount1Min,
+        address to,
+        uint256 deadline
+    ) external returns (uint256 amount0, uint256 amount1);
+
+    /// @notice Bridge LP tokens to another chain
+    function bridgeLiquidity(
+        uint256 amount,
+        uint256 toChainId,
+        address recipient
+    ) external returns (bytes32 messageId);
+
+    /// @notice Get reserves on this chain
+    function getReserves() external view returns (
+        uint112 reserve0,
+        uint112 reserve1,
+        uint32 blockTimestampLast
+    );
+
+    /// @notice Get total liquidity across all chains
+    function getTotalOmnichainLiquidity() external view returns (uint256);
+}
+```
+
+### Cross-Chain Liquidity Tracking
+
+```solidity
+// Track liquidity per chain
+mapping(uint256 => uint256) public chainLiquidity;
+
+// Track user balances per chain
+mapping(address => mapping(uint256 => uint256)) public userChainBalances;
+```
+
+## OmnichainLPRouter
+
+Routes swaps through optimal paths across chains.
+
+### Single-Chain Swap
+
+```solidity
+import "@luxfi/standard/src/OmnichainLPRouter.sol";
+
+// Standard AMM swap on current chain
+router.swapExactTokensForTokens(
+    amountIn,
+    amountOutMin,
+    path,           // [tokenA, tokenB]
+    recipient,
+    deadline
+);
+```
+
+### Cross-Chain Swap
+
+```solidity
+// Swap from C-Chain WLUX to Hanzo USDC
+router.crossChainSwap(
+    Route({
+        path: [WLUX, USDC],
+        chainIds: [96369, 36963],  // C-Chain → Hanzo
+        bridges: [warpBridge]
+    }),
+    amountIn,
+    amountOutMin,
+    recipient,
+    deadline
+);
+```
+
+### Multi-Hop Cross-Chain
+
+```solidity
+// Complex route: C-Chain ETH → Hanzo USDC → Zoo LUX
+Route memory route = Route({
+    path: [WETH, USDC, WLUX],
+    chainIds: [96369, 36963, 200200],
+    bridges: [warpBridge, warpBridge]
+});
+
+router.crossChainSwap(route, amountIn, minOut, recipient, deadline);
+```
+
+## Intent-Based Swaps
+
+Submit swap intents and let solvers find optimal execution.
+
+### Intent Structure
+
+```solidity
+struct SwapIntent {
+    address tokenIn;
+    address tokenOut;
+    uint256 amountIn;
+    uint256 minAmountOut;
+    uint256 sourceChainId;
+    uint256 destChainId;
+    address recipient;
+    uint256 deadline;
+    bytes32 intentId;
+}
+```
+
+### Submitting Intents
+
+```solidity
+import "@luxfi/standard/src/IntentRouter.sol";
+
+IntentRouter intentRouter = IntentRouter(INTENT_ROUTER);
+
+// Submit intent - solvers compete to fill
+bytes32 intentId = intentRouter.submitIntent(
+    SwapIntent({
+        tokenIn: WETH,
+        tokenOut: USDC,
+        amountIn: 1 ether,
+        minAmountOut: 3000 * 1e6,  // Min 3000 USDC
+        sourceChainId: 96369,       // C-Chain
+        destChainId: 36963,         // Hanzo
+        recipient: msg.sender,
+        deadline: block.timestamp + 1 hours,
+        intentId: bytes32(0)        // Auto-generated
+    })
+);
+```
+
+### Solver Execution
+
+```solidity
+// Solvers fill intents with optimal routes
+function fillIntent(
+    bytes32 intentId,
+    Route calldata route,
+    uint256 amountOut
+) external onlyRegisteredSolver {
+    SwapIntent memory intent = intents[intentId];
+
+    require(amountOut >= intent.minAmountOut, "Insufficient output");
+    require(block.timestamp <= intent.deadline, "Expired");
+
+    // Execute the cross-chain swap
+    _executeCrossChainSwap(intent, route);
+
+    // Solver receives spread as profit
+    emit IntentFilled(intentId, msg.sender, amountOut);
+}
+```
+
+## Unified Liquidity Architecture
+
+### How It Works
+
+1. **LP tokens are chain-agnostic**: Same LP token represents share across all chains
+2. **Reserves synchronized via Warp**: Real-time state sync between chains
+3. **Arbitrageurs maintain parity**: Price discrepancies are arbed across chains
+4. **Fees accrue globally**: All swap fees distributed to all LPs
+
+### Adding Liquidity
+
+```solidity
+// Add liquidity on any chain - it's unified
+(uint256 amount0, uint256 amount1, uint256 liquidity) = router.addLiquidity(
+    tokenA,
+    tokenB,
+    amount0Desired,
+    amount1Desired,
+    amount0Min,
+    amount1Min,
+    msg.sender,
+    deadline
+);
+
+// LP tokens can be bridged to any chain
+omnichainLP.bridgeLiquidity(liquidity, HANZO_CHAIN_ID, msg.sender);
+```
+
+### Removing Liquidity
+
+```solidity
+// Remove on any chain where you hold LP tokens
+(uint256 amount0, uint256 amount1) = router.removeLiquidity(
+    tokenA,
+    tokenB,
+    liquidity,
+    amount0Min,
+    amount1Min,
+    msg.sender,
+    deadline
+);
+```
+
+## Supported Chains
+
+| Chain | Chain ID | Native Token | Status |
+|-------|----------|--------------|--------|
+| C-Chain | 96369 | LUX | ✅ Live |
+| Hanzo | 36963 | LUX | ✅ Live |
+| Zoo | 200200 | LUX | ✅ Live |
+| A-Chain | - | LUX | ✅ Live |
+| Solana | - | SOL | 🔄 Coming |
+| Bitcoin | - | BTC | 🔄 Coming |
+
+## Non-EVM Support
+
+### Solana Integration
+
+```typescript
+// TypeScript SDK for Solana
+import { OmnichainClient } from '@luxfi/omnichain-sdk';
+
+const client = new OmnichainClient({
+  sourceChain: 'solana',
+  destChain: 'c-chain',
+});
+
+// Swap SOL for WLUX
+await client.swap({
+  tokenIn: 'SOL',
+  tokenOut: 'WLUX',
+  amount: 1_000_000_000, // 1 SOL in lamports
+  minOut: parseEther('100'),
+  recipient: evmAddress,
+});
+```
+
+### Bitcoin Integration
+
+```typescript
+// Bitcoin PSBT-based swaps
+const swap = await client.createBitcoinSwap({
+  btcAmount: 0.1,
+  destChain: 'c-chain',
+  destToken: 'LBTC',
+  recipient: evmAddress,
+});
+
+// Sign with Bitcoin wallet
+const signedPsbt = await wallet.signPsbt(swap.psbt);
+
+// Submit for execution
+await client.submitBitcoinSwap(signedPsbt);
+```
+
+## Gas Optimization
+
+| Operation | Same-Chain | Cross-Chain |
+|-----------|------------|-------------|
+| Swap | ~150,000 | ~250,000 + bridge |
+| Add Liquidity | ~200,000 | ~300,000 + bridge |
+| Remove Liquidity | ~180,000 | ~280,000 + bridge |
+| Bridge LP | - | ~100,000 |
+
+## Security
+
+- **Warp Verification**: All cross-chain messages BLS-verified
+- **Price Oracle**: TWAP oracles prevent manipulation
+- **Slippage Protection**: User-defined minimum outputs
+- **Deadline Enforcement**: Transactions expire if not executed
+
+## Best Practices
+
+1. **Set Reasonable Slippage**: 0.5-1% for stable pairs, 1-3% for volatile
+2. **Use Intents for Large Swaps**: Better execution through solver competition
+3. **Monitor Cross-Chain State**: Check liquidity on destination before swapping
+4. **Bridge LP for Yield**: Move LP to chains with higher fee generation
+
+## Related
+
+- [AMM](/docs/amm) - Single-chain AMM pools
+- [Bridge](/docs/bridge) - Cross-chain bridging
+- [Warp](/docs/bridge/warp) - Native messaging protocol

@@ -1,0 +1,329 @@
+---
+title: Minimal Lending Architecture
+description: Permissionless, gas-efficient lending with pluggable components
+---
+
+# Minimal Lending Architecture
+
+LuxLend is a minimal, permissionless lending protocol designed for maximum gas efficiency and composability.
+
+## Design Philosophy
+
+| Metric | LuxLend | Traditional | Savings |
+|--------|---------|-------------|---------|
+| Core Contract | ~600 lines | 10,000+ lines | 94% smaller |
+| Gas (Supply) | ~50,000 | ~150,000 | 66% cheaper |
+| Markets | Permissionless | Governance | Instant |
+| Flash Loans | Free | 0.09% fee | 100% cheaper |
+| Oracles | Any | Chainlink only | Flexible |
+
+## Core Principles
+
+### 1. Radical Minimalism
+
+```solidity
+// LuxLend market definition - just 5 parameters
+struct MarketParams {
+    address loanToken;
+    address collateralToken;
+    address oracle;
+    address irm;
+    uint256 lltv;
+}
+
+// Market ID is simply the hash
+function id(MarketParams memory params) internal pure returns (Id) {
+    return Id.wrap(keccak256(abi.encode(params)));
+}
+```
+
+A market is just 5 parameters. No governance, no whitelists, no committees.
+
+### 2. Pluggable Components
+
+```solidity
+// Oracle interface - implement however you want
+interface IOracle {
+    function price() external view returns (uint256);
+}
+
+// Interest Rate Model - implement however you want
+interface IIrm {
+    function borrowRate(MarketParams memory, Market memory)
+        external returns (uint256);
+}
+```
+
+Core protocol doesn't care HOW you get prices or calculate rates.
+
+### 3. Singleton Pattern
+
+```solidity
+// ONE contract holds ALL markets
+contract LuxLend {
+    mapping(Id => Market) public market;
+    mapping(Id => mapping(address => Position)) public position;
+}
+```
+
+Benefits:
+- Shared liquidity across markets
+- Lower deployment costs
+- Simpler integrations
+- Single approval for all markets
+
+### 4. Free Flash Loans
+
+```solidity
+function flashLoan(address token, uint256 assets, bytes calldata data) external {
+    IERC20(token).safeTransfer(msg.sender, assets);
+    IFlashLoanCallback(msg.sender).onFlashLoan(assets, data);
+    IERC20(token).safeTransferFrom(msg.sender, address(this), assets);
+    // No fee! Just repay what you borrowed
+}
+```
+
+Flash loans enable arbitrage that keeps markets efficient - they're a feature, not revenue.
+
+### 5. Callbacks for Composability
+
+```solidity
+// Supply with callback
+function supply(..., bytes calldata data) external {
+    // ... accounting
+    if (data.length > 0) {
+        ISupplyCallback(msg.sender).onSupply(assets, data);
+    }
+    IERC20(token).safeTransferFrom(msg.sender, address(this), assets);
+}
+```
+
+Let integrators do complex operations atomically.
+
+## Bundler Pattern
+
+LuxBundler enables atomic multi-step operations:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      LUXBUNDLER                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│   User signs ONE transaction containing:                     │
+│                                                              │
+│   1. Approve USDC to Bundler                                │
+│   2. Swap USDC → WETH via DEX                               │
+│   3. Supply WETH as collateral to LuxLend                   │
+│   4. Borrow LUXD against collateral                         │
+│   5. Repay competitor loan with LUXD                        │
+│   6. Withdraw competitor collateral                         │
+│   7. Supply competitor collateral to LuxLend                │
+│                                                              │
+│   = Complete migration in ONE tx                            │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Migration Adapters
+
+```solidity
+// One-click migration from competitors
+contract MigrationAdapter {
+    function migratePosition(
+        address sourcePool,
+        address[] calldata collaterals,
+        address[] calldata debts,
+        Id[] calldata luxMarkets
+    ) external {
+        // 1. Flash loan to repay source debt
+        // 2. Withdraw source collateral
+        // 3. Supply collateral to LuxLend
+        // 4. Borrow from LuxLend to repay flash loan
+    }
+}
+```
+
+## LuxLend Implementation
+
+```solidity
+contract LuxLend {
+    // Core lending logic
+
+    // + Warp integration for cross-chain markets
+    IWarpMessenger constant WARP = IWarpMessenger(0x0200...0005);
+
+    function supplyFromRemoteChain(
+        MarketParams memory params,
+        uint256 assets,
+        uint32 warpIndex
+    ) external {
+        WarpMessage memory msg = WARP.getVerifiedWarpMessage(warpIndex);
+        // Verify and credit cross-chain supply
+    }
+
+    // + Native LUX collateral
+    function supplyCollateralLUX(MarketParams memory params)
+        external payable
+    {
+        IWLUX(WLUX).deposit{value: msg.value}();
+        _supplyCollateral(params, msg.value, msg.sender);
+    }
+}
+```
+
+## Default Markets
+
+| Loan Token | Collateral | Oracle | LLTV |
+|------------|------------|--------|------|
+| LUXD | WLUX | Chainlink | 80% |
+| LUXD | LETH | Chainlink | 85% |
+| LUXD | LBTC | Chainlink | 85% |
+| USDC | WLUX | TWAP | 75% |
+| Any | Any | Any | Any |
+
+## LuxBundler Adapters
+
+```solidity
+contract LuxBundler {
+    // Core bundler logic
+
+    // Adapters:
+    // - GeneralAdapter (ERC20, WLUX, ERC4626)
+    // - LendingAdapter (LuxLend interactions)
+    // - AMMAdapter (Uniswap V2/V3 swaps)
+    // - PerpsAdapter (position management)
+    // - OmnichainAdapter (cross-chain operations)
+    // - MigrationAdapter (competitor migration)
+}
+```
+
+**Example bundle - Leverage Long:**
+
+```solidity
+Call[] memory bundle = new Call[](4);
+
+// 1. Supply ETH as collateral
+bundle[0] = Call({
+    to: lendingAdapter,
+    data: abi.encodeCall(supplyCollateral, (market, ethAmount)),
+    value: ethAmount
+});
+
+// 2. Borrow LUXD
+bundle[1] = Call({
+    to: lendingAdapter,
+    data: abi.encodeCall(borrow, (market, luxdAmount))
+});
+
+// 3. Swap LUXD for more ETH
+bundle[2] = Call({
+    to: ammAdapter,
+    data: abi.encodeCall(swapExactIn, (LUXD, WETH, luxdAmount, minEth))
+});
+
+// 4. Supply swapped ETH as more collateral
+bundle[3] = Call({
+    to: lendingAdapter,
+    data: abi.encodeCall(supplyCollateral, (market, 0)) // Uses balance
+});
+
+bundler.multicall(bundle);
+// Result: 3x leveraged ETH long in one tx
+```
+
+## @luxfi/sdk
+
+```
+@luxfi/sdk/
+├── packages/
+│   ├── core/              # Entity classes (Market, Position, Vault)
+│   ├── viem/              # Viem-based fetch and actions
+│   ├── wagmi/             # React hooks
+│   ├── bundler/           # Build bundler transactions
+│   ├── simulation/        # Preview outcomes before tx
+│   ├── liquidation/       # MEV-protected liquidation bots
+│   ├── omnichain/         # Cross-chain operations
+│   └── migration/         # Competitor migration helpers
+```
+
+**Usage example:**
+
+```typescript
+import { LuxLend, Market, simulate } from '@luxfi/sdk';
+
+// Fetch market data
+const market = await LuxLend.getMarket(marketId);
+
+// Simulate borrow
+const result = await simulate.borrow({
+  market,
+  assets: parseEther('1000'),
+  account: userAddress,
+});
+
+console.log({
+  newHealthFactor: result.healthFactor,
+  liquidationPrice: result.liquidationPrice,
+  interestRate: result.borrowRate,
+});
+
+// Build bundler tx for leverage
+const bundle = await bundler.leverageLong({
+  market,
+  collateralAmount: parseEther('1'),
+  leverage: 3,
+  slippage: 0.5,
+});
+
+// Execute
+await walletClient.sendTransaction(bundle);
+```
+
+## Competitive Advantages
+
+### vs Traditional Lending
+- Permissionless market creation
+- Lower gas costs (66% cheaper)
+- Free flash loans
+- Simpler integration
+
+### vs All Competitors
+- Omnichain native (Warp precompile)
+- Intent-based execution
+- Perps integration
+- Non-EVM support (Solana, Bitcoin)
+- DEX precompiles (434M orders/sec)
+- Post-quantum ready (Lamport, Ringtail)
+
+## File Structure
+
+```
+src/
+├── lending/
+│   ├── LuxLend.sol           # Core lending
+│   ├── interfaces/
+│   │   ├── ILuxLend.sol
+│   │   ├── IOracle.sol
+│   │   └── IIrm.sol
+│   └── libraries/
+│       ├── MathLib.sol
+│       ├── SharesMathLib.sol
+│       └── MarketParamsLib.sol
+├── bundler/
+│   ├── LuxBundler.sol        # Core bundler
+│   └── adapters/
+│       ├── GeneralAdapter.sol
+│       ├── LendingAdapter.sol
+│       ├── AMMAdapter.sol
+│       ├── PerpsAdapter.sol
+│       └── MigrationAdapter.sol
+└── resolver/
+    ├── LuxResolver.sol       # Intent resolution
+    └── SolverRegistry.sol
+```
+
+## Related
+
+- [Lending](/docs/defi/lending) - Current lending pools
+- [Intents](/docs/defi/intents) - Intent-based swaps
+- [Omnichain](/docs/defi/omnichain) - Cross-chain infrastructure

@@ -18,6 +18,18 @@
     "ts-node": "~10.9.2",
     "typescript": "^5.9.3"
   },
+  "files": [
+    "contracts/**/*.sol",
+    "lib/openzeppelin-contracts/contracts/**/*.sol",
+    "lib/openzeppelin-contracts-upgradeable/contracts/**/*.sol",
+    "lib/account-abstraction/contracts/**/*.sol",
+    "lib/solmate/src/**/*.sol",
+    "foundry.toml",
+    "remappings.txt"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@ethersproject/abi": "^5.8.0",
     "@ethersproject/abstract-signer": "^5.8.0",
@@ -96,6 +108,9 @@
     "matrix": "ts-node utils/yieldMatrix.ts",
     "send": "hardhat send",
     "verify:testnet": "hardhat verify --network testnet",
-    "watch": "node scripts/watch.js"
+    "watch": "node scripts/watch.js",
+    "docs": "forge doc -o docs/generated",
+    "docs:build": "forge doc --build -o docs/generated",
+    "docs:serve": "forge doc --serve -o docs/generated"
   }
 }

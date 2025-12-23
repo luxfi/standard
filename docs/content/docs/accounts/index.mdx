@@ -1,0 +1,193 @@
+---
+title: Smart Accounts
+description: ERC-4337 Account Abstraction with modular validation and gas sponsorship
+---
+
+# Smart Accounts
+
+ERC-4337 compliant smart contract wallets with modular validation, session keys, and gas sponsorship via paymasters.
+
+## Overview
+
+<Cards>
+  <Card title="Smart Account" href="/docs/accounts/smart-account">
+    Core smart account contract with modular architecture
+  </Card>
+  <Card title="Factory" href="/docs/accounts/factory">
+    Deploy and manage smart account instances
+  </Card>
+  <Card title="Modules" href="/docs/accounts/modules">
+    Session keys, validation rules, and extensions
+  </Card>
+  <Card title="Paymasters" href="/docs/accounts/paymasters">
+    Gas sponsorship and ERC20 gas payment
+  </Card>
+</Cards>
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        Account Abstraction (ERC-4337)                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│                              EntryPoint                                  │
+│         (Central contract that validates and executes UserOps)          │
+├───────────────┬───────────────────────────────────────┬─────────────────┤
+│  Smart Account│           Modules                     │   Paymaster     │
+│  ┌───────────┐│  ┌─────────────┐  ┌───────────────┐  │  ┌───────────┐  │
+│  │   Proxy   ││  │Session Keys │  │ Passkey Valid │  │  │ Verifying │  │
+│  ├───────────┤│  └─────────────┘  └───────────────┘  │  │ Paymaster │  │
+│  │   Base    ││  ┌─────────────┐  ┌───────────────┐  │  ├───────────┤  │
+│  │  Account  ││  │ Batched     │  │   Social      │  │  │   ERC20   │  │
+│  ├───────────┤│  │ Session     │  │   Recovery    │  │  │  Payment  │  │
+│  │  Executor ││  └─────────────┘  └───────────────┘  │  └───────────┘  │
+│  ├───────────┤│                                      │                  │
+│  │  Module   ││                                      │                  │
+│  │  Manager  ││                                      │                  │
+│  └───────────┘│                                      │                  │
+└───────────────┴──────────────────────────────────────┴─────────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │           Bundler             │
+                    │   (Off-chain UserOp relayer)  │
+                    └───────────────────────────────┘
+```
+
+## Key Concepts
+
+### UserOperation
+
+The core data structure for account abstraction:
+
+```solidity
+struct UserOperation {
+    address sender;              // Smart account address
+    uint256 nonce;               // Anti-replay nonce
+    bytes initCode;              // Factory calldata (if deploying)
+    bytes callData;              // Execution calldata
+    uint256 callGasLimit;        // Gas for execution
+    uint256 verificationGasLimit;// Gas for validation
+    uint256 preVerificationGas;  // Gas for bundler
+    uint256 maxFeePerGas;        // EIP-1559 max fee
+    uint256 maxPriorityFeePerGas;// EIP-1559 priority fee
+    bytes paymasterAndData;      // Paymaster address + data
+    bytes signature;             // Validation signature
+}
+```
+
+### Validation Flow
+
+```
+1. User creates UserOperation
+2. Signs with EOA or module
+3. Bundler submits to EntryPoint
+4. EntryPoint calls validateUserOp()
+5. Smart Account validates signature
+6. Paymaster validates (if used)
+7. EntryPoint executes callData
+8. Gas accounting and refunds
+```
+
+## Quick Start
+
+```solidity
+import "@luxfi/standard/src/eoa/contracts/smart-account/SmartAccount.sol";
+import "@luxfi/standard/src/eoa/contracts/smart-account/factory/SmartAccountFactory.sol";
+
+// Deploy smart account via factory
+SmartAccountFactory factory = SmartAccountFactory(FACTORY_ADDRESS);
+address smartAccount = factory.deployCounterFactualAccount(
+    owner,      // EOA owner
+    index       // Salt for address derivation
+);
+
+// Execute transaction via smart account
+SmartAccount(smartAccount).execute(
+    target,     // Contract to call
+    value,      // ETH value
+    callData    // Function calldata
+);
+
+// Batch execute multiple transactions
+SmartAccount(smartAccount).executeBatch(
+    targets,    // Array of addresses
+    values,     // Array of values
+    calldatas   // Array of calldatas
+);
+```
+
+## Core Contracts
+
+| Contract | Description |
+|----------|-------------|
+| **SmartAccount** | Main account implementation |
+| **SmartAccountFactory** | Deploys new smart accounts |
+| **EntryPoint** | ERC-4337 entry point |
+| **Proxy** | UUPS upgradeable proxy |
+| **ModuleManager** | Manages installed modules |
+| **Executor** | Executes calls and delegatecalls |
+| **FallbackManager** | Handles fallback calls |
+
+## Module Types
+
+| Module | Purpose |
+|--------|---------|
+| **Session Keys** | Time/value-limited signing keys |
+| **Batched Sessions** | Multiple operations per session |
+| **Passkey Validation** | WebAuthn/FIDO2 authentication |
+| **Social Recovery** | Guardian-based account recovery |
+
+## Benefits
+
+- **No ETH Required**: Paymasters sponsor gas
+- **Batch Transactions**: Execute multiple ops atomically
+- **Session Keys**: Grant limited permissions to dapps
+- **Social Recovery**: Recover access via guardians
+- **Upgradeable**: Update account logic via UUPS
+- **Modular**: Add/remove features via modules
+
+## Integration
+
+### With Lending Pools
+
+```solidity
+// Session key for automated position management
+bytes memory sessionData = abi.encode(
+    lendingPool,           // Target contract
+    0,                     // No ETH
+    "repay(uint256)",      // Allowed function
+    block.timestamp + 1 days // Expiry
+);
+
+// Grant session key
+account.enableModule(sessionKeyModule);
+```
+
+### With AMM
+
+```solidity
+// Batch: approve + swap in one tx
+address[] memory targets = new address[](2);
+uint256[] memory values = new uint256[](2);
+bytes[] memory calldatas = new bytes[](2);
+
+targets[0] = WLUX;
+calldatas[0] = abi.encodeWithSignature("approve(address,uint256)", router, amount);
+
+targets[1] = router;
+calldatas[1] = abi.encodeWithSignature(
+    "swapExactTokensForTokens(uint256,uint256,address[],address)",
+    amount, minOut, path, address(account)
+);
+
+account.executeBatch(targets, values, calldatas);
+```
+
+## Related
+
+- [Smart Account](/docs/accounts/smart-account) - Core account contract
+- [Factory](/docs/accounts/factory) - Account deployment
+- [Modules](/docs/accounts/modules) - Session keys and validation
+- [Paymasters](/docs/accounts/paymasters) - Gas sponsorship
+- [Safe](/docs/safe) - Multi-signature wallet

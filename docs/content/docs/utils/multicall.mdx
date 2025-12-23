@@ -1,0 +1,254 @@
+---
+title: Multicall
+description: Batch multiple contract calls into a single transaction
+---
+
+# Multicall
+
+Aggregate multiple contract calls into a single transaction, reducing RPC overhead and ensuring atomic state reads.
+
+## Contracts
+
+| Contract | Features |
+|----------|----------|
+| **Multicall** | Basic aggregation, reverts on failure |
+| **Multicall2** | Try/catch support, optional failure handling |
+
+## Multicall
+
+Basic batching that reverts if any call fails.
+
+### aggregate
+
+```solidity
+struct Call {
+    address target;
+    bytes callData;
+}
+
+function aggregate(Call[] memory calls)
+    public
+    returns (uint256 blockNumber, bytes[] memory returnData);
+```
+
+### Helper Functions
+
+```solidity
+function getEthBalance(address addr) public view returns (uint256 balance);
+function getBlockHash(uint256 blockNumber) public view returns (bytes32 blockHash);
+function getLastBlockHash() public view returns (bytes32 blockHash);
+function getCurrentBlockTimestamp() public view returns (uint256 timestamp);
+function getCurrentBlockDifficulty() public view returns (uint256 difficulty);
+function getCurrentBlockGasLimit() public view returns (uint256 gaslimit);
+function getCurrentBlockCoinbase() public view returns (address coinbase);
+```
+
+## Multicall2
+
+Enhanced version with try/catch and block info.
+
+### tryAggregate
+
+Execute calls with optional failure tolerance.
+
+```solidity
+struct Result {
+    bool success;
+    bytes returnData;
+}
+
+function tryAggregate(bool requireSuccess, Call[] memory calls)
+    public
+    returns (Result[] memory returnData);
+```
+
+**Parameters:**
+- `requireSuccess`: If true, reverts on any failure; if false, returns failure info
+
+### blockAndAggregate
+
+Aggregate with block information.
+
+```solidity
+function blockAndAggregate(Call[] memory calls)
+    public
+    returns (
+        uint256 blockNumber,
+        bytes32 blockHash,
+        Result[] memory returnData
+    );
+```
+
+### tryBlockAndAggregate
+
+Combined try/catch with block info.
+
+```solidity
+function tryBlockAndAggregate(bool requireSuccess, Call[] memory calls)
+    public
+    returns (
+        uint256 blockNumber,
+        bytes32 blockHash,
+        Result[] memory returnData
+    );
+```
+
+## Usage Examples
+
+### Fetch Multiple Balances
+
+```solidity
+Multicall2 multicall = Multicall2(MULTICALL_ADDRESS);
+
+// Build calls
+Multicall2.Call[] memory calls = new Multicall2.Call[](3);
+
+calls[0] = Multicall2.Call({
+    target: WLUX,
+    callData: abi.encodeWithSignature("balanceOf(address)", user)
+});
+calls[1] = Multicall2.Call({
+    target: LUXD,
+    callData: abi.encodeWithSignature("balanceOf(address)", user)
+});
+calls[2] = Multicall2.Call({
+    target: LETH,
+    callData: abi.encodeWithSignature("balanceOf(address)", user)
+});
+
+// Execute
+(, bytes[] memory results) = multicall.aggregate(calls);
+
+// Decode
+uint256 wluxBalance = abi.decode(results[0], (uint256));
+uint256 luxdBalance = abi.decode(results[1], (uint256));
+uint256 lethBalance = abi.decode(results[2], (uint256));
+```
+
+### Query AMM Pools
+
+```solidity
+// Get reserves from multiple pairs
+Multicall2.Call[] memory calls = new Multicall2.Call[](2);
+
+calls[0] = Multicall2.Call({
+    target: wluxLuxdPair,
+    callData: abi.encodeWithSignature("getReserves()")
+});
+calls[1] = Multicall2.Call({
+    target: wluxLethPair,
+    callData: abi.encodeWithSignature("getReserves()")
+});
+
+(uint256 blockNumber, bytes[] memory results) = multicall.aggregate(calls);
+
+// Decode reserves
+(uint112 reserve0_1, uint112 reserve1_1,) = abi.decode(
+    results[0], (uint112, uint112, uint32)
+);
+(uint112 reserve0_2, uint112 reserve1_2,) = abi.decode(
+    results[1], (uint112, uint112, uint32)
+);
+```
+
+### With Failure Tolerance
+
+```solidity
+// Some calls might fail (e.g., tokens without balanceOf)
+Multicall2.Call[] memory calls = new Multicall2.Call[](5);
+// ... build calls
+
+// Allow failures
+Multicall2.Result[] memory results = multicall.tryAggregate(false, calls);
+
+for (uint i = 0; i < results.length; i++) {
+    if (results[i].success) {
+        uint256 balance = abi.decode(results[i].returnData, (uint256));
+        // Process balance
+    } else {
+        // Handle failure
+    }
+}
+```
+
+### Lending Pool State
+
+```solidity
+// Get user account data across lending protocols
+Multicall2.Call[] memory calls = new Multicall2.Call[](3);
+
+calls[0] = Multicall2.Call({
+    target: lendingPool,
+    callData: abi.encodeWithSignature("getUserAccountData(address)", user)
+});
+calls[1] = Multicall2.Call({
+    target: lendingPool,
+    callData: abi.encodeWithSignature("getReserveData(address)", WLUX)
+});
+calls[2] = Multicall2.Call({
+    target: lendingPool,
+    callData: abi.encodeWithSignature("getReserveData(address)", LUXD)
+});
+
+(
+    uint256 blockNumber,
+    bytes32 blockHash,
+    Multicall2.Result[] memory results
+) = multicall.blockAndAggregate(calls);
+
+// All data is from the same block
+```
+
+## TypeScript/ethers.js
+
+```typescript
+import { Contract } from 'ethers';
+
+const multicall = new Contract(MULTICALL_ADDRESS, MULTICALL_ABI, provider);
+
+// Build calls
+const calls = [
+    {
+        target: tokenAddress,
+        callData: tokenInterface.encodeFunctionData('balanceOf', [user])
+    },
+    {
+        target: tokenAddress,
+        callData: tokenInterface.encodeFunctionData('totalSupply')
+    }
+];
+
+// Execute
+const [blockNumber, results] = await multicall.callStatic.aggregate(calls);
+
+// Decode
+const balance = tokenInterface.decodeFunctionResult('balanceOf', results[0]);
+const supply = tokenInterface.decodeFunctionResult('totalSupply', results[1]);
+```
+
+## Gas Optimization
+
+Multicall saves gas by:
+- Single RPC round-trip instead of N
+- Shared transaction overhead
+- Atomic block state reads
+
+| Calls | Individual RPC | Multicall | Savings |
+|-------|----------------|-----------|---------|
+| 5 | ~100ms | ~25ms | 75% |
+| 10 | ~200ms | ~30ms | 85% |
+| 50 | ~1000ms | ~50ms | 95% |
+
+## Best Practices
+
+1. **Batch Related Calls**: Group calls that need consistent state
+2. **Use Multicall2**: Prefer tryAggregate for resilience
+3. **Limit Batch Size**: Stay under block gas limit (~500 calls max)
+4. **Cache Results**: Store decoded results to avoid re-fetching
+5. **Handle Failures**: Use tryAggregate when some calls might fail
+
+## Related
+
+- [AMM](/docs/amm) - Pool queries
+- [Lending](/docs/defi/lending) - Account data queries
+- [Smart Accounts](/docs/accounts) - Batch execution

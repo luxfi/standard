@@ -1,0 +1,137 @@
+---
+title: LUX Token
+description: Native platform token with bridge support and access control
+---
+
+# LUX Token
+
+The native platform token for Lux Network with bridge integration and blacklist functionality.
+
+**Inherits:** ERC20, ERC20Burnable, Pausable, Ownable, AccessControl
+
+## State Variables
+
+### BLACKLIST
+
+```solidity
+bytes32 public constant BLACKLIST = keccak256("BLACKLIST")
+```
+
+Role identifier for blacklisted addresses.
+
+### bridge
+
+```solidity
+address public bridge
+```
+
+The authorized bridge contract address.
+
+## Functions
+
+### constructor
+
+```solidity
+constructor() ERC20("LUX", "LUX") Ownable(msg.sender)
+```
+
+Initializes the LUX token with name "LUX" and symbol "LUX".
+
+### configure
+
+```solidity
+function configure(address _bridge) public onlyOwner
+```
+
+Sets the bridge contract address. Only callable by owner.
+
+### blacklistAddress
+
+```solidity
+function blacklistAddress(address _addr) public onlyOwner
+```
+
+Adds an address to the blacklist. Blacklisted addresses cannot send or receive tokens.
+
+### isBlacklisted
+
+```solidity
+function isBlacklisted(address _addr) public view returns (bool)
+```
+
+Checks if an address is blacklisted.
+
+### transfer
+
+```solidity
+function transfer(address _to, uint256 _value) public override whenNotPaused returns (bool)
+```
+
+Transfers tokens. Reverts if sender or recipient is blacklisted or if paused.
+
+### transferFrom
+
+```solidity
+function transferFrom(address _from, address _to, uint256 _value) public override whenNotPaused returns (bool)
+```
+
+Transfers tokens on behalf of another address. Reverts if any party is blacklisted or if paused.
+
+### bridgeMint
+
+```solidity
+function bridgeMint(address to, uint256 value) external whenNotPaused onlyBridge
+```
+
+Mints tokens via bridge. Only callable by the bridge contract.
+
+### bridgeBurn
+
+```solidity
+function bridgeBurn(address account, uint256 amount) external whenNotPaused onlyBridge
+```
+
+Burns tokens via bridge. Only callable by the bridge contract.
+
+### pause / unpause
+
+```solidity
+function pause() public onlyOwner whenNotPaused
+function unpause() public onlyOwner whenPaused
+```
+
+Emergency pause controls. Only callable by owner.
+
+### mint
+
+```solidity
+function mint(address to, uint256 value) public onlyOwner
+```
+
+Mints new tokens. Only callable by owner.
+
+### airdrop
+
+```solidity
+function airdrop(address[] memory addresses, uint256[] memory amounts) public onlyOwner returns (uint256)
+```
+
+Batch airdrop tokens to multiple addresses.
+
+## Usage
+
+```solidity
+import "@luxfi/standard/src/LUX.sol";
+
+// Deploy
+LUX lux = new LUX();
+
+// Configure bridge
+lux.configure(bridgeAddress);
+
+// Mint tokens
+lux.mint(recipient, 1000 ether);
+
+// Blacklist address
+lux.blacklistAddress(badActor);
+```

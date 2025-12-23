@@ -1,0 +1,130 @@
+---
+title: LUXVoting
+description: Token-weighted voting system for governance proposals
+---
+
+# LUXVoting
+
+Token-weighted voting system for LUX governance proposals.
+
+**Inherits:** IVoting, Ownable
+
+## State Variables
+
+```solidity
+IERC20 public LUX;                                          // LUX token
+mapping(address => bool) public coreMember;                 // Core members
+mapping(address => bool) public blocked;                    // Blocked addresses
+mapping(string => Proposal) public proposals;               // Proposals by ID
+mapping(string => Voter) public voters;                     // Voters by proposal
+mapping(address => mapping(string => VotingAmount)) public votingAmount;
+uint8 public decimals = 18;
+address public withdrawAddress;
+uint256 public proposalFee;
+bool proposingLive;
+```
+
+## Functions
+
+### addProposals
+
+```solidity
+function addProposals(
+    string memory newProposal,
+    uint40 startTime,
+    uint40 endTime
+) public
+```
+
+Create a new proposal.
+
+**Parameters:**
+- `newProposal`: Proposal title/ID
+- `startTime`: Voting start timestamp
+- `endTime`: Voting end timestamp
+
+### voteProposal
+
+```solidity
+function voteProposal(string memory proposal, bool choice) public override
+```
+
+Cast a vote on a proposal.
+
+**Parameters:**
+- `proposal`: Proposal ID
+- `choice`: `true` for yes, `false` for no
+
+### getAllProposals
+
+```solidity
+function getAllProposals() public view returns (Proposal[] memory)
+```
+
+Get all proposals.
+
+### getAllVoters
+
+```solidity
+function getAllVoters() public view returns (Voter[] memory)
+```
+
+Get all voters.
+
+### Admin Functions
+
+```solidity
+function changeWithdrawAddress(address _newWithdrawAddress) public override onlyOwner
+function changeCoinAddress(address _newCoinAddress) public onlyOwner
+function proposalFeeAmount(uint256 _newAmount) public onlyOwner
+function blockAddress(address target, bool freeze) public override onlyOwner
+function whitelist_as_core(address target, bool state) public onlyOwner
+function toggleproposingStatus() public onlyOwner
+function updateProposalStatus(string memory proposal, uint8 _status) public onlyOwner
+function withdraw() public onlyOwner
+```
+
+### View Functions
+
+```solidity
+function isBlocked(address _addr) public view override returns (bool)
+```
+
+## Usage Example
+
+```solidity
+import "@luxdao/Vote.sol";
+
+// Deploy voting contract
+LUXVoting voting = new LUXVoting(IERC20(luxTokenAddress));
+
+// Set proposal fee
+voting.proposalFeeAmount(100 ether);
+
+// Create a proposal
+voting.addProposals(
+    "LIP-001: Increase staking APY to 15%",
+    block.timestamp,
+    block.timestamp + 7 days
+);
+
+// Users vote
+voting.voteProposal("LIP-001: Increase staking APY to 15%", true);
+
+// Get results
+Proposal[] memory allProps = voting.getAllProposals();
+```
+
+## Voting Power
+
+Voting power is determined by LUX token balance at the time of voting. The contract tracks:
+- Total votes for/against
+- Individual voting amounts
+- Voter addresses
+
+## Security
+
+- **Blocked Addresses**: Owner can block addresses from voting
+- **Core Members**: Special whitelist for core team
+- **Proposal Fees**: Optional fee to prevent spam proposals
+- **Time-Bounded**: Proposals have start and end times

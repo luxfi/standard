@@ -1,0 +1,657 @@
+---
+title: Perpetuals
+description: Decentralized perpetual futures trading with up to 1111x leverage
+---
+
+# Perpetuals
+
+Decentralized perpetual futures protocol for leveraged trading on Lux Network.
+
+## Overview
+
+The perpetuals system provides:
+
+- **Up to 1111x Leverage**: Isolated margin with extreme leverage options
+- **Dual Mode Trading**: Turbo Mode (1111x) + Pro Mode (order book)
+- **Deep Liquidity**: LLP pool for zero slippage execution
+- **Multi-Oracle**: Chainlink + Pyth + TWAP for manipulation resistance
+- **Auto-Deleveraging**: Systematic risk management for extreme moves
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    PERPETUALS ARCHITECTURE                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌─────────────────┐              ┌─────────────────────┐       │
+│  │   TURBO MODE    │              │     PRO MODE        │       │
+│  │   (1111x max)   │              │   (Order Book)      │       │
+│  │   ┌─────────┐   │              │   ┌─────────────┐   │       │
+│  │   │Isolated │   │              │   │Cross/Isolated│  │       │
+│  │   │Margin   │   │              │   │Margin        │  │       │
+│  │   └─────────┘   │              │   └─────────────┘   │       │
+│  └────────┬────────┘              └──────────┬──────────┘       │
+│           │                                   │                  │
+│           └───────────────┬───────────────────┘                  │
+│                           ▼                                      │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │                         VAULT                              │  │
+│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌──────────────┐  │  │
+│  │  │Position │  │Funding  │  │Circuit  │  │    ADL       │  │  │
+│  │  │Manager  │  │Rate     │  │Breaker  │  │  Engine      │  │  │
+│  │  └─────────┘  └─────────┘  └─────────┘  └──────────────┘  │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                           │                                      │
+│                           ▼                                      │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │                    LLP (Liquidity Pool)                    │  │
+│  │            Multi-Asset + Insurance Fund                    │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Trading Modes
+
+### Turbo Mode (1111x)
+
+One-click trading with extreme leverage, fully on-chain:
+
+| Feature | Description |
+|---------|-------------|
+| **Max Leverage** | 1111x on BTC/ETH, 500x on majors |
+| **Margin Type** | Isolated only |
+| **Opening Fee** | None for 500x+ |
+| **Closing Fee** | Dynamic (0.03% min, based on PnL) |
+| **Execution** | Instant, MEV-protected |
+
+### Pro Mode (Order Book)
+
+Advanced trading with full order book:
+
+| Feature | Description |
+|---------|-------------|
+| **Max Leverage** | 100x |
+| **Margin Type** | Isolated or Cross |
+| **Maker Fee** | 0.01% |
+| **Taker Fee** | 0.035% |
+| **Order Types** | Limit, Stop, TP/SL, Hidden |
+
+## Core Contracts
+
+| Contract | Purpose |
+|----------|---------|
+| **Vault** | Holds liquidity and manages positions |
+| **TurboRouter** | 1111x Turbo Mode execution |
+| **OrderBook** | Pro Mode limit orders |
+| **PositionRouter** | Keeper-executed positions |
+| **LLP** | Liquidity provider token |
+| **ADLEngine** | Auto-deleveraging logic |
+| **InsuranceFund** | Protocol backstop |
+| **CircuitBreaker** | Price deviation protection |
+
+## Turbo Mode (1111x)
+
+### Opening Positions
+
+```solidity
+import "@luxfi/standard/src/perps/TurboRouter.sol";
+
+TurboRouter router = TurboRouter(TURBO_ROUTER);
+
+// Open 1111x long BTC with isolated margin
+router.openPosition{value: margin}(
+    address(0),                 // tokenIn (address(0) = native)
+    WBTC,                       // indexToken
+    margin,                     // collateral amount
+    1111,                       // leverage (1111x)
+    true,                       // isLong
+    0                           // acceptablePrice (0 = market)
+);
+
+// Open 500x short ETH
+router.openPosition(
+    USDC,                       // tokenIn
+    WETH,                       // indexToken
+    1000e6,                     // 1000 USDC collateral
+    500,                        // leverage
+    false,                      // isShort
+    0
+);
+```
+
+### Position Management
+
+```solidity
+// Increase leverage (moves liquidation price closer)
+router.adjustLeverage(
+    positionId,
+    1111                        // new leverage
+);
+
+// Decrease leverage (moves liquidation price further)
+router.adjustLeverage(
+    positionId,
+    500                         // new leverage
+);
+
+// Add margin (reduces leverage, safer position)
+router.addMargin{value: additionalMargin}(positionId);
+
+// Close position
+router.closePosition(
+    positionId,
+    0                           // acceptablePrice
+);
+```
+
+## Margin System
+
+### Isolated Margin
+
+All positions in Turbo Mode use isolated margin:
+
+```solidity
+struct Position {
+    uint256 size;           // Position size in USD
+    uint256 collateral;     // Isolated margin
+    uint256 averagePrice;   // Entry price
+    uint256 leverage;       // Current leverage (1-1111)
+    int256 fundingAccrued;  // Accumulated funding
+    uint256 lastUpdate;     // Block timestamp
+    bool isLong;
+}
+```
+
+**Key Properties:**
+- Each position has its own margin
+- Losses limited to position's collateral
+- Leverage adjustable per-position
+- No cross-contamination of risk
+
+### Maintenance Margin
+
+```solidity
+// Margin ratio must stay below 80% to avoid liquidation
+// marginRatio = (size - unrealizedPnL) / collateral
+
+function isLiquidatable(Position memory pos) public view returns (bool) {
+    int256 pnl = calculatePnL(pos);
+    int256 marginBalance = int256(pos.collateral) + pnl + pos.fundingAccrued;
+    uint256 maintenanceMargin = pos.size * MAINTENANCE_MARGIN_RATE / 100; // 1%
+
+    return marginBalance <= int256(maintenanceMargin);
+}
+```
+
+### Liquidation Price Formula
+
+```
+For Longs:
+liquidationPrice = entryPrice × (1 - (collateral × liquidationRate) / size)
+
+For Shorts:
+liquidationPrice = entryPrice × (1 + (collateral × liquidationRate) / size)
+
+Where:
+- liquidationRate = 90% (protocol parameter)
+- At 1111x: 0.08% adverse move triggers liquidation
+- At 100x: 0.9% adverse move triggers liquidation
+```
+
+## Leverage Limits
+
+| Asset | Turbo Mode Max | Pro Mode Max | Min Collateral |
+|-------|-----------------|--------------|----------------|
+| BTC | 1111x | 100x | 1 USD |
+| ETH | 1111x | 100x | 1 USD |
+| LUX | 500x | 50x | 1 USD |
+| Majors | 500x | 50x | 1 USD |
+| Altcoins | 100x | 20x | 1 USD |
+
+### Profit Caps (Extreme Leverage)
+
+| Leverage | Max ROI |
+|----------|---------|
+| 1-100x | Unlimited |
+| 101-500x | 500% |
+| 501-750x | 400% |
+| 751-1000x | 350% |
+| 1001-1111x | 300% |
+
+## Auto-Deleveraging (ADL)
+
+When liquidation execution price is worse than bankruptcy price:
+
+```solidity
+interface IADLEngine {
+    /// @notice ADL ranking: most profitable + highest leverage first
+    function getADLRanking(address indexToken, bool isLong)
+        external view returns (address[] memory accounts);
+
+    /// @notice Execute ADL on ranked positions
+    function executeADL(
+        bytes32 liquidatedPositionId,
+        uint256 shortfall
+    ) external;
+}
+
+// ADL triggers when:
+// 1. Position is liquidated
+// 2. Execution price worse than bankruptcy price
+// 3. Insurance fund insufficient to cover loss
+
+// ADL reduces opposite-side positions:
+// - Starting with most profitable + highest leverage
+// - Proportional reduction based on shortfall
+```
+
+**ADL Priority Ranking:**
+1. Highest unrealized PnL %
+2. Highest leverage
+3. Largest position size
+
+## Insurance Fund
+
+```solidity
+interface IInsuranceFund {
+    /// @notice Cover liquidation losses
+    function coverShortfall(uint256 amount) external returns (bool);
+
+    /// @notice Receive liquidation fees
+    function receiveFees(uint256 amount) external;
+
+    /// @notice Current fund balance
+    function balance() external view returns (uint256);
+}
+
+// Insurance fund sources:
+// - 50% of liquidation fees
+// - Protocol revenue allocation
+// - Governance deposits
+```
+
+## Circuit Breaker
+
+Price protection against flash crashes and manipulation:
+
+```solidity
+interface ICircuitBreaker {
+    /// @notice Maximum price deviation before pause (1% default)
+    function maxDeviation() external view returns (uint256);
+
+    /// @notice Check if trading is paused
+    function isPaused(address token) external view returns (bool);
+
+    /// @notice Trigger circuit breaker
+    function trigger(address token, uint256 deviation) external;
+}
+
+// Activates when:
+// - Price deviates >1% from oracle median
+// - Pauses new positions for that asset
+// - Existing positions can still close
+// - Auto-resumes after 5 minutes of stable prices
+```
+
+## Funding Rate
+
+Calculated per-block to balance long/short exposure:
+
+```solidity
+// Funding rate = (longOI - shortOI) / (longOI + shortOI) * fundingFactor
+// Applied every block, settled on position changes
+
+interface IFundingRate {
+    /// @notice Get current funding rate (per 8 hours, scaled by 1e6)
+    function getFundingRate(address token) external view returns (int256);
+
+    /// @notice Get accumulated funding for position
+    function getAccumulatedFunding(bytes32 positionId)
+        external view returns (int256);
+}
+
+// Funding direction:
+// Positive rate: Longs pay shorts
+// Negative rate: Shorts pay longs
+```
+
+## Fees
+
+### Turbo Mode (1111x)
+
+| Leverage | Opening Fee | Closing Fee |
+|----------|-------------|-------------|
+| 1-100x | 0.05% | 0.05% |
+| 101-500x | 0% | 0.03% (min) |
+| 501-1111x | 0% | Dynamic* |
+
+*Dynamic closing fee = max(0.03%, PnL × 0.5%)
+
+### Pro Mode
+
+| Fee Type | Amount |
+|----------|--------|
+| Maker | 0.01% |
+| Taker | 0.035% |
+| Liquidation | 0.5% |
+
+### All Modes
+
+| Fee Type | Amount |
+|----------|--------|
+| Funding Rate | Variable (per-block) |
+| Borrowing Fee | 0.01% per hour |
+| ADL Fee | None (loss capped at margin) |
+
+## Multi-Oracle Pricing
+
+```solidity
+interface IMultiOracle {
+    /// @notice Get aggregated price from multiple sources
+    function getPrice(address token) external view returns (
+        uint256 price,
+        uint256 confidence,
+        uint256 timestamp
+    );
+
+    /// @notice Price sources
+    function getSources() external view returns (
+        address chainlink,
+        address pyth,
+        address twap
+    );
+}
+
+// Price aggregation:
+// 1. Fetch from Chainlink, Pyth, TWAP
+// 2. Reject if any source stale (>60s)
+// 3. Reject if deviation >0.5% between sources
+// 4. Use median price for execution
+// 5. Trigger circuit breaker if >1% deviation
+```
+
+**Price Sources:**
+1. **Chainlink** - Primary, highest confidence
+2. **Pyth** - Secondary, low latency
+3. **TWAP** - Tertiary, manipulation resistant
+
+## Liquidity Pool (LLP)
+
+### Minting LLP
+
+```solidity
+import "@luxfi/standard/src/perps/LLPManager.sol";
+
+LLPManager llpManager = LLPManager(LLP_MANAGER);
+
+// Mint LLP with ETH
+llpManager.addLiquidity{value: amount}(
+    WETH,          // token to add
+    amount,        // amount
+    minUsd,        // minimum USD value
+    minLlp         // minimum LLP to receive
+);
+
+// Mint LLP with stablecoins
+IERC20(USDC).approve(LLP_MANAGER, amount);
+llpManager.addLiquidity(USDC, amount, minUsd, minLlp);
+```
+
+### LLP Composition
+
+| Asset | Target Weight | Max Weight |
+|-------|---------------|------------|
+| ETH | 30% | 40% |
+| BTC | 30% | 40% |
+| LUX | 15% | 25% |
+| USDC | 12.5% | 20% |
+| USDT | 12.5% | 20% |
+
+### LLP Yields
+
+| Source | Share |
+|--------|-------|
+| Trading Fees | 60% |
+| Borrowing Fees | 100% |
+| Liquidation Fees | 50% |
+| **Total APY** | ~15-40% |
+
+## TypeScript SDK
+
+```typescript
+import { LuxPerps, Position, TurboMode } from '@luxfi/perps-sdk';
+
+const perps = new LuxPerps({
+  chainId: 96369,
+  signer: wallet,
+});
+
+// Turbo Mode: Open 1111x long
+async function openExtremeLong() {
+  const tx = await perps.turbo.openPosition({
+    indexToken: 'BTC',
+    collateral: parseEther('0.1'),
+    leverage: 1111,
+    isLong: true,
+  });
+
+  const receipt = await tx.wait();
+  const positionId = perps.getPositionId(receipt);
+
+  return positionId;
+}
+
+// Get position with liquidation info
+async function getPositionInfo(positionId: string) {
+  const position = await perps.getPosition(positionId);
+
+  return {
+    size: formatUsd(position.size),
+    collateral: formatUsd(position.collateral),
+    leverage: position.leverage,
+    pnl: formatUsd(position.unrealizedPnl),
+    pnlPercent: position.pnlPercent,
+    liquidationPrice: formatUsd(position.liquidationPrice),
+    marginRatio: position.marginRatio,
+    isLiquidatable: position.isLiquidatable,
+  };
+}
+
+// Pro Mode: Place limit order
+async function placeLimitOrder() {
+  const tx = await perps.pro.createOrder({
+    indexToken: 'ETH',
+    collateral: parseEther('1'),
+    leverage: 50,
+    isLong: true,
+    orderType: 'limit',
+    triggerPrice: parseUsd('3000'),
+    takeProfitPrice: parseUsd('3500'),
+    stopLossPrice: parseUsd('2800'),
+  });
+
+  return tx.wait();
+}
+
+// Monitor for ADL risk
+perps.on('adlWarning', (position) => {
+  console.log(`ADL risk: Position ${position.id} may be deleveraged`);
+});
+```
+
+## Risk Management
+
+### For Extreme Leverage (500x+)
+
+```solidity
+// Always check liquidation distance
+uint256 liquidationDistance = router.getLiquidationDistance(positionId);
+require(liquidationDistance > MIN_SAFE_DISTANCE, "Too close to liquidation");
+
+// Use stop-loss orders
+router.setStopLoss(positionId, stopLossPrice);
+
+// Monitor ADL queue
+uint256 adlRank = adlEngine.getPositionRank(positionId);
+if (adlRank < 100) {
+    // High ADL risk - consider reducing position
+}
+```
+
+### For LPs
+
+- **Diversified exposure**: LLP holds multiple assets
+- **Delta hedging**: Protocol rebalances automatically
+- **Insurance backstop**: Fund covers extreme losses
+- **ADL protection**: Losses limited to winning traders
+
+## Risk Warnings
+
+| Leverage | Price Move to Liquidation | Recommendation |
+|----------|---------------------------|----------------|
+| 1111x | 0.08% | Experienced only |
+| 500x | 0.18% | High risk |
+| 100x | 0.9% | Advanced traders |
+| 50x | 1.8% | Standard leverage |
+| 10x | 9% | Conservative |
+
+**Critical Notes:**
+- 1111x means 0.1% adverse move approaches liquidation
+- Circuit breaker may pause trading during volatility
+- ADL may reduce profitable positions without consent
+- Profit caps apply to extreme leverage (>500x)
+
+## Aster Integration (1001x on BSC/Arbitrum)
+
+For 1001x leverage on BTC/ETH, we provide a trustless adapter to [Aster DEX](https://asterdex.com):
+
+### Supported Pairs
+
+| Pair | Chain | Max Leverage |
+|------|-------|--------------|
+| BTC/USD | BSC, Arbitrum | 1001x |
+| ETH/USD | BSC, Arbitrum | 1001x |
+
+### Adapter Contract
+
+```solidity
+import "@luxfi/standard/src/adapters/AsterAdapter.sol";
+
+LuxAsterAdapter adapter = LuxAsterAdapter(ASTER_ADAPTER);
+
+// Open 1001x long BTC on BSC
+IERC20(USDT).approve(address(adapter), margin);
+
+bytes32 tradeHash = adapter.openPosition(
+    0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c, // BTCB
+    true,                                         // isLong
+    USDT,                                         // margin token
+    100e18,                                       // 100 USDT margin
+    1001,                                         // leverage
+    0,                                            // stopLoss (0 = disabled)
+    0                                             // takeProfit (0 = disabled)
+);
+
+// Close position
+adapter.closePosition(tradeHash);
+
+// Add margin to reduce leverage
+adapter.addMargin(tradeHash, USDT, 50e18);
+
+// Update risk parameters
+adapter.updateRiskParams(
+    tradeHash,
+    95000e8,   // stop loss at $95,000
+    110000e8   // take profit at $110,000
+);
+```
+
+### TypeScript SDK
+
+```typescript
+import { AsterAdapter } from '@luxfi/perps-sdk';
+
+const adapter = new AsterAdapter({
+  chainId: 56, // BSC
+  signer: wallet,
+});
+
+// Open 1001x leveraged position
+const { tradeHash, tx } = await adapter.openPosition({
+  pair: 'BTC',
+  isLong: true,
+  margin: parseUnits('100', 18), // 100 USDT
+  leverage: 1001,
+  stopLoss: parseUnits('95000', 8),
+  takeProfit: parseUnits('110000', 8),
+});
+
+await tx.wait();
+
+// Get position info
+const position = await adapter.getPosition(tradeHash);
+console.log({
+  size: position.size,
+  margin: position.margin,
+  liquidationPrice: position.liquidationPrice,
+  unrealizedPnl: position.pnl,
+});
+```
+
+### Deployment Addresses
+
+| Contract | BSC | Arbitrum |
+|----------|-----|----------|
+| AsterTrading | `0x1b6F2d3844C6ae7D56ceb3C3643b9060ba28FEb0` | TBD |
+| LuxAsterAdapter | TBD | TBD |
+| AsterPriceFeed | TBD | TBD |
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    LUX ASTER INTEGRATION                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  User (BSC/Arbitrum)                                            │
+│       │                                                          │
+│       ▼                                                          │
+│  ┌─────────────────────┐                                        │
+│  │  LuxAsterAdapter    │  ◄── Trustless on-chain adapter        │
+│  │  - openPosition()   │                                        │
+│  │  - closePosition()  │                                        │
+│  │  - addMargin()      │                                        │
+│  └──────────┬──────────┘                                        │
+│             │                                                    │
+│             ▼                                                    │
+│  ┌─────────────────────┐     ┌─────────────────────┐           │
+│  │  Aster Trading      │ ◄── │  AsterPriceFeed     │           │
+│  │  0x1b6F2d38...      │     │  (Chainlink)        │           │
+│  └─────────────────────┘     └─────────────────────┘           │
+│             │                                                    │
+│             ▼                                                    │
+│  ┌─────────────────────┐                                        │
+│  │  ALP Liquidity Pool │  ◄── Counter-party for all trades     │
+│  └─────────────────────┘                                        │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Differences: Native vs Aster
+
+| Feature | Native LuxPerps | Aster Adapter |
+|---------|-----------------|---------------|
+| Max Leverage | 1111x | 1001x |
+| Chains | Lux (C/Hanzo/Zoo) | BSC, Arbitrum |
+| Pairs | All supported | BTC, ETH only |
+| Fees | Lux fee schedule | Aster fees |
+| Liquidity | LLP | ALP |
+| Settlement | Native | Aster contract |
+
+**Recommendation**: Use native LuxPerps for most trading. Use Aster adapter only when you specifically need BSC/Arbitrum settlement or want to access Aster's ALP liquidity.
+
+## Related
+
+- [Oracles](/docs/defi/oracles) - Price feed integration
+- [Vault](/docs/defi/vault) - Margin vault architecture
+- [Lending](/docs/defi/lending) - Borrowing for leverage
+- [Intents](/docs/defi/intents) - Intent-based order execution

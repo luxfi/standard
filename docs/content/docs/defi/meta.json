@@ -1,0 +1,22 @@
+{
+  "title": "DeFi",
+  "pages": [
+    "---Liquidity---",
+    "liquidity-engine",
+    "---Trading---",
+    "perps",
+    "vault",
+    "router",
+    "intents",
+    "---Lending---",
+    "lending",
+    "loans",
+    "minimal-lending",
+    "---Cross-Chain---",
+    "omnichain",
+    "oracles",
+    "---Markets---",
+    "nft-market",
+    "farm"
+  ]
+}

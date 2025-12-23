@@ -1,0 +1,210 @@
+---
+title: Warp Messaging
+description: Native cross-chain messaging protocol for Lux Network
+---
+
+# Warp Messaging
+
+Native cross-chain messaging precompile for trustless communication between Lux chains and subnets.
+
+## Overview
+
+Warp is Lux Network's native cross-chain messaging protocol, implemented as an EVM precompile. It enables:
+
+- **Trustless messaging** between any Lux chains
+- **BLS signature aggregation** for validator consensus
+- **Sub-second finality** for cross-chain operations
+- **Native token transfers** without wrapped assets
+
+## Precompile Address
+
+```
+0x0200000000000000000000000000000000000008
+```
+
+## Architecture
+
+```
+┌─────────────────────┐                    ┌─────────────────────┐
+│   Source Chain      │                    │   Destination Chain │
+│   (C-Chain)         │                    │   (Subnet/A-Chain)  │
+├─────────────────────┤                    ├─────────────────────┤
+│                     │                    │                     │
+│  1. sendWarpMessage │                    │  4. Execute action  │
+│     (emit event)    │─────────────────▶  │     with payload    │
+│                     │  BLS Aggregation   │                     │
+│  2. Validators sign │  (67% threshold)   │  3. getVerified     │
+│     message hash    │                    │     WarpMessage     │
+└─────────────────────┘                    └─────────────────────┘
+```
+
+## Interface
+
+```solidity
+interface IWarpMessenger {
+    /// @notice Send a message to another chain
+    /// @param payload The message payload
+    /// @return messageID Unique identifier for the message
+    function sendWarpMessage(bytes calldata payload) external returns (bytes32 messageID);
+
+    /// @notice Get a verified incoming message
+    /// @param index The message index in the block
+    /// @return message The verified WarpMessage
+    function getVerifiedWarpMessage(uint32 index)
+        external view
+        returns (WarpMessage calldata message);
+
+    /// @notice Get verified block hash from another chain
+    /// @param index The message index
+    /// @return blockHash The verified block hash
+    function getVerifiedWarpBlockHash(uint32 index)
+        external view
+        returns (bytes32 blockHash);
+}
+
+struct WarpMessage {
+    bytes32 sourceChainID;
+    address originSenderAddress;
+    bytes payload;
+}
+```
+
+## Sending Messages
+
+```solidity
+import "@luxfi/standard/src/interfaces/IWarpMessenger.sol";
+
+contract CrossChainSender {
+    IWarpMessenger constant WARP = IWarpMessenger(0x0200000000000000000000000000000000000008);
+
+    function sendCrossChain(bytes calldata data) external returns (bytes32) {
+        // Encode the payload with destination info
+        bytes memory payload = abi.encode(
+            msg.sender,    // Original sender
+            data           // Action data
+        );
+
+        // Send via Warp precompile
+        return WARP.sendWarpMessage(payload);
+    }
+}
+```
+
+## Receiving Messages
+
+```solidity
+contract CrossChainReceiver {
+    IWarpMessenger constant WARP = IWarpMessenger(0x0200000000000000000000000000000000000008);
+
+    bytes32 public immutable trustedSourceChain;
+    address public immutable trustedSender;
+
+    function receiveMessage(uint32 warpIndex) external {
+        // Get verified message (BLS signatures validated by precompile)
+        WarpMessage memory message = WARP.getVerifiedWarpMessage(warpIndex);
+
+        // Verify source chain
+        require(message.sourceChainID == trustedSourceChain, "Untrusted chain");
+
+        // Verify sender
+        require(message.originSenderAddress == trustedSender, "Untrusted sender");
+
+        // Decode and execute
+        (address sender, bytes memory data) = abi.decode(message.payload, (address, bytes));
+        _executeAction(sender, data);
+    }
+}
+```
+
+## Cross-Chain Token Transfer
+
+```solidity
+contract WarpBridge {
+    IWarpMessenger constant WARP = IWarpMessenger(0x0200000000000000000000000000000000000008);
+    IERC20 public token;
+    bytes32 public remoteChainID;
+    address public remoteBridge;
+
+    /// @notice Bridge tokens to remote chain
+    function bridge(uint256 amount, address recipient) external returns (bytes32) {
+        // Lock tokens
+        token.transferFrom(msg.sender, address(this), amount);
+
+        // Send warp message
+        bytes memory payload = abi.encode(
+            amount,
+            recipient,
+            msg.sender
+        );
+
+        return WARP.sendWarpMessage(payload);
+    }
+
+    /// @notice Claim bridged tokens
+    function claim(uint32 warpIndex) external {
+        WarpMessage memory message = WARP.getVerifiedWarpMessage(warpIndex);
+
+        require(message.sourceChainID == remoteChainID, "Wrong chain");
+        require(message.originSenderAddress == remoteBridge, "Wrong bridge");
+
+        (uint256 amount, address recipient,) = abi.decode(
+            message.payload,
+            (uint256, address, address)
+        );
+
+        token.transfer(recipient, amount);
+    }
+}
+```
+
+## Warp Block Hash Verification
+
+For light client verification of state from other chains:
+
+```solidity
+function verifyRemoteState(
+    uint32 warpIndex,
+    bytes32 expectedBlockHash
+) external view returns (bool) {
+    bytes32 blockHash = WARP.getVerifiedWarpBlockHash(warpIndex);
+    return blockHash == expectedBlockHash;
+}
+```
+
+## Security
+
+| Property | Description |
+|----------|-------------|
+| **BLS Aggregation** | 67% validator threshold required |
+| **Chain Verification** | Source chain ID cryptographically verified |
+| **Sender Authentication** | Origin address included in signed payload |
+| **Replay Protection** | Message index prevents double-processing |
+
+## Gas Costs
+
+| Operation | Gas Cost |
+|-----------|----------|
+| `sendWarpMessage` | ~50,000 + payload size |
+| `getVerifiedWarpMessage` | ~25,000 |
+| `getVerifiedWarpBlockHash` | ~20,000 |
+
+## Best Practices
+
+1. **Verify Source Chain**: Always check `sourceChainID` matches expected
+2. **Verify Sender**: Check `originSenderAddress` is trusted contract
+3. **Idempotency**: Track processed message IDs to prevent replay
+4. **Error Handling**: Handle missing or invalid messages gracefully
+
+## Comparison with Bridge
+
+| Feature | Warp | MPC Bridge |
+|---------|------|------------|
+| **Trust Model** | Lux validators (BLS) | MPC oracle network |
+| **Speed** | Sub-second | ~30 seconds |
+| **Scope** | Lux chains only | External chains (ETH, BTC) |
+| **Use Case** | Internal cross-chain | External bridging |
+
+## Related
+
+- [Bridge](/docs/bridge/bridge) - MPC bridge for external chains
+- [Tokens](/docs/tokens) - Bridgeable token standards

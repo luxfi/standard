@@ -1,0 +1,35 @@
+{
+  "lib/base64": {
+    "tag": {
+      "name": "v1.1.0",
+      "rev": "dcbf852ba545b3d15de0ac0ef88dce934c090c8e"
+    }
+  },
+  "lib/chainlink": {
+    "tag": {
+      "name": "v2.7.0",
+      "rev": "e8d8a6040e7b1736d1527344c500a8fb37abbc61"
+    }
+  },
+  "lib/prb-math": {
+    "tag": {
+      "name": "v4.1.0",
+      "rev": "280fc5f77e1b21b9c54013aac51966be33f4a410"
+    }
+  },
+  "lib/safe-modules": {
+    "tag": {
+      "name": "v0.1.0",
+      "rev": "1981fbc63e3850d626074d81d22a198afe64ac03"
+    }
+  },
+  "lib/safe-smart-account": {
+    "tag": {
+      "name": "v1.5.0",
+      "rev": "dc437e8fba8b4805d76bcbd1c668c9fd3d1e83be"
+    }
+  },
+  "lib/solmate": {
+    "rev": "89365b880c4f3c786bdd453d4b8e8fe410344a69"
+  }
+}

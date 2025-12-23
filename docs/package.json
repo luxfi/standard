@@ -3,24 +3,25 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3003",
-    "build": "TURBOPACK=0 next build",
-    "export": "TURBOPACK=0 next build",
+    "dev": "next dev --port 3007",
+    "build": "fumadocs-mdx && TURBOPACK=0 next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "fumadocs-mdx && next lint",
+    "postinstall": "fumadocs-mdx"
   },
   "dependencies": {
     "@luxfi/logo": "^1.0.0",
-    "clsx": "^2.1.1",
-    "gray-matter": "^4.0.3",
+    "fumadocs-core": "^16.0.0",
+    "fumadocs-mdx": "^14.1.1",
+    "fumadocs-ui": "^16.0.0",
     "lucide-react": "^0.468.0",
     "next": "16.0.1",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1",
+    "shiki": "^1.27.2",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.16",
+    "tailwindcss-animate": "^1.0.7",
     "zod": "^3.24.1"
   },
   "devDependencies": {
@@ -31,8 +32,6 @@
     "@types/react-dom": "^19.0.2",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
-    "rehype-pretty-code": "^0.14.1",
-    "shiki": "^1.27.2",
     "typescript": "^5.7.2"
   },
   "packageManager": "pnpm@10.12.4"

@@ -1,141 +1,72 @@
-# ============================================================================
-# Lux Standard Library - Foundry Configuration
-# ============================================================================
-#
-# ARCHITECTURE NOTES:
-#
-# DEX Strategy - QuantumSwap (LX) vs Uniswap
-# ------------------------------------------
-# Uniswap v4 is INTENTIONALLY SKIPPED in favor of our native QuantumSwap
-# protocol built on the Lux DEX infrastructure (~/work/lux/dex).
-#
-# Why QuantumSwap/LX over Uniswap v4:
-#   - Performance: 434M orders/sec vs Uniswap's AMM-bound throughput
-#   - Latency: 2ns (GPU) / 487ns (CPU) vs ~12s block time on Ethereum
-#   - Finality: 1ms block finality with FPC consensus
-#   - Architecture: Full on-chain CLOB (Central Limit Order Book) vs AMM
-#   - Security: Post-quantum QZMQ protocol for node communication
-#   - Precompiles: Native high-performance matching via EVM precompiles
-#
-# Uniswap v2/v3 retained for:
-#   - Legacy AMM pool compatibility
-#   - LP token standards (UNI-V2-LP, etc.)
-#   - Price oracle references (TWAP)
-#   - Cross-chain bridge liquidity
-#
-# High-Performance Precompiles (src/precompiles/):
-#   - FROST (0x...000C): Schnorr threshold signatures for MPC custody
-#   - CGGMP21 (0x...000D): ECDSA threshold for institutional wallets
-#   - Ringtail (0x...000B): Post-quantum threshold signatures
-#   - ML-DSA (0x...0006): FIPS 204 post-quantum signatures
-#   - Quasar (0x...000A): Quantum consensus operations
-#   - Warp (0x...0008): Cross-chain messaging with BLS aggregation
-#
-# See: ~/work/lux/dex/LLM.md for full LX architecture documentation
-# ============================================================================
-
 [profile.default]
-src = "src"
-out = "artifacts"
+src = "contracts"
+out = "out"
 libs = ["lib"]
-test = "test"
-script = "script"
-cache_path = "cache_forge"
-auto_detect_solc = true
-via_ir = true
 optimizer = true
 optimizer_runs = 200
-ignored_error_codes = [3716]  # Multiple SPDX licenses
-deny_warnings = false
-fs_permissions = [{ access = "read-write", path = "./" }]
+via_ir = true
+solc_version = "0.8.28"
+# Point test and script to empty dirs during migration
+test = "contracts/test"
+script = "contracts/script"
 
-# Skip files with version incompatibilities or missing dependencies
-# These protocols need individual attention to update for OZ 5.x
-skip = [
-    # Scripts needing updates
-    "script/UnifiedDeploy.s.sol",
-    "script/DeployWithCreate2.s.sol",
-    "script/Deploy.s.sol",
-    # === PROTOCOLS NEEDING UPDATES ===
-    # Uniswap v2/v3 - Legacy AMM support only (v4 SKIPPED - use QuantumSwap/LX)
-    # Kept for: LP tokens, TWAP oracles, cross-chain liquidity
-    # Version =0.7.6 incompatible with OZ 5.x ^0.8.20
-    "src/uni/**/*.sol",
-    # Sudoswap (needs manifoldxyz, prb/math)
-    "src/sudo2/**/*.sol",
-    # Safe (needs munged contracts, mock-contract)
-    "src/safe/**/*.sol",
-    # Alchemix (needs rari-capital/solmate, version issues)
-    "src/alcx2/**/*.sol",
-    # EOA/Account Abstraction (=0.8.17, needs AA v0.7 ^0.8.28)
-    "src/eoa/**/*.sol",
-    # DAO - skip all (node_modules, vyper, deprecated OZ patterns)
-    "src/dao/**/*.sol",
-    # === CONTRACTS WITH LOCAL REFS ===
-    "src/DLUX.sol",
-    "src/DropNFTs.sol",
-    "src/MigratePool.sol",
-    # Omnichain LP (needs interface refactoring for IERC20Bridgable)
-    "src/OmnichainLP.sol",
-    "src/OmnichainLPFactory.sol",
-    "src/OmnichainLPRouter.sol",
-    # Legacy ERC721/NFT marketplace with OZ 4.x patterns
-    "src/ERC721.sol",
-    "src/ERC721Burnable.sol",
-    "src/LRC721.sol",
-    "src/LRC721Burnable.sol",
-    "src/Media.sol",
-    "src/Market.sol",
-    "src/tokens/LRC20.sol",
-    "src/tokens/LBTC.sol",
-    "src/tokens/LETH.sol",
-    # Test files needing updates
-    "test/foundry/AIMining.t.sol",
-    "test/foundry/LUX.t.sol",
-    "test/foundry/Lamport.t.sol",
-    # === EXTERNAL LIBRARIES ===
-    "lib/seaport/**/*.sol",
-    "lib/compound/**/*.sol",
-    "lib/account-abstraction/**/*.sol",
-    "lib/v3-core/**/*.sol",
-    "lib/v3-periphery/**/*.sol",
-    "lib/v2-core/**/*.sol"
-]
-
+# Remappings - comprehensive library support
 remappings = [
-    # OZ 5.x main contracts
+    # Lux Standard paths
+    "@luxfi/standard/lib/=lib/openzeppelin-contracts/contracts/",
+    "@luxfi/standard/lib-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+    "@luxfi/standard/=./",
+    "@lux/=contracts/",
+    "manifoldxyz/=lib/manifoldxyz/",
+    "@manifoldxyz/=lib/manifoldxyz/",
+    
+    # OpenZeppelin
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
     "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
-    # OZ 4.x compatibility shims (removed/moved in OZ 5.x)
-    "@openzeppelin/contracts/utils/math/SafeMath.sol=src/utils/oz4/SafeMath.sol",
-    "@openzeppelin/contracts/utils/Counters.sol=src/utils/oz4/Counters.sol",
-    "@openzeppelin/contracts/security/ReentrancyGuard.sol=src/utils/oz4/ReentrancyGuard.sol",
-    "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol=src/utils/oz4/ERC165Storage.sol",
-    "@openzeppelin/contracts/drafts/ERC20Permit.sol=src/utils/oz4/ERC20Permit.sol",
-    "@openzeppelin/contracts/drafts/IERC20Permit.sol=src/utils/oz4/IERC20Permit.sol",
-    "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol=src/utils/oz4/IERC20Permit.sol",
-    # Foundry
-    "forge-std/=lib/forge-std/src/",
-    # Solmate
-    "solmate/=lib/solmate/src/",
-    # Uniswap
-    "@uniswap/v3-core/=lib/v3-core/",
-    "@uniswap/v3-periphery/=lib/v3-periphery/",
-    "@uniswap/v2-core/=lib/v2-core/",
-    "@uniswap/lib/=lib/uniswap-lib/",
+    
     # Account Abstraction (ERC-4337)
-    "@account-abstraction/=lib/account-abstraction/",
+    "@account-abstraction/=lib/account-abstraction/contracts/",
+    
+    # Safe (Gnosis) - v1.5.0
+    "@safe-global/safe-smart-account/=lib/safe-smart-account/contracts/",
+    "@safe-global/safe-modules/=lib/safe-modules/modules/",
+    "@gnosis.pm/safe-contracts/=lib/safe-smart-account/contracts/",
+    "safe-smart-account/=lib/safe-smart-account/contracts/",
+    
+    # DeFi
+    "@uniswap/v2-core/=lib/v2-core/contracts/",
+    "@uniswap/v3-core/=lib/v3-core/contracts/",
+    "@uniswap/v3-periphery/=lib/v3-periphery/contracts/",
+    "@uniswap/lib/=lib/uniswap-lib/contracts/",
+    "@seaport/=lib/seaport/src/",
+    
     # Utilities
+    "@solmate/=lib/solmate/src/",
+    "solmate/=lib/solmate/src/",
     "clones-with-immutable-args/=lib/clones-with-immutable-args/src/",
-    "seaport/=lib/seaport/",
-    "compound/=lib/compound/",
-    "hardhat/=src/utils/hardhat/"
+    "@rari-capital/solmate/=lib/solmate/",
+    
+    # PRB Math
+    "@prb/math/=lib/prb-math/src/",
+    
+    # Chainlink
+    "@chainlink/contracts/=lib/chainlink/contracts/",
+    
+    # Base64
+    "base64-sol/=lib/base64/",
+    
+    # Hardhat console compatibility
+    "hardhat/=lib/forge-std/src/",
+    
+    # Forge
+    "forge-std/=lib/forge-std/src/",
 ]
 
-[rpc_endpoints]
-mainnet = "${RPC_MAINNET}"
-testnet = "${RPC_TESTNET}"
-localhost = "http://localhost:8545"
+[profile.default.fmt]
+line_length = 120
+tab_width = 4
+bracket_spacing = true
 
-[etherscan]
-mainnet = { key = "${ETHERSCAN_API_KEY}" }
+[rpc_endpoints]
+lux = "https://api.lux.network/ext/bc/C/rpc"
+lux_testnet = "https://api.lux-test.network/ext/bc/C/rpc"

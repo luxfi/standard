@@ -1,0 +1,160 @@
+---
+title: Farm
+description: MasterChef-style yield farming with LP staking
+---
+
+# Farm
+
+Classic MasterChef-style yield farming contract. Stake LP tokens to earn reward emissions.
+
+## Overview
+
+Farm distributes reward tokens to stakers based on:
+- Pool allocation points (weight)
+- Time staked
+- Bonus multiplier period
+
+## State Variables
+
+```solidity
+IERC20Mintable public token;      // Reward token (mintable)
+address public daoAddress;         // DAO receives share of rewards
+uint256 public daoShare;           // DAO share divisor
+uint256 public bonusEndBlock;      // When 2x bonus ends
+uint256 public rewardPerBlock;     // Tokens minted per block
+uint256 public startBlock;         // When farming starts
+uint256 public totalAllocPoint;    // Sum of all pool weights
+```
+
+## Structs
+
+### PoolInfo
+
+```solidity
+struct PoolInfo {
+    IERC20 lpToken;            // LP token to stake
+    uint256 allocPoint;        // Pool weight
+    uint256 lastRewardBlock;   // Last update block
+    uint256 accRewardPerShare; // Accumulated rewards per share
+}
+```
+
+### UserInfo
+
+```solidity
+struct UserInfo {
+    uint256 amount;     // Staked LP tokens
+    uint256 rewardDebt; // Reward debt for accounting
+}
+```
+
+## Functions
+
+### deposit
+
+```solidity
+function deposit(uint256 _pid, uint256 _amount) public
+```
+
+Stake LP tokens in a pool.
+
+### withdraw
+
+```solidity
+function withdraw(uint256 _pid, uint256 _amount) public
+```
+
+Withdraw staked LP tokens and claim rewards.
+
+### emergencyWithdraw
+
+```solidity
+function emergencyWithdraw(uint256 _pid) public
+```
+
+Withdraw LP tokens without caring about rewards. Emergency only.
+
+### pendingReward
+
+```solidity
+function pendingReward(uint256 _pid, address _user) external view returns (uint256)
+```
+
+View pending reward for a user in a pool.
+
+### add (onlyOwner)
+
+```solidity
+function add(uint256 _allocPoint, IERC20 _lpToken, bool _withUpdate) public onlyOwner
+```
+
+Add a new pool.
+
+### set (onlyOwner)
+
+```solidity
+function set(uint256 _pid, uint256 _allocPoint, bool _withUpdate) public onlyOwner
+```
+
+Update pool allocation points.
+
+## Bonus Multiplier
+
+During the bonus period (before `bonusEndBlock`), rewards are 2x:
+
+```solidity
+uint256 public constant BONUS_MULTIPLIER = 2;
+
+function getMultiplier(uint256 _from, uint256 _to) public view returns (uint256) {
+    if (_to <= bonusEndBlock) {
+        return (_to - _from) * BONUS_MULTIPLIER;
+    } else if (_from >= bonusEndBlock) {
+        return _to - _from;
+    } else {
+        return (bonusEndBlock - _from) * BONUS_MULTIPLIER + (_to - bonusEndBlock);
+    }
+}
+```
+
+## Usage Example
+
+```solidity
+import "@luxfi/standard/src/Farm.sol";
+
+// Deploy farm
+Farm farm = new Farm(
+    daoAddress,
+    10,              // DAO gets 1/10 of rewards
+    rewardToken,
+    1e18,            // 1 token per block
+    startBlock,
+    bonusEndBlock
+);
+
+// Add LP pool with 100 allocation points
+farm.add(100, lpToken, true);
+
+// User stakes LP tokens
+lpToken.approve(address(farm), amount);
+farm.deposit(0, amount);
+
+// Check pending rewards
+uint256 pending = farm.pendingReward(0, msg.sender);
+
+// Withdraw and claim
+farm.withdraw(0, amount);
+```
+
+## Events
+
+```solidity
+event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
+event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
+event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount);
+```
+
+## Security Notes
+
+- The reward token must have a `mint` function callable by the Farm
+- `emergencyWithdraw` forfeits all pending rewards
+- Always check `pendingReward` before withdrawing to avoid gas waste

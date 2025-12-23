@@ -1,0 +1,90 @@
+---
+title: LBTC
+description: Bridgeable Bitcoin representation on Lux Network
+---
+
+# LBTC (LuxBTC)
+
+Bridgeable Bitcoin representation on the Lux Network. LBTC is an ERC20B token with admin-controlled minting and burning for cross-chain bridge operations.
+
+**Inherits:** [ERC20B](/docs/tokens/erc20b)
+
+## Token Details
+
+| Property | Value |
+|----------|-------|
+| Name | LuxBTC |
+| Symbol | LBTC |
+| Decimals | 18 |
+| Type | Bridgeable ERC20 |
+
+## Use Cases
+
+1. **Cross-Chain Bridge**: Represents BTC from Bitcoin network on Lux
+2. **DeFi Integration**: Use BTC in Lux DeFi protocols (margin, loans, etc.)
+3. **Collateral**: Provide LBTC as collateral for lending protocols
+4. **Trading**: Trade LBTC pairs on Lux DEX
+
+## Functions
+
+Inherits all functions from [ERC20B](/docs/tokens/erc20b):
+
+```solidity
+function mint(address account, uint256 amount) public onlyAdmin returns (bool)
+function burnIt(address account, uint256 amount) public onlyAdmin returns (bool)
+function grantAdmin(address to) public onlyAdmin
+function revokeAdmin(address to) public onlyAdmin
+```
+
+## Bridge Flow
+
+```
+Bitcoin Network                    Lux Network
+┌────────────┐                     ┌────────────┐
+│    BTC     │ ──Lock──────────────│   LBTC     │
+│            │                     │   mint()   │
+│            │ ◄─Unlock────────────│   burn()   │
+└────────────┘                     └────────────┘
+         ▲                               │
+         │      MPC Oracle Bridge        │
+         └───────────────────────────────┘
+```
+
+## Deployment
+
+```solidity
+import "@luxfi/standard/src/tokens/LBTC.sol";
+
+// Deploy LBTC token
+LuxBTC lbtc = new LuxBTC();
+
+// Grant bridge contract admin rights
+lbtc.grantAdmin(bridgeContract);
+```
+
+## Usage
+
+```solidity
+// Bridge mints LBTC when BTC is locked
+lbtc.mint(user, 1e18); // 1 LBTC
+
+// Bridge burns LBTC when BTC is released
+lbtc.burnIt(user, 1e18);
+
+// Standard ERC20 operations
+lbtc.transfer(recipient, amount);
+lbtc.approve(spender, amount);
+```
+
+## Security
+
+- **Admin-Only Minting**: Only authorized bridge contracts can mint
+- **Admin-Only Burning**: Only authorized bridge contracts can burn
+- **Role-Based Access**: AccessControl for admin management
+- **Ownable**: Owner can transfer ownership
+
+## Related
+
+- [ERC20B](/docs/tokens/erc20b) - Base bridgeable ERC20
+- [LETH](/docs/tokens/leth) - Bridgeable ETH
+- [Bridge](/docs/bridge) - Cross-chain bridge contracts

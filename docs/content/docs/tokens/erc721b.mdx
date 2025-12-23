@@ -1,0 +1,166 @@
+---
+title: ERC721B
+description: Extended ERC721 with enumeration, minting, and pausable functionality
+---
+
+# ERC721B
+
+Extended ERC721 token implementation with enumeration support, public minting, and pausable functionality.
+
+**Inherits:** ERC721Enumerable, Ownable
+
+## State Variables
+
+### _baseTokenURI
+
+```solidity
+string _baseTokenURI
+```
+
+Base URI for computing `tokenURI`. The resulting URI for each token is the concatenation of `baseURI` and `tokenId`.
+
+### _price
+
+```solidity
+uint256 public _price = 0.001 ether
+```
+
+Mint price per token.
+
+### _paused
+
+```solidity
+bool public _paused
+```
+
+Pause state for minting.
+
+### maxTokenIds
+
+```solidity
+uint256 public maxTokenIds = 1111
+```
+
+Maximum supply of tokens.
+
+### tokenIds
+
+```solidity
+uint256 public tokenIds
+```
+
+Current token ID counter.
+
+## Functions
+
+### constructor
+
+```solidity
+constructor(string memory baseURI) ERC721("LUX", "LUX") Ownable(msg.sender)
+```
+
+Initializes the NFT collection with a base URI.
+
+### mint
+
+```solidity
+function mint() public payable onlyWhenNotPaused
+```
+
+Mints 1 NFT per transaction. Requires payment of `_price`.
+
+### addDrop
+
+```solidity
+function addDrop() public onlyOwner
+```
+
+Adds additional tokens to the max supply.
+
+### setPaused
+
+```solidity
+function setPaused(bool val) public onlyOwner
+```
+
+Sets the pause state for minting.
+
+### withdraw
+
+```solidity
+function withdraw() public onlyOwner
+```
+
+Withdraws all ETH from the contract to the owner.
+
+### tokenURI
+
+```solidity
+function tokenURI(uint256 tokenId) public view virtual override returns (string memory)
+```
+
+Returns the token metadata URI.
+
+## Modifiers
+
+### onlyWhenNotPaused
+
+```solidity
+modifier onlyWhenNotPaused()
+```
+
+Ensures minting is not paused.
+
+## Usage
+
+```solidity
+import "@luxfi/standard/src/tokens/ERC721B.sol";
+
+// Deploy
+ERC721B nft = new ERC721B("https://api.example.com/metadata/");
+
+// Mint
+nft.mint{value: 0.001 ether}();
+
+// Check ownership
+address owner = nft.ownerOf(tokenId);
+
+// Get total supply
+uint256 total = nft.totalSupply();
+
+// Get tokens by owner
+uint256[] memory tokens = new uint256[](nft.balanceOf(owner));
+for (uint i = 0; i < nft.balanceOf(owner); i++) {
+    tokens[i] = nft.tokenOfOwnerByIndex(owner, i);
+}
+```
+
+## Features
+
+### Enumeration
+
+Full enumeration support via ERC721Enumerable:
+
+- `totalSupply()` - Total minted tokens
+- `tokenByIndex(index)` - Token ID at global index
+- `tokenOfOwnerByIndex(owner, index)` - Token ID at owner's index
+
+### Pausable Minting
+
+Owner can pause/unpause minting:
+
+```solidity
+// Pause minting
+nft.setPaused(true);
+
+// Resume minting
+nft.setPaused(false);
+```
+
+### Expandable Supply
+
+Owner can add drops to increase max supply:
+
+```solidity
+nft.addDrop(); // Adds to maxTokenIds
+```

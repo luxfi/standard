@@ -1,0 +1,17 @@
+{
+  "title": "Lux Standard Library",
+  "pages": [
+    "---Core---",
+    "tokens",
+    "amm",
+    "defi",
+    "accounts",
+    "---Infrastructure---",
+    "governance",
+    "bridge",
+    "utils",
+    "---Security---",
+    "safe",
+    "lamport"
+  ]
+}

@@ -1,0 +1,135 @@
+---
+title: Loans
+description: Self-repaying loans using yield-bearing collateral
+---
+
+# Loans
+
+Self-repaying loans that use yield from collateral to automatically pay down debt over time.
+
+## How It Works
+
+1. **Deposit** yield-bearing tokens (e.g., staked ETH, yield vaults)
+2. **Borrow** synthetic assets up to 50% of collateral value
+3. **Yield accrues** and automatically pays down your debt
+4. **Withdraw** when debt is paid or redeem synthetics 1:1
+
+## Key Concepts
+
+### Collateralization
+- Minimum 200% collateralization (50% LTV)
+- Positions cannot be liquidated by price movements - only by debt ceiling
+
+### Synthetic Assets
+- **luxUSD**: Synthetic dollar, backed by yield-bearing stablecoins
+- **luxETH**: Synthetic ETH, backed by yield-bearing ETH
+
+## Functions
+
+### deposit
+
+```solidity
+function deposit(
+    address yieldToken,
+    uint256 amount,
+    address recipient
+) external returns (uint256 shares)
+```
+
+Deposit yield-bearing tokens as collateral.
+
+### mint
+
+```solidity
+function mint(
+    uint256 amount,
+    address recipient
+) external
+```
+
+Borrow synthetic tokens against your collateral.
+
+### burn
+
+```solidity
+function burn(
+    uint256 amount,
+    address recipient
+) external returns (uint256)
+```
+
+Repay debt by burning synthetic tokens.
+
+### withdraw
+
+```solidity
+function withdraw(
+    address yieldToken,
+    uint256 shares,
+    address recipient
+) external returns (uint256)
+```
+
+Withdraw collateral.
+
+### liquidate
+
+```solidity
+function liquidate(
+    address owner,
+    uint256 shares,
+    uint256 minimumAmountOut
+) external returns (uint256)
+```
+
+Liquidate underwater positions (when debt exceeds collateral value).
+
+## Usage Example
+
+```solidity
+import "@luxfi/standard/src/Loans.sol";
+
+// Deposit yield-bearing USDC
+IERC20(yieldUSDC).approve(address(loans), amount);
+loans.deposit(yieldUSDC, amount, msg.sender);
+
+// Mint luxUSD (up to 50% of collateral value)
+uint256 maxMint = loans.getMintLimit(msg.sender);
+loans.mint(maxMint / 2, msg.sender);
+
+// Check position
+(int256 debt, address[] memory tokens) = loans.accounts(msg.sender);
+
+// Debt auto-repays from yield over time
+// Eventually withdraw collateral when debt is 0
+loans.withdraw(yieldUSDC, shares, msg.sender);
+```
+
+## Account Structure
+
+```solidity
+struct Account {
+    int256 debt;                                    // Positive = debt, negative = credit
+    mapping(address => uint256) balances;           // Share balances per yield token
+    mapping(address => uint256) lastAccruedWeights; // Last accrued weights
+    Sets.AddressSet depositedTokens;                // Deposited yield tokens
+}
+```
+
+## Constants
+
+| Name | Value | Description |
+|------|-------|-------------|
+| `BPS` | 10000 | Basis points divisor |
+| `FIXED_POINT_SCALAR` | 1e18 | Fixed point precision |
+| `minimumCollateralization` | 2e18 | 200% (2x collateral required) |
+
+## Events
+
+```solidity
+event Deposit(address indexed sender, address indexed yieldToken, uint256 amount, address recipient);
+event Withdraw(address indexed sender, address indexed yieldToken, uint256 shares, address recipient);
+event Mint(address indexed sender, uint256 amount, address recipient);
+event Burn(address indexed sender, uint256 amount, address recipient);
+event Liquidate(address indexed sender, address indexed owner, uint256 shares);
+```

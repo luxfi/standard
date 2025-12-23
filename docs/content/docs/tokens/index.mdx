@@ -1,0 +1,41 @@
+---
+title: Token Contracts
+description: LUX, LUXD, AI tokens and ERC20/ERC721 implementations
+---
+
+# Token Contracts
+
+Core token implementations for the Lux Network ecosystem.
+
+## Native Tokens
+
+<Cards>
+  <Card title="LUX" href="/docs/tokens/lux">
+    Native platform token with bridge support and blacklist functionality
+  </Card>
+  <Card title="LUXD" href="/docs/tokens/luxd">
+    Stable dollar-pegged token for the Lux ecosystem
+  </Card>
+  <Card title="AI" href="/docs/tokens/ai">
+    AI mining token for compute rewards
+  </Card>
+</Cards>
+
+## Base Implementations
+
+<Cards>
+  <Card title="ERC20B" href="/docs/tokens/erc20b">
+    Extended ERC20 with bridging capabilities
+  </Card>
+  <Card title="ERC721B" href="/docs/tokens/erc721b">
+    Extended ERC721 with bridging and enumeration
+  </Card>
+</Cards>
+
+## Usage
+
+```solidity
+import "@luxfi/standard/src/LUX.sol";
+import "@luxfi/standard/src/tokens/AI.sol";
+import "@luxfi/standard/src/tokens/ERC20B.sol";
+```

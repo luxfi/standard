@@ -1,0 +1,227 @@
+---
+title: Modules
+description: Session keys, validation rules, and smart account extensions
+---
+
+# Modules
+
+Modules extend smart account functionality with session keys, alternative validation methods, and custom logic.
+
+## Module Types
+
+| Module | Purpose |
+|--------|---------|
+| **Session Key** | Time-limited signing permissions |
+| **Batched Session** | Multiple operations per session |
+| **Passkey Validation** | WebAuthn/FIDO2 authentication |
+| **ECDSA Validation** | Standard EOA signature validation |
+
+## Session Key Module
+
+Grant temporary, limited signing permissions to dapps.
+
+### Session Data
+
+```solidity
+struct SessionData {
+    uint48 validUntil;      // Expiration timestamp
+    uint48 validAfter;      // Start timestamp
+    address sessionValidationModule;  // Validation logic
+    bytes sessionKeyData;   // Session key public key
+}
+```
+
+### Create Session
+
+```solidity
+// Define session permissions
+SessionData memory session = SessionData({
+    validUntil: uint48(block.timestamp + 1 days),
+    validAfter: uint48(block.timestamp),
+    sessionValidationModule: erc20SessionModule,
+    sessionKeyData: abi.encode(
+        sessionPublicKey,
+        tokenAddress,
+        recipient,
+        maxAmount
+    )
+});
+
+// Enable session on account
+bytes memory enableData = abi.encodeWithSignature(
+    "enableSession(tuple)",
+    session
+);
+
+account.execute(sessionKeyManager, 0, enableData);
+```
+
+### Session Validation Modules
+
+#### ERC20 Session
+
+Limit transfers to specific tokens and amounts.
+
+```solidity
+struct ERC20SessionParams {
+    address sessionKey;
+    address token;
+    address recipient;
+    uint256 maxAmount;
+}
+```
+
+#### ABI Session
+
+Limit calls to specific function signatures.
+
+```solidity
+struct ABISessionParams {
+    address sessionKey;
+    address target;
+    bytes4 selector;
+    bytes rules;  // Parameter validation rules
+}
+```
+
+## Batched Session Module
+
+Execute multiple operations in a single session.
+
+```solidity
+struct BatchedSessionParams {
+    uint48 validUntil;
+    uint48 validAfter;
+    SessionData[] sessions;  // Multiple session configs
+}
+
+// Create batched session
+BatchedSessionParams memory batch = BatchedSessionParams({
+    validUntil: uint48(block.timestamp + 1 hours),
+    validAfter: uint48(block.timestamp),
+    sessions: [session1, session2, session3]
+});
+```
+
+## Passkey Validation Module
+
+WebAuthn/FIDO2 authentication for smart accounts.
+
+```solidity
+struct PasskeyData {
+    uint256 x;      // Public key x coordinate
+    uint256 y;      // Public key y coordinate
+    string origin;  // WebAuthn origin
+}
+
+// Register passkey
+passkeyModule.registerPasskey(
+    accountAddress,
+    x, y,
+    "https://app.lux.network"
+);
+
+// Signature format
+struct PasskeySignature {
+    bytes authenticatorData;
+    string clientDataJSON;
+    uint256 r;
+    uint256 s;
+}
+```
+
+## ECDSA Validation Module
+
+Standard EOA signature validation.
+
+```solidity
+// Initialize with owner
+ecdsaModule.initForSmartAccount(ownerAddress);
+
+// Transfer ownership
+ecdsaModule.transferOwnership(
+    accountAddress,
+    newOwnerAddress
+);
+
+// Signature is standard (r, s, v)
+```
+
+## Module Interface
+
+All modules implement:
+
+```solidity
+interface ISessionValidationModule {
+    function validateSessionParams(
+        address destinationContract,
+        uint256 callValue,
+        bytes calldata funcCallData,
+        bytes calldata sessionKeyData,
+        bytes calldata callSpecificData
+    ) external view returns (address);
+
+    function validateSessionUserOp(
+        UserOperation calldata userOp,
+        bytes32 userOpHash,
+        bytes calldata sessionKeyData,
+        bytes calldata sessionKeySignature
+    ) external view returns (bool);
+}
+```
+
+## Usage Examples
+
+### Grant DeFi Session
+
+```solidity
+// Allow dapp to interact with lending pool for 1 hour
+SessionData memory defiSession = SessionData({
+    validUntil: uint48(block.timestamp + 1 hours),
+    validAfter: uint48(block.timestamp),
+    sessionValidationModule: abiSessionModule,
+    sessionKeyData: abi.encode(
+        dappSessionKey,
+        lendingPool,
+        bytes4(keccak256("deposit(address,uint256)")),
+        abi.encode(/* parameter rules */)
+    )
+});
+```
+
+### Gaming Session
+
+```solidity
+// Allow game to spend up to 100 tokens
+SessionData memory gameSession = SessionData({
+    validUntil: uint48(block.timestamp + 24 hours),
+    validAfter: uint48(block.timestamp),
+    sessionValidationModule: erc20SessionModule,
+    sessionKeyData: abi.encode(
+        gameSessionKey,
+        gameToken,
+        gameContract,
+        100e18  // Max 100 tokens
+    )
+});
+```
+
+### Revoke Session
+
+```solidity
+// Disable session before expiry
+sessionKeyManager.disableSession(sessionHash);
+```
+
+## Security
+
+- Sessions have expiration timestamps
+- Validation modules enforce restrictions
+- Only account owner can grant sessions
+- Sessions can be revoked at any time
+- Each module is independently audited
+
+## Related
+
+- [Smart Account](/docs/accounts/smart-account) - Core account contract
+- [Paymasters](/docs/accounts/paymasters) - Gas sponsorship

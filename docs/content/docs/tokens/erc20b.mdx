@@ -1,0 +1,128 @@
+---
+title: ERC20B
+description: Extended ERC20 with bridging capabilities and admin controls
+---
+
+# ERC20B
+
+Extended ERC20 token implementation with bridging capabilities, admin-controlled minting/burning, and access control.
+
+**Inherits:** ERC20, Ownable, AccessControl
+
+## Functions
+
+### constructor
+
+```solidity
+constructor(string memory name, string memory symbol) ERC20(name, symbol)
+```
+
+### onlyAdmin
+
+```solidity
+modifier onlyAdmin()
+```
+
+Restricts function access to admin role holders.
+
+### grantAdmin
+
+```solidity
+function grantAdmin(address to) public onlyAdmin
+```
+
+Grants admin role to an address.
+
+### revokeAdmin
+
+```solidity
+function revokeAdmin(address to) public onlyAdmin
+```
+
+Revokes admin role from an address.
+
+### mint
+
+```solidity
+function mint(address account, uint256 amount) public onlyAdmin returns (bool)
+```
+
+Mints tokens to an account. Only callable by admins.
+
+### burnIt
+
+```solidity
+function burnIt(address account, uint256 amount) public onlyAdmin returns (bool)
+```
+
+Burns tokens from an account. Only callable by admins.
+
+## Events
+
+### LogMint
+
+```solidity
+event LogMint(address indexed account, uint256 amount)
+```
+
+### LogBurn
+
+```solidity
+event LogBurn(address indexed account, uint256 amount)
+```
+
+### AdminGranted
+
+```solidity
+event AdminGranted(address to)
+```
+
+### AdminRevoked
+
+```solidity
+event AdminRevoked(address to)
+```
+
+## Usage
+
+```solidity
+import "@luxfi/standard/src/tokens/ERC20B.sol";
+
+contract MyToken is ERC20B {
+    constructor() ERC20B("My Token", "MTK") {}
+}
+
+// Deploy and configure
+MyToken token = new MyToken();
+token.grantAdmin(bridgeContract);
+
+// Admin mints
+token.mint(user, 1000 ether);
+
+// Admin burns
+token.burnIt(user, 500 ether);
+```
+
+## Bridge Integration
+
+ERC20B is designed for cross-chain bridge integration:
+
+```solidity
+// Bridge contract as admin
+contract Bridge {
+    ERC20B public token;
+
+    function bridgeMint(address to, uint256 amount) external {
+        token.mint(to, amount);
+    }
+
+    function bridgeBurn(address from, uint256 amount) external {
+        token.burnIt(from, amount);
+    }
+}
+```
+
+## Tokens Using ERC20B
+
+- [AI Token](/docs/tokens/ai) - GPU compute rewards
+- [LUXD](/docs/tokens/luxd) - Lux Dollar stablecoin

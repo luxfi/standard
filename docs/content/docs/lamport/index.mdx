@@ -1,0 +1,159 @@
+---
+title: Lamport Signatures
+description: Post-quantum cryptography for contract ownership
+---
+
+# Lamport Signatures
+
+Post-quantum secure signatures for protecting smart contract ownership against quantum computing attacks.
+
+## Overview
+
+Lamport signatures are one-time signatures based on hash functions, providing security against both classical and quantum computers. This library enables quantum-resistant ownership of contracts.
+
+## Why Lamport?
+
+| Property | ECDSA | Lamport |
+|----------|-------|---------|
+| Quantum Safe | No | Yes |
+| Signature Size | 65 bytes | ~8 KB |
+| One-time Use | No | Yes |
+| Key Generation | Fast | Fast |
+| Verification | Fast | Fast |
+
+## How It Works
+
+1. **Key Generation**: Generate 256 pairs of random 256-bit values
+2. **Public Key**: Hash each value to create 512 hashes
+3. **Signing**: Reveal one value from each pair based on message bits
+4. **Verification**: Hash revealed values and compare to public key
+
+## Usage
+
+### Inherit from LamportBase
+
+```solidity
+import "@luxfi/standard/src/lamport/contracts/LamportBase.sol";
+
+contract MyQuantumSafeContract is LamportBase {
+    function secureFunction(
+        bytes32[256] memory currentPub,
+        bytes32[256] memory sig,
+        bytes32 nextPKH,
+        bytes memory params
+    ) external onlyLamportOwner(currentPub, sig, nextPKH, params) {
+        // Function logic here
+    }
+}
+```
+
+### The onlyLamportOwner Modifier
+
+```solidity
+modifier onlyLamportOwner(
+    bytes32[256] memory currentPub,
+    bytes32[256] memory sig,
+    bytes32 nextPKH,
+    bytes memory params
+)
+```
+
+**Parameters:**
+- `currentPub`: Current public key (256 hashes)
+- `sig`: Signature (256 revealed values)
+- `nextPKH`: Hash of next public key (key rotation)
+- `params`: All function parameters packed with `abi.encodePacked()`
+
+### Key Rotation
+
+After each signature, the key is rotated:
+
+```solidity
+// Current PKH is stored
+bytes32 public pkh;
+
+// After verification, nextPKH becomes the new pkh
+pkh = nextPKH;
+```
+
+## Security Considerations
+
+1. **One-Time Use**: Each key pair can only sign once
+2. **Include All Parameters**: Any unsigned parameter is vulnerable
+3. **Key Storage**: Store next key securely before signing
+4. **Precompute Keys**: Generate multiple key pairs in advance
+
+## Example: Quantum-Safe Broadcast
+
+```solidity
+contract LamportBroadcast is LamportBase {
+    event Broadcast(uint256 number, address addr);
+
+    function broadcastWithNumberAndAddress(
+        bytes32[256] memory currentpub,
+        bytes32[256] memory sig,
+        bytes32 nextPKH,
+        uint256 number,
+        address addr
+    )
+        public
+        onlyLamportOwner(
+            currentpub,
+            sig,
+            nextPKH,
+            abi.encodePacked(number, addr)
+        )
+    {
+        emit Broadcast(number, addr);
+    }
+}
+```
+
+## Off-Chain Key Generation
+
+```typescript
+// Generate key pair (256 value pairs)
+function generateKeyPair(): { privateKey: bytes32[512], publicKey: bytes32[256] } {
+    const privateKey: bytes32[512] = [];
+    const publicKey: bytes32[256] = [];
+
+    for (let i = 0; i < 256; i++) {
+        const value0 = randomBytes(32);
+        const value1 = randomBytes(32);
+        privateKey[i * 2] = value0;
+        privateKey[i * 2 + 1] = value1;
+        publicKey[i] = keccak256(abi.encodePacked(value0, value1));
+    }
+
+    return { privateKey, publicKey };
+}
+
+// Sign message
+function sign(message: bytes32, privateKey: bytes32[512]): bytes32[256] {
+    const sig: bytes32[256] = [];
+
+    for (let i = 0; i < 256; i++) {
+        const bit = (message >> (255 - i)) & 1;
+        sig[i] = privateKey[i * 2 + bit];
+    }
+
+    return sig;
+}
+```
+
+## Integration with Precompiles
+
+For high-performance verification, Lux Network provides precompiles for post-quantum cryptography:
+
+| Precompile | Address | Purpose |
+|------------|---------|---------|
+| ML-DSA | `0x...0006` | FIPS 204 signatures |
+| Ringtail | `0x...000B` | Threshold lattice signatures |
+
+See [Precompiles](/docs/precompiles) for more details.
+
+## Related
+
+- [Post-Quantum Cryptography](/docs/precompiles) - EVM precompiles for PQ crypto
+- [Safe](/docs/safe) - Multisig wallet
+- [Governance](/docs/governance) - DAO with threshold voting

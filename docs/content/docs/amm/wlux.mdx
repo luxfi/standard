@@ -1,0 +1,151 @@
+---
+title: WLUX
+description: Wrapped LUX - ERC20 wrapper for native LUX
+---
+
+# WLUX (Wrapped LUX)
+
+WLUX is an ERC20 wrapper for native LUX. It enables LUX to be used in DeFi protocols that require ERC20 tokens.
+
+## Token Details
+
+| Property | Value |
+|----------|-------|
+| Name | Wrapped LUX |
+| Symbol | WLUX |
+| Decimals | 18 |
+| Type | ERC20 Wrapper |
+
+## Functions
+
+### deposit
+
+Wrap native LUX to WLUX.
+
+```solidity
+function deposit() public payable;
+
+// Also supports fallback
+receive() external payable {
+    deposit();
+}
+```
+
+### withdraw
+
+Unwrap WLUX to native LUX.
+
+```solidity
+function withdraw(uint256 wad) public;
+```
+
+### Standard ERC20
+
+```solidity
+function totalSupply() public view returns (uint256);
+function balanceOf(address owner) public view returns (uint256);
+function allowance(address owner, address spender) public view returns (uint256);
+function approve(address spender, uint256 value) public returns (bool);
+function transfer(address to, uint256 value) public returns (bool);
+function transferFrom(address from, address to, uint256 value) public returns (bool);
+```
+
+## Events
+
+```solidity
+event Deposit(address indexed dst, uint256 wad);
+event Withdrawal(address indexed src, uint256 wad);
+event Approval(address indexed src, address indexed guy, uint256 wad);
+event Transfer(address indexed src, address indexed dst, uint256 wad);
+```
+
+## Usage
+
+### Wrapping LUX
+
+```solidity
+import "@luxfi/standard/src/uni/WLUX.sol";
+
+WLUX wlux = WLUX(WLUX_ADDRESS);
+
+// Method 1: deposit()
+wlux.deposit{value: 1 ether}();
+
+// Method 2: send directly
+payable(address(wlux)).transfer(1 ether);
+
+// Check balance
+uint256 balance = wlux.balanceOf(msg.sender);
+// balance == 1e18 WLUX
+```
+
+### Unwrapping WLUX
+
+```solidity
+// Unwrap WLUX to receive native LUX
+wlux.withdraw(1 ether);
+
+// LUX is sent to msg.sender
+```
+
+### DeFi Integration
+
+```solidity
+// Wrap LUX for AMM swap
+wlux.deposit{value: 1 ether}();
+wlux.approve(router, 1 ether);
+
+router.swapExactTokensForTokens(
+    1 ether,
+    minOut,
+    [address(wlux), LUXD],
+    msg.sender
+);
+
+// Add liquidity to V2 pool
+wlux.deposit{value: 10 ether}();
+wlux.approve(router, 10 ether);
+LUXD.approve(router, 10000e18);
+
+router.addLiquidity(
+    address(wlux),
+    LUXD,
+    10 ether,
+    10000e18,
+    0,
+    0,
+    msg.sender,
+    deadline
+);
+```
+
+## Properties
+
+- **1:1 Ratio**: 1 LUX = 1 WLUX always
+- **No Fee**: Wrapping/unwrapping is free (just gas)
+- **Fully Backed**: totalSupply() == contract.balance
+- **Reentrant Safe**: Uses checks-effects-interactions pattern
+
+## Why WLUX?
+
+Native LUX is not ERC20 compatible. Many DeFi protocols require ERC20 tokens:
+
+| Protocol | Needs WLUX |
+|----------|------------|
+| AMM Pools | ✅ V2/V3 pairs |
+| Lending | ✅ Collateral deposit |
+| Margin | ✅ Position collateral |
+| NFT Market | ✅ Payment token |
+| Governance | ✅ Voting token |
+
+## Security
+
+- **Battle-tested**: Same implementation as WETH
+- **Simple**: Minimal attack surface
+- **Audited**: Standard wrapped token pattern
+
+## Related
+
+- [Pools](/docs/amm/pools) - AMM liquidity pools
+- [Router](/docs/amm/router) - Swap router
+- [LUX](/docs/tokens/lux) - Native LUX token
