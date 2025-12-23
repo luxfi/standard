@@ -11,7 +11,8 @@
 
 
 */
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BSD-3-Clause
+// Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.0;
 
 import "./ERC20B.sol";
