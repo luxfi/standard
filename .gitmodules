@@ -13,9 +13,6 @@
 [submodule "lib/base64"]
 	path = lib/base64
 	url = https://github.com/Brechtpd/base64
-[submodule "lib/lssvm2"]
-	path = lib/lssvm2
-	url = https://github.com/sudoswap/lssvm2
 [submodule "lib/gmx-contracts"]
 	path = lib/gmx-contracts
 	url = https://github.com/gmx-io/gmx-contracts
@@ -34,15 +31,9 @@
 [submodule "lib/clones-with-immutable-args"]
 	path = lib/clones-with-immutable-args
 	url = https://github.com/wighawag/clones-with-immutable-args
-[submodule "lib/compound"]
-	path = lib/compound
-	url = https://github.com/compound-finance/compound-protocol
 [submodule "lib/forge-std"]
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
-[submodule "lib/seaport"]
-	path = lib/seaport
-	url = https://github.com/ProjectOpenSea/seaport
 [submodule "lib/uniswap-lib"]
 	path = lib/uniswap-lib
 	url = https://github.com/Uniswap/uniswap-lib
