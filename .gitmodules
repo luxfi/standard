@@ -67,3 +67,6 @@
 [submodule "lib/layerzero-v2"]
 	path = lib/layerzero-v2
 	url = https://github.com/LayerZero-Labs/LayerZero-v2.git
+[submodule "lib/gmx-synthetics"]
+	path = lib/gmx-synthetics
+	url = https://github.com/gmx-io/gmx-synthetics
