@@ -7,7 +7,7 @@ optimizer_runs = 200
 via_ir = true
 solc_version = "0.8.28"
 # Point test and script to empty dirs during migration
-test = "contracts/test"
+test = "test"
 script = "contracts/script"
 
 # Remappings - comprehensive library support
