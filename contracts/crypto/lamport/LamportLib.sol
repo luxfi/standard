@@ -26,7 +26,7 @@ library LamportLib {
     function verify(
         bytes32 message,
         bytes32[] memory signature,
-        bytes32[256][2] memory publicKey
+        bytes32[2][256] memory publicKey
     ) internal pure returns (bool) {
         require(signature.length == 256, "Invalid signature length");
         

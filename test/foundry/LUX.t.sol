@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 import "../../contracts/tokens/LUX.sol";
 import "../../contracts/bridge/Bridge.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 contract LUXTest is Test {
     LUX public token;
@@ -69,8 +70,8 @@ contract LUXTest is Test {
         // Mint tokens while paused
         token.mint(owner, 1000e18);
         
-        // Transfer should fail while paused
-        vm.expectRevert("Pausable: paused");
+        // Transfer should fail while paused (OZ v5 uses custom errors)
+        vm.expectRevert(Pausable.EnforcedPause.selector);
         token.transfer(user1, 100e18);
         
         // Unpause
