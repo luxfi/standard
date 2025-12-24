@@ -31,6 +31,17 @@ enum ServiceType {
     LinkedDomains,
     DIDCommMessaging,
     CredentialRegistry,
+    // x402 Payment Protocol services
+    X402PaymentEndpoint,     // x402 payment verification endpoint
+    X402Facilitator,         // x402 facilitator service
+    X402Resource,            // x402 protected resource
+    // Verifiable Credentials
+    CredentialIssuer,        // VC issuer service
+    CredentialVerifier,      // VC verification service
+    CredentialStatus,        // Credential status/revocation
+    // Cross-chain
+    OmnichainBridge,         // Cross-chain identity bridge
+    WarpMessenger,           // Lux Warp messaging service
     Custom
 }
 
@@ -130,11 +141,12 @@ interface IDIDRegistry {
      * @param method DID method (e.g., "lux", "hanzo")
      * @param identifier Method-specific identifier
      * @return did The full DID string
+     * @dev May be payable in premium implementations
      */
     function createDID(
         string calldata method,
         string calldata identifier
-    ) external returns (string memory did);
+    ) external payable returns (string memory did);
     
     /**
      * @notice Resolve a DID to its document
@@ -273,4 +285,165 @@ interface IDIDResolver {
      * @return registry The registry address
      */
     function getRegistry(string calldata method) external view returns (address registry);
+}
+
+/**
+ * @title IPremiumDIDRegistry
+ * @notice Interface for Premium DID Registry with tiered pricing
+ * @dev Supports paid registration for short names (1-4 chars)
+ *
+ * PRICING TIERS:
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │  Length  │  Tier           │  Price (Native)  │  Example       │
+ * ├─────────────────────────────────────────────────────────────────┤
+ * │  1 char  │  Ultra Premium  │  1000 tokens     │  did:lux:a     │
+ * │  2 chars │  Super Premium  │  100 tokens      │  did:lux:ai    │
+ * │  3 chars │  Premium        │  10 tokens       │  did:lux:bob   │
+ * │  4 chars │  Standard       │  1 token         │  did:lux:john  │
+ * │  5+ chars│  Basic          │  0.1 tokens      │  did:lux:alice │
+ * └─────────────────────────────────────────────────────────────────┘
+ */
+interface IPremiumDIDRegistry is IDIDRegistry {
+    // ============ Events ============
+
+    event DIDRegistered(
+        string indexed didHash,
+        string did,
+        address indexed controller,
+        uint256 price,
+        uint256 expiresAt
+    );
+
+    event DIDRenewed(
+        string indexed didHash,
+        string did,
+        uint256 newExpiry,
+        uint256 price
+    );
+
+    event DIDExpired(string indexed didHash, string did);
+
+    // ============ Pricing ============
+
+    /**
+     * @notice Get registration price for an identifier
+     * @param identifier The identifier to price
+     * @return price The price in native tokens
+     */
+    function getPrice(string calldata identifier) external view returns (uint256 price);
+
+    /**
+     * @notice Get renewal price for an identifier
+     * @param identifier The identifier
+     * @return price The renewal price (typically 50% of registration)
+     */
+    function getRenewalPrice(string calldata identifier) external view returns (uint256 price);
+
+    /**
+     * @notice Get the price tier name for an identifier
+     * @param identifier The identifier
+     * @return tier The tier name
+     */
+    function getPriceTier(string calldata identifier) external pure returns (string memory tier);
+
+    /**
+     * @notice Check if an identifier is available
+     * @param identifier The identifier to check
+     * @return available Whether the DID is available
+     * @return price The price to register
+     */
+    function isAvailable(string calldata identifier) external view returns (bool available, uint256 price);
+
+    // ============ Expiration ============
+
+    /**
+     * @notice Get DID expiration info
+     * @param did The DID to check
+     * @return expiry Expiration timestamp
+     * @return isExpired Whether expired
+     * @return inGracePeriod Whether in grace period
+     */
+    function getExpiry(string calldata did) external view returns (
+        uint256 expiry,
+        bool isExpired,
+        bool inGracePeriod
+    );
+
+    /**
+     * @notice Renew a DID
+     * @param did The DID to renew
+     */
+    function renewDID(string calldata did) external payable;
+
+    // ============ Network Info ============
+
+    /**
+     * @notice Get network name (lux, hanzo, zoo)
+     */
+    function network() external view returns (string memory);
+
+    /**
+     * @notice Get chain ID
+     */
+    function chainId() external view returns (uint256);
+
+    /**
+     * @notice Get treasury address
+     */
+    function treasury() external view returns (address);
+
+    /**
+     * @notice Get total revenue collected
+     */
+    function totalRevenue() external view returns (uint256);
+}
+
+/**
+ * @title IX402DIDService
+ * @notice Interface for x402 payment protocol integration with DIDs
+ * @dev Enables DIDs to advertise x402 payment capabilities
+ *
+ * x402 INTEGRATION:
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │  DID documents can include x402 service endpoints:             │
+ * │                                                                 │
+ * │  {                                                              │
+ * │    "id": "did:lux:alice#x402-payment",                         │
+ * │    "type": "X402PaymentEndpoint",                              │
+ * │    "serviceEndpoint": "https://pay.alice.lux/x402",            │
+ * │    "acceptedTokens": ["LUX", "USDC", "ETH"],                   │
+ * │    "facilitator": "did:lux:hanzo-facilitator"                  │
+ * │  }                                                              │
+ * └─────────────────────────────────────────────────────────────────┘
+ */
+interface IX402DIDService {
+    /// @notice x402 payment endpoint configuration
+    struct X402Config {
+        string endpoint;           // Payment verification endpoint
+        string[] acceptedTokens;   // Accepted payment tokens
+        string facilitatorDID;     // Facilitator DID (optional)
+        uint256 minPayment;        // Minimum payment amount
+        bytes32 resourceHash;      // Protected resource identifier
+    }
+
+    /**
+     * @notice Set x402 payment configuration for a DID
+     * @param did The DID to configure
+     * @param config The x402 configuration
+     */
+    function setX402Config(string calldata did, X402Config calldata config) external;
+
+    /**
+     * @notice Get x402 configuration for a DID
+     * @param did The DID to query
+     * @return config The x402 configuration
+     */
+    function getX402Config(string calldata did) external view returns (X402Config memory config);
+
+    /**
+     * @notice Check if DID supports x402 payments
+     * @param did The DID to check
+     * @return supported Whether x402 is configured
+     */
+    function supportsX402(string calldata did) external view returns (bool supported);
 }

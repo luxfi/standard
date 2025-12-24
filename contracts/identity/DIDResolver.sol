@@ -154,12 +154,12 @@ contract DIDResolver is IDIDResolver, AccessControl {
     /**
      * @notice Check if a DID can be resolved
      * @param did The DID to check
-     * @return canResolve Whether the DID can be resolved
+     * @return resolvable Whether the DID can be resolved
      * @return registry The registry that would handle resolution
      */
     function canResolve(
         string calldata did
-    ) external view returns (bool canResolve, address registry) {
+    ) external view returns (bool resolvable, address registry) {
         string memory method = _parseMethod(did);
         bytes32 methodHash = keccak256(bytes(method));
 
@@ -171,9 +171,9 @@ contract DIDResolver is IDIDResolver, AccessControl {
         }
 
         try IDIDRegistry(registry).didExists(did) returns (bool exists) {
-            canResolve = exists;
+            resolvable = exists;
         } catch {
-            canResolve = false;
+            resolvable = false;
         }
     }
 

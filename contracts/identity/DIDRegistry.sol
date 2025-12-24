@@ -144,7 +144,7 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
     function createDID(
         string calldata _method,
         string calldata identifier
-    ) external nonReentrant returns (string memory did) {
+    ) external payable nonReentrant returns (string memory did) {
         // Validate method matches
         if (keccak256(bytes(_method)) != keccak256(bytes(method))) {
             revert InvalidDID();
