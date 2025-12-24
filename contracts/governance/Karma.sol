@@ -3,6 +3,8 @@ pragma solidity ^0.8.31;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
+import {IDIDRegistry} from "../identity/interfaces/IDID.sol";
+
 /**
  * @title Karma (K) - Soul-Bound Reputation Token
  * @notice Non-transferable reputation score bound to decentralized identifiers (DIDs)
@@ -69,6 +71,12 @@ contract Karma is AccessControl {
     /// @notice Total K in circulation
     uint256 public totalSupply;
 
+    /// @notice DID Registry for on-chain DID verification
+    IDIDRegistry public didRegistry;
+
+    /// @notice Full DID string storage (optional, for display)
+    mapping(address => string) public didStringOf;
+
     /// @notice Token metadata
     string public constant name = "Karma";
     string public constant symbol = "K";
@@ -93,6 +101,8 @@ contract Karma is AccessControl {
     error AccountAlreadyHasDID();
     error ZeroAddress();
     error ZeroAmount();
+    error DIDNotVerified();
+    error NotDIDController();
 
     // ============ Constructor ============
 
@@ -242,6 +252,60 @@ contract Karma is AccessControl {
             totalSupply -= decayAmount;
             emit KarmaDecayed(account, decayAmount);
         }
+    }
+
+    // ============ DID Registry Integration ============
+
+    /// @notice Set DID Registry contract
+    /// @param registry Address of DIDRegistry contract
+    function setDIDRegistry(address registry) external {
+        if (!hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) revert NotAttestor();
+        didRegistry = IDIDRegistry(registry);
+    }
+
+    /// @notice Link DID from registry (self-service with on-chain verification)
+    /// @param did Full DID string (e.g., "did:lux:alice")
+    /// @dev Caller must be the controller of the DID in the registry
+    function linkDIDFromRegistry(string calldata did) external {
+        if (address(didRegistry) == address(0)) revert ZeroAddress();
+        
+        // Verify DID exists and caller is controller
+        if (!didRegistry.didExists(did)) revert DIDNotVerified();
+        if (didRegistry.controllerOf(did) != msg.sender) revert NotDIDController();
+
+        bytes32 didHash = keccak256(bytes(did));
+        
+        if (didOf[msg.sender] != bytes32(0)) revert AccountAlreadyHasDID();
+        if (accountOf[didHash] != address(0)) revert DIDAlreadyLinked();
+
+        didOf[msg.sender] = didHash;
+        accountOf[didHash] = msg.sender;
+        didStringOf[msg.sender] = did;
+        lastActivity[msg.sender] = block.timestamp;
+
+        emit DIDLinked(msg.sender, didHash);
+    }
+
+    /// @notice Get DID string for account
+    /// @param account Address to query
+    /// @return did The full DID string if linked
+    function getDIDString(address account) external view returns (string memory did) {
+        return didStringOf[account];
+    }
+
+    /// @notice Check if account has verified DID from registry
+    /// @param account Address to check
+    /// @return hasVerifiedDID Whether account has a verified DID
+    function hasVerifiedDID(address account) external view returns (bool) {
+        if (address(didRegistry) == address(0)) return false;
+        
+        bytes32 didHash = didOf[account];
+        if (didHash == bytes32(0)) return false;
+
+        string memory did = didStringOf[account];
+        if (bytes(did).length == 0) return false;
+
+        return didRegistry.didExists(did);
     }
 
     // ============ Disabled Transfer Functions ============
