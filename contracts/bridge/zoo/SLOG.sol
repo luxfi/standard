@@ -11,13 +11,13 @@ pragma solidity ^0.8.20;
     ╚══════╝╚══════╝ ╚═════╝  ╚═════╝ 
  */
 
-import "../ERC20B.sol";
+import "../LRC20B.sol";
 
-contract SLOG is ERC20B {
+contract SLOG is LRC20B {
     string public constant _name = "Slog";
     string public constant _symbol = "SLOG";
 
-    constructor() ERC20B(_name, _symbol) {
+    constructor() LRC20B(_name, _symbol) {
          _mint(msg.sender, 1000000000 * 10 ** decimals());
     }
 

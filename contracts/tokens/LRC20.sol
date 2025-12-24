@@ -52,7 +52,7 @@ contract LRC20 {
      * Ether and Wei. This is the value we use, unless the inherited contract
      * overrules this function.
      */
-    function decimals() public pure returns (uint8) {
+    function decimals() public view virtual returns (uint8) {
         return 18;
     }
 
@@ -282,7 +282,7 @@ contract LRC20 {
         }
     }
 
-    function _msgSender() internal view returns (address) {
+    function _msgSender() internal view virtual returns (address) {
         return Context.msgSender();
     }
 }

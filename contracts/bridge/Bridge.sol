@@ -15,8 +15,8 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "./ERC20B.sol";
-import "./LuxVault.sol";
+import "./LRC20B.sol";
+import "./BridgeVault.sol";
 
 contract Bridge is Ownable, AccessControl {
     // Use the library functions from OpenZeppelin
@@ -25,7 +25,7 @@ contract Bridge is Ownable, AccessControl {
     uint256 public feeRate = 100; // Fee rate 1% decimals 4
     bool withdrawalEnabled = true;
     address internal payoutAddress = 0x9011E888251AB053B7bD1cdB598Db4f9DEd94714;
-    LuxVault public vault;
+    BridgeVault public vault;
     
     /** Events */
     event BridgeBurned(address caller, uint256 amt, address token);
@@ -165,7 +165,7 @@ contract Bridge is Ownable, AccessControl {
         address receiverAddress;
         bytes32 receiverAddressHash;
         string decimals;
-        ERC20B token;
+        LRC20B token;
     }
 
     /**
@@ -174,7 +174,7 @@ contract Bridge is Ownable, AccessControl {
      */
     function setVault(address payable vault_) public onlyAdmin {
         require(vault_ != address(0), "Invalid address");
-        vault = LuxVault(vault_);
+        vault = BridgeVault(vault_);
     }
 
     /**
@@ -242,7 +242,7 @@ contract Bridge is Ownable, AccessControl {
      */
     function bridgeBurn(uint256 amount_, address tokenAddr_) public {
         TeleportStruct memory teleport;
-        teleport.token = ERC20B(tokenAddr_);
+        teleport.token = LRC20B(tokenAddr_);
         require(
             (teleport.token.balanceOf(msg.sender) >= amount_),
             "Insufficient token balance"
@@ -363,7 +363,7 @@ contract Bridge is Ownable, AccessControl {
         teleport.tokenAddressHash = keccak256(
             abi.encodePacked(toTokenAddress_)
         );
-        teleport.token = ERC20B(toTokenAddress_);
+        teleport.token = LRC20B(toTokenAddress_);
         teleport.receiverAddress = receiverAddress_;
         teleport.receiverAddressHash = keccak256(
             abi.encodePacked(receiverAddress_)
@@ -416,7 +416,7 @@ contract Bridge is Ownable, AccessControl {
         teleport.tokenAddressHash = keccak256(
             abi.encodePacked(toTokenAddress_)
         );
-        teleport.token = ERC20B(toTokenAddress_);
+        teleport.token = LRC20B(toTokenAddress_);
         teleport.receiverAddress = receiverAddress_;
         teleport.receiverAddressHash = keccak256(
             abi.encodePacked(receiverAddress_)
@@ -446,7 +446,7 @@ contract Bridge is Ownable, AccessControl {
             signedTXInfo_
         );
 
-        // Check if signer is MPCOracle and corresponds to the correct ERC20B
+        // Check if signer is MPCOracle and corresponds to the correct LRC20B
         require(MPCOracleAddrMap[signer].exists, "Unauthorized Signature");
 
         // Calculate fee and adjust amount
@@ -493,7 +493,7 @@ contract Bridge is Ownable, AccessControl {
         teleport.tokenAddressHash = keccak256(
             abi.encodePacked(toTokenAddress_)
         );
-        teleport.token = ERC20B(toTokenAddress_);
+        teleport.token = LRC20B(toTokenAddress_);
         teleport.receiverAddress = receiverAddress_;
         teleport.receiverAddressHash = keccak256(
             abi.encodePacked(receiverAddress_)
@@ -523,7 +523,7 @@ contract Bridge is Ownable, AccessControl {
             signedTXInfo_
         );
 
-        // Check if signer is MPCOracle and corresponds to the correct ERC20B
+        // Check if signer is MPCOracle and corresponds to the correct LRC20B
         require(MPCOracleAddrMap[signer].exists, "Unauthorized Signature");
 
         uint256 _amount = 0;

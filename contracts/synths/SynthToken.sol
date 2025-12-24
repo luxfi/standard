@@ -2,7 +2,8 @@
 pragma solidity ^0.8.28;
 
 import {AccessControl} from "@luxfi/standard/lib/access/AccessControl.sol";
-import {ERC20} from "@luxfi/standard/lib/token/ERC20/ERC20.sol";
+import {Context} from "@luxfi/standard/lib/utils/Context.sol";
+import {LRC20} from "../tokens/LRC20.sol";
 import {ReentrancyGuard} from "@luxfi/standard/lib/utils/ReentrancyGuard.sol";
 
 import {IllegalArgument, IllegalState, Unauthorized} from "./base/Errors.sol";
@@ -13,7 +14,7 @@ import {IERC3156FlashLender} from "./interfaces/IERC3156FlashLender.sol";
 /// @notice Base contract for Lux synthetic assets (xUSD, xETH, xBTC)
 /// @dev Overcollateralized synthetic tokens backed by yield-generating assets
 /// @custom:security-contact security@lux.network
-contract SynthToken is AccessControl, ReentrancyGuard, ERC20, IERC3156FlashLender {
+contract SynthToken is AccessControl, ReentrancyGuard, LRC20, IERC3156FlashLender {
     // ═══════════════════════════════════════════════════════════════════════════
     // CONSTANTS
     // ═══════════════════════════════════════════════════════════════════════════
@@ -66,7 +67,7 @@ contract SynthToken is AccessControl, ReentrancyGuard, ERC20, IERC3156FlashLende
         string memory _name,
         string memory _symbol,
         uint256 _flashFee
-    ) ERC20(_name, _symbol) {
+    ) LRC20(_name, _symbol) {
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(SENTINEL_ROLE, msg.sender);
         _setRoleAdmin(SENTINEL_ROLE, ADMIN_ROLE);
@@ -197,5 +198,14 @@ contract SynthToken is AccessControl, ReentrancyGuard, ERC20, IERC3156FlashLende
         }
 
         return true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // OVERRIDES (resolve AccessControl/LRC20 conflict)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// @dev Override _msgSender to resolve conflict between Context (from AccessControl) and LRC20
+    function _msgSender() internal view override(Context, LRC20) returns (address) {
+        return msg.sender;
     }
 }

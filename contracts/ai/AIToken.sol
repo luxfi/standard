@@ -3,11 +3,11 @@
 // Copyright (C) 2019-2025, Lux Industries Inc. All rights reserved.
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
+import {LRC20} from "../tokens/LRC20.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {Context} from "@openzeppelin/contracts/utils/Context.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title AIToken
@@ -127,7 +127,7 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
  *
  * ══════════════════════════════════════════════════════════════════════════════
  */
-contract AIToken is ERC20, ERC20Burnable, AccessControl, ReentrancyGuard, Pausable {
+contract AIToken is LRC20, AccessControl, ReentrancyGuard, Pausable {
     // ═══════════════════════════════════════════════════════════════════════════
     //                              CONSTANTS
     // ═══════════════════════════════════════════════════════════════════════════
@@ -254,7 +254,7 @@ contract AIToken is ERC20, ERC20Burnable, AccessControl, ReentrancyGuard, Pausab
      * @param _treasury Treasury address for research fund
      * @dev Validates chain ID is in launch set, grants admin to Safe
      */
-    constructor(address _safe, address _treasury) ERC20("AI", "AI") {
+    constructor(address _safe, address _treasury) LRC20("AI", "AI") {
         if (_safe == address(0) || _treasury == address(0)) revert InvalidAddress();
 
         CHAIN_ID = block.chainid;
@@ -581,6 +581,31 @@ contract AIToken is ERC20, ERC20Burnable, AccessControl, ReentrancyGuard, Pausab
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }
+
+    /**
+     * @dev Override _msgSender for OZ AccessControl and LRC20 compatibility
+     */
+    function _msgSender() internal view override(Context, LRC20) returns (address) {
+        return msg.sender;
+    }
+
+    /**
+     * @notice Burn tokens from caller's account
+     * @param amount Amount to burn
+     */
+    function burn(uint256 amount) public {
+        _burn(msg.sender, amount);
+    }
+
+    /**
+     * @notice Burn tokens from specified account (with allowance)
+     * @param account Account to burn from
+     * @param amount Amount to burn
+     */
+    function burnFrom(address account, uint256 amount) public {
+        _spendAllowance(account, msg.sender, amount);
+        _burn(account, amount);
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -607,12 +632,18 @@ library LaunchChains {
 
     /// @notice Lux C-Chain - Primary deployment
     uint256 constant LUX = 96369;
+    uint256 constant LUX_TESTNET = 96368;
 
     /// @notice Hanzo EVM - AI-focused applications
     uint256 constant HANZO = 36963;
+    uint256 constant HANZO_TESTNET = 36962;
 
     /// @notice Zoo EVM - Research/DeSci applications
     uint256 constant ZOO = 200200;
+    uint256 constant ZOO_TESTNET = 200201;
+
+    /// @notice Anvil - Local testing
+    uint256 constant ANVIL = 31337;
 
     // ═══════════════════════════════════════════════════════════════════════════
     //                          EXTERNAL EVM CHAINS
@@ -674,7 +705,10 @@ library LaunchChains {
      * @return valid True if chain is a launch chain
      */
     function isLaunchChain(uint256 chainId) internal pure returns (bool valid) {
-        return chainId == LUX || chainId == HANZO || chainId == ZOO ||
+        return chainId == LUX || chainId == LUX_TESTNET ||
+               chainId == HANZO || chainId == HANZO_TESTNET ||
+               chainId == ZOO || chainId == ZOO_TESTNET ||
+               chainId == ANVIL ||
                chainId == ETHEREUM || chainId == BASE || chainId == BNB ||
                chainId == AVALANCHE || chainId == ARBITRUM || chainId == OPTIMISM ||
                chainId == POLYGON;
@@ -686,7 +720,9 @@ library LaunchChains {
      * @return isNative True if chain is Lux native
      */
     function isLuxNative(uint256 chainId) internal pure returns (bool isNative) {
-        return chainId == LUX || chainId == HANZO || chainId == ZOO;
+        return chainId == LUX || chainId == LUX_TESTNET ||
+               chainId == HANZO || chainId == HANZO_TESTNET ||
+               chainId == ZOO || chainId == ZOO_TESTNET;
     }
 
     /**

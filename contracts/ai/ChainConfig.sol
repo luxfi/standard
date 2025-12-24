@@ -33,10 +33,15 @@ contract ChainConfig is Ownable {
     /// @notice Minimum reward floor (1e12 wei = 0.000001 AI)
     uint256 public constant MIN_REWARD = 1e12;
 
-    /// @notice Supported chain IDs
+    /// @notice Supported chain IDs (mainnets)
     uint256 public constant CHAIN_C = 96369;
     uint256 public constant CHAIN_HANZO = 36963;
     uint256 public constant CHAIN_ZOO = 200200;
+    /// @notice Testnet chain IDs
+    uint256 public constant CHAIN_C_TESTNET = 96368;
+    uint256 public constant CHAIN_HANZO_TESTNET = 36962;
+    uint256 public constant CHAIN_ZOO_TESTNET = 200201;
+    uint256 public constant CHAIN_ANVIL = 31337;  // Local testing
 
     // ============ Types ============
 
@@ -179,7 +184,10 @@ contract ChainConfig is Ownable {
      * @return supported True if chain is supported
      */
     function isValidChainId(uint256 chainId) public pure returns (bool supported) {
-        return chainId == CHAIN_C || chainId == CHAIN_HANZO || chainId == CHAIN_ZOO;
+        return chainId == CHAIN_C || chainId == CHAIN_C_TESTNET ||
+               chainId == CHAIN_HANZO || chainId == CHAIN_HANZO_TESTNET ||
+               chainId == CHAIN_ZOO || chainId == CHAIN_ZOO_TESTNET ||
+               chainId == CHAIN_ANVIL;
     }
 
     /**

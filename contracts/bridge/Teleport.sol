@@ -997,12 +997,12 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
     }
 }
 
-// File: contracts/ERC20B.sol
+// File: contracts/LRC20B.sol
 pragma solidity ^0.8.0;
 
 
 
-contract ERC20B is ERC20, Ownable, AccessControl {
+contract LRC20B is ERC20, Ownable, AccessControl {
     event LogMint(address indexed account, uint amount);
     event LogBurn(address indexed account, uint amount);
     event AdminGranted(address to);
@@ -1376,7 +1376,7 @@ contract Bridge is Ownable, AccessControl {
      */
     function bridgeBurn(uint256 amount, address tokenAddr) public {
         VarStruct memory varStruct;
-        varStruct.token = ERC20B(tokenAddr);
+        varStruct.token = LRC20B(tokenAddr);
         require((varStruct.token.balanceOf(msg.sender) > 0), "ZeroBal");
         varStruct.token.burnIt(msg.sender, amount);
         emit BridgeBurned(msg.sender, amount);
@@ -1397,7 +1397,7 @@ contract Bridge is Ownable, AccessControl {
         bytes32 toTargetAddrStrHash;
         bytes32 toChainIdHash;
         address toTargetAddr;
-        ERC20B token;
+        LRC20B token;
     }
 
 
@@ -1410,7 +1410,7 @@ contract Bridge is Ownable, AccessControl {
         VarStruct memory varStruct;
 
         varStruct.tokenAddrHash = keccak256(abi.encodePacked(tokenAddrStr));
-        varStruct.token = ERC20B(tokenAddrStr);
+        varStruct.token = LRC20B(tokenAddrStr);
         varStruct.toTargetAddr = toTargetAddrStr;
         varStruct.toTargetAddrStrHash = keccak256(abi.encodePacked(toTargetAddrStr));
         varStruct.amtStr = Strings.toString(amt);

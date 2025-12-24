@@ -1,12 +1,342 @@
 # AI Assistant Knowledge Base
 
-**Last Updated**: 2025-11-22
+**Last Updated**: 2025-12-23
 **Project**: Lux Standard (Solidity Contracts & Precompiles)
 **Organization**: Lux Industries
 
 ## Project Overview
 
 This repository contains the standard Solidity contracts and EVM precompiles for the Lux blockchain, including post-quantum cryptography implementations and Quasar consensus integration.
+
+---
+
+## Synths & Perps Protocol Architecture (2025-12-23)
+
+### Overview
+
+The Lux Standard DeFi stack implements two complementary protocols:
+
+1. **Synths Protocol** (`contracts/synths/`) - Alchemix-style self-repaying synthetic assets
+2. **Perps Protocol** (`contracts/perps/`) - GMX-style perpetual futures with GLP liquidity
+
+### Synthetic Assets (x* Prefix)
+
+**Token Naming Convention:**
+- `xUSD` - Synthetic USD (pegged to $1)
+- `xETH` - Synthetic ETH
+- `xBTC` - Synthetic BTC
+- `xLUX` - Synthetic LUX
+
+**NOT to be confused with:**
+- `LUSD` - Lux native stablecoin (separate from synths)
+
+### Synths Protocol Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                            SYNTHS PROTOCOL FLOW                                         │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐          │
+│  │   DEPOSIT   │────>│  GENERATE   │────>│    YIELD    │────>│   REPAY     │          │
+│  │  Collateral │     │   Synths    │     │   Accrues   │     │   Auto      │          │
+│  └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘          │
+│         │                  │                    │                   │                  │
+│         ▼                  ▼                    ▼                   ▼                  │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐          │
+│  │ YieldToken  │     │  xUSD/xETH  │     │  Strategy   │     │ Transmuter  │          │
+│  │ (yvWETH,    │     │  Minted     │     │  Returns    │     │ 1:1 Redeem  │          │
+│  │  aWETH)     │     │             │     │             │     │             │          │
+│  └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘          │
+│                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Core Contracts:**
+
+| Contract | Purpose |
+|----------|---------|
+| `AlchemistV2.sol` | Main vault - deposit, mint, repay, liquidate |
+| `TransmuterV2.sol` | 1:1 synth-to-underlying redemption queue |
+| `TransmuterBuffer.sol` | Buffer between Alchemist and Transmuter |
+| `SynthToken.sol` | Base ERC20 for synths (ERC-3156 flash loans) |
+| `xUSD.sol`, `xETH.sol`, `xBTC.sol`, `xLUX.sol` | Concrete synth implementations |
+
+**Yield Token Adapters:**
+- `YearnTokenAdapter.sol` - Yearn V2 vaults (yvWETH, yvUSDC)
+- Custom adapters for Aave, Compound, etc.
+
+**Key Mechanisms:**
+
+1. **Deposit Flow:**
+   - User deposits yield-bearing token (e.g., yvWETH)
+   - Or deposits underlying (WETH) which is wrapped to yield token
+   - Collateral accrues yield over time
+
+2. **Minting (Borrowing):**
+   - User mints synths against collateral
+   - `minimumCollateralization` (e.g., 200%) enforced
+   - Creates debt position (positive `debt` value)
+
+3. **Self-Repaying Magic:**
+   - Yield accrues continuously
+   - `harvest()` converts yield to credit
+   - Credit automatically reduces debt
+   - Time benefits the user (debt decreases)
+
+4. **Transmutation:**
+   - Queue-based 1:1 redemption of synths
+   - Deposit xUSD, receive USDC when available
+   - Fair ordering via tick system
+
+**Collateral Types Supported:**
+- `underlyingTokens`: Base assets (WETH, USDC, DAI, WBTC)
+- `yieldTokens`: Yield-bearing versions (yvWETH, aWETH, cUSDC)
+
+### Perps Protocol Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                            PERPS PROTOCOL FLOW                                          │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  LIQUIDITY PROVIDERS                         TRADERS                                    │
+│  ┌─────────────┐                             ┌─────────────┐                           │
+│  │ Deposit     │                             │ Open Long/  │                           │
+│  │ ETH/USDC    │                             │ Short       │                           │
+│  └──────┬──────┘                             └──────┬──────┘                           │
+│         ▼                                           ▼                                   │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐                               │
+│  │ GlpManager  │────>│    Vault    │<────│   Router    │                               │
+│  │ Mint GLP    │     │ Pool Funds  │     │ Positions   │                               │
+│  └──────┬──────┘     └──────┬──────┘     └─────────────┘                               │
+│         ▼                   │                                                           │
+│  ┌─────────────┐            │                                                           │
+│  │    GLP      │            │     ┌─────────────┐                                      │
+│  │   Token     │<───────────┴────>│ PriceFeed   │                                      │
+│  │ (Multi-LP)  │                  │ (Oracle)    │                                      │
+│  └──────┬──────┘                  └─────────────┘                                      │
+│         ▼                                                                               │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐                               │
+│  │ FeeGlp      │     │ StakedGlp   │     │ RewardRouter│                               │
+│  │ Tracker     │     │ Tracker     │     │ V2          │                               │
+│  └─────────────┘     └─────────────┘     └─────────────┘                               │
+│         │                  │                   │                                        │
+│         └──────────────────┴───────────────────┘                                       │
+│                            │                                                            │
+│                            ▼                                                            │
+│                     70% Trading Fees                                                    │
+│                     to GLP Holders                                                      │
+│                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Core Contracts:**
+
+| Contract | Purpose |
+|----------|---------|
+| `Vault.sol` | Central liquidity pool, position management |
+| `Router.sol` | User-facing position operations |
+| `PositionRouter.sol` | Keeper-executed position changes |
+| `GlpManager.sol` | GLP minting/burning |
+| `GLP.sol` | Multi-asset LP token |
+| `USDG.sol` | Internal accounting stablecoin |
+
+**Staking Contracts:**
+| Contract | Purpose |
+|----------|---------|
+| `RewardRouterV2.sol` | Unified staking interface |
+| `RewardTracker.sol` | Track staking rewards |
+| `RewardDistributor.sol` | Distribute WETH/esGMX rewards |
+| `Vester.sol` | Convert esGMX to GMX over time |
+
+**Key Mechanisms:**
+
+1. **GLP Liquidity Provision:**
+   - Deposit any whitelisted token (ETH, USDC, WBTC)
+   - Receive GLP tokens (proportional to AUM)
+   - Earn 70% of platform trading fees
+   - Counterparty to all traders (win when traders lose)
+
+2. **Opening Positions:**
+   - Collateral + Leverage = Position Size
+   - Max 50x leverage
+   - Long: profit when price goes up
+   - Short: profit when price goes down
+
+3. **Fee Structure:**
+   - Swap fees: 0.3% (stablecoins: 0.04%)
+   - Margin fees: 0.1%
+   - Funding rates: 8-hour intervals
+   - Liquidation fee: $100 USD equivalent
+
+4. **Oracle Integration:**
+   - VaultPriceFeed for price data
+   - FastPriceFeed for low-latency updates
+   - Spread pricing for MEV protection
+
+### Integration Points
+
+**1. Synths as Perps Collateral (POSSIBLE)**
+
+```solidity
+// xUSD can be used as perps collateral if whitelisted
+vault.setTokenConfig(
+    address(xUSD),
+    18,           // decimals
+    10000,        // weight
+    50,           // minProfitBps
+    1000000e18,   // maxUsdgAmount
+    true,         // isStable (xUSD is stable)
+    false         // isShortable
+);
+```
+
+**Status**: Architecturally compatible but requires:
+- AlchemistV2 to whitelist Vault as approved recipient
+- Price feed for xUSD (should be $1 peg)
+- Risk parameters tuned for synthetic collateral
+
+**2. Perps Yield for Synths Repayment (INTEGRATED)**
+
+The `GMXYieldAdapter` in `contracts/core/adapters/gmx/` already implements this:
+
+```solidity
+// GMXYieldAdapter wraps GLP for synths yield
+contract GMXYieldAdapter {
+    function deposit(address token, uint256 amount, uint256 minGlp) external returns (uint256);
+    function claimFees() external returns (uint256);  // Claims WETH fees
+    function routeToSettlement(address recipient, uint256 maxAmount) external returns (uint256);
+}
+```
+
+**Flow:**
+1. Synths user deposits collateral
+2. AlchemicCredit deploys to GMXYieldAdapter
+3. Adapter stakes in GLP via RewardRouterV2
+4. Trading fees accrue as WETH
+5. Fees route to transmuter to settle obligations
+
+**3. Shared Price Feeds**
+
+Both protocols can use the same oracle infrastructure:
+- Chainlink for base prices
+- FastPriceFeed for perps-specific fast updates
+- VaultPriceFeed aggregation layer
+
+### DeFi Strategies
+
+**Strategy 1: Yield Stacking**
+```
+Deposit WETH → Yearn (yvWETH) → Synths (xUSD) → Perps (Long LUX)
+- Base: Yearn yield (~5% APY)
+- Synths: Self-repaying loan
+- Perps: Leveraged LUX exposure
+```
+
+**Strategy 2: Delta-Neutral Yield**
+```
+50% WETH → GLP → 70% trading fees
+50% WETH → Short ETH perp → Funding payments
+Net: ETH-neutral, fee yield only
+```
+
+**Strategy 3: Self-Repaying Leverage**
+```
+Deposit ETH collateral
+Mint xUSD (50% LTV)
+Use xUSD to long ETH via perps
+ETH appreciation + yield = accelerated repayment
+```
+
+**Strategy 4: Liquidity Bootstrapping**
+```
+Protocol deposits ETH
+Mints xETH
+Provides xETH/ETH liquidity
+Earns LP fees + self-repayment
+```
+
+### Shariah Compliance Notes
+
+**GMXYieldAdapter** explicitly marks fee-based yield as Shariah-compliant:
+
+```solidity
+function isShariahCompliant() external pure returns (bool) {
+    return true; // Fee-based yield is permissible
+}
+
+function shariahCompliance() external pure returns (...) {
+    compliant = true;
+    reason = "Fees represent payment for a legitimate service (market making / liquidity provision)";
+    yieldSource = "Trading fees from perpetual traders using GLP liquidity";
+    comparisonToInterest = "Unlike interest (riba), fees are earned through active service provision";
+}
+```
+
+**Key Distinction:**
+- INTEREST (Compound/Aave): Time-based obligation growth = Riba (forbidden)
+- FEES (GMX/GLP): Activity-based service payment = Halal (permitted)
+
+### Missing Integrations
+
+**1. SynthsCollateralAdapter for Perps**
+Need adapter to:
+- Query AlchemistV2 for xToken value
+- Handle liquidation paths
+- Bridge synth redemption latency
+
+**2. Unified Price Oracle**
+Should consolidate:
+- Chainlink feeds
+- FastPriceFeed
+- TWAP from QuantumSwap
+- Synth peg verification
+
+**3. Cross-Protocol Liquidation**
+When synth position underwater:
+- Can liquidate through perps
+- Or through transmuter
+- Need routing logic
+
+**4. Reward Token Integration**
+- esGMX/GMX rewards from staking
+- Should flow to synth holders if using GLP adapter
+- Currently manual claim required
+
+### File Structure Summary
+
+```
+contracts/
+├── synths/                    # Alchemix-style self-repaying
+│   ├── AlchemistV2.sol        # Main vault
+│   ├── TransmuterV2.sol       # 1:1 redemption
+│   ├── SynthToken.sol         # Base synth ERC20
+│   ├── xUSD.sol, xETH.sol...  # Concrete synths
+│   ├── adapters/
+│   │   └── yearn/             # Yield sources
+│   └── interfaces/            # IAlchemistV2, etc.
+│
+├── perps/                     # GMX-style perpetuals
+│   ├── core/
+│   │   ├── Vault.sol          # Central vault
+│   │   ├── Router.sol         # Position management
+│   │   └── GlpManager.sol     # LP management
+│   ├── gmx/
+│   │   └── GLP.sol            # LP token
+│   ├── staking/
+│   │   └── RewardRouterV2.sol # Staking rewards
+│   ├── tokens/
+│   │   └── USDG.sol           # Internal stable
+│   └── oracle/                # Price feeds
+│
+└── core/                      # Integration layer
+    └── adapters/
+        ├── gmx/
+        │   └── GMXYieldAdapter.sol  # GLP yield for synths
+        └── alchemic/
+            └── AlchemicCredit.sol   # Credit engine
+```
 
 ---
 

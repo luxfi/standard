@@ -1,0 +1,73 @@
+# Lux Standard Library - Third-Party Licenses
+
+This directory contains third-party libraries as git submodules. Each has its own license terms documented below.
+
+## License Summary
+
+| Submodule | License | Notes |
+|-----------|---------|-------|
+| `aave-v3` | MIT | Converted from BUSL-1.1 (Jan 27, 2023) |
+| `uni-v2` | GPL-2.0 | Uniswap V2 Core |
+| `uni-v3` | GPL-2.0 | Converted from BUSL-1.1 (Apr 1, 2023) |
+| `uni-v3-periphery` | GPL-2.0 | Uniswap V3 Router/Periphery |
+| `uni-lib` | GPL-3.0 | Uniswap shared library |
+| `openzeppelin-contracts` | MIT | OpenZeppelin Contracts |
+| `openzeppelin-contracts-upgradeable` | MIT | OpenZeppelin Upgradeable |
+| `forge-std` | MIT | Foundry testing framework |
+| `solmate` | AGPL-3.0 | Rari Capital's Solmate |
+| `prb-math` | MIT | Fixed-point math library |
+| `base64` | MIT | Base64 encoding |
+| `safe-smart-account` | LGPL-3.0 | Safe (Gnosis) multisig |
+| `safe-modules` | LGPL-3.0 | Safe modules |
+| `account-abstraction` | GPL-3.0 | ERC-4337 reference |
+| `clones-with-immutable-args` | BSD | Clone factory |
+| `chainlink` | MIT | Chainlink oracles |
+| `layerzero-v2` | MIT | LayerZero messaging |
+| `gmx-v1` | MIT | GMX V1 |
+| `gmx-v2` | BUSL-1.1 | GMX V2 (still restricted) |
+| `alchemix-v2` | AGPL-3.0 | Alchemix protocol |
+| `compound-v2` | BSD-3 | Compound V2 protocol |
+| `compound-v3` | BUSL-1.1 | Compound V3 (Comet) |
+| `pyth` | Apache-2.0 | Pyth Network oracles |
+| `curve` | MIT | Curve stablecoin/AMM |
+| `balancer` | GPL-3.0 | Balancer V2 weighted pools |
+| `lido` | GPL-3.0 | Lido liquid staking |
+| `pendle` | MIT | Pendle yield tokenization |
+| `morpho-blue` | GPL-2.0 | Morpho Blue (upstream reference) |
+| `manifoldxyz` | MIT | Royalty registry |
+
+## BUSL-1.1 Conversion Notes
+
+Several libraries were originally released under Business Source License 1.1 with automatic conversion:
+
+### Aave V3 (`aave-v3`)
+- **Original**: BUSL-1.1
+- **Change Date**: January 27, 2023
+- **Current License**: MIT
+- **Status**: ✅ Fully open source
+
+### Uniswap V3 (`uni-v3`)
+- **Original**: BUSL-1.1
+- **Change Date**: April 1, 2023
+- **Current License**: GPL-2.0
+- **Status**: ✅ Fully open source (copyleft)
+
+### GMX V2 (`gmx-synthetics`)
+- **Original**: BUSL-1.1
+- **Change Date**: TBD (~2027)
+- **Current License**: BUSL-1.1
+- **Status**: ⚠️ Still restricted - integration via adapter only
+
+## Copyleft Considerations
+
+Libraries under GPL/AGPL licenses require derivative works to use compatible licenses:
+
+- **GPL-2.0** (Uniswap): Derivatives must be GPL-2.0 or compatible
+- **GPL-3.0** (uni-lib, account-abstraction): Stronger copyleft
+- **AGPL-3.0** (Solmate, Alchemix): Network use triggers copyleft
+
+Lux standard library contracts that import these must comply with copyleft requirements.
+
+## Individual License Files
+
+Each submodule contains its original LICENSE file with full terms. This summary is for convenience only - refer to individual licenses for authoritative terms.

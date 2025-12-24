@@ -161,6 +161,7 @@ contract LRC721 is
     function supportsInterface(bytes4 interfaceId)
         public
         view
+        virtual
         override(ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty, AccessControl)
         returns (bool)
     {

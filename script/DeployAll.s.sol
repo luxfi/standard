@@ -6,19 +6,25 @@ import "./DeployConfig.s.sol";
 
 // Token imports with aliases to avoid ERC20 conflicts
 import {WLUX} from "../contracts/tokens/WLUX.sol";
-import {USDC as BridgeUSDC} from "../contracts/bridge/USDC.sol";
-import {USDT as BridgeUSDT} from "../contracts/bridge/USDT.sol";
-import {DAI as BridgeDAI} from "../contracts/bridge/DAI.sol";
+import {LuxUSD} from "../contracts/bridge/lux/LUSD.sol";  // Native stablecoin
+// NOTE: Bridged tokens (USDC, USDT, DAI) are NOT deployed here
+// They come from external bridges - only LUSD is native
 import {WETH as BridgeWETH} from "../contracts/bridge/WETH.sol";
 import {AIToken} from "../contracts/ai/AIToken.sol";
 
-// Synths imports
+// Synths imports (x* = Lux omnichain synths)
 import {AlchemistV2} from "../contracts/synths/AlchemistV2.sol";
 import {IAlchemistV2} from "../contracts/synths/interfaces/IAlchemistV2.sol";
 import {IAlchemistV2AdminActions} from "../contracts/synths/interfaces/alchemist/IAlchemistV2AdminActions.sol";
-import {AlchemicTokenV2} from "../contracts/synths/AlchemicTokenV2.sol";
 import {TransmuterV2} from "../contracts/synths/TransmuterV2.sol";
 import {Whitelist} from "../contracts/synths/utils/Whitelist.sol";
+import {xUSD} from "../contracts/synths/xUSD.sol";
+import {xETH} from "../contracts/synths/xETH.sol";
+import {xBTC} from "../contracts/synths/xBTC.sol";
+import {xLUX} from "../contracts/synths/xLUX.sol";
+
+// Proxy for upgradeable contracts
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 // Perps imports
 import {IVault} from "../contracts/perps/core/interfaces/IVault.sol";
@@ -51,19 +57,19 @@ contract DeployAll is Script, DeployConfig {
     struct FullDeployment {
         // Tokens
         address wlux;
-        address usdc;
-        address usdt;
-        address dai;
+        address lusd;   // Native stablecoin (Lux Dollar)
         address weth;
         address aiToken;
         
-        // Synths
-        address alUSD;
-        address alETH;
-        address alBTC;
+        // Synths (x* = Lux omnichain synths)
+        address xUSD;
+        address xETH;
+        address xBTC;
+        address xLUX;
         address alchemistUSD;
         address alchemistETH;
         address alchemistBTC;
+        address alchemistLUX;
         
         // Perps
         address vault;
@@ -111,6 +117,19 @@ contract DeployAll is Script, DeployConfig {
         console.log("================================================================");
         _deployPhase1_Tokens();
         
+        // Phase 1.5: AMM (Uniswap V2/V3)
+        // Note: For production, use canonical Uniswap deployments
+        // For testnet, deploy via DeployAMM.s.sol separately
+        console.log("");
+        console.log("================================================================");
+        console.log("  PHASE 1.5: AMM Infrastructure (Reference Only)");
+        console.log("================================================================");
+        console.log("  V2 Factory:", config.uniV2Factory);
+        console.log("  V2 Router:", config.uniV2Router);
+        console.log("  V3 Factory:", config.uniV3Factory);
+        console.log("  V3 Router:", config.uniV3Router);
+        console.log("  NOTE: AMM uses canonical/existing deployments or DeployAMM.s.sol");
+
         // Phase 2: Synths Protocol
         console.log("");
         console.log("================================================================");
@@ -153,18 +172,11 @@ contract DeployAll is Script, DeployConfig {
         deployment.wlux = address(wlux);
         console.log("    WLUX:", deployment.wlux);
         
-        // Stablecoins
-        BridgeUSDC usdc = new BridgeUSDC();
-        deployment.usdc = address(usdc);
-        console.log("    USDC:", deployment.usdc);
-        
-        BridgeUSDT usdt = new BridgeUSDT();
-        deployment.usdt = address(usdt);
-        console.log("    USDT:", deployment.usdt);
-        
-        BridgeDAI dai = new BridgeDAI();
-        deployment.dai = address(dai);
-        console.log("    DAI:", deployment.dai);
+        // LUSD - Native stablecoin (Lux Dollar)
+        LuxUSD lusd = new LuxUSD();
+        deployment.lusd = address(lusd);
+        console.log("    LUSD:", deployment.lusd);
+
         
         // WETH
         BridgeWETH weth = new BridgeWETH();
@@ -178,51 +190,69 @@ contract DeployAll is Script, DeployConfig {
         console.log("    AI Token:", deployment.aiToken);
     }
     
-    function _deployPhase2_Synths(address admin, ChainConfig memory config) internal {
-        console.log("  Deploying synths protocol...");
+        function _deployPhase2_Synths(address admin, ChainConfig memory config) internal {
+        console.log("  Deploying synths protocol (x* omnichain synths)...");
+
+        // Deploy x* synths - Lux omnichain synthetic tokens
+        // These can work on any chain and redeem to underlying assets
         
-        // This is a simplified version - full deployment uses DeploySynths
-        // Deploy synthetic tokens (constructor: name, symbol, flashFee)
-        uint256 defaultFlashFee = 0; // 0 flash fee initially
-        
-        AlchemicTokenV2 alUSD = new AlchemicTokenV2("Alchemic USD", "alUSD", defaultFlashFee);
-        deployment.alUSD = address(alUSD);
-        console.log("    alUSD:", deployment.alUSD);
-        
-        AlchemicTokenV2 alETH = new AlchemicTokenV2("Alchemic ETH", "alETH", defaultFlashFee);
-        deployment.alETH = address(alETH);
-        console.log("    alETH:", deployment.alETH);
-        
-        AlchemicTokenV2 alBTC = new AlchemicTokenV2("Alchemic BTC", "alBTC", defaultFlashFee);
-        deployment.alBTC = address(alBTC);
-        console.log("    alBTC:", deployment.alBTC);
-        
+        xUSD synthUSD = new xUSD();
+        deployment.xUSD = address(synthUSD);
+        console.log("    xUSD:", deployment.xUSD);
+
+        xETH synthETH = new xETH();
+        deployment.xETH = address(synthETH);
+        console.log("    xETH:", deployment.xETH);
+
+        xBTC synthBTC = new xBTC();
+        deployment.xBTC = address(synthBTC);
+        console.log("    xBTC:", deployment.xBTC);
+
+        xLUX synthLUX = new xLUX();
+        deployment.xLUX = address(synthLUX);
+        console.log("    xLUX:", deployment.xLUX);
+
         // Deploy Whitelist (no initialization needed - uses constructor with msg.sender as owner)
         Whitelist whitelist = new Whitelist();
-        
-        // Deploy Transmuter (simplified) - params: syntheticToken, underlyingToken, buffer, whitelist
-        TransmuterV2 transmuterUSD = new TransmuterV2();
-        transmuterUSD.initialize(deployment.alUSD, deployment.usdc, address(0), address(whitelist));
-        
-        // Deploy Alchemist for USD
-        AlchemistV2 alchemistUSD = new AlchemistV2();
-        alchemistUSD.initialize(IAlchemistV2AdminActions.InitializationParams({
-            admin: admin,
-            debtToken: deployment.alUSD,
-            transmuter: address(transmuterUSD),
-            minimumCollateralization: 2e18,
-            protocolFee: 1000,
-            protocolFeeReceiver: config.multisig,
-            mintingLimitMinimum: 0,
-            mintingLimitMaximum: 1_000_000e18,
-            mintingLimitBlocks: 7200,
-            whitelist: address(whitelist)
-        }));
-        deployment.alchemistUSD = address(alchemistUSD);
+        console.log("    Whitelist:", address(whitelist));
+
+        // Deploy Transmuter via ERC1967Proxy (upgradeable pattern)
+        // TransmuterV2 uses _disableInitializers() in constructor, must use proxy
+        TransmuterV2 transmuterImpl = new TransmuterV2();
+        bytes memory transmuterInitData = abi.encodeWithSelector(
+            TransmuterV2.initialize.selector,
+            deployment.xUSD,
+            deployment.lusd,
+            address(0),
+            address(whitelist)
+        );
+        ERC1967Proxy transmuterProxy = new ERC1967Proxy(address(transmuterImpl), transmuterInitData);
+        address transmuterUSD = address(transmuterProxy);
+        console.log("    TransmuterUSD:", transmuterUSD);
+
+        // Deploy Alchemist via ERC1967Proxy (upgradeable pattern)
+        AlchemistV2 alchemistImpl = new AlchemistV2();
+        bytes memory alchemistInitData = abi.encodeWithSelector(
+            AlchemistV2.initialize.selector,
+            IAlchemistV2AdminActions.InitializationParams({
+                admin: admin,
+                debtToken: deployment.xUSD,
+                transmuter: transmuterUSD,
+                minimumCollateralization: 2e18,
+                protocolFee: 1000,
+                protocolFeeReceiver: config.multisig,
+                mintingLimitMinimum: 0,
+                mintingLimitMaximum: 1_000_000e18,
+                mintingLimitBlocks: 7200,
+                whitelist: address(whitelist)
+            })
+        );
+        ERC1967Proxy alchemistProxy = new ERC1967Proxy(address(alchemistImpl), alchemistInitData);
+        deployment.alchemistUSD = address(alchemistProxy);
         console.log("    AlchemistUSD:", deployment.alchemistUSD);
-        
+
         // Grant minter role
-        alUSD.setWhitelist(deployment.alchemistUSD, true);
+        synthUSD.setWhitelist(deployment.alchemistUSD, true);
     }
     
     function _deployPhase3_Perps(address gov, ChainConfig memory) internal {
@@ -336,16 +366,20 @@ contract DeployAll is Script, DeployConfig {
         console.log("+==============================================================+");
         console.log("|  TOKENS                                                      |");
         console.log("|    WLUX:", deployment.wlux);
-        console.log("|    USDC:", deployment.usdc);
-        console.log("|    USDT:", deployment.usdt);
-        console.log("|    DAI:", deployment.dai);
+        console.log("|    LUSD:", deployment.lusd);
         console.log("|    WETH:", deployment.weth);
         console.log("|    AI:", deployment.aiToken);
         console.log("+==============================================================+");
-        console.log("|  SYNTHS                                                      |");
-        console.log("|    alUSD:", deployment.alUSD);
-        console.log("|    alETH:", deployment.alETH);
-        console.log("|    alBTC:", deployment.alBTC);
+        console.log("|  AMM (via DeployAMM.s.sol or canonical)                      |");
+        ChainConfig memory config = getConfig();
+        console.log("|    V2 Factory:", config.uniV2Factory);
+        console.log("|    V2 Router:", config.uniV2Router);
+        console.log("+==============================================================+");
+        console.log("|  SYNTHS (x* = Lux omnichain synths)                          |");
+        console.log("|    xUSD:", deployment.xUSD);
+        console.log("|    xETH:", deployment.xETH);
+        console.log("|    xBTC:", deployment.xBTC);
+        console.log("|    xLUX:", deployment.xLUX);
         console.log("|    AlchemistUSD:", deployment.alchemistUSD);
         console.log("+==============================================================+");
         console.log("|  PERPS                                                       |");
