@@ -19,7 +19,7 @@ contract Reader is Governable {
     uint256 public constant BASIS_POINTS_DIVISOR = 10000;
     uint256 public constant POSITION_PROPS_LENGTH = 9;
     uint256 public constant PRICE_PRECISION = 10 ** 30;
-    uint256 public constant USDG_DECIMALS = 18;
+    uint256 public constant LPUSD_DECIMALS = 18;
 
     bool public hasMaxGlobalShortSizes;
 
@@ -48,15 +48,15 @@ contract Reader is Governable {
             amountIn = availableAmount * priceOut / priceIn * 10 ** tokenInDecimals / 10 ** tokenOutDecimals;
         }
 
-        uint256 maxUsdgAmount = _vault.maxUsdgAmounts(_tokenIn);
+        uint256 maxLpusdAmount = _vault.maxLpusdAmounts(_tokenIn);
 
-        if (maxUsdgAmount != 0) {
-            if (maxUsdgAmount < _vault.usdgAmounts(_tokenIn)) {
+        if (maxLpusdAmount != 0) {
+            if (maxLpusdAmount < _vault.lpusdAmounts(_tokenIn)) {
                 return 0;
             }
 
-            uint256 maxAmountIn = maxUsdgAmount - _vault.usdgAmounts(_tokenIn);
-            maxAmountIn = maxAmountIn * 10 ** tokenInDecimals / 10 ** USDG_DECIMALS;
+            uint256 maxAmountIn = maxLpusdAmount - _vault.lpusdAmounts(_tokenIn);
+            maxAmountIn = maxAmountIn * 10 ** tokenInDecimals / 10 ** LPUSD_DECIMALS;
             maxAmountIn = maxAmountIn * PRICE_PRECISION / priceIn;
 
             if (amountIn > maxAmountIn) {
@@ -75,14 +75,14 @@ contract Reader is Governable {
 
         uint256 feeBasisPoints;
         {
-            uint256 usdgAmount = _amountIn * priceIn / PRICE_PRECISION;
-            usdgAmount = usdgAmount * 10 ** USDG_DECIMALS / 10 ** tokenInDecimals;
+            uint256 lpusdAmount = _amountIn * priceIn / PRICE_PRECISION;
+            lpusdAmount = lpusdAmount * 10 ** LPUSD_DECIMALS / 10 ** tokenInDecimals;
 
             bool isStableSwap = _vault.stableTokens(_tokenIn) && _vault.stableTokens(_tokenOut);
             uint256 baseBps = isStableSwap ? _vault.stableSwapFeeBasisPoints() : _vault.swapFeeBasisPoints();
             uint256 taxBps = isStableSwap ? _vault.stableTaxBasisPoints() : _vault.taxBasisPoints();
-            uint256 feesBasisPoints0 = _vault.getFeeBasisPoints(_tokenIn, usdgAmount, baseBps, taxBps, true);
-            uint256 feesBasisPoints1 = _vault.getFeeBasisPoints(_tokenOut, usdgAmount, baseBps, taxBps, false);
+            uint256 feesBasisPoints0 = _vault.getFeeBasisPoints(_tokenIn, lpusdAmount, baseBps, taxBps, true);
+            uint256 feesBasisPoints1 = _vault.getFeeBasisPoints(_tokenOut, lpusdAmount, baseBps, taxBps, false);
             // use the higher of the two fee basis points
             feeBasisPoints = feesBasisPoints0 > feesBasisPoints1 ? feesBasisPoints0 : feesBasisPoints1;
         }
@@ -101,14 +101,14 @@ contract Reader is Governable {
         uint256 priceIn = _vault.getMinPrice(_tokenIn);
         uint256 tokenInDecimals = _vault.tokenDecimals(_tokenIn);
 
-        uint256 usdgAmount = _amountIn * priceIn / PRICE_PRECISION;
-        usdgAmount = usdgAmount * 10 ** USDG_DECIMALS / 10 ** tokenInDecimals;
+        uint256 lpusdAmount = _amountIn * priceIn / PRICE_PRECISION;
+        lpusdAmount = lpusdAmount * 10 ** LPUSD_DECIMALS / 10 ** tokenInDecimals;
 
         bool isStableSwap = _vault.stableTokens(_tokenIn) && _vault.stableTokens(_tokenOut);
         uint256 baseBps = isStableSwap ? _vault.stableSwapFeeBasisPoints() : _vault.swapFeeBasisPoints();
         uint256 taxBps = isStableSwap ? _vault.stableTaxBasisPoints() : _vault.taxBasisPoints();
-        uint256 feesBasisPoints0 = _vault.getFeeBasisPoints(_tokenIn, usdgAmount, baseBps, taxBps, true);
-        uint256 feesBasisPoints1 = _vault.getFeeBasisPoints(_tokenOut, usdgAmount, baseBps, taxBps, false);
+        uint256 feesBasisPoints0 = _vault.getFeeBasisPoints(_tokenIn, lpusdAmount, baseBps, taxBps, true);
+        uint256 feesBasisPoints1 = _vault.getFeeBasisPoints(_tokenOut, lpusdAmount, baseBps, taxBps, false);
         // use the higher of the two fee basis points
         uint256 feeBasisPoints = feesBasisPoints0 > feesBasisPoints1 ? feesBasisPoints0 : feesBasisPoints1;
 
@@ -270,34 +270,7 @@ contract Reader is Governable {
         return amounts;
     }
 
-    function getVaultTokenInfo(address _vault, address _weth, uint256 _usdgAmount, address[] memory _tokens) public view returns (uint256[] memory) {
-        uint256 propsLength = 10;
-
-        IVault vault = IVault(_vault);
-        IVaultPriceFeed priceFeed = IVaultPriceFeed(vault.priceFeed());
-
-        uint256[] memory amounts = new uint256[](_tokens.length * propsLength);
-        for (uint256 i = 0; i < _tokens.length; i++) {
-            address token = _tokens[i];
-            if (token == address(0)) {
-                token = _weth;
-            }
-            amounts[i * propsLength] = vault.poolAmounts(token);
-            amounts[i * propsLength + 1] = vault.reservedAmounts(token);
-            amounts[i * propsLength + 2] = vault.usdgAmounts(token);
-            amounts[i * propsLength + 3] = vault.getRedemptionAmount(token, _usdgAmount);
-            amounts[i * propsLength + 4] = vault.tokenWeights(token);
-            amounts[i * propsLength + 5] = vault.getMinPrice(token);
-            amounts[i * propsLength + 6] = vault.getMaxPrice(token);
-            amounts[i * propsLength + 7] = vault.guaranteedUsd(token);
-            amounts[i * propsLength + 8] = priceFeed.getPrimaryPrice(token, false);
-            amounts[i * propsLength + 9] = priceFeed.getPrimaryPrice(token, true);
-        }
-
-        return amounts;
-    }
-
-    function getFullVaultTokenInfo(address _vault, address _weth, uint256 _usdgAmount, address[] memory _tokens) public view returns (uint256[] memory) {
+    function getFullVaultTokenInfo(address _vault, address _weth, uint256 _lpusdAmount, address[] memory _tokens) public view returns (uint256[] memory) {
         uint256 propsLength = 12;
 
         IVault vault = IVault(_vault);
@@ -311,11 +284,11 @@ contract Reader is Governable {
             }
             amounts[i * propsLength] = vault.poolAmounts(token);
             amounts[i * propsLength + 1] = vault.reservedAmounts(token);
-            amounts[i * propsLength + 2] = vault.usdgAmounts(token);
-            amounts[i * propsLength + 3] = vault.getRedemptionAmount(token, _usdgAmount);
+            amounts[i * propsLength + 2] = vault.lpusdAmounts(token);
+            amounts[i * propsLength + 3] = vault.getRedemptionAmount(token, _lpusdAmount);
             amounts[i * propsLength + 4] = vault.tokenWeights(token);
             amounts[i * propsLength + 5] = vault.bufferAmounts(token);
-            amounts[i * propsLength + 6] = vault.maxUsdgAmounts(token);
+            amounts[i * propsLength + 6] = vault.maxLpusdAmounts(token);
             amounts[i * propsLength + 7] = vault.getMinPrice(token);
             amounts[i * propsLength + 8] = vault.getMaxPrice(token);
             amounts[i * propsLength + 9] = vault.guaranteedUsd(token);
@@ -326,7 +299,7 @@ contract Reader is Governable {
         return amounts;
     }
 
-    function getVaultTokenInfoV2(address _vault, address _weth, uint256 _usdgAmount, address[] memory _tokens) public view returns (uint256[] memory) {
+    function getVaultTokenInfo(address _vault, address _weth, uint256 _lpusdAmount, address[] memory _tokens) public view returns (uint256[] memory) {
         uint256 propsLength = 14;
 
         IVault vault = IVault(_vault);
@@ -342,11 +315,11 @@ contract Reader is Governable {
             uint256 maxGlobalShortSize = hasMaxGlobalShortSizes ? vault.maxGlobalShortSizes(token) : 0;
             amounts[i * propsLength] = vault.poolAmounts(token);
             amounts[i * propsLength + 1] = vault.reservedAmounts(token);
-            amounts[i * propsLength + 2] = vault.usdgAmounts(token);
-            amounts[i * propsLength + 3] = vault.getRedemptionAmount(token, _usdgAmount);
+            amounts[i * propsLength + 2] = vault.lpusdAmounts(token);
+            amounts[i * propsLength + 3] = vault.getRedemptionAmount(token, _lpusdAmount);
             amounts[i * propsLength + 4] = vault.tokenWeights(token);
             amounts[i * propsLength + 5] = vault.bufferAmounts(token);
-            amounts[i * propsLength + 6] = vault.maxUsdgAmounts(token);
+            amounts[i * propsLength + 6] = vault.maxLpusdAmounts(token);
             amounts[i * propsLength + 7] = vault.globalShortSizes(token);
             amounts[i * propsLength + 8] = maxGlobalShortSize;
             amounts[i * propsLength + 9] = vault.getMinPrice(token);

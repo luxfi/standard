@@ -11,8 +11,8 @@ contract BalanceUpdater {
     function updateBalance(
         address _vault,
         address _token,
-        address _usdg,
-        uint256 _usdgAmount
+        address _lpusd,
+        uint256 _lpusdAmount
     ) public {
         IVault vault = IVault(_vault);
         IERC20 token = IERC20(_token);
@@ -22,8 +22,8 @@ contract BalanceUpdater {
 
         uint256 transferAmount = poolAmount + fee - balance;
         token.transferFrom(msg.sender, _vault, transferAmount);
-        IERC20(_usdg).transferFrom(msg.sender, _vault, _usdgAmount);
+        IERC20(_lpusd).transferFrom(msg.sender, _vault, _lpusdAmount);
 
-        vault.sellUSDG(_token, msg.sender);
+        vault.sellLPUSD(_token, msg.sender);
     }
 }

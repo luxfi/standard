@@ -14,14 +14,14 @@ import "../access/interfaces/IGovRequester.sol";
 import "../access/Governable.sol";
 import "../core/interfaces/IVault.sol";
 import "../core/interfaces/IVaultUtils.sol";
-import "../core/interfaces/IGlpManager.sol";
+import "../core/interfaces/ILLPManager.sol";
 import "../referrals/interfaces/IReferralStorage.sol";
 import "../tokens/interfaces/IYieldToken.sol";
 import "../tokens/interfaces/IBaseToken.sol";
 import "../tokens/interfaces/IMintable.sol";
-import "../tokens/interfaces/IUSDG.sol";
+import "../tokens/interfaces/ILPUSD.sol";
 import "../staking/interfaces/IVester.sol";
-import "../staking/interfaces/IRewardRouterV2.sol";
+import "../staking/interfaces/IRewardRouter.sol";
 
 import "@luxfi/standard/lib/token/ERC20/IERC20.sol";
 
@@ -38,8 +38,8 @@ contract Timelock is ITimelock, BasicMulticall {
 
     address public tokenManager;
     address public mintReceiver;
-    address public glpManager;
-    address public prevGlpManager;
+    address public llpManager;
+    address public prevLlpManager;
     address public rewardRouter;
     uint256 public maxTokenSupply;
 
@@ -63,14 +63,14 @@ contract Timelock is ITimelock, BasicMulticall {
     event SignalSetMinter(address target, address minter, bool isActive, bytes32 action);
     event SignalSetPriceFeed(address vault, address priceFeed, bytes32 action);
     event SignalSetGovRequester(address requester);
-    event SignalRedeemUsdg(address vault, address token, uint256 amount);
+    event SignalRedeemLpusd(address vault, address token, uint256 amount);
     event SignalVaultSetTokenConfig(
         address vault,
         address token,
         uint256 tokenDecimals,
         uint256 tokenWeight,
         uint256 minProfitBps,
-        uint256 maxUsdgAmount,
+        uint256 maxLpusdAmount,
         bool isStable,
         bool isShortable
     );
@@ -106,8 +106,8 @@ contract Timelock is ITimelock, BasicMulticall {
         uint256 _buffer,
         address _tokenManager,
         address _mintReceiver,
-        address _glpManager,
-        address _prevGlpManager,
+        address _llpManager,
+        address _prevLlpManager,
         address _rewardRouter,
         uint256 _maxTokenSupply,
         uint256 _marginFeeBasisPoints,
@@ -118,8 +118,8 @@ contract Timelock is ITimelock, BasicMulticall {
         buffer = _buffer;
         tokenManager = _tokenManager;
         mintReceiver = _mintReceiver;
-        glpManager = _glpManager;
-        prevGlpManager = _prevGlpManager;
+        llpManager = _llpManager;
+        prevLlpManager = _prevLlpManager;
         rewardRouter = _rewardRouter;
         maxTokenSupply = _maxTokenSupply;
 
@@ -286,9 +286,9 @@ contract Timelock is ITimelock, BasicMulticall {
         address _token,
         uint256 _tokenWeight,
         uint256 _minProfitBps,
-        uint256 _maxUsdgAmount,
+        uint256 _maxLpusdAmount,
         uint256 _bufferAmount,
-        uint256 _usdgAmount
+        uint256 _lpusdAmount
     ) external onlyKeeperAndAbove {
         require(_minProfitBps <= 500, "invalid _minProfitBps");
 
@@ -304,48 +304,48 @@ contract Timelock is ITimelock, BasicMulticall {
             tokenDecimals,
             _tokenWeight,
             _minProfitBps,
-            _maxUsdgAmount,
+            _maxLpusdAmount,
             isStable,
             isShortable
         );
 
         IVault(_vault).setBufferAmount(_token, _bufferAmount);
 
-        IVault(_vault).setUsdgAmount(_token, _usdgAmount);
+        IVault(_vault).setLpusdAmount(_token, _lpusdAmount);
     }
 
-    function setUsdgAmounts(address _vault, address[] memory _tokens, uint256[] memory _usdgAmounts) external onlyKeeperAndAbove {
+    function setLpusdAmounts(address _vault, address[] memory _tokens, uint256[] memory _lpusdAmounts) external onlyKeeperAndAbove {
         for (uint256 i = 0; i < _tokens.length; i++) {
-            IVault(_vault).setUsdgAmount(_tokens[i], _usdgAmounts[i]);
+            IVault(_vault).setLpusdAmount(_tokens[i], _lpusdAmounts[i]);
         }
     }
 
-    function updateUsdgSupply(address _glpManager, uint256 usdgAmount) external onlyKeeperAndAbove {
-        require(_glpManager == glpManager || _glpManager == prevGlpManager, "invalid _glpManager");
+    function updateLpusdSupply(address _llpManager, uint256 lpusdAmount) external onlyKeeperAndAbove {
+        require(_llpManager == llpManager || _llpManager == prevLlpManager, "invalid _llpManager");
 
-        address usdg = IGlpManager(_glpManager).usdg();
-        uint256 balance = IERC20(usdg).balanceOf(_glpManager);
+        address lpusd = ILLPManager(_llpManager).lpusd();
+        uint256 balance = IERC20(lpusd).balanceOf(_llpManager);
 
-        IUSDG(usdg).addVault(address(this));
+        ILPUSD(lpusd).addVault(address(this));
 
-        if (usdgAmount > balance) {
-            uint256 mintAmount = usdgAmount - balance;
-            IUSDG(usdg).mint(_glpManager, mintAmount);
+        if (lpusdAmount > balance) {
+            uint256 mintAmount = lpusdAmount - balance;
+            ILPUSD(lpusd).mint(_llpManager, mintAmount);
         } else {
-            uint256 burnAmount = balance - usdgAmount;
-            IUSDG(usdg).burn(_glpManager, burnAmount);
+            uint256 burnAmount = balance - lpusdAmount;
+            ILPUSD(lpusd).burn(_llpManager, burnAmount);
         }
 
-        IUSDG(usdg).removeVault(address(this));
+        ILPUSD(lpusd).removeVault(address(this));
     }
 
     function setShortsTrackerAveragePriceWeight(uint256 _shortsTrackerAveragePriceWeight) external onlyAdmin {
-        IGlpManager(glpManager).setShortsTrackerAveragePriceWeight(_shortsTrackerAveragePriceWeight);
+        ILLPManager(llpManager).setShortsTrackerAveragePriceWeight(_shortsTrackerAveragePriceWeight);
     }
 
-    function setGlpCooldownDuration(uint256 _cooldownDuration) external onlyAdmin {
+    function setLlpCooldownDuration(uint256 _cooldownDuration) external onlyAdmin {
         require(_cooldownDuration < 2 hours, "invalid _cooldownDuration");
-        IGlpManager(glpManager).setCooldownDuration(_cooldownDuration);
+        ILLPManager(llpManager).setCooldownDuration(_cooldownDuration);
     }
 
     function setMaxGlobalShortSize(address _vault, address _token, uint256 _amount) external onlyAdmin {

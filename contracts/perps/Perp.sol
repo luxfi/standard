@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title Perp
 /// @notice Lux perpetual trading interface - simplified wrapper for perpetual trading
-/// @dev Wraps GMX-style perpetuals with Lux-branded interface
+/// @dev Implements LPX perpetuals protocol for Lux Network
 contract Perp is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 

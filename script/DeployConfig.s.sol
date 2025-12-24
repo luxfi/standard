@@ -26,9 +26,10 @@ abstract contract DeployConfig is Script {
     struct ChainConfig {
         // Core tokens
         address wlux;           // Wrapped LUX
-        address usdc;           // USDC stablecoin
-        address usdt;           // USDT stablecoin
-        address dai;            // DAI stablecoin
+        address lusd;           // Lux Dollar (native stablecoin)
+        address usdc;           // USDC stablecoin (bridged, NOT deployed)
+        address usdt;           // USDT stablecoin (bridged, NOT deployed)
+        address dai;            // DAI stablecoin (bridged, NOT deployed)
         address weth;           // Wrapped ETH
         address wbtc;           // Wrapped BTC
         
@@ -57,9 +58,10 @@ abstract contract DeployConfig is Script {
         // Lux Mainnet
         configs[LUX_MAINNET] = ChainConfig({
             wlux: 0x0000000000000000000000000000000000000000, // To be deployed
-            usdc: 0x0000000000000000000000000000000000000000,
-            usdt: 0x0000000000000000000000000000000000000000,
-            dai: 0x0000000000000000000000000000000000000000,
+            lusd: 0x0000000000000000000000000000000000000000, // Lux Dollar - to be deployed
+            usdc: 0x0000000000000000000000000000000000000000, // Bridged - external
+            usdt: 0x0000000000000000000000000000000000000000, // Bridged - external
+            dai: 0x0000000000000000000000000000000000000000,  // Bridged - external
             weth: 0x0000000000000000000000000000000000000000,
             wbtc: 0x0000000000000000000000000000000000000000,
             uniV2Factory: 0x0000000000000000000000000000000000000000,
@@ -77,6 +79,7 @@ abstract contract DeployConfig is Script {
         // Lux Testnet
         configs[LUX_TESTNET] = ChainConfig({
             wlux: 0x0000000000000000000000000000000000000000,
+            lusd: 0x0000000000000000000000000000000000000000, // To be deployed
             usdc: 0x0000000000000000000000000000000000000000,
             usdt: 0x0000000000000000000000000000000000000000,
             dai: 0x0000000000000000000000000000000000000000,
@@ -97,6 +100,7 @@ abstract contract DeployConfig is Script {
         // Local Development (chain ID 1)
         configs[LOCAL_DEV] = ChainConfig({
             wlux: 0x0000000000000000000000000000000000000000, // Will deploy
+            lusd: 0x0000000000000000000000000000000000000000, // Will deploy
             usdc: 0x0000000000000000000000000000000000000000,
             usdt: 0x0000000000000000000000000000000000000000,
             dai: 0x0000000000000000000000000000000000000000,
@@ -110,6 +114,27 @@ abstract contract DeployConfig is Script {
             chainlinkBTC: 0x0000000000000000000000000000000000000000,
             chainlinkLUX: 0x0000000000000000000000000000000000000000,
             multisig: msg.sender, // Deployer for local
+            timelock: 0x0000000000000000000000000000000000000000,
+            warpMessenger: 0x0200000000000000000000000000000000000005
+        });
+
+        // Anvil (chain ID 31337) - default for forge script
+        configs[31337] = ChainConfig({
+            wlux: 0x0000000000000000000000000000000000000000, // Will deploy
+            lusd: 0x0000000000000000000000000000000000000000, // Will deploy
+            usdc: 0x0000000000000000000000000000000000000000,
+            usdt: 0x0000000000000000000000000000000000000000,
+            dai: 0x0000000000000000000000000000000000000000,
+            weth: 0x0000000000000000000000000000000000000000,
+            wbtc: 0x0000000000000000000000000000000000000000,
+            uniV2Factory: 0x0000000000000000000000000000000000000000,
+            uniV2Router: 0x0000000000000000000000000000000000000000,
+            uniV3Factory: 0x0000000000000000000000000000000000000000,
+            uniV3Router: 0x0000000000000000000000000000000000000000,
+            chainlinkETH: 0x0000000000000000000000000000000000000000,
+            chainlinkBTC: 0x0000000000000000000000000000000000000000,
+            chainlinkLUX: 0x0000000000000000000000000000000000000000,
+            multisig: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266, // Anvil account 0
             timelock: 0x0000000000000000000000000000000000000000,
             warpMessenger: 0x0200000000000000000000000000000000000005
         });

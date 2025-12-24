@@ -1,0 +1,48 @@
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}The Lux Network Vision}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Key Economic Properties}{3}{subsection.1.2}%
+\contentsline {section}{\numberline {2}Token Distribution}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Total Supply}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Initial Allocation}{3}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Key Metrics}{4}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Vesting Schedules}{4}{subsection.2.4}%
+\contentsline {section}{\numberline {3}Deflationary Mechanics}{4}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Fee Burning}{4}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Supply Reduction Over Time}{4}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Remaining Fee Distribution}{4}{subsection.3.3}%
+\contentsline {section}{\numberline {4}Validator Economics}{5}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Validator Tiers}{5}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Validator Counts Summary}{5}{subsection.4.2}%
+\contentsline {section}{\numberline {5}NFT System}{5}{section.5}%
+\contentsline {subsection}{\numberline {5.1}NFT Types}{5}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}NFT Tiers}{6}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Ethereum Genesis Collection}{6}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Permanent LUX Locking}{6}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.5}NFT Holder Benefits}{6}{subsection.5.5}%
+\contentsline {section}{\numberline {6}Staking Rewards}{6}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Liquidity Provider Rewards}{6}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Single-Sided Staking}{7}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Staking vs LP Comparison}{7}{subsection.6.3}%
+\contentsline {section}{\numberline {7}Vote-Escrowed Tokenomics (vLUX)}{8}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Lock Mechanism}{8}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Voting Power Decay}{8}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}Gauge Voting}{8}{subsection.7.3}%
+\contentsline {section}{\numberline {8}Staked LUX (sLUX)}{9}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Overview}{9}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Exchange Rate}{9}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}Cooldown Period}{9}{subsection.8.3}%
+\contentsline {section}{\numberline {9}Synthetic Assets}{9}{section.9}%
+\contentsline {subsection}{\numberline {9.1}The Synth Protocol}{9}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Supported Synths}{9}{subsection.9.2}%
+\contentsline {section}{\numberline {10}Smart Contract Architecture}{10}{section.10}%
+\contentsline {subsection}{\numberline {10.1}Core Contracts}{10}{subsection.10.1}%
+\contentsline {subsection}{\numberline {10.2}Contract Interactions}{10}{subsection.10.2}%
+\contentsline {section}{\numberline {11}Security Considerations}{10}{section.11}%
+\contentsline {subsection}{\numberline {11.1}Economic Security}{10}{subsection.11.1}%
+\contentsline {subsection}{\numberline {11.2}Slashing Protection}{11}{subsection.11.2}%
+\contentsline {section}{\numberline {12}Governance and DAO}{11}{section.12}%
+\contentsline {subsection}{\numberline {12.1}DAO Structure}{11}{subsection.12.1}%
+\contentsline {subsection}{\numberline {12.2}SubDAOs}{11}{subsection.12.2}%
+\contentsline {section}{\numberline {13}Conclusion}{11}{section.13}%
+\contentsline {section}{\numberline {A}Appendix: Token Summary}{12}{appendix.A}%
+\contentsline {section}{\numberline {B}Appendix: References}{12}{appendix.B}%

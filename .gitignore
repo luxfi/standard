@@ -66,3 +66,4 @@ cache_hardhat/
 
 # Dependencies (use forge install)
 # lib/  # Uncomment to ignore lib/
+out-seaport/

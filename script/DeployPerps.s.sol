@@ -15,21 +15,21 @@ import "../contracts/perps/core/PositionRouter.sol";
 import "../contracts/perps/core/PositionManager.sol";
 import "../contracts/perps/core/OrderBook.sol";
 import "../contracts/perps/core/ShortsTracker.sol";
-import "../contracts/perps/core/GlpManager.sol";
+import "../contracts/perps/core/LLPManager.sol";
 
 // Tokens
-import "../contracts/perps/gmx/GMX.sol";
-import "../contracts/perps/gmx/GLP.sol";
-import "../contracts/perps/gmx/EsGMX.sol";
-import "../contracts/perps/tokens/USDG.sol";
+import "../contracts/perps/tokens/LPX.sol";
+import "../contracts/perps/tokens/LLP.sol";
+import "../contracts/perps/tokens/xLPX.sol";
+import "../contracts/perps/tokens/LPUSD.sol";
 
 // Staking
-import "../contracts/perps/staking/RewardRouterV2.sol";
+import "../contracts/perps/staking/RewardRouter.sol";
 import "../contracts/perps/staking/RewardTracker.sol";
 import "../contracts/perps/staking/RewardDistributor.sol";
 import "../contracts/perps/staking/BonusDistributor.sol";
 import "../contracts/perps/staking/Vester.sol";
-import "../contracts/perps/staking/StakedGlp.sol";
+import "../contracts/perps/staking/StakedLLP.sol";
 
 // Oracle
 import "../contracts/perps/oracle/FastPriceFeed.sol";
@@ -53,7 +53,7 @@ import "../contracts/perps/referrals/ReferralReader.sol";
 ///   1. USDG (stablecoin)
 ///   2. Vault + VaultUtils + VaultPriceFeed
 ///   3. Router + PositionRouter + OrderBook
-///   4. GMX + GLP + EsGMX tokens
+///   4. GMX + LLP + EsGMX tokens
 ///   5. Staking (RewardRouter, Trackers, Vesters)
 ///   6. Oracle (FastPriceFeed, PriceFeeds)
 ///   7. Peripherals (Reader, Timelock)
@@ -94,37 +94,37 @@ contract DeployPerps is Script, DeployConfig {
         address vault;
         address vaultUtils;
         address vaultPriceFeed;
-        address usdg;
+        address lpusd;
         address router;
         address positionRouter;
         address positionManager;
         address orderBook;
         address shortsTracker;
-        address glpManager;
+        address llpManager;
         
         // Tokens
-        address gmx;
+        address lpx;
         address esGmx;
-        address glp;
+        address llp;
         address bnGmx; // Bonus GMX
         
         // Staking
         address stakedGmxTracker;      // staked GMX
         address bonusGmxTracker;        // staked + bonus GMX
         address feeGmxTracker;          // staked + bonus + fee GMX
-        address stakedGlpTracker;       // staked GLP
-        address feeGlpTracker;          // staked + fee GLP
+        address stakedLlpTracker;       // staked LLP
+        address feeLlpTracker;          // staked + fee LLP
         address gmxVester;
-        address glpVester;
-        address stakedGlp;
+        address llpVester;
+        address stakedLLP;
         address rewardRouter;
         
         // Distributors
         address stakedGmxDistributor;
         address bonusGmxDistributor;
         address feeGmxDistributor;
-        address stakedGlpDistributor;
-        address feeGlpDistributor;
+        address stakedLlpDistributor;
+        address feeLlpDistributor;
         
         // Oracle
         address fastPriceFeed;
@@ -163,7 +163,7 @@ contract DeployPerps is Script, DeployConfig {
         vm.startBroadcast(deployerPrivateKey);
         
         // Step 1: Deploy USDG
-        _deployUSDG();
+        _deployLPUSD();
         
         // Step 2: Deploy Vault
         _deployVault(deployer, config);
@@ -174,8 +174,8 @@ contract DeployPerps is Script, DeployConfig {
         // Step 4: Deploy tokens
         _deployTokens();
         
-        // Step 5: Deploy GLP Manager
-        _deployGlpManager();
+        // Step 5: Deploy LLP Manager
+        _deployLLPManager();
         
         // Step 6: Deploy staking
         _deployStaking(deployer, config);
@@ -202,12 +202,12 @@ contract DeployPerps is Script, DeployConfig {
     // DEPLOYMENT STEPS
     // ═══════════════════════════════════════════════════════════════════════
     
-    function _deployUSDG() internal {
+    function _deployLPUSD() internal {
         console.log("Step 1: Deploying USDG...");
         
-        USDG usdg = new USDG(address(0)); // Vault will be set later
-        deployed.usdg = address(usdg);
-        console.log("  USDG:", deployed.usdg);
+        USDG usdg = new LPUSD(address(0)); // Vault will be set later
+        deployed.lpusd = address(usdg);
+        console.log("  LPUSD:", deployed.lpusd);
     }
     
     function _deployVault(address gov, ChainConfig memory) internal {
@@ -226,7 +226,7 @@ contract DeployPerps is Script, DeployConfig {
         // Initialize vault
         vault.initialize(
             address(0), // router - set later
-            deployed.usdg,
+            deployed.lpusd,
             deployed.vaultPriceFeed,
             LIQUIDATION_FEE_USD,
             FUNDING_RATE_FACTOR,
@@ -252,7 +252,7 @@ contract DeployPerps is Script, DeployConfig {
         vault.setVaultUtils(IVaultUtils(address(vaultUtils)));
         
         // Set USDG vault
-        USDG(deployed.usdg).addVault(deployed.vault);
+        LPUSD(deployed.lpusd).addVault(deployed.vault);
         
         console.log("  Vault:", deployed.vault);
         console.log("  VaultUtils:", deployed.vaultUtils);
@@ -263,7 +263,7 @@ contract DeployPerps is Script, DeployConfig {
         console.log("Step 3: Deploying Router + Position contracts...");
         
         // Deploy Router
-        Router router = new Router(deployed.vault, deployed.usdg, address(0)); // WETH later
+        Router router = new Router(deployed.vault, deployed.lpusd, address(0)); // WETH later
         deployed.router = address(router);
         
         // Deploy ShortsTracker
@@ -276,7 +276,7 @@ contract DeployPerps is Script, DeployConfig {
             deployed.router,
             deployed.vault,
             address(0), // WETH
-            deployed.usdg,
+            deployed.lpusd,
             1e16, // minExecutionFee
             1e30  // minPurchaseTokenAmountUsd
         );
@@ -319,47 +319,47 @@ contract DeployPerps is Script, DeployConfig {
         
         // GMX governance/utility token
         GMX gmx = new GMX();
-        deployed.gmx = address(gmx);
+        deployed.lpx = address(gmx);
         
         // Escrowed GMX
         EsGMX esGmx = new EsGMX();
         deployed.esGmx = address(esGmx);
         
-        // GLP liquidity provider token
-        GLP glp = new GLP();
-        deployed.glp = address(glp);
+        // LLP liquidity provider token
+        LLP llp = new LLP();
+        deployed.llp = address(llp);
         
-        console.log("  GMX:", deployed.gmx);
+        console.log("  LPX:", deployed.lpx);
         console.log("  EsGMX:", deployed.esGmx);
-        console.log("  GLP:", deployed.glp);
+        console.log("  LLP:", deployed.llp);
     }
     
-    function _deployGlpManager() internal {
-        console.log("Step 5: Deploying GLP Manager...");
+    function _deployLLPManager() internal {
+        console.log("Step 5: Deploying LLP Manager...");
         
-        GlpManager glpManager = new GlpManager(
+        LLPManager llpManager = new LLPManager(
             deployed.vault,
-            deployed.usdg,
-            deployed.glp,
+            deployed.lpusd,
+            deployed.llp,
             deployed.shortsTracker,
             15 minutes // cooldown duration
         );
-        deployed.glpManager = address(glpManager);
+        deployed.llpManager = address(llpManager);
         
-        // Set GlpManager as GLP minter
-        GLP(deployed.glp).setMinter(deployed.glpManager, true);
+        // Set LLPManager as LLP minter
+        LLP(deployed.llp).setMinter(deployed.llpManager, true);
         
-        // Set GlpManager on USDG
-        USDG(deployed.usdg).addVault(deployed.glpManager);
+        // Set LLPManager on USDG
+        LPUSD(deployed.lpusd).addVault(deployed.llpManager);
         
-        console.log("  GlpManager:", deployed.glpManager);
+        console.log("  LLPManager:", deployed.llpManager);
     }
     
     function _deployStaking(address, ChainConfig memory config) internal {
         console.log("Step 6: Deploying Staking...");
         
         // Deploy RewardRouter
-        RewardRouterV2 rewardRouter = new RewardRouterV2();
+        RewardRouter rewardRouter = new RewardRouter();
         deployed.rewardRouter = address(rewardRouter);
         
         // Staked GMX
@@ -392,34 +392,34 @@ contract DeployPerps is Script, DeployConfig {
         );
         deployed.feeGmxDistributor = address(feeGmxDistributor);
         
-        // Staked GLP
-        RewardTracker stakedGlpTracker = new RewardTracker("Fee + Staked GLP", "fsGLP");
-        deployed.stakedGlpTracker = address(stakedGlpTracker);
+        // Staked LLP
+        RewardTracker stakedLlpTracker = new RewardTracker("Fee + Staked LLP", "fsLLP");
+        deployed.stakedLlpTracker = address(stakedLlpTracker);
         
-        RewardDistributor stakedGlpDistributor = new RewardDistributor(
+        RewardDistributor stakedLlpDistributor = new RewardDistributor(
             deployed.esGmx,
-            deployed.stakedGlpTracker
+            deployed.stakedLlpTracker
         );
-        deployed.stakedGlpDistributor = address(stakedGlpDistributor);
+        deployed.stakedLlpDistributor = address(stakedLlpDistributor);
         
-        // Fee GLP
-        RewardTracker feeGlpTracker = new RewardTracker("Staked GLP", "sGLP");
-        deployed.feeGlpTracker = address(feeGlpTracker);
+        // Fee LLP
+        RewardTracker feeLlpTracker = new RewardTracker("Staked LLP", "sLLP");
+        deployed.feeLlpTracker = address(feeLlpTracker);
         
-        RewardDistributor feeGlpDistributor = new RewardDistributor(
+        RewardDistributor feeLlpDistributor = new RewardDistributor(
             config.weth,
-            deployed.feeGlpTracker
+            deployed.feeLlpTracker
         );
-        deployed.feeGlpDistributor = address(feeGlpDistributor);
+        deployed.feeLlpDistributor = address(feeLlpDistributor);
         
-        // StakedGlp helper
-        StakedGlp stakedGlp = new StakedGlp(
-            deployed.glp,
-            IGlpManager(deployed.glpManager),
-            deployed.stakedGlpTracker,
-            deployed.feeGlpTracker
+        // StakedLLP helper
+        StakedLLP stakedLLP = new StakedLLP(
+            deployed.llp,
+            ILLPManager(deployed.llpManager),
+            deployed.stakedLlpTracker,
+            deployed.feeLlpTracker
         );
-        deployed.stakedGlp = address(stakedGlp);
+        deployed.stakedLLP = address(stakedLLP);
         
         // Vesters
         Vester gmxVester = new Vester(
@@ -428,30 +428,30 @@ contract DeployPerps is Script, DeployConfig {
             VESTING_DURATION,
             deployed.esGmx,
             deployed.feeGmxTracker,
-            deployed.gmx,
+            deployed.lpx,
             deployed.stakedGmxTracker
         );
-        deployed.gmxVester = address(gmxVester);
+        deployed.lpxVester = address(gmxVester);
         
-        Vester glpVester = new Vester(
-            "Vested GLP",
-            "vGLP",
+        Vester llpVester = new Vester(
+            "Vested LLP",
+            "vLLP",
             VESTING_DURATION,
             deployed.esGmx,
-            deployed.stakedGlpTracker,
-            deployed.gmx,
-            deployed.stakedGlpTracker
+            deployed.stakedLlpTracker,
+            deployed.lpx,
+            deployed.stakedLlpTracker
         );
-        deployed.glpVester = address(glpVester);
+        deployed.llpVester = address(llpVester);
         
         console.log("  RewardRouter:", deployed.rewardRouter);
         console.log("  StakedGmxTracker:", deployed.stakedGmxTracker);
         console.log("  BonusGmxTracker:", deployed.bonusGmxTracker);
         console.log("  FeeGmxTracker:", deployed.feeGmxTracker);
-        console.log("  StakedGlpTracker:", deployed.stakedGlpTracker);
-        console.log("  FeeGlpTracker:", deployed.feeGlpTracker);
-        console.log("  GMXVester:", deployed.gmxVester);
-        console.log("  GLPVester:", deployed.glpVester);
+        console.log("  StakedLlpTracker:", deployed.stakedLlpTracker);
+        console.log("  FeeLlpTracker:", deployed.feeLlpTracker);
+        console.log("  LPXVester:", deployed.lpxVester);
+        console.log("  LLPVester:", deployed.llpVester);
     }
     
     function _deployOracle(address, ChainConfig memory) internal {
@@ -502,8 +502,8 @@ contract DeployPerps is Script, DeployConfig {
             buffer,
             gov, // tokenManager
             gov, // mintReceiver
-            deployed.glpManager,
-            address(0), // prevGlpManager (none for new deployment)
+            deployed.llpManager,
+            address(0), // prevLLPManager (none for new deployment)
             deployed.rewardRouter,
             maxTokenSupply,
             10, // marginFeeBasisPoints
@@ -555,21 +555,21 @@ contract DeployPerps is Script, DeployConfig {
         vault.setGov(deployed.timelock);
         
         // Initialize RewardRouter
-        RewardRouterV2(payable(deployed.rewardRouter)).initialize(
+        RewardRouter(payable(deployed.rewardRouter)).initialize(
             config.weth,
-            deployed.gmx,
+            deployed.lpx,
             deployed.esGmx,
             address(0), // bnGMX
-            deployed.glp,
+            deployed.llp,
             deployed.stakedGmxTracker,
             deployed.bonusGmxTracker,
             deployed.feeGmxTracker,
-            deployed.feeGlpTracker,
-            deployed.stakedGlpTracker,
-            deployed.glpManager,
-            deployed.gmxVester,
-            deployed.glpVester,
-            deployed.gmx // govToken
+            deployed.feeLlpTracker,
+            deployed.stakedLlpTracker,
+            deployed.llpManager,
+            deployed.lpxVester,
+            deployed.llpVester,
+            deployed.lpx // govToken
         );
         
         // Configure reward trackers
@@ -582,7 +582,7 @@ contract DeployPerps is Script, DeployConfig {
         // Configure staked GMX tracker
         RewardTracker stakedGmxTracker = RewardTracker(deployed.stakedGmxTracker);
         stakedGmxTracker.initialize(
-            _singleAddressArray(deployed.gmx),
+            _singleAddressArray(deployed.lpx),
             deployed.stakedGmxDistributor
         );
         stakedGmxTracker.setInPrivateTransferMode(true);
@@ -612,26 +612,26 @@ contract DeployPerps is Script, DeployConfig {
         feeGmxTracker.setInPrivateStakingMode(true);
         feeGmxTracker.setHandler(deployed.rewardRouter, true);
         
-        // Configure staked GLP tracker
-        RewardTracker stakedGlpTracker = RewardTracker(deployed.stakedGlpTracker);
-        stakedGlpTracker.initialize(
-            _singleAddressArray(deployed.feeGlpTracker),
-            deployed.stakedGlpDistributor
+        // Configure staked LLP tracker
+        RewardTracker stakedLlpTracker = RewardTracker(deployed.stakedLlpTracker);
+        stakedLlpTracker.initialize(
+            _singleAddressArray(deployed.feeLlpTracker),
+            deployed.stakedLlpDistributor
         );
-        stakedGlpTracker.setInPrivateTransferMode(true);
-        stakedGlpTracker.setInPrivateStakingMode(true);
-        stakedGlpTracker.setHandler(deployed.rewardRouter, true);
+        stakedLlpTracker.setInPrivateTransferMode(true);
+        stakedLlpTracker.setInPrivateStakingMode(true);
+        stakedLlpTracker.setHandler(deployed.rewardRouter, true);
         
-        // Configure fee GLP tracker
-        RewardTracker feeGlpTracker = RewardTracker(deployed.feeGlpTracker);
-        feeGlpTracker.initialize(
-            _singleAddressArray(deployed.glp),
-            deployed.feeGlpDistributor
+        // Configure fee LLP tracker
+        RewardTracker feeLlpTracker = RewardTracker(deployed.feeLlpTracker);
+        feeLlpTracker.initialize(
+            _singleAddressArray(deployed.llp),
+            deployed.feeLlpDistributor
         );
-        feeGlpTracker.setInPrivateTransferMode(true);
-        feeGlpTracker.setInPrivateStakingMode(true);
-        feeGlpTracker.setHandler(deployed.stakedGlp, true);
-        feeGlpTracker.setHandler(deployed.rewardRouter, true);
+        feeLlpTracker.setInPrivateTransferMode(true);
+        feeLlpTracker.setInPrivateStakingMode(true);
+        feeLlpTracker.setHandler(deployed.stakedLLP, true);
+        feeLlpTracker.setHandler(deployed.rewardRouter, true);
     }
     
     function _singleAddressArray(address addr) internal pure returns (address[] memory) {
@@ -652,7 +652,7 @@ contract DeployPerps is Script, DeployConfig {
         console.log("  Vault:", deployed.vault);
         console.log("  VaultUtils:", deployed.vaultUtils);
         console.log("  VaultPriceFeed:", deployed.vaultPriceFeed);
-        console.log("  USDG:", deployed.usdg);
+        console.log("  LPUSD:", deployed.lpusd);
         console.log("");
         console.log("Routing:");
         console.log("  Router:", deployed.router);
@@ -661,13 +661,13 @@ contract DeployPerps is Script, DeployConfig {
         console.log("  OrderBook:", deployed.orderBook);
         console.log("");
         console.log("Tokens:");
-        console.log("  GMX:", deployed.gmx);
+        console.log("  LPX:", deployed.lpx);
         console.log("  EsGMX:", deployed.esGmx);
-        console.log("  GLP:", deployed.glp);
+        console.log("  LLP:", deployed.llp);
         console.log("");
         console.log("Staking:");
         console.log("  RewardRouter:", deployed.rewardRouter);
-        console.log("  GlpManager:", deployed.glpManager);
+        console.log("  LLPManager:", deployed.llpManager);
         console.log("");
         console.log("Oracle:");
         console.log("  FastPriceFeed:", deployed.fastPriceFeed);

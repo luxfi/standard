@@ -1,377 +1,191 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+// SPDX-License-Identifier: BSD-3-Clause
+pragma solidity ^0.8.24;
 
-import "forge-std/Script.sol";
-import "./DeployConfig.s.sol";
+import {Script, console} from "forge-std/Script.sol";
 
-// Core Synths contracts - using named imports to avoid ERC20 conflicts
+// Synth Tokens (12 total)
+import {xUSD} from "../contracts/synths/xUSD.sol";
+import {xETH} from "../contracts/synths/xETH.sol";
+import {xBTC} from "../contracts/synths/xBTC.sol";
+import {xLUX} from "../contracts/synths/xLUX.sol";
+import {xAI} from "../contracts/synths/xAI.sol";
+import {xSOL} from "../contracts/synths/xSOL.sol";
+import {xTON} from "../contracts/synths/xTON.sol";
+import {xADA} from "../contracts/synths/xADA.sol";
+import {xAVAX} from "../contracts/synths/xAVAX.sol";
+import {xBNB} from "../contracts/synths/xBNB.sol";
+import {xPOL} from "../contracts/synths/xPOL.sol";
+import {xZOO} from "../contracts/synths/xZOO.sol";
+
+// Core Protocol
 import {AlchemistV2} from "../contracts/synths/AlchemistV2.sol";
-import {IAlchemistV2} from "../contracts/synths/interfaces/IAlchemistV2.sol";
-import {IAlchemistV2AdminActions} from "../contracts/synths/interfaces/alchemist/IAlchemistV2AdminActions.sol";
-import {AlchemicTokenV2} from "../contracts/synths/AlchemicTokenV2.sol";
 import {TransmuterV2} from "../contracts/synths/TransmuterV2.sol";
 import {TransmuterBuffer} from "../contracts/synths/TransmuterBuffer.sol";
-import {WETHGateway} from "../contracts/synths/WETHGateway.sol";
-// Note: gALCX has ERC20 conflicts - import only if needed
-// import {gALCX} from "../contracts/synths/gALCX.sol";
-import {Whitelist} from "../contracts/synths/utils/Whitelist.sol";
 
-// Adapters
-import {YearnTokenAdapter} from "../contracts/synths/adapters/yearn/YearnTokenAdapter.sol";
+// Proxy
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-/// @title DeploySynths
-/// @notice Deploy the complete Synths (Alchemix-style) protocol
-/// @dev Deployment order:
-///   1. AlchemicTokenV2 (alUSD, alETH, alBTC)
-///   2. Whitelist
-///   3. TransmuterV2 (for each synthetic)
-///   4. TransmuterBuffer
-///   5. AlchemistV2 (for each collateral type)
-///   6. YieldAdapters (Yearn, Aave, Compound)
-///   7. WETHGateway (for ETH deposits)
-///   8. gALCX (governance staking)
-contract DeploySynths is Script, DeployConfig {
-    
-    // ═══════════════════════════════════════════════════════════════════════
-    // DEPLOYMENT PARAMETERS
-    // ═══════════════════════════════════════════════════════════════════════
-    
-    // Protocol fee: 10% of yield
-    uint256 constant PROTOCOL_FEE = 1000; // 10% in BPS
-    
-    // Minimum collateralization ratio: 200%
-    uint256 constant MIN_COLLATERALIZATION = 2e18;
-    
-    // Minting limits
-    uint256 constant MINT_LIMIT_MAXIMUM = 1_000_000e18; // 1M tokens
-    uint256 constant MINT_LIMIT_BLOCKS = 7200; // ~24 hours at 12s/block
-    
-    // ═══════════════════════════════════════════════════════════════════════
-    // DEPLOYED ADDRESSES
-    // ═══════════════════════════════════════════════════════════════════════
-    
-    struct DeployedSynths {
-        // Synthetic tokens
-        address alUSD;
-        address alETH;
-        address alBTC;
-        
-        // Whitelists
-        address whitelistUSD;
-        address whitelistETH;
-        address whitelistBTC;
-        
-        // Transmuters
-        address transmuterUSD;
-        address transmuterETH;
-        address transmuterBTC;
-        
-        // Transmuter buffers
-        address bufferUSD;
-        address bufferETH;
-        address bufferBTC;
-        
-        // Alchemists
-        address alchemistUSD;
-        address alchemistETH;
-        address alchemistBTC;
-        
-        // Adapters
-        address yearnUSDCAdapter;
-        address yearnDAIAdapter;
-        address yearnWETHAdapter;
-        address yearnWBTCAdapter;
-        
-        // Utilities
-        address wethGateway;
-        address gALCX;
-    }
-    
-    DeployedSynths public deployed;
-    
-    // ═══════════════════════════════════════════════════════════════════════
-    // MAIN DEPLOYMENT
-    // ═══════════════════════════════════════════════════════════════════════
-    
-    function run() public virtual {
-        _initConfigs();
-        ChainConfig memory config = getConfig();
-        
+/**
+ * @title DeploySynths
+ * @notice Deploys all 12 mainnet synth tokens and core protocol contracts
+ * @dev LP-9108: Synths - Self-Repaying Synthetic Assets Standard
+ * 
+ * Mainnet Synths (12):
+ * - Native: xLUX, xAI, xZOO
+ * - Stablecoin: xUSD
+ * - Major L1s: xETH, xBTC, xSOL, xTON, xADA, xAVAX, xBNB, xPOL
+ * 
+ * Usage:
+ *   forge script script/DeploySynths.s.sol --rpc-url <RPC_URL> --broadcast
+ */
+contract DeploySynths is Script {
+    // Deployed synth tokens
+    xUSD public synthUSD;
+    xETH public synthETH;
+    xBTC public synthBTC;
+    xLUX public synthLUX;
+    xAI public synthAI;
+    xSOL public synthSOL;
+    xTON public synthTON;
+    xADA public synthADA;
+    xAVAX public synthAVAX;
+    xBNB public synthBNB;
+    xPOL public synthPOL;
+    xZOO public synthZOO;
+
+    // Core protocol (implementation + proxy)
+    AlchemistV2 public alchemistImpl;
+    TransmuterV2 public transmuterImpl;
+    TransmuterBuffer public bufferImpl;
+
+    // Proxies
+    AlchemistV2 public xUSDVault;
+    TransmuterV2 public transmuterUSD;
+
+    function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address deployer = vm.addr(deployerPrivateKey);
         
-        console.log("=== Synths Protocol Deployment ===");
-        console.log("Chain ID:", block.chainid);
+        console.log("=== Deploying Synths Protocol ===");
         console.log("Deployer:", deployer);
+        console.log("Chain ID:", block.chainid);
         console.log("");
-        
-        vm.startBroadcast(deployerPrivateKey);
-        
-        // Step 1: Deploy synthetic tokens
-        _deploySyntheticTokens(deployer);
-        
-        // Step 2: Deploy whitelists
-        _deployWhitelists(deployer);
-        
-        // Step 3: Deploy transmuters
-        _deployTransmuters(config);
-        
-        // Step 4: Deploy transmuter buffers
-        _deployTransmuterBuffers();
-        
-        // Step 5: Deploy alchemists
-        _deployAlchemists(deployer, config);
-        
-        // Step 6: Deploy yield adapters
-        _deployYieldAdapters();
-        
-        // Step 7: Deploy WETH gateway
-        _deployWETHGateway(config);
-        
-        // Step 8: Deploy governance staking
-        _deployGovernanceStaking(config);
-        
-        // Step 9: Configure protocol
-        _configureProtocol(deployer, config);
-        
-        vm.stopBroadcast();
-        
-        // Output deployment summary
-        _printDeploymentSummary();
-    }
-    
-    // ═══════════════════════════════════════════════════════════════════════
-    // DEPLOYMENT STEPS
-    // ═══════════════════════════════════════════════════════════════════════
-    
-    function _deploySyntheticTokens(address admin) internal {
-        console.log("Step 1: Deploying Synthetic Tokens...");
-        
-        // alUSD - Synthetic USD
-        AlchemicTokenV2 alUSD = new AlchemicTokenV2("Alchemic USD", "alUSD", 0);
-        deployed.alUSD = address(alUSD);
-        console.log("  alUSD:", deployed.alUSD);
-        
-        // alETH - Synthetic ETH
-        AlchemicTokenV2 alETH = new AlchemicTokenV2("Alchemic ETH", "alETH", 0);
-        deployed.alETH = address(alETH);
-        console.log("  alETH:", deployed.alETH);
-        
-        // alBTC - Synthetic BTC
-        AlchemicTokenV2 alBTC = new AlchemicTokenV2("Alchemic BTC", "alBTC", 0);
-        deployed.alBTC = address(alBTC);
-        console.log("  alBTC:", deployed.alBTC);
-    }
-    
-    function _deployWhitelists(address admin) internal {
-        console.log("Step 2: Deploying Whitelists...");
-        
-        // USD whitelist
-        Whitelist whitelistUSD = new Whitelist();
-        deployed.whitelistUSD = address(whitelistUSD);
-        
-        // ETH whitelist  
-        Whitelist whitelistETH = new Whitelist();
-        deployed.whitelistETH = address(whitelistETH);
-        
-        // BTC whitelist
-        Whitelist whitelistBTC = new Whitelist();
-        deployed.whitelistBTC = address(whitelistBTC);
-        
-        console.log("  Whitelists deployed");
-    }
-    
-    function _deployTransmuters(ChainConfig memory config) internal {
-        console.log("Step 3: Deploying Transmuters...");
-        
-        // Transmuter for alUSD -> USDC/DAI
-        TransmuterV2 transmuterUSD = new TransmuterV2();
-        transmuterUSD.initialize(
-            deployed.alUSD,
-            config.usdc,
-            address(0), deployed.whitelistUSD
-        );
-        deployed.transmuterUSD = address(transmuterUSD);
-        console.log("  TransmuterUSD:", deployed.transmuterUSD);
-        
-        // Transmuter for alETH -> WETH
-        TransmuterV2 transmuterETH = new TransmuterV2();
-        transmuterETH.initialize(
-            deployed.alETH,
-            config.weth,
-            address(0),
-            deployed.whitelistETH
-        );
-        deployed.transmuterETH = address(transmuterETH);
-        console.log("  TransmuterETH:", deployed.transmuterETH);
-        
-        // Transmuter for alBTC -> WBTC
-        TransmuterV2 transmuterBTC = new TransmuterV2();
-        transmuterBTC.initialize(
-            deployed.alBTC,
-            config.wbtc,
-            address(0),
-            deployed.whitelistBTC
-        );
-        deployed.transmuterBTC = address(transmuterBTC);
-        console.log("  TransmuterBTC:", deployed.transmuterBTC);
-    }
-    
-    function _deployTransmuterBuffers() internal {
-        console.log("Step 4: Deploying Transmuter Buffers...");
-        
-        // Buffer for USD transmuter
-        TransmuterBuffer bufferUSD = new TransmuterBuffer();
-        bufferUSD.initialize(msg.sender, deployed.alUSD);
-        deployed.bufferUSD = address(bufferUSD);
-        
-        // Buffer for ETH transmuter
-        TransmuterBuffer bufferETH = new TransmuterBuffer();
-        bufferETH.initialize(msg.sender, deployed.alETH);
-        deployed.bufferETH = address(bufferETH);
-        
-        // Buffer for BTC transmuter
-        TransmuterBuffer bufferBTC = new TransmuterBuffer();
-        bufferBTC.initialize(msg.sender, deployed.alBTC);
-        deployed.bufferBTC = address(bufferBTC);
-        
-        console.log("  Buffers deployed");
-    }
-    
-    function _deployAlchemists(address admin, ChainConfig memory config) internal {
-        console.log("Step 5: Deploying Alchemists...");
-        
-        // Alchemist for USD (collateral: USDC, DAI)
-        AlchemistV2 alchemistUSD = new AlchemistV2();
-        alchemistUSD.initialize(IAlchemistV2AdminActions.InitializationParams({
-            admin: admin,
-            debtToken: deployed.alUSD,
-            transmuter: deployed.transmuterUSD,
-            minimumCollateralization: MIN_COLLATERALIZATION,
-            protocolFee: PROTOCOL_FEE,
-            protocolFeeReceiver: config.multisig,
-            mintingLimitMinimum: 0,
-            mintingLimitMaximum: MINT_LIMIT_MAXIMUM,
-            mintingLimitBlocks: MINT_LIMIT_BLOCKS,
-            whitelist: deployed.whitelistUSD
-        }));
-        deployed.alchemistUSD = address(alchemistUSD);
-        console.log("  AlchemistUSD:", deployed.alchemistUSD);
-        
-        // Alchemist for ETH (collateral: WETH)
-        AlchemistV2 alchemistETH = new AlchemistV2();
-        alchemistETH.initialize(IAlchemistV2AdminActions.InitializationParams({
-            admin: admin,
-            debtToken: deployed.alETH,
-            transmuter: deployed.transmuterETH,
-            minimumCollateralization: MIN_COLLATERALIZATION,
-            protocolFee: PROTOCOL_FEE,
-            protocolFeeReceiver: config.multisig,
-            mintingLimitMinimum: 0,
-            mintingLimitMaximum: MINT_LIMIT_MAXIMUM,
-            mintingLimitBlocks: MINT_LIMIT_BLOCKS,
-            whitelist: deployed.whitelistETH
-        }));
-        deployed.alchemistETH = address(alchemistETH);
-        console.log("  AlchemistETH:", deployed.alchemistETH);
-        
-        // Alchemist for BTC (collateral: WBTC)
-        AlchemistV2 alchemistBTC = new AlchemistV2();
-        alchemistBTC.initialize(IAlchemistV2AdminActions.InitializationParams({
-            admin: admin,
-            debtToken: deployed.alBTC,
-            transmuter: deployed.transmuterBTC,
-            minimumCollateralization: MIN_COLLATERALIZATION,
-            protocolFee: PROTOCOL_FEE,
-            protocolFeeReceiver: config.multisig,
-            mintingLimitMinimum: 0,
-            mintingLimitMaximum: MINT_LIMIT_MAXIMUM,
-            mintingLimitBlocks: MINT_LIMIT_BLOCKS,
-            whitelist: deployed.whitelistBTC
-        }));
-        deployed.alchemistBTC = address(alchemistBTC);
-        console.log("  AlchemistBTC:", deployed.alchemistBTC);
-    }
-    
-    function _deployYieldAdapters() internal {
-        console.log("Step 6: Deploying Yield Adapters...");
-        // Yearn adapters would be deployed here
-        // For now, placeholder - actual Yearn vaults need to exist
-        console.log("  (Yield adapters require existing vault addresses)");
-    }
-    
-    function _deployWETHGateway(ChainConfig memory config) internal {
-        console.log("Step 7: Deploying WETH Gateway...");
-        
-        if (config.weth != address(0)) {
-            WETHGateway gateway = new WETHGateway(
-                config.weth,
-                deployed.whitelistETH
-            );
-            deployed.wethGateway = address(gateway);
-            console.log("  WETHGateway:", deployed.wethGateway);
-        } else {
-            console.log("  (WETH not configured, skipping gateway)");
-        }
-    }
-    
-    function _deployGovernanceStaking(ChainConfig memory) internal {
-        console.log("Step 8: Deploying Governance Staking...");
-        // gALCX deployment would require governance token
-        console.log("  (Governance staking requires ALCX token)");
-    }
-    
-    function _configureProtocol(address admin, ChainConfig memory config) internal {
-        console.log("Step 9: Configuring Protocol...");
-        
-        // Grant minter roles to alchemists
-        AlchemicTokenV2(deployed.alUSD).setWhitelist(deployed.alchemistUSD, true);
-        AlchemicTokenV2(deployed.alETH).setWhitelist(deployed.alchemistETH, true);
-        AlchemicTokenV2(deployed.alBTC).setWhitelist(deployed.alchemistBTC, true);
-        
-        // Set transmuter buffer sources (buffer is the collateral source)
-        TransmuterV2(deployed.transmuterUSD).setCollateralSource(deployed.bufferUSD);
-        TransmuterV2(deployed.transmuterETH).setCollateralSource(deployed.bufferETH);
-        TransmuterV2(deployed.transmuterBTC).setCollateralSource(deployed.bufferBTC);
-        
-        console.log("  Protocol configured");
-    }
-    
-    // ═══════════════════════════════════════════════════════════════════════
-    // OUTPUT
-    // ═══════════════════════════════════════════════════════════════════════
-    
-    function _printDeploymentSummary() internal view {
-        console.log("");
-        console.log("=== Deployment Summary ===");
-        console.log("");
-        console.log("Synthetic Tokens:");
-        console.log("  alUSD:", deployed.alUSD);
-        console.log("  alETH:", deployed.alETH);
-        console.log("  alBTC:", deployed.alBTC);
-        console.log("");
-        console.log("Alchemists:");
-        console.log("  USD:", deployed.alchemistUSD);
-        console.log("  ETH:", deployed.alchemistETH);
-        console.log("  BTC:", deployed.alchemistBTC);
-        console.log("");
-        console.log("Transmuters:");
-        console.log("  USD:", deployed.transmuterUSD);
-        console.log("  ETH:", deployed.transmuterETH);
-        console.log("  BTC:", deployed.transmuterBTC);
-        console.log("");
-        console.log("Utilities:");
-        console.log("  WETH Gateway:", deployed.wethGateway);
-        console.log("");
-    }
-}
 
-/// @title DeploySynthsTestnet
-/// @notice Deploy Synths with test tokens for testnet
-contract DeploySynthsTestnet is DeploySynths {
-    function run() public override {
-        console.log("Deploying Synths to Testnet with mock tokens...");
-        // Would deploy mock tokens first, then protocol
-        super.run();
+        vm.startBroadcast(deployerPrivateKey);
+
+        // ========== Phase 1: Deploy Synth Tokens ==========
+        console.log("--- Phase 1: Synth Tokens (12) ---");
+        
+        // Native Lux Tokens
+        synthLUX = new xLUX();
+        console.log("xLUX deployed:", address(synthLUX));
+        
+        synthAI = new xAI();
+        console.log("xAI deployed:", address(synthAI));
+        
+        synthZOO = new xZOO();
+        console.log("xZOO deployed:", address(synthZOO));
+        
+        // Stablecoin
+        synthUSD = new xUSD();
+        console.log("xUSD deployed:", address(synthUSD));
+        
+        // Major L1s
+        synthETH = new xETH();
+        console.log("xETH deployed:", address(synthETH));
+        
+        synthBTC = new xBTC();
+        console.log("xBTC deployed:", address(synthBTC));
+        
+        synthSOL = new xSOL();
+        console.log("xSOL deployed:", address(synthSOL));
+        
+        synthTON = new xTON();
+        console.log("xTON deployed:", address(synthTON));
+        
+        synthADA = new xADA();
+        console.log("xADA deployed:", address(synthADA));
+        
+        synthAVAX = new xAVAX();
+        console.log("xAVAX deployed:", address(synthAVAX));
+        
+        synthBNB = new xBNB();
+        console.log("xBNB deployed:", address(synthBNB));
+        
+        synthPOL = new xPOL();
+        console.log("xPOL deployed:", address(synthPOL));
+        
+        console.log("");
+
+        // ========== Phase 2: Deploy Protocol Implementations ==========
+        console.log("--- Phase 2: Protocol Implementations ---");
+        
+        alchemistImpl = new AlchemistV2();
+        console.log("AlchemistV2 impl:", address(alchemistImpl));
+        
+        transmuterImpl = new TransmuterV2();
+        console.log("TransmuterV2 impl:", address(transmuterImpl));
+        
+        bufferImpl = new TransmuterBuffer();
+        console.log("TransmuterBuffer impl:", address(bufferImpl));
+        
+        console.log("");
+
+        // ========== Phase 3: Deploy Proxies (xUSD example) ==========
+        console.log("--- Phase 3: Protocol Proxies (xUSD) ---");
+        
+        // Transmuter proxy for xUSD
+        bytes memory transmuterInitData = abi.encodeWithSelector(
+            TransmuterV2.initialize.selector,
+            address(synthUSD),  // syntheticToken
+            address(0),         // underlyingToken (to be set)
+            address(0)          // buffer (to be set)
+        );
+        ERC1967Proxy transmuterProxy = new ERC1967Proxy(
+            address(transmuterImpl),
+            transmuterInitData
+        );
+        transmuterUSD = TransmuterV2(address(transmuterProxy));
+        console.log("TransmuterV2 proxy (xUSD):", address(transmuterUSD));
+        
+        // Alchemist proxy for xUSD
+        bytes memory alchemistInitData = abi.encodeWithSelector(
+            AlchemistV2.initialize.selector,
+            address(synthUSD),      // debtToken
+            deployer                // admin
+        );
+        ERC1967Proxy alchemistProxy = new ERC1967Proxy(
+            address(alchemistImpl),
+            alchemistInitData
+        );
+        xUSDVault = AlchemistV2(address(alchemistProxy));
+        console.log("AlchemistV2 proxy (xUSD):", address(xUSDVault));
+
+        vm.stopBroadcast();
+
+        // ========== Summary ==========
+        console.log("");
+        console.log("=== Deployment Complete ===");
+        console.log("");
+        console.log("Synth Tokens (12):");
+        console.log("  xLUX:  ", address(synthLUX));
+        console.log("  xAI:   ", address(synthAI));
+        console.log("  xZOO:  ", address(synthZOO));
+        console.log("  xUSD:  ", address(synthUSD));
+        console.log("  xETH:  ", address(synthETH));
+        console.log("  xBTC:  ", address(synthBTC));
+        console.log("  xSOL:  ", address(synthSOL));
+        console.log("  xTON:  ", address(synthTON));
+        console.log("  xADA:  ", address(synthADA));
+        console.log("  xAVAX: ", address(synthAVAX));
+        console.log("  xBNB:  ", address(synthBNB));
+        console.log("  xPOL:  ", address(synthPOL));
+        console.log("");
+        console.log("Protocol:");
+        console.log("  AlchemistV2 impl:   ", address(alchemistImpl));
+        console.log("  TransmuterV2 impl:  ", address(transmuterImpl));
+        console.log("  TransmuterBuffer:   ", address(bufferImpl));
+        console.log("  AlchemistV2 (xUSD): ", address(xUSDVault));
+        console.log("  TransmuterV2 (xUSD):", address(transmuterUSD));
     }
 }

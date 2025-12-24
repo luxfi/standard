@@ -33,7 +33,7 @@ contract RewardReader {
         return amounts;
     }
 
-    function getVestingInfoV2(address _account, address[] memory _vesters) public view returns (uint256[] memory) {
+    function getVestingInfo(address _account, address[] memory _vesters) public view returns (uint256[] memory) {
         uint256 propsLength = 12;
         uint256[] memory amounts = new uint256[](_vesters.length * propsLength);
         for (uint256 i = 0; i < _vesters.length; i++) {
