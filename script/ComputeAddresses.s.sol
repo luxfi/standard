@@ -11,7 +11,10 @@ import {USDT as BridgeUSDT} from "../contracts/bridge/USDT.sol";
 import {DAI as BridgeDAI} from "../contracts/bridge/DAI.sol";
 import {WETH as BridgeWETH} from "../contracts/bridge/WETH.sol";
 import {AIToken} from "../contracts/ai/AIToken.sol";
-import {AlchemicTokenV2} from "../contracts/synths/AlchemicTokenV2.sol";
+import {xUSD} from "../contracts/synths/xUSD.sol";
+import {xETH} from "../contracts/synths/xETH.sol";
+import {xBTC} from "../contracts/synths/xBTC.sol";
+import {xLUX} from "../contracts/synths/xLUX.sol";
 import {Whitelist} from "../contracts/synths/utils/Whitelist.sol";
 import {AlchemistV2} from "../contracts/synths/AlchemistV2.sol";
 import {TransmuterV2} from "../contracts/synths/TransmuterV2.sol";
@@ -112,31 +115,23 @@ contract ComputeAddresses is Script {
         // SYNTHS
         // ═══════════════════════════════════════════════════════════════════
 
-        console.log("SYNTHS:");
+        console.log("SYNTHS (x* = Lux omnichain synths):");
 
         address whitelist = computeAddress(factory, salt("Whitelist"), type(Whitelist).creationCode);
         console.log("  Whitelist:     ", whitelist);
 
-        bytes memory alUSDBytecode = abi.encodePacked(
-            type(AlchemicTokenV2).creationCode,
-            abi.encode("Alchemic USD", "alUSD", uint256(0))
-        );
-        address alUSD = computeAddress(factory, salt("alUSD"), alUSDBytecode);
-        console.log("  alUSD:         ", alUSD);
+        // x* synths have no constructor args - bytecode is complete
+        address xUSDAddr = computeAddress(factory, salt("xUSD"), type(xUSD).creationCode);
+        console.log("  xUSD:          ", xUSDAddr);
 
-        bytes memory alETHBytecode = abi.encodePacked(
-            type(AlchemicTokenV2).creationCode,
-            abi.encode("Alchemic ETH", "alETH", uint256(0))
-        );
-        address alETH = computeAddress(factory, salt("alETH"), alETHBytecode);
-        console.log("  alETH:         ", alETH);
+        address xETHAddr = computeAddress(factory, salt("xETH"), type(xETH).creationCode);
+        console.log("  xETH:          ", xETHAddr);
 
-        bytes memory alBTCBytecode = abi.encodePacked(
-            type(AlchemicTokenV2).creationCode,
-            abi.encode("Alchemic BTC", "alBTC", uint256(0))
-        );
-        address alBTC = computeAddress(factory, salt("alBTC"), alBTCBytecode);
-        console.log("  alBTC:         ", alBTC);
+        address xBTCAddr = computeAddress(factory, salt("xBTC"), type(xBTC).creationCode);
+        console.log("  xBTC:          ", xBTCAddr);
+
+        address xLUXAddr = computeAddress(factory, salt("xLUX"), type(xLUX).creationCode);
+        console.log("  xLUX:          ", xLUXAddr);
 
         address transmuterBuffer = computeAddress(factory, salt("TransmuterBufferUSD"), type(TransmuterBuffer).creationCode);
         console.log("  TransmuterBuffer:", transmuterBuffer);

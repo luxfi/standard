@@ -17,6 +17,7 @@ abstract contract DeployConfig is Script {
     uint256 constant HANZO_TESTNET = 36962;
     uint256 constant ZOO_MAINNET = 200200;
     uint256 constant ZOO_TESTNET = 200201;
+    uint256 constant LOCAL_DEV = 1;  // Local development network
     
     // ═══════════════════════════════════════════════════════════════════════
     // PROTOCOL ADDRESSES (per chain)
@@ -92,6 +93,26 @@ abstract contract DeployConfig is Script {
             timelock: 0x0000000000000000000000000000000000000000,
             warpMessenger: 0x0200000000000000000000000000000000000005
         });
+
+        // Local Development (chain ID 1)
+        configs[LOCAL_DEV] = ChainConfig({
+            wlux: 0x0000000000000000000000000000000000000000, // Will deploy
+            usdc: 0x0000000000000000000000000000000000000000,
+            usdt: 0x0000000000000000000000000000000000000000,
+            dai: 0x0000000000000000000000000000000000000000,
+            weth: 0x0000000000000000000000000000000000000000,
+            wbtc: 0x0000000000000000000000000000000000000000,
+            uniV2Factory: 0x0000000000000000000000000000000000000000,
+            uniV2Router: 0x0000000000000000000000000000000000000000,
+            uniV3Factory: 0x0000000000000000000000000000000000000000,
+            uniV3Router: 0x0000000000000000000000000000000000000000,
+            chainlinkETH: 0x0000000000000000000000000000000000000000,
+            chainlinkBTC: 0x0000000000000000000000000000000000000000,
+            chainlinkLUX: 0x0000000000000000000000000000000000000000,
+            multisig: msg.sender, // Deployer for local
+            timelock: 0x0000000000000000000000000000000000000000,
+            warpMessenger: 0x0200000000000000000000000000000000000005
+        });
     }
     
     function getConfig() internal view returns (ChainConfig memory) {
@@ -105,9 +126,10 @@ abstract contract DeployConfig is Script {
     }
     
     function isTestnet() internal view returns (bool) {
-        return block.chainid == LUX_TESTNET || 
-               block.chainid == HANZO_TESTNET || 
-               block.chainid == ZOO_TESTNET;
+        return block.chainid == LUX_TESTNET ||
+               block.chainid == HANZO_TESTNET ||
+               block.chainid == ZOO_TESTNET ||
+               block.chainid == LOCAL_DEV;
     }
 }
 

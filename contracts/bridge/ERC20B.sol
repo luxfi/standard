@@ -14,7 +14,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract ERC20B is ERC20, Ownable, AccessControl {
+contract LRC20B is ERC20, Ownable, AccessControl {
     event BridgeMint(address indexed account, uint amount);
     event BridgeBurn(address indexed account, uint amount);
     event AdminGranted(address to);

@@ -33,11 +33,11 @@ remappings = [
     "@gnosis.pm/safe-contracts/=lib/safe-smart-account/contracts/",
     "safe-smart-account/=lib/safe-smart-account/contracts/",
     
-    # DeFi - Uniswap
-    "@uniswap/v2-core/=lib/v2-core/",
-    "@uniswap/v3-core/=lib/v3-core/",
-    "@uniswap/v3-periphery/=lib/v3-periphery/",
-    "@uniswap/lib/=lib/uniswap-lib/",
+    # DeFi - Uniswap (V2: GPL-2.0, V3: GPL-2.0 converted from BUSL)
+    "@uniswap/v2-core/=lib/uni-v2/",
+    "@uniswap/v3-core/=lib/uni-v3/",
+    "@uniswap/v3-periphery/=lib/uni-v3-periphery/",
+    "@uniswap/lib/=lib/uni-lib/",
     "@seaport/=lib/seaport/src/",
     
     # Utilities
@@ -51,6 +51,19 @@ remappings = [
     
     # Chainlink
     "@chainlink/contracts/=lib/chainlink/contracts/",
+    
+    # Compound V3 (Comet)
+    "@compound-v3/=lib/compound-v3/contracts/",
+    
+    # Pyth Network
+    "@pyth-network/=lib/pyth/",
+    
+    # DeFi Protocols
+    "@curve/=lib/curve/contracts/",
+    "@balancer/=lib/balancer/pkg/",
+    "@lido/=lib/lido/contracts/",
+    "@pendle/=lib/pendle/contracts/",
+    "@luxfi/markets/=contracts/markets/",
     
     # Base64
     "base64-sol/=lib/base64/",

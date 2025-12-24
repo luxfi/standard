@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../ERC20B.sol";
+import "../LRC20B.sol";
 
-contract LuxREDO is ERC20B {
+contract LuxREDO is LRC20B {
     string public constant _name = "Lux Resistance Dog";
     string public constant _symbol = "LREDO";
 
-    constructor() ERC20B(_name, _symbol) {}
+    constructor() LRC20B(_name, _symbol) {}
 
     function mint(address account, uint256 amount) public {
         _mint(account, amount);

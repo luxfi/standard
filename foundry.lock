@@ -77,6 +77,18 @@
   "lib/solmate": {
     "rev": "89365b880c4f3c786bdd453d4b8e8fe410344a69"
   },
+  "lib/uni-lib": {
+    "rev": "c01640b0f0f1d8a85cba8de378cc48469fcfd9a6"
+  },
+  "lib/uni-v2": {
+    "rev": "ee547b17853e71ed4e0101ccfd52e70d5acded58"
+  },
+  "lib/uni-v3": {
+    "rev": "d8b1c635c275d2a9450bd6a78f3fa2484fef73eb"
+  },
+  "lib/uni-v3-periphery": {
+    "rev": "0682387198a24c7cd63566a2c58398533860a5d1"
+  },
   "lib/uniswap-lib": {
     "rev": "c01640b0f0f1d8a85cba8de378cc48469fcfd9a6"
   },

@@ -13,11 +13,11 @@
 [submodule "lib/base64"]
 	path = lib/base64
 	url = https://github.com/Brechtpd/base64
-[submodule "lib/gmx-contracts"]
-	path = lib/gmx-contracts
+[submodule "lib/gmx-v1"]
+	path = lib/gmx-v1
 	url = https://github.com/gmx-io/gmx-contracts
-[submodule "lib/v3-periphery"]
-	path = lib/v3-periphery
+[submodule "lib/uni-v3-periphery"]
+	path = lib/uni-v3-periphery
 	url = https://github.com/Uniswap/v3-periphery
 [submodule "lib/alchemix-v2"]
 	path = lib/alchemix-v2
@@ -34,14 +34,14 @@
 [submodule "lib/forge-std"]
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
-[submodule "lib/uniswap-lib"]
-	path = lib/uniswap-lib
+[submodule "lib/uni-lib"]
+	path = lib/uni-lib
 	url = https://github.com/Uniswap/uniswap-lib
-[submodule "lib/v2-core"]
-	path = lib/v2-core
+[submodule "lib/uni-v2"]
+	path = lib/uni-v2
 	url = https://github.com/Uniswap/v2-core
-[submodule "lib/v3-core"]
-	path = lib/v3-core
+[submodule "lib/uni-v3"]
+	path = lib/uni-v3
 	url = https://github.com/Uniswap/v3-core
 [submodule "lib/openzeppelin-contracts"]
 	path = lib/openzeppelin-contracts
@@ -52,15 +52,36 @@
 [submodule "lib/manifoldxyz"]
 	path = lib/manifoldxyz
 	url = https://github.com/manifoldxyz/royalty-registry-solidity
-[submodule "lib/chainlink-contracts"]
-	path = lib/chainlink-contracts
+[submodule "lib/chainlink"]
+	path = lib/chainlink
 	url = https://github.com/smartcontractkit/chainlink-brownie-contracts
 [submodule "lib/layerzero-v2"]
 	path = lib/layerzero-v2
 	url = https://github.com/LayerZero-Labs/LayerZero-v2.git
-[submodule "lib/gmx-synthetics"]
-	path = lib/gmx-synthetics
+[submodule "lib/gmx-v2"]
+	path = lib/gmx-v2
 	url = https://github.com/gmx-io/gmx-synthetics
-[submodule "lib/compound"]
-	path = lib/compound
+[submodule "lib/compound-v2"]
+	path = lib/compound-v2
 	url = https://github.com/compound-finance/compound-protocol.git
+[submodule "lib/compound-v3"]
+	path = lib/compound-v3
+	url = https://github.com/compound-finance/comet
+[submodule "lib/pyth"]
+	path = lib/pyth
+	url = https://github.com/pyth-network/pyth-sdk-solidity
+[submodule "lib/curve"]
+	path = lib/curve
+	url = https://github.com/curvefi/curve-stablecoin
+[submodule "lib/balancer"]
+	path = lib/balancer
+	url = https://github.com/balancer/balancer-v2-monorepo
+[submodule "lib/lido"]
+	path = lib/lido
+	url = https://github.com/lidofinance/lido-dao
+[submodule "lib/pendle"]
+	path = lib/pendle
+	url = https://github.com/pendle-finance/pendle-core-v2-public
+[submodule "lib/morpho-blue"]
+	path = lib/morpho-blue
+	url = https://github.com/morpho-org/morpho-blue

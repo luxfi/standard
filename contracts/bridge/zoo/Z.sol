@@ -11,13 +11,13 @@ pragma solidity ^0.8.20;
     ╚══════╝
  */
 
-import "../ERC20B.sol";
+import "../LRC20B.sol";
 
-contract Z is ERC20B {
+contract Z is LRC20B {
     string public constant _name = "Z";
     string public constant _symbol = "Z";
 
-    constructor() ERC20B(_name, _symbol) {}
+    constructor() LRC20B(_name, _symbol) {}
 
     function decimals() public view virtual override returns (uint8) {
         return 6;

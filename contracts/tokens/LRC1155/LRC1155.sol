@@ -148,6 +148,7 @@ contract LRC1155 is
     function supportsInterface(bytes4 interfaceId)
         public
         view
+        virtual
         override(ERC1155, ERC2981, AccessControl)
         returns (bool)
     {

@@ -10,13 +10,13 @@ pragma solidity ^0.8.20;
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝     ╚═╝  ╚═══╝ ╚═════╝    ╚═╝     
  */
 
-import "../ERC20B.sol";
+import "../LRC20B.sol";
 
-contract LuxPNUT is ERC20B {
+contract LuxPNUT is LRC20B {
     string public constant _name = "Lux PNUT";
     string public constant _symbol = "LPNUT";
 
-    constructor() ERC20B(_name, _symbol) {}
+    constructor() LRC20B(_name, _symbol) {}
 
     function mint(address account, uint256 amount) public {
         _mint(account, amount);
