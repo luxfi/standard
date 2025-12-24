@@ -8,6 +8,9 @@
   "lib/alchemix-v2": {
     "rev": "8915ef7b1714c16f9e260a4ef41c5f254d5b7f58"
   },
+  "lib/balancer": {
+    "rev": "316ded078ddc2f1b28da5804d25752af67453435"
+  },
   "lib/base64": {
     "tag": {
       "name": "v1.1.0",
@@ -29,6 +32,15 @@
   "lib/compound": {
     "rev": "80d38c945a36c6d686960a0d5293514b5e7f7419"
   },
+  "lib/compound-v2": {
+    "rev": "a3214f67b73310d547e00fc578e8355911c9d376"
+  },
+  "lib/compound-v3": {
+    "rev": "ed6ebcd84ac00906e8e725716891d482f4bef8b9"
+  },
+  "lib/curve": {
+    "rev": "e231a18ef860edbe36688452b7d15fde42d33c9b"
+  },
   "lib/forge-std": {
     "rev": "3f999523613ab5454a5c4ae4abeaa8ea2ba7bcae"
   },
@@ -38,8 +50,17 @@
   "lib/gmx-synthetics": {
     "rev": "3b9e1399ecae352814a2602650d21721e1e03693"
   },
+  "lib/gmx-v1": {
+    "rev": "fe55c4ba8911ae2378b50bfb9bece5ee50cf2af8"
+  },
+  "lib/gmx-v2": {
+    "rev": "3b9e1399ecae352814a2602650d21721e1e03693"
+  },
   "lib/layerzero-v2": {
     "rev": "ab9b083410b9359285a5756807e1b6145d4711a7"
+  },
+  "lib/lido": {
+    "rev": "cca04b42123735714d8c60a73c2f7af949e989db"
   },
   "lib/lssvm2": {
     "rev": "1b18945b6c8f3e74052ffae0385bd2640d167e81"
@@ -47,17 +68,26 @@
   "lib/manifoldxyz": {
     "rev": "8e3ade55bc2390353145f656bb2785e46edcb970"
   },
+  "lib/morpho-blue": {
+    "rev": "48b2a62d9d911a27f886fb7909ad57e29f7dacc9"
+  },
   "lib/openzeppelin-contracts": {
     "rev": "69c8def5f222ff96f2b5beff05dfba996368aa79"
   },
   "lib/openzeppelin-contracts-upgradeable": {
     "rev": "fa525310e45f91eb20a6d3baa2644be8e0adba31"
   },
+  "lib/pendle": {
+    "rev": "4469a1df4dc524138f8322357a7096498e2de4ee"
+  },
   "lib/prb-math": {
     "tag": {
       "name": "v4.1.0",
       "rev": "280fc5f77e1b21b9c54013aac51966be33f4a410"
     }
+  },
+  "lib/pyth": {
+    "rev": "d7dd6e149936552198c12fac1273997cefc03ceb"
   },
   "lib/safe-modules": {
     "tag": {

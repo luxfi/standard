@@ -27,10 +27,10 @@ import {VaultPriceFeed} from "../contracts/perps/core/VaultPriceFeed.sol";
 import {Router} from "../contracts/perps/core/Router.sol";
 import {PositionRouter} from "../contracts/perps/core/PositionRouter.sol";
 import {ShortsTracker} from "../contracts/perps/core/ShortsTracker.sol";
-import {USDG} from "../contracts/perps/tokens/USDG.sol";
-import {GMX} from "../contracts/perps/gmx/GMX.sol";
-import {GLP} from "../contracts/perps/gmx/GLP.sol";
-import {GlpManager} from "../contracts/perps/core/GlpManager.sol";
+import {USDG} from "../contracts/perps/tokens/LPUSD.sol";
+import {GMX} from "../contracts/perps/lux/LPX.sol";
+import {LLP} from "../contracts/perps/lux/LLP.sol";
+import {LLPManager} from "../contracts/perps/core/LLPManager.sol";
 
 /// @title DeployCreate2
 /// @notice Deterministic deployment using CREATE2 for identical addresses across all chains
@@ -71,20 +71,20 @@ contract DeployCreate2 is Script, DeployConfig {
     function SALT_ALETH() internal pure returns (bytes32) { return salt("alETH"); }
     function SALT_ALBTC() internal pure returns (bytes32) { return salt("alBTC"); }
     function SALT_WHITELIST() internal pure returns (bytes32) { return salt("Whitelist"); }
-    function SALT_ALCHEMIST_USD() internal pure returns (bytes32) { return salt("AlchemistUSD"); }
+    function SALT_ALCHEMIST_USD() internal pure returns (bytes32) { return salt("xUSDVault"); }
     function SALT_ALCHEMIST_ETH() internal pure returns (bytes32) { return salt("AlchemistETH"); }
     function SALT_TRANSMUTER_USD() internal pure returns (bytes32) { return salt("TransmuterUSD"); }
     function SALT_BUFFER_USD() internal pure returns (bytes32) { return salt("TransmuterBufferUSD"); }
-    function SALT_USDG() internal pure returns (bytes32) { return salt("USDG"); }
+    function SALT_LPUSD() internal pure returns (bytes32) { return salt("LPUSD"); }
     function SALT_VAULT() internal pure returns (bytes32) { return salt("Vault"); }
     function SALT_VAULT_UTILS() internal pure returns (bytes32) { return salt("VaultUtils"); }
     function SALT_VAULT_PRICE_FEED() internal pure returns (bytes32) { return salt("VaultPriceFeed"); }
     function SALT_ROUTER() internal pure returns (bytes32) { return salt("Router"); }
     function SALT_POSITION_ROUTER() internal pure returns (bytes32) { return salt("PositionRouter"); }
     function SALT_SHORTS_TRACKER() internal pure returns (bytes32) { return salt("ShortsTracker"); }
-    function SALT_GMX() internal pure returns (bytes32) { return salt("GMX"); }
-    function SALT_GLP() internal pure returns (bytes32) { return salt("GLP"); }
-    function SALT_GLP_MANAGER() internal pure returns (bytes32) { return salt("GlpManager"); }
+    function SALT_LPX() internal pure returns (bytes32) { return salt("LPX"); }
+    function SALT_LLP() internal pure returns (bytes32) { return salt("LLP"); }
+    function SALT_LLP_MANAGER() internal pure returns (bytes32) { return salt("LLPManager"); }
 
     // ═══════════════════════════════════════════════════════════════════════
     // STATE
@@ -107,21 +107,21 @@ contract DeployCreate2 is Script, DeployConfig {
         address alETH;
         address alBTC;
         address whitelist;
-        address alchemistUSD;
+        address xUSDVault;
         address alchemistETH;
         address transmuterUSD;
         address bufferUSD;
         // Perps
-        address usdg;
+        address lpusd;
         address vault;
         address vaultUtils;
         address vaultPriceFeed;
         address router;
         address positionRouter;
         address shortsTracker;
-        address gmx;
-        address glp;
-        address glpManager;
+        address lpx;
+        address llp;
+        address llpManager;
     }
 
     Deployment public d;
@@ -278,8 +278,8 @@ contract DeployCreate2 is Script, DeployConfig {
 
         // Alchemist (impl - will be proxied)
         bytes memory alchemistBytecode = type(AlchemistV2).creationCode;
-        d.alchemistUSD = deployer.deploy(SALT_ALCHEMIST_USD(), alchemistBytecode);
-        console.log("  AlchemistV2 (USD):", d.alchemistUSD);
+        d.xUSDVault = deployer.deploy(SALT_ALCHEMIST_USD(), alchemistBytecode);
+        console.log("  AlchemistV2 (USD):", d.xUSDVault);
 
         d.alchemistETH = deployer.deploy(SALT_ALCHEMIST_ETH(), alchemistBytecode);
         console.log("  AlchemistV2 (ETH):", d.alchemistETH);
@@ -296,11 +296,11 @@ contract DeployCreate2 is Script, DeployConfig {
 
         // USDG (vault param set later)
         bytes memory usdgBytecode = abi.encodePacked(
-            type(USDG).creationCode,
+            type(LPUSD).creationCode,
             abi.encode(address(0))
         );
-        d.usdg = deployer.deploy(SALT_USDG(), usdgBytecode);
-        console.log("  USDG:", d.usdg);
+        d.lpusd = deployer.deploy(SALT_LPUSD(), usdgBytecode);
+        console.log("  LPUSD:", d.lpusd);
 
         // VaultPriceFeed
         bytes memory priceFeedBytecode = type(VaultPriceFeed).creationCode;
@@ -313,14 +313,14 @@ contract DeployCreate2 is Script, DeployConfig {
         console.log("  Vault:", d.vault);
 
         // GMX token
-        bytes memory gmxBytecode = type(GMX).creationCode;
-        d.gmx = deployer.deploy(SALT_GMX(), gmxBytecode);
-        console.log("  GMX:", d.gmx);
+        bytes memory gmxBytecode = type(LPX).creationCode;
+        d.lpx = deployer.deploy(SALT_LPX(), gmxBytecode);
+        console.log("  LPX:", d.lpx);
 
-        // GLP token
-        bytes memory glpBytecode = type(GLP).creationCode;
-        d.glp = deployer.deploy(SALT_GLP(), glpBytecode);
-        console.log("  GLP:", d.glp);
+        // LLP token
+        bytes memory llpBytecode = type(LLP).creationCode;
+        d.llp = deployer.deploy(SALT_LLP(), llpBytecode);
+        console.log("  LLP:", d.llp);
 
         // ShortsTracker
         bytes memory shortsTrackerBytecode = abi.encodePacked(
@@ -333,7 +333,7 @@ contract DeployCreate2 is Script, DeployConfig {
         // Router
         bytes memory routerBytecode = abi.encodePacked(
             type(Router).creationCode,
-            abi.encode(d.vault, d.usdg, d.weth)
+            abi.encode(d.vault, d.lpusd, d.weth)
         );
         d.router = deployer.deploy(SALT_ROUTER(), routerBytecode);
         console.log("  Router:", d.router);
@@ -346,13 +346,13 @@ contract DeployCreate2 is Script, DeployConfig {
         d.positionRouter = deployer.deploy(SALT_POSITION_ROUTER(), positionRouterBytecode);
         console.log("  PositionRouter:", d.positionRouter);
 
-        // GlpManager
-        bytes memory glpManagerBytecode = abi.encodePacked(
-            type(GlpManager).creationCode,
-            abi.encode(d.vault, d.usdg, d.glp, d.shortsTracker, 15 minutes)
+        // LLPManager
+        bytes memory llpManagerBytecode = abi.encodePacked(
+            type(LLPManager).creationCode,
+            abi.encode(d.vault, d.lpusd, d.llp, d.shortsTracker, 15 minutes)
         );
-        d.glpManager = deployer.deploy(SALT_GLP_MANAGER(), glpManagerBytecode);
-        console.log("  GlpManager:", d.glpManager);
+        d.llpManager = deployer.deploy(SALT_LLP_MANAGER(), llpManagerBytecode);
+        console.log("  LLPManager:", d.llpManager);
 
         console.log("");
     }
@@ -367,7 +367,7 @@ contract DeployCreate2 is Script, DeployConfig {
         // Initialize Vault
         Vault(payable(d.vault)).initialize(
             d.router,
-            d.usdg,
+            d.lpusd,
             d.vaultPriceFeed,
             5e30, // liquidationFeeUsd
             100,  // fundingRateFactor
@@ -376,16 +376,16 @@ contract DeployCreate2 is Script, DeployConfig {
         console.log("  Vault initialized");
 
         // USDG vault permission
-        USDG(d.usdg).addVault(d.vault);
-        USDG(d.usdg).addVault(d.glpManager);
-        console.log("  USDG vaults set");
+        LPUSD(d.lpusd).addVault(d.vault);
+        LPUSD(d.lpusd).addVault(d.llpManager);
+        console.log("  LPUSD vaults set");
 
-        // GLP minter
-        GLP(d.glp).setMinter(d.glpManager, true);
-        console.log("  GLP minter set");
+        // LLP minter
+        LLP(d.llp).setMinter(d.llpManager, true);
+        console.log("  LLP minter set");
 
         // Grant whitelist to alchemist for synth tokens
-        AlchemicTokenV2(d.alUSD).setWhitelist(d.alchemistUSD, true);
+        AlchemicTokenV2(d.alUSD).setWhitelist(d.xUSDVault, true);
         AlchemicTokenV2(d.alETH).setWhitelist(d.alchemistETH, true);
         console.log("  Synth whitelists set");
 
@@ -440,21 +440,21 @@ contract DeployCreate2 is Script, DeployConfig {
         console.log("  alETH:         ", d.alETH);
         console.log("  alBTC:         ", d.alBTC);
         console.log("  Whitelist:     ", d.whitelist);
-        console.log("  AlchemistUSD:  ", d.alchemistUSD);
+        console.log("  xUSDVault:  ", d.xUSDVault);
         console.log("  AlchemistETH:  ", d.alchemistETH);
         console.log("  TransmuterUSD: ", d.transmuterUSD);
         console.log("  BufferUSD:     ", d.bufferUSD);
         console.log("");
         console.log("PERPS:");
-        console.log("  USDG:          ", d.usdg);
+        console.log("  LPUSD:          ", d.lpusd);
         console.log("  Vault:         ", d.vault);
         console.log("  VaultPriceFeed:", d.vaultPriceFeed);
         console.log("  Router:        ", d.router);
         console.log("  PositionRouter:", d.positionRouter);
         console.log("  ShortsTracker: ", d.shortsTracker);
-        console.log("  GMX:           ", d.gmx);
-        console.log("  GLP:           ", d.glp);
-        console.log("  GlpManager:    ", d.glpManager);
+        console.log("  LPX:           ", d.lpx);
+        console.log("  LLP:           ", d.llp);
+        console.log("  LLPManager:    ", d.llpManager);
         console.log("");
         console.log("+====================================================================+");
     }

@@ -7,7 +7,7 @@ import "../core/interfaces/IVaultPriceFeed.sol";
 import "../core/interfaces/IBasePositionManager.sol";
 
 contract VaultReader {
-    function getVaultTokenInfoV3(address _vault, address _positionManager, address _weth, uint256 _usdgAmount, address[] memory _tokens) public view returns (uint256[] memory) {
+    function getVaultTokenInfoV3(address _vault, address _positionManager, address _weth, uint256 _lpusdAmount, address[] memory _tokens) public view returns (uint256[] memory) {
         uint256 propsLength = 14;
 
         IVault vault = IVault(_vault);
@@ -23,11 +23,11 @@ contract VaultReader {
 
             amounts[i * propsLength] = vault.poolAmounts(token);
             amounts[i * propsLength + 1] = vault.reservedAmounts(token);
-            amounts[i * propsLength + 2] = vault.usdgAmounts(token);
-            amounts[i * propsLength + 3] = vault.getRedemptionAmount(token, _usdgAmount);
+            amounts[i * propsLength + 2] = vault.lpusdAmounts(token);
+            amounts[i * propsLength + 3] = vault.getRedemptionAmount(token, _lpusdAmount);
             amounts[i * propsLength + 4] = vault.tokenWeights(token);
             amounts[i * propsLength + 5] = vault.bufferAmounts(token);
-            amounts[i * propsLength + 6] = vault.maxUsdgAmounts(token);
+            amounts[i * propsLength + 6] = vault.maxLpusdAmounts(token);
             amounts[i * propsLength + 7] = vault.globalShortSizes(token);
             amounts[i * propsLength + 8] = positionManager.maxGlobalShortSizes(token);
             amounts[i * propsLength + 9] = vault.getMinPrice(token);
@@ -40,7 +40,7 @@ contract VaultReader {
         return amounts;
     }
 
-    function getVaultTokenInfoV4(address _vault, address _positionManager, address _weth, uint256 _usdgAmount, address[] memory _tokens) public view returns (uint256[] memory) {
+    function getVaultTokenInfoV4(address _vault, address _positionManager, address _weth, uint256 _lpusdAmount, address[] memory _tokens) public view returns (uint256[] memory) {
         uint256 propsLength = 15;
 
         IVault vault = IVault(_vault);
@@ -56,11 +56,11 @@ contract VaultReader {
 
             amounts[i * propsLength] = vault.poolAmounts(token);
             amounts[i * propsLength + 1] = vault.reservedAmounts(token);
-            amounts[i * propsLength + 2] = vault.usdgAmounts(token);
-            amounts[i * propsLength + 3] = vault.getRedemptionAmount(token, _usdgAmount);
+            amounts[i * propsLength + 2] = vault.lpusdAmounts(token);
+            amounts[i * propsLength + 3] = vault.getRedemptionAmount(token, _lpusdAmount);
             amounts[i * propsLength + 4] = vault.tokenWeights(token);
             amounts[i * propsLength + 5] = vault.bufferAmounts(token);
-            amounts[i * propsLength + 6] = vault.maxUsdgAmounts(token);
+            amounts[i * propsLength + 6] = vault.maxLpusdAmounts(token);
             amounts[i * propsLength + 7] = vault.globalShortSizes(token);
             amounts[i * propsLength + 8] = positionManager.maxGlobalShortSizes(token);
             amounts[i * propsLength + 9] = positionManager.maxGlobalLongSizes(token);

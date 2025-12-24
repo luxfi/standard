@@ -402,7 +402,9 @@ contract LuxFullStackIntegration is Test {
 
         // Step 3: Swap LUSD -> alUSD
         uint256 lusdToSwap = 50_000e18; // Use 50k LUSD
-        lusd.mint(alice, lusdToSwap); // Mint more for this test
+        vm.stopPrank();
+        lusd.mint(alice, lusdToSwap); // Mint more for this test (requires admin)
+        vm.startPrank(alice);
         lusd.transfer(address(alUsdLusdPair), lusdToSwap);
 
         (r0, r1,) = alUsdLusdPair.getReserves();

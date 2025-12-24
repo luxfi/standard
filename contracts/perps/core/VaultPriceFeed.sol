@@ -27,7 +27,7 @@ contract VaultPriceFeed is IVaultPriceFeed {
 
     bool public isAmmEnabled = true;
     bool public isSecondaryPriceEnabled = true;
-    bool public useV2Pricing = false;
+    
     bool public favorPrimaryPrice = false;
     uint256 public priceSampleSpace = 3;
     uint256 public maxStrictPriceDeviation = 0;
@@ -83,9 +83,7 @@ contract VaultPriceFeed is IVaultPriceFeed {
         lastAdjustmentTimings[_token] = block.timestamp;
     }
 
-    function setUseV2Pricing(bool _useV2Pricing) external override onlyGov {
-        useV2Pricing = _useV2Pricing;
-    }
+    
 
     function setIsAmmEnabled(bool _isEnabled) external override onlyGov {
         isAmmEnabled = _isEnabled;
@@ -145,7 +143,7 @@ contract VaultPriceFeed is IVaultPriceFeed {
     }
 
     function getPrice(address _token, bool _maximise, bool _includeAmmPrice, bool /* _useSwapPricing */) public override view returns (uint256) {
-        uint256 price = useV2Pricing ? getPriceV2(_token, _maximise, _includeAmmPrice) : getPriceV1(_token, _maximise, _includeAmmPrice);
+        uint256 price = _getPriceInternal(_token, _maximise, _includeAmmPrice);
 
         uint256 adjustmentBps = adjustmentBasisPoints[_token];
         if (adjustmentBps > 0) {
@@ -160,19 +158,11 @@ contract VaultPriceFeed is IVaultPriceFeed {
         return price;
     }
 
-    function getPriceV1(address _token, bool _maximise, bool _includeAmmPrice) public view returns (uint256) {
+    function _getPriceInternal(address _token, bool _maximise, bool _includeAmmPrice) internal view returns (uint256) {
         uint256 price = getPrimaryPrice(_token, _maximise);
 
         if (_includeAmmPrice && isAmmEnabled) {
-            uint256 ammPrice = getAmmPrice(_token);
-            if (ammPrice > 0) {
-                if (_maximise && ammPrice > price) {
-                    price = ammPrice;
-                }
-                if (!_maximise && ammPrice < price) {
-                    price = ammPrice;
-                }
-            }
+            price = _getAdjustedAmmPrice(_token, _maximise, price);
         }
 
         if (isSecondaryPriceEnabled) {
@@ -207,46 +197,7 @@ contract VaultPriceFeed is IVaultPriceFeed {
         return price * (BASIS_POINTS_DIVISOR - _spreadBasisPoints) / BASIS_POINTS_DIVISOR;
     }
 
-    function getPriceV2(address _token, bool _maximise, bool _includeAmmPrice) public view returns (uint256) {
-        uint256 price = getPrimaryPrice(_token, _maximise);
-
-        if (_includeAmmPrice && isAmmEnabled) {
-            price = getAmmPriceV2(_token, _maximise, price);
-        }
-
-        if (isSecondaryPriceEnabled) {
-            price = getSecondaryPrice(_token, price, _maximise);
-        }
-
-        if (strictStableTokens[_token]) {
-            uint256 delta = price > ONE_USD ? price - ONE_USD : ONE_USD - price;
-            if (delta <= maxStrictPriceDeviation) {
-                return ONE_USD;
-            }
-
-            // if _maximise and price is e.g. 1.02, return 1.02
-            if (_maximise && price > ONE_USD) {
-                return price;
-            }
-
-            // if !_maximise and price is e.g. 0.98, return 0.98
-            if (!_maximise && price < ONE_USD) {
-                return price;
-            }
-
-            return ONE_USD;
-        }
-
-        uint256 _spreadBasisPoints = spreadBasisPoints[_token];
-
-        if (_maximise) {
-            return price * (BASIS_POINTS_DIVISOR + _spreadBasisPoints) / BASIS_POINTS_DIVISOR;
-        }
-
-        return price * (BASIS_POINTS_DIVISOR - _spreadBasisPoints) / BASIS_POINTS_DIVISOR;
-    }
-
-    function getAmmPriceV2(address _token, bool _maximise, uint256 _primaryPrice) public view returns (uint256) {
+    function _getAdjustedAmmPrice(address _token, bool _maximise, uint256 _primaryPrice) internal view returns (uint256) {
         uint256 ammPrice = getAmmPrice(_token);
         if (ammPrice == 0) {
             return _primaryPrice;

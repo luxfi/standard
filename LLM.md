@@ -1,6 +1,6 @@
 # AI Assistant Knowledge Base
 
-**Last Updated**: 2025-12-23
+**Last Updated**: 2025-12-24
 **Project**: Lux Standard (Solidity Contracts & Precompiles)
 **Organization**: Lux Industries
 
@@ -17,18 +17,49 @@ This repository contains the standard Solidity contracts and EVM precompiles for
 The Lux Standard DeFi stack implements two complementary protocols:
 
 1. **Synths Protocol** (`contracts/synths/`) - Alchemix-style self-repaying synthetic assets
-2. **Perps Protocol** (`contracts/perps/`) - GMX-style perpetual futures with GLP liquidity
+2. **Perps Protocol** (`contracts/perps/`) - LPX-style perpetual futures with LLP liquidity
 
-### Synthetic Assets (x* Prefix)
+### Token Renaming (2025-12-24)
+
+The perps protocol tokens have been renamed to use Lux-native naming:
+
+| Old Name | New Name | Description |
+|----------|----------|-------------|
+| GMX | **LPX** | Lux Perps governance/utility token |
+| GLP | **LLP** | Lux Liquidity Provider (vault share token) |
+| USDG | **LPUSD** | Lux Perps USD (internal accounting) |
+| EsGMX | **xLPX** | Escrowed LPX (vesting rewards) |
+| GmxTimelock | **LpxTimelock** | Protocol timelock contract |
+
+**Internal Variable Names:** Some internal variables (e.g., `usdg` in Vault.sol, `usdgAmounts`) retain original names for code stability while the contract/token names use new convention.
+
+### Mainnet Launch: 12 Synthetic Assets (x* Prefix)
+
+**LP-9108 defines 12 synths for Lux Mainnet:**
+
+| Synth | Name | Collateral | Category |
+|-------|------|------------|----------|
+| **xLUX** | Lux Synthetic LUX | WLUX/sLUX | Native |
+| **xAI** | Lux Synthetic AI | AI/sAI | Native |
+| **xZOO** | Lux Synthetic ZOO | LZOO | Native |
+| **xUSD** | Lux Synthetic USD | LUSD | Stablecoin |
+| **xETH** | Lux Synthetic ETH | LETH | Major L1 |
+| **xBTC** | Lux Synthetic BTC | LBTC | Major L1 |
+| **xSOL** | Lux Synthetic SOL | LSOL | Major L1 |
+| **xTON** | Lux Synthetic TON | LTON | Major L1 |
+| **xADA** | Lux Synthetic ADA | LADA | Major L1 |
+| **xAVAX** | Lux Synthetic AVAX | LAVAX | Major L1 |
+| **xBNB** | Lux Synthetic BNB | LBNB | Major L1 |
+| **xPOL** | Lux Synthetic POL | LPOL | Major L1 |
 
 **Token Naming Convention:**
-- `xUSD` - Synthetic USD (pegged to $1)
-- `xETH` - Synthetic ETH
-- `xBTC` - Synthetic BTC
-- `xLUX` - Synthetic LUX
+- `x*` prefix: Synthetic tokens (xUSD, xETH, xBTC...)
+- `L*` prefix: Bridge tokens on Lux (LETH, LBTC, LUSD...)
+- `Z*` prefix: Bridge tokens on Zoo (ZETH, ZBTC, ZUSD...)
 
-**NOT to be confused with:**
-- `LUSD` - Lux native stablecoin (separate from synths)
+**IMPORTANT:**
+- `LUSD` is the native Lux stablecoin (NOT USDC)
+- Bridge tokens are MPC-controlled with `onlyAdmin` modifier
 
 ### Synths Protocol Architecture
 
@@ -60,7 +91,9 @@ The Lux Standard DeFi stack implements two complementary protocols:
 | `TransmuterV2.sol` | 1:1 synth-to-underlying redemption queue |
 | `TransmuterBuffer.sol` | Buffer between Alchemist and Transmuter |
 | `SynthToken.sol` | Base ERC20 for synths (ERC-3156 flash loans) |
-| `xUSD.sol`, `xETH.sol`, `xBTC.sol`, `xLUX.sol` | Concrete synth implementations |
+| `xUSD.sol`, `xETH.sol`, `xBTC.sol`, `xLUX.sol` | Core synth implementations |
+| `xAI.sol`, `xSOL.sol`, `xTON.sol`, `xADA.sol` | Additional synth implementations |
+| `xAVAX.sol`, `xBNB.sol`, `xPOL.sol`, `xZOO.sol` | Additional synth implementations |
 
 **Yield Token Adapters:**
 - `YearnTokenAdapter.sol` - Yearn V2 vaults (yvWETH, yvUSDC)
@@ -107,8 +140,8 @@ The Lux Standard DeFi stack implements two complementary protocols:
 │  └──────┬──────┘                             └──────┬──────┘                           │
 │         ▼                                           ▼                                   │
 │  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐                               │
-│  │ GlpManager  │────>│    Vault    │<────│   Router    │                               │
-│  │ Mint GLP    │     │ Pool Funds  │     │ Positions   │                               │
+│  │ LlpManager  │────>│    Vault    │<────│   Router    │                               │
+│  │ Mint LLP    │     │ Pool Funds  │     │ Positions   │                               │
 │  └──────┬──────┘     └──────┬──────┘     └─────────────┘                               │
 │         ▼                   │                                                           │
 │  ┌─────────────┐            │                                                           │
@@ -126,7 +159,7 @@ The Lux Standard DeFi stack implements two complementary protocols:
 │                            │                                                            │
 │                            ▼                                                            │
 │                     70% Trading Fees                                                    │
-│                     to GLP Holders                                                      │
+│                     to LLP Holders                                                      │
 │                                                                                         │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -138,8 +171,8 @@ The Lux Standard DeFi stack implements two complementary protocols:
 | `Vault.sol` | Central liquidity pool, position management |
 | `Router.sol` | User-facing position operations |
 | `PositionRouter.sol` | Keeper-executed position changes |
-| `GlpManager.sol` | GLP minting/burning |
-| `GLP.sol` | Multi-asset LP token |
+| `LlpManager.sol` | LLP minting/burning |
+| `LLP.sol` | Multi-asset LP token |
 | `USDG.sol` | Internal accounting stablecoin |
 
 **Staking Contracts:**
@@ -152,9 +185,9 @@ The Lux Standard DeFi stack implements two complementary protocols:
 
 **Key Mechanisms:**
 
-1. **GLP Liquidity Provision:**
+1. **LLP Liquidity Provision:**
    - Deposit any whitelisted token (ETH, USDC, WBTC)
-   - Receive GLP tokens (proportional to AUM)
+   - Receive LLP tokens (proportional to AUM)
    - Earn 70% of platform trading fees
    - Counterparty to all traders (win when traders lose)
 
@@ -199,11 +232,11 @@ vault.setTokenConfig(
 
 **2. Perps Yield for Synths Repayment (INTEGRATED)**
 
-The `GMXYieldAdapter` in `contracts/core/adapters/gmx/` already implements this:
+The `LPXYieldAdapter` in `contracts/core/adapters/gmx/` already implements this:
 
 ```solidity
-// GMXYieldAdapter wraps GLP for synths yield
-contract GMXYieldAdapter {
+// LPXYieldAdapter wraps GLP for synths yield
+contract LPXYieldAdapter {
     function deposit(address token, uint256 amount, uint256 minGlp) external returns (uint256);
     function claimFees() external returns (uint256);  // Claims WETH fees
     function routeToSettlement(address recipient, uint256 maxAmount) external returns (uint256);
@@ -212,8 +245,8 @@ contract GMXYieldAdapter {
 
 **Flow:**
 1. Synths user deposits collateral
-2. AlchemicCredit deploys to GMXYieldAdapter
-3. Adapter stakes in GLP via RewardRouterV2
+2. AlchemicCredit deploys to LPXYieldAdapter
+3. Adapter stakes in LLP via RewardRouterV2
 4. Trading fees accrue as WETH
 5. Fees route to transmuter to settle obligations
 
@@ -236,7 +269,7 @@ Deposit WETH → Yearn (yvWETH) → Synths (xUSD) → Perps (Long LUX)
 
 **Strategy 2: Delta-Neutral Yield**
 ```
-50% WETH → GLP → 70% trading fees
+50% WETH → LLP → 70% trading fees
 50% WETH → Short ETH perp → Funding payments
 Net: ETH-neutral, fee yield only
 ```
@@ -259,7 +292,7 @@ Earns LP fees + self-repayment
 
 ### Shariah Compliance Notes
 
-**GMXYieldAdapter** explicitly marks fee-based yield as Shariah-compliant:
+**LPXYieldAdapter** explicitly marks fee-based yield as Shariah-compliant:
 
 ```solidity
 function isShariahCompliant() external pure returns (bool) {
@@ -269,14 +302,14 @@ function isShariahCompliant() external pure returns (bool) {
 function shariahCompliance() external pure returns (...) {
     compliant = true;
     reason = "Fees represent payment for a legitimate service (market making / liquidity provision)";
-    yieldSource = "Trading fees from perpetual traders using GLP liquidity";
+    yieldSource = "Trading fees from perpetual traders using LLP liquidity";
     comparisonToInterest = "Unlike interest (riba), fees are earned through active service provision";
 }
 ```
 
 **Key Distinction:**
 - INTEREST (Compound/Aave): Time-based obligation growth = Riba (forbidden)
-- FEES (GMX/GLP): Activity-based service payment = Halal (permitted)
+- FEES (LPX/LLP): Activity-based service payment = Halal (permitted)
 
 ### Missing Integrations
 
@@ -301,7 +334,7 @@ When synth position underwater:
 
 **4. Reward Token Integration**
 - esGMX/GMX rewards from staking
-- Should flow to synth holders if using GLP adapter
+- Should flow to synth holders if using LLP adapter
 - Currently manual claim required
 
 ### File Structure Summary
@@ -321,9 +354,9 @@ contracts/
 │   ├── core/
 │   │   ├── Vault.sol          # Central vault
 │   │   ├── Router.sol         # Position management
-│   │   └── GlpManager.sol     # LP management
+│   │   └── LlpManager.sol     # LP management
 │   ├── gmx/
-│   │   └── GLP.sol            # LP token
+│   │   └── LLP.sol            # LP token
 │   ├── staking/
 │   │   └── RewardRouterV2.sol # Staking rewards
 │   ├── tokens/
@@ -333,7 +366,7 @@ contracts/
 └── core/                      # Integration layer
     └── adapters/
         ├── gmx/
-        │   └── GMXYieldAdapter.sol  # GLP yield for synths
+        │   └── LPXYieldAdapter.sol  # GLP yield for synths
         └── alchemic/
             └── AlchemicCredit.sol   # Credit engine
 ```

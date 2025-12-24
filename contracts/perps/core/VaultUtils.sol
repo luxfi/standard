@@ -113,20 +113,20 @@ contract VaultUtils is IVaultUtils, Governable {
         return _size * fundingRate / FUNDING_RATE_PRECISION;
     }
 
-    function getBuyUsdgFeeBasisPoints(address _token, uint256 _usdgAmount) public override view returns (uint256) {
-        return getFeeBasisPoints(_token, _usdgAmount, vault.mintBurnFeeBasisPoints(), vault.taxBasisPoints(), true);
+    function getBuyLpusdFeeBasisPoints(address _token, uint256 _lpusdAmount) public override view returns (uint256) {
+        return getFeeBasisPoints(_token, _lpusdAmount, vault.mintBurnFeeBasisPoints(), vault.taxBasisPoints(), true);
     }
 
-    function getSellUsdgFeeBasisPoints(address _token, uint256 _usdgAmount) public override view returns (uint256) {
-        return getFeeBasisPoints(_token, _usdgAmount, vault.mintBurnFeeBasisPoints(), vault.taxBasisPoints(), false);
+    function getSellLpusdFeeBasisPoints(address _token, uint256 _lpusdAmount) public override view returns (uint256) {
+        return getFeeBasisPoints(_token, _lpusdAmount, vault.mintBurnFeeBasisPoints(), vault.taxBasisPoints(), false);
     }
 
-    function getSwapFeeBasisPoints(address _tokenIn, address _tokenOut, uint256 _usdgAmount) public override view returns (uint256) {
+    function getSwapFeeBasisPoints(address _tokenIn, address _tokenOut, uint256 _lpusdAmount) public override view returns (uint256) {
         bool isStableSwap = vault.stableTokens(_tokenIn) && vault.stableTokens(_tokenOut);
         uint256 baseBps = isStableSwap ? vault.stableSwapFeeBasisPoints() : vault.swapFeeBasisPoints();
         uint256 taxBps = isStableSwap ? vault.stableTaxBasisPoints() : vault.taxBasisPoints();
-        uint256 feesBasisPoints0 = getFeeBasisPoints(_tokenIn, _usdgAmount, baseBps, taxBps, true);
-        uint256 feesBasisPoints1 = getFeeBasisPoints(_tokenOut, _usdgAmount, baseBps, taxBps, false);
+        uint256 feesBasisPoints0 = getFeeBasisPoints(_tokenIn, _lpusdAmount, baseBps, taxBps, true);
+        uint256 feesBasisPoints1 = getFeeBasisPoints(_tokenOut, _lpusdAmount, baseBps, taxBps, false);
         // use the higher of the two fee basis points
         return feesBasisPoints0 > feesBasisPoints1 ? feesBasisPoints0 : feesBasisPoints1;
     }
@@ -140,16 +140,16 @@ contract VaultUtils is IVaultUtils, Governable {
     // 6. initialAmount is close to targetAmount, action reduces balance largely => low tax
     // 7. initialAmount is above targetAmount, nextAmount is below targetAmount and vice versa
     // 8. a large swap should have similar fees as the same trade split into multiple smaller swaps
-    function getFeeBasisPoints(address _token, uint256 _usdgDelta, uint256 _feeBasisPoints, uint256 _taxBasisPoints, bool _increment) public override view returns (uint256) {
+    function getFeeBasisPoints(address _token, uint256 _lpusdDelta, uint256 _feeBasisPoints, uint256 _taxBasisPoints, bool _increment) public override view returns (uint256) {
         if (!vault.hasDynamicFees()) { return _feeBasisPoints; }
 
-        uint256 initialAmount = vault.usdgAmounts(_token);
-        uint256 nextAmount = initialAmount + _usdgDelta;
+        uint256 initialAmount = vault.lpusdAmounts(_token);
+        uint256 nextAmount = initialAmount + _lpusdDelta;
         if (!_increment) {
-            nextAmount = _usdgDelta > initialAmount ? 0 : initialAmount - _usdgDelta;
+            nextAmount = _lpusdDelta > initialAmount ? 0 : initialAmount - _lpusdDelta;
         }
 
-        uint256 targetAmount = vault.getTargetUsdgAmount(_token);
+        uint256 targetAmount = vault.getTargetLpusdAmount(_token);
         if (targetAmount == 0) { return _feeBasisPoints; }
 
         uint256 initialDiff = initialAmount > targetAmount ? initialAmount - targetAmount : targetAmount - initialAmount;

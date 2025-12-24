@@ -23,11 +23,11 @@ contract Z is LRC20B {
         return 6;
     }
 
-    function mint(address account, uint256 amount) public {
+    function mint(address account, uint256 amount) public onlyAdmin {
         _mint(account, amount);
     }
 
-    function burn(address account, uint256 amount) public {
+    function burn(address account, uint256 amount) public onlyAdmin {
         _burn(account, amount);
     }
 }

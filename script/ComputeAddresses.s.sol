@@ -24,10 +24,10 @@ import {VaultPriceFeed} from "../contracts/perps/core/VaultPriceFeed.sol";
 import {Router} from "../contracts/perps/core/Router.sol";
 import {PositionRouter} from "../contracts/perps/core/PositionRouter.sol";
 import {ShortsTracker} from "../contracts/perps/core/ShortsTracker.sol";
-import {USDG} from "../contracts/perps/tokens/USDG.sol";
-import {GMX} from "../contracts/perps/gmx/GMX.sol";
-import {GLP} from "../contracts/perps/gmx/GLP.sol";
-import {GlpManager} from "../contracts/perps/core/GlpManager.sol";
+import {USDG} from "../contracts/perps/tokens/LPUSD.sol";
+import {GMX} from "../contracts/perps/lux/LPX.sol";
+import {LLP} from "../contracts/perps/lux/LLP.sol";
+import {LLPManager} from "../contracts/perps/core/LLPManager.sol";
 
 /// @title ComputeAddresses
 /// @notice Compute all deterministic addresses before deployment
@@ -139,8 +139,8 @@ contract ComputeAddresses is Script {
         address transmuter = computeAddress(factory, salt("TransmuterUSD"), type(TransmuterV2).creationCode);
         console.log("  TransmuterV2:  ", transmuter);
 
-        address alchemistUSD = computeAddress(factory, salt("AlchemistUSD"), type(AlchemistV2).creationCode);
-        console.log("  AlchemistUSD:  ", alchemistUSD);
+        address xUSDVault = computeAddress(factory, salt("xUSDVault"), type(AlchemistV2).creationCode);
+        console.log("  xUSDVault:  ", xUSDVault);
 
         address alchemistETH = computeAddress(factory, salt("AlchemistETH"), type(AlchemistV2).creationCode);
         console.log("  AlchemistETH:  ", alchemistETH);
@@ -154,11 +154,11 @@ contract ComputeAddresses is Script {
         console.log("PERPS:");
 
         bytes memory usdgBytecode = abi.encodePacked(
-            type(USDG).creationCode,
+            type(LPUSD).creationCode,
             abi.encode(address(0))
         );
-        address usdg = computeAddress(factory, salt("USDG"), usdgBytecode);
-        console.log("  USDG:          ", usdg);
+        address usdg = computeAddress(factory, salt("LPUSD"), usdgBytecode);
+        console.log("  LPUSD:          ", usdg);
 
         address vaultPriceFeed = computeAddress(factory, salt("VaultPriceFeed"), type(VaultPriceFeed).creationCode);
         console.log("  VaultPriceFeed:", vaultPriceFeed);
@@ -166,11 +166,11 @@ contract ComputeAddresses is Script {
         address vault = computeAddress(factory, salt("Vault"), type(Vault).creationCode);
         console.log("  Vault:         ", vault);
 
-        address gmx = computeAddress(factory, salt("GMX"), type(GMX).creationCode);
-        console.log("  GMX:           ", gmx);
+        address gmx = computeAddress(factory, salt("LPX"), type(LPX).creationCode);
+        console.log("  LPX:           ", gmx);
 
-        address glp = computeAddress(factory, salt("GLP"), type(GLP).creationCode);
-        console.log("  GLP:           ", glp);
+        address llp = computeAddress(factory, salt("LLP"), type(LLP).creationCode);
+        console.log("  LLP:           ", llp);
 
         bytes memory shortsTrackerBytecode = abi.encodePacked(
             type(ShortsTracker).creationCode,
@@ -193,12 +193,12 @@ contract ComputeAddresses is Script {
         address positionRouter = computeAddress(factory, salt("PositionRouter"), positionRouterBytecode);
         console.log("  PositionRouter:", positionRouter);
 
-        bytes memory glpManagerBytecode = abi.encodePacked(
-            type(GlpManager).creationCode,
-            abi.encode(vault, usdg, glp, shortsTracker, 15 minutes)
+        bytes memory llpManagerBytecode = abi.encodePacked(
+            type(LLPManager).creationCode,
+            abi.encode(vault, usdg, llp, shortsTracker, 15 minutes)
         );
-        address glpManager = computeAddress(factory, salt("GlpManager"), glpManagerBytecode);
-        console.log("  GlpManager:    ", glpManager);
+        address llpManager = computeAddress(factory, salt("LLPManager"), llpManagerBytecode);
+        console.log("  LLPManager:    ", llpManager);
 
         console.log("");
         console.log("+====================================================================+");

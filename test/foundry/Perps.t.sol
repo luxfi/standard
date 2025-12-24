@@ -12,13 +12,13 @@ import "../../contracts/perps/core/VaultPriceFeed.sol";
 import "../../contracts/perps/core/Router.sol";
 import "../../contracts/perps/core/PositionRouter.sol";
 import "../../contracts/perps/core/ShortsTracker.sol";
-import "../../contracts/perps/core/GlpManager.sol";
+import "../../contracts/perps/core/LLPManager.sol";
 
 // Tokens
-import "../../contracts/perps/tokens/USDG.sol";
-import "../../contracts/perps/gmx/GMX.sol";
-import "../../contracts/perps/gmx/GLP.sol";
-import "../../contracts/perps/gmx/EsGMX.sol";
+import "../../contracts/perps/tokens/LPUSD.sol";
+import "../../contracts/perps/tokens/LPX.sol";
+import "../../contracts/perps/tokens/LLP.sol";
+import "../../contracts/perps/tokens/xLPX.sol";
 import "../../contracts/perps/tokens/MintableBaseToken.sol";
 
 // Staking
@@ -102,7 +102,7 @@ contract MockPriceFeed {
 }
 
 /// @title PerpsTest
-/// @notice Comprehensive tests for the Perps (GMX-style) protocol
+/// @notice Comprehensive tests for the Perps (LPX-style) protocol
 contract PerpsTest is Test {
     // Core contracts
     Vault public vault;
@@ -110,12 +110,12 @@ contract PerpsTest is Test {
     VaultPriceFeed public vaultPriceFeed;
     Router public router;
     ShortsTracker public shortsTracker;
-    GlpManager public glpManager;
+    LLPManager public llpManager;
     
     // Tokens
-    USDG public usdg;
-    GMX public gmx;
-    GLP public glp;
+    LPUSD public lpusd;
+    LPX public lpx;
+    LLP public llp;
     MockToken public weth;
     MockToken public wbtc;
     MockToken public usdc;
@@ -147,8 +147,8 @@ contract PerpsTest is Test {
         btcPriceFeed = new MockPriceFeed(40000e8, 8); // $40000
         usdcPriceFeed = new MockPriceFeed(1e8, 8); // $1.00
         
-        // Deploy USDG
-        usdg = new USDG(address(0));
+        // Deploy LPUSD
+        lpusd = new LPUSD(address(0));
         
         // Deploy VaultPriceFeed
         vaultPriceFeed = new VaultPriceFeed();
@@ -163,7 +163,7 @@ contract PerpsTest is Test {
         // Initialize Vault
         vault.initialize(
             address(0), // router - set later
-            address(usdg),
+            address(lpusd),
             address(vaultPriceFeed),
             LIQUIDATION_FEE,
             100, // fundingRateFactor
@@ -178,32 +178,32 @@ contract PerpsTest is Test {
         vault.setGov(gov);
         
         // Add vault to USDG
-        usdg.addVault(address(vault));
+        lpusd.addVault(address(vault));
         
         // Deploy Router
-        router = new Router(address(vault), address(usdg), address(weth));
+        router = new Router(address(vault), address(lpusd), address(weth));
         
         // Deploy ShortsTracker
         shortsTracker = new ShortsTracker(address(vault));
         
-        // Deploy GLP
-        glp = new GLP();
+        // Deploy LLP
+        llp = new LLP();
         
-        // Deploy GMX
-        gmx = new GMX();
+        // Deploy LPX
+        lpx = new LPX();
         
-        // Deploy GlpManager
-        glpManager = new GlpManager(
+        // Deploy LLPManager
+        llpManager = new LLPManager(
             address(vault),
-            address(usdg),
-            address(glp),
+            address(lpusd),
+            address(llp),
             address(shortsTracker),
             15 minutes
         );
         
-        // Configure GLP minting
-        glp.setMinter(address(glpManager), true);
-        usdg.addVault(address(glpManager));
+        // Configure LLP minting
+        llp.setMinter(address(llpManager), true);
+        lpusd.addVault(address(llpManager));
         
         // Note: Router is set during vault.initialize()
         // Users can approve additional routers via vault.addRouter()
@@ -292,7 +292,7 @@ contract PerpsTest is Test {
     function test_VaultInitialization() public view {
         assertTrue(vault.isInitialized());
         assertEq(vault.gov(), gov);
-        assertEq(vault.usdg(), address(usdg));
+        assertEq(vault.lpusd(), address(lpusd));
         assertEq(vault.priceFeed(), address(vaultPriceFeed));
     }
     
@@ -323,7 +323,7 @@ contract PerpsTest is Test {
     
     function test_RouterInitialization() public view {
         assertEq(router.vault(), address(vault));
-        assertEq(router.usdg(), address(usdg));
+        assertEq(router.lpusd(), address(lpusd));
         assertEq(router.weth(), address(weth));
     }
     
@@ -337,33 +337,33 @@ contract PerpsTest is Test {
     }
     
     // ═══════════════════════════════════════════════════════════════════════
-    // GLP MANAGER TESTS
+    // LLP MANAGER TESTS
     // ═══════════════════════════════════════════════════════════════════════
     
-    function test_GlpManagerInitialization() public view {
-        assertEq(address(glpManager.vault()), address(vault));
-        assertEq(address(glpManager.usdg()), address(usdg));
-        assertEq(address(glpManager.glp()), address(glp));
+    function test_LLPManagerInitialization() public view {
+        assertEq(address(llpManager.vault()), address(vault));
+        assertEq(llpManager.lpusd(), address(lpusd));
+        assertEq(llpManager.llp(), address(llp));
     }
     
     function test_AddLiquidity() public {
         uint256 depositAmount = 10e18; // 10 WETH
         
         vm.startPrank(alice);
-        weth.approve(address(glpManager), depositAmount);
+        weth.approve(address(llpManager), depositAmount);
         
-        // Calculate expected GLP amount
-        // At $2000/ETH, 10 ETH = $20,000 worth of GLP
-        uint256 glpAmount = glpManager.addLiquidity(
+        // Calculate expected LLP amount
+        // At $2000/ETH, 10 ETH = $20,000 worth of LLP
+        uint256 llpAmount = llpManager.addLiquidity(
             address(weth),
             depositAmount,
             0, // minUsdg
-            0  // minGlp
+            0  // minLlp
         );
         vm.stopPrank();
         
-        assertGt(glpAmount, 0);
-        assertEq(glp.balanceOf(alice), glpAmount);
+        assertGt(llpAmount, 0);
+        assertEq(llp.balanceOf(alice), llpAmount);
     }
     
     function test_RemoveLiquidity() public {
@@ -371,8 +371,8 @@ contract PerpsTest is Test {
         uint256 depositAmount = 10e18;
         
         vm.startPrank(alice);
-        weth.approve(address(glpManager), depositAmount);
-        uint256 glpAmount = glpManager.addLiquidity(
+        weth.approve(address(llpManager), depositAmount);
+        uint256 llpAmount = llpManager.addLiquidity(
             address(weth),
             depositAmount,
             0,
@@ -383,37 +383,36 @@ contract PerpsTest is Test {
         vm.warp(block.timestamp + 16 minutes);
         
         // Remove liquidity
-        glp.approve(address(glpManager), glpAmount);
-        uint256 wethReceived = glpManager.removeLiquidity(
+        llp.approve(address(llpManager), llpAmount);
+        uint256 wethReceived = llpManager.removeLiquidity(
             address(weth),
-            glpAmount,
+            llpAmount,
             0, // minOut
             alice
         );
         vm.stopPrank();
         
         assertGt(wethReceived, 0);
-        assertEq(glp.balanceOf(alice), 0);
+        assertEq(llp.balanceOf(alice), 0);
     }
     
     // ═══════════════════════════════════════════════════════════════════════
     // TOKEN TESTS
     // ═══════════════════════════════════════════════════════════════════════
     
-    function test_GMXToken() public view {
-        assertEq(gmx.name(), "GMX");
-        assertEq(gmx.symbol(), "GMX");
-        assertEq(gmx.id(), "GMX");
+    function test_LPXToken() public view {
+        assertEq(lpx.name(), "Lux Perps");
+        assertEq(lpx.symbol(), "LPX");
     }
     
-    function test_GLPToken() public view {
-        assertEq(glp.name(), "GMX LP");
-        assertEq(glp.symbol(), "GLP");
+    function test_LLPToken() public view {
+        assertEq(llp.name(), "Lux LP");
+        assertEq(llp.symbol(), "LLP");
     }
     
-    function test_USDGToken() public view {
-        assertEq(usdg.name(), "USD Gambit");
-        assertEq(usdg.symbol(), "USDG");
+    function test_LPUSDToken() public view {
+        assertEq(lpusd.name(), "Lux Perps USD");
+        assertEq(lpusd.symbol(), "LPUSD");
     }
     
     // ═══════════════════════════════════════════════════════════════════════
@@ -483,17 +482,17 @@ contract PerpsTest is Test {
         amount = bound(amount, 0.01e18, 50e18); // 0.01 - 50 WETH
         
         vm.startPrank(alice);
-        weth.approve(address(glpManager), amount);
+        weth.approve(address(llpManager), amount);
         
-        uint256 glpAmount = glpManager.addLiquidity(
+        uint256 llpAmount = llpManager.addLiquidity(
             address(weth),
             amount,
             0,
             0
         );
         
-        assertGt(glpAmount, 0);
-        assertEq(glp.balanceOf(alice), glpAmount);
+        assertGt(llpAmount, 0);
+        assertEq(llp.balanceOf(alice), llpAmount);
         vm.stopPrank();
     }
 }
@@ -524,7 +523,7 @@ contract PerpsEdgeCaseTest is PerpsTest {
         vm.expectRevert();
         vault.initialize(
             address(0),
-            address(usdg),
+            address(lpusd),
             address(vaultPriceFeed),
             5e30,
             100,
@@ -551,13 +550,13 @@ contract PerpsEdgeCaseTest is PerpsTest {
     function test_CooldownPeriod() public {
         // Add liquidity
         vm.startPrank(alice);
-        weth.approve(address(glpManager), 10e18);
-        uint256 glpAmount = glpManager.addLiquidity(address(weth), 10e18, 0, 0);
+        weth.approve(address(llpManager), 10e18);
+        uint256 llpAmount = llpManager.addLiquidity(address(weth), 10e18, 0, 0);
         
         // Try to remove immediately (should fail due to cooldown)
-        glp.approve(address(glpManager), glpAmount);
+        llp.approve(address(llpManager), llpAmount);
         vm.expectRevert();
-        glpManager.removeLiquidity(address(weth), glpAmount, 0, alice);
+        llpManager.removeLiquidity(address(weth), llpAmount, 0, alice);
         
         vm.stopPrank();
     }

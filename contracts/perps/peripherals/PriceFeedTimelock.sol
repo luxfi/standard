@@ -11,7 +11,7 @@ import "../referrals/interfaces/IReferralStorage.sol";
 import "../tokens/interfaces/IYieldToken.sol";
 import "../tokens/interfaces/IBaseToken.sol";
 import "../tokens/interfaces/IMintable.sol";
-import "../tokens/interfaces/IUSDG.sol";
+import "../tokens/interfaces/ILPUSD.sol";
 import "../staking/interfaces/IVester.sol";
 
 import "@luxfi/standard/lib/token/ERC20/IERC20.sol";
@@ -109,10 +109,6 @@ contract PriceFeedTimelock {
 
     function setMaxStrictPriceDeviation(address _priceFeed, uint256 _maxStrictPriceDeviation) external onlyAdmin {
         IVaultPriceFeed(_priceFeed).setMaxStrictPriceDeviation(_maxStrictPriceDeviation);
-    }
-
-    function setUseV2Pricing(address _priceFeed, bool _useV2Pricing) external onlyAdmin {
-        IVaultPriceFeed(_priceFeed).setUseV2Pricing(_useV2Pricing);
     }
 
     function setAdjustment(address _priceFeed, address _token, bool _isAdditive, uint256 _adjustmentBps) external onlyKeeperAndAbove {

@@ -5,7 +5,8 @@ libs = ["lib"]
 optimizer = true
 optimizer_runs = 200
 via_ir = true
-solc_version = "0.8.28"
+solc_version = "0.8.31"
+auto_detect_solc = true
 # Point test and script to empty dirs during migration
 test = "test"
 script = "contracts/script"
@@ -38,7 +39,14 @@ remappings = [
     "@uniswap/v3-core/=lib/uni-v3/",
     "@uniswap/v3-periphery/=lib/uni-v3-periphery/",
     "@uniswap/lib/=lib/uni-lib/",
-    "@seaport/=lib/seaport/src/",
+    # Seaport NFT Marketplace (v1.6)
+    "@seaport/=lib/seaport/contracts/",
+    "seaport-core/=lib/seaport/lib/seaport-core/",
+    "seaport-types/=lib/seaport/lib/seaport-types/",
+    "seaport-sol/=lib/seaport/lib/seaport-sol/",
+
+    # Reservoir NFT Aggregation
+    "@reservoir/=lib/core/packages/contracts/contracts/",
     
     # Utilities
     "@solmate/=lib/solmate/src/",
@@ -80,6 +88,40 @@ line_length = 120
 tab_width = 4
 bracket_spacing = true
 
+# Allow reading Seaport artifacts for deployment
+fs_permissions = [
+    { access = "read", path = "./out-seaport" },
+    { access = "read", path = "out-seaport" },
+    { access = "read", path = "/Users/z/work/lux/standard/out-seaport" }
+]
+
 [rpc_endpoints]
 lux = "https://api.lux.network/ext/bc/C/rpc"
 lux_testnet = "https://api.lux-test.network/ext/bc/C/rpc"
+
+# Seaport compilation profile (uses 0.8.24)
+# Build with: FOUNDRY_PROFILE=seaport forge build
+[profile.seaport]
+solc = "0.8.24"
+src = "lib/seaport/contracts"
+out = "out-seaport"
+test = "empty"
+script = "empty"
+libs = ["lib/seaport/lib", "lib"]
+via_ir = false
+optimizer = true
+optimizer_runs = 200
+no_match_path = "**/test/**"
+remappings = [
+    "seaport-core/=lib/seaport/lib/seaport-core/",
+    "seaport-types/=lib/seaport/lib/seaport-types/",
+    "seaport-sol/=lib/seaport/lib/seaport-sol/",
+    "seaport/=lib/seaport/contracts/",
+    "forge-std/=lib/seaport/lib/forge-std/src/",
+    "ds-test/=lib/seaport/lib/ds-test/src/",
+    "@openzeppelin/=lib/seaport/lib/openzeppelin-contracts/",
+    "@rari-capital/solmate/=lib/seaport/lib/solmate/",
+    "solady/=lib/seaport/lib/solady/",
+    "solarray/=lib/seaport/lib/solarray/src/",
+    "murky/=lib/seaport/lib/murky/src/",
+]

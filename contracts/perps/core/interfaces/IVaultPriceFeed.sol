@@ -6,7 +6,6 @@ interface IVaultPriceFeed {
     function adjustmentBasisPoints(address _token) external view returns (uint256);
     function isAdjustmentAdditive(address _token) external view returns (bool);
     function setAdjustment(address _token, bool _isAdditive, uint256 _adjustmentBps) external;
-    function setUseV2Pricing(bool _useV2Pricing) external;
     function setIsAmmEnabled(bool _isEnabled) external;
     function setIsSecondaryPriceEnabled(bool _isEnabled) external;
     function setSpreadBasisPoints(address _token, uint256 _spreadBasisPoints) external;
