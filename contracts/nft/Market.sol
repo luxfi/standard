@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Copyright (c) 2025 Lux Industries Inc.
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.31;
 
 /**
     ███╗   ███╗ █████╗ ██████╗ ██╗  ██╗███████╗████████╗
@@ -41,17 +41,7 @@ import {
     FulfillmentComponent
 } from "seaport-types/src/lib/ConsiderationStructs.sol";
 import {OrderType, ItemType} from "seaport-types/src/lib/ConsiderationEnums.sol";
-
-/**
- * @title ILRC20
- * @notice Minimal LRC20 interface
- */
-interface ILRC20 {
-    function transferFrom(address from, address to, uint256 amount) external returns (bool);
-    function transfer(address to, uint256 amount) external returns (bool);
-    function approve(address spender, uint256 amount) external returns (bool);
-    function balanceOf(address account) external view returns (uint256);
-}
+import {ILRC20} from "../tokens/interfaces/ILRC20.sol";
 
 /**
  * @title IMarket

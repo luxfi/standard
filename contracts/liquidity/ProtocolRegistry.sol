@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Copyright (c) 2025 Lux Industries Inc.
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 /// @title ProtocolRegistry
 /// @notice Registry of all supported DeFi protocols across chains

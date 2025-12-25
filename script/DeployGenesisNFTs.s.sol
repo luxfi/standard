@@ -60,8 +60,8 @@ contract DeployGenesisNFTs is Script {
     
     MockLRC20 wlux;
     MockLRC20 lusd;
-    LuxV2Factory factory;
-    LuxV2Pair pair;
+    AMMV2Factory factory;
+    AMMV2Pair pair;
     GenesisNFTs genesis;
 
     function run() external {
@@ -80,9 +80,9 @@ contract DeployGenesisNFTs is Script {
         // 2. Deploy AMM factory and create pair
         console.log("");
         console.log("2. Deploying AMM...");
-        factory = new LuxV2Factory(DEPLOYER);
+        factory = new AMMV2Factory(DEPLOYER);
         address pairAddr = factory.createPair(address(wlux), address(lusd));
-        pair = LuxV2Pair(pairAddr);
+        pair = AMMV2Pair(pairAddr);
         console.log("   Factory:", address(factory));
         console.log("   WLUX/LUSD Pair:", pairAddr);
 

@@ -1,4 +1,4 @@
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 /// @title  IERC20Metadata
 /// @author Alchemix Finance

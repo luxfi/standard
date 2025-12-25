@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Copyright (c) 2025 Lux Industries Inc.
 
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 /// @title Position Parameters
 /// @notice Common position parameters for perpetual markets

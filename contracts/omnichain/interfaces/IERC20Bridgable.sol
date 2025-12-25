@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 /**
  * @dev Interface for tokens that can be bridged across chains

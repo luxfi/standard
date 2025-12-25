@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 import {AccessControlUpgradeable} from "@luxfi/standard/lib-upgradeable/access/AccessControlUpgradeable.sol";
 import {ERC20Upgradeable} from "@luxfi/standard/lib-upgradeable/token/ERC20/ERC20Upgradeable.sol";

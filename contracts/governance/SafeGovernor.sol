@@ -1,24 +1,21 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.31;
 
 import {Enum} from "@safe-global/safe-smart-account/interfaces/Enum.sol";
 import {ISafe} from "@safe-global/safe-smart-account/interfaces/ISafe.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 /**
- * @title LuxSafeGovernor
- * @author Lux Industries Inc
+ * @title SafeGovernor
  * @notice Azorius-style governance module for Safe multisig
- * @dev Enables on-chain voting for Safe transactions
- * 
+ * @dev Chain-agnostic Safe governance - enables on-chain voting for Safe transactions
+ *
  * This is a modular governance system that attaches to a Safe wallet:
  * - Proposals can be submitted by token holders meeting threshold
  * - Voting is weighted by token holdings (ERC20Votes or ERC721Votes)
  * - Passed proposals can be executed through the Safe
- * 
- * Built on Safe v1.5.0 and OpenZeppelin Contracts v5.1.0
  */
-contract LuxSafeGovernor {
+contract SafeGovernor {
     /// @notice Contract version
     string public constant VERSION = "1.0.0";
 

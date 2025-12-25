@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-pragma solidity >=0.8.4;
+pragma solidity ^0.8.31;
 
 // Copyright 2019 dYdX Trading Inc.
 //

@@ -1,4 +1,4 @@
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 import "@luxfi/standard/lib/access/Ownable.sol";
 import "./base/Errors.sol";

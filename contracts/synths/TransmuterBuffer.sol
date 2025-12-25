@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 import "@luxfi/standard/lib/access/AccessControl.sol";
 import "@luxfi/standard/lib-upgradeable/proxy/utils/Initializable.sol";

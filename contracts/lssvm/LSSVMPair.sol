@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
@@ -198,10 +198,9 @@ contract LSSVMPair is IERC721Receiver, ReentrancyGuard {
         spotPrice = newSpotPrice;
         emit SpotPriceUpdate(newSpotPrice);
 
-        // Transfer NFTs from seller
+        // Transfer NFTs from seller (safeTransferFrom triggers onERC721Received for tracking)
         for (uint256 i = 0; i < nftIds.length; i++) {
             nft.safeTransferFrom(msg.sender, address(this), nftIds[i]);
-            _addNftToPool(nftIds[i]);
         }
 
         // Transfer payment to recipient
@@ -241,10 +240,11 @@ contract LSSVMPair is IERC721Receiver, ReentrancyGuard {
     }
 
     /// @notice Deposit NFTs to the pool
+    /// @dev Uses safeTransferFrom which triggers onERC721Received for automatic tracking
     function depositNFTs(uint256[] calldata nftIds) external onlyOwner {
         for (uint256 i = 0; i < nftIds.length; i++) {
+            // safeTransferFrom triggers onERC721Received which calls _addNftToPool
             nft.safeTransferFrom(msg.sender, address(this), nftIds[i]);
-            _addNftToPool(nftIds[i]);
         }
         emit NFTDeposit(nftIds);
     }
@@ -393,7 +393,11 @@ contract LSSVMPair is IERC721Receiver, ReentrancyGuard {
     // ERC721 RECEIVER
     // ═══════════════════════════════════════════════════════════════════════
 
-    function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
+    function onERC721Received(address, address, uint256 tokenId, bytes calldata) external override returns (bytes4) {
+        // Only track NFTs from our designated collection
+        if (msg.sender == address(nft)) {
+            _addNftToPool(tokenId);
+        }
         return IERC721Receiver.onERC721Received.selector;
     }
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 import {ERC20PermitUpgradeable} from "@luxfi/standard/lib-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 import {OwnableUpgradeable} from "@luxfi/standard/lib-upgradeable/access/OwnableUpgradeable.sol";

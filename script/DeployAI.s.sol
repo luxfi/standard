@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.31;
 
 import "forge-std/Script.sol";
 import "../contracts/ai/AIToken.sol";

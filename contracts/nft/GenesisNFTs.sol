@@ -25,15 +25,22 @@ pragma solidity ^0.8.31;
 import {LRC721} from "../tokens/LRC721/LRC721.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {SafeLRC20, ILRC20} from "../tokens/LRC20/SafeLRC20.sol";
 
 /**
- * @title ILRC20
- * @notice Minimal LRC20 interface for token transfers
+ * @title IChainlinkAggregator
+ * @notice Chainlink price feed interface for secure oracle pricing
+ * @dev Used as primary oracle to prevent flash loan price manipulation
  */
-interface ILRC20 {
-    function transferFrom(address from, address to, uint256 amount) external returns (bool);
-    function transfer(address to, uint256 amount) external returns (bool);
-    function balanceOf(address account) external view returns (uint256);
+interface IChainlinkAggregator {
+    function latestRoundData() external view returns (
+        uint80 roundId,
+        int256 answer,
+        uint256 startedAt,
+        uint256 updatedAt,
+        uint80 answeredInRound
+    );
+    function decimals() external view returns (uint8);
 }
 
 /**
@@ -84,6 +91,8 @@ interface IStakingRewards {
  * - Nano: 1,000,000 LUX (1M) - $1K value
  */
 contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
+    using SafeLRC20 for ILRC20;
+
     // ═══════════════════════════════════════════════════════════════════════
     // CONSTANTS
     // ═══════════════════════════════════════════════════════════════════════
@@ -105,6 +114,15 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
 
     /// @notice Ending discount: 1% (100 basis points)
     uint256 public constant END_DISCOUNT_BPS = 100;
+
+    /// @notice Maximum staleness for Chainlink oracle (1 hour)
+    uint256 public constant ORACLE_STALENESS_THRESHOLD = 1 hours;
+
+    /// @notice Minimum valid LUX price (sanity check - $0.001)
+    uint256 public constant MIN_LUX_PRICE = 1e15;
+
+    /// @notice Maximum valid LUX price (sanity check - $10,000)
+    uint256 public constant MAX_LUX_PRICE = 10_000e18;
 
     // ═══════════════════════════════════════════════════════════════════════
     // STRUCTS
@@ -167,6 +185,12 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
 
     /// @notice Which token in the pair is LUX (true = token0, false = token1)
     bool public luxIsToken0;
+
+    /// @notice Chainlink LUX/USD price feed (primary oracle - manipulation resistant)
+    IChainlinkAggregator public chainlinkPriceFeed;
+
+    /// @notice Whether to use Chainlink as primary oracle (recommended: true)
+    bool public useChainlinkOracle;
 
     /// @notice Timestamp when sales opened (used for time-based discount calculation)
     uint256 public salesStartTimestamp;
@@ -255,6 +279,11 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
     error LuxCannotBeUnlocked();
     error SalesNotOpen();
     error TransferFailed();
+    error ZeroAddress();
+    error InvalidReserves();
+    error OracleStale();
+    error PriceOutOfBounds();
+    error SlippageExceeded();
 
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -281,6 +310,12 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
         LRC721("Lux Genesis", "GENESIS", baseURI_, royaltyReceiver, royaltyBps)
         Ownable(msg.sender)
     {
+        // Validate constructor parameters - prevent zero addresses
+        if (wlux_ == address(0)) revert ZeroAddress();
+        if (lusd_ == address(0)) revert ZeroAddress();
+        if (luxLusdPair_ == address(0)) revert ZeroAddress();
+        if (royaltyReceiver == address(0)) revert ZeroAddress();
+
         wlux = ILRC20(wlux_);
         lusd = ILRC20(lusd_);
         luxLusdPair = ILuxV2Pair(luxLusdPair_);
@@ -557,25 +592,29 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
 
     /**
      * @notice Buy a Genesis NFT with LUSD (discounted market price from AMM)
-     * @dev Price = current LUX price on AMM minus discount. Proceeds go to DAO_TREASURY.
+     * @dev Price = current LUX price on oracle minus discount. Proceeds go to DAO_TREASURY.
      * @param nftType Type of NFT (Validator, Card, Coin)
      * @param tier Tier (Genesis, Validator, Mini, Nano)
      * @param name Custom name for the NFT
+     * @param maxPrice Maximum price willing to pay (slippage protection, 0 = no limit)
      */
     function buy(
         NFTType nftType,
         Tier tier,
-        string calldata name
+        string calldata name,
+        uint256 maxPrice
     ) external nonReentrant returns (uint256) {
         if (!salesOpen) revert SalesNotOpen();
         if (!migrationComplete) revert MigrationNotComplete();
 
-        // Get current LUX price from AMM with discount applied
+        // Get current LUX price with discount applied
         uint256 price = getDiscountedPrice();
 
-        // Transfer LUSD from buyer to DAO Treasury
-        bool success = lusd.transferFrom(msg.sender, DAO_TREASURY, price);
-        if (!success) revert TransferFailed();
+        // Slippage protection: ensure price hasn't increased beyond max acceptable
+        if (maxPrice > 0 && price > maxPrice) revert SlippageExceeded();
+
+        // SafeLRC20: Transfer LUSD from buyer to DAO Treasury (reverts on failure)
+        lusd.safeTransferFrom(msg.sender, DAO_TREASURY, price);
 
         uint256 tokenId = _nextTokenId++;
         uint256 luxLocked = _getLuxForTier(tier);
@@ -617,23 +656,81 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Get current LUX price in LUSD from AMM
-     * @dev Queries LUX/LUSD pair reserves to calculate spot price
+     * @notice Get current LUX price in LUSD using Chainlink oracle (primary) or AMM (fallback)
+     * @dev Uses Chainlink for manipulation resistance, falls back to AMM if not configured
      * @return Price of 1 LUX in LUSD (18 decimals)
      */
     function getLuxPrice() public view returns (uint256) {
+        // Primary: Use Chainlink oracle if configured (manipulation resistant)
+        if (useChainlinkOracle && address(chainlinkPriceFeed) != address(0)) {
+            return _getChainlinkPrice();
+        }
+
+        // Fallback: Use AMM spot price (less secure, but always available)
+        return _getAMMPrice();
+    }
+
+    /**
+     * @notice Get LUX price from Chainlink oracle
+     * @dev Includes staleness check and sanity bounds
+     */
+    function _getChainlinkPrice() internal view returns (uint256) {
+        (
+            uint80 roundId,
+            int256 answer,
+            ,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        ) = chainlinkPriceFeed.latestRoundData();
+
+        // Validate oracle data
+        if (answer <= 0) revert PriceOutOfBounds();
+        if (updatedAt == 0) revert OracleStale();
+        if (block.timestamp - updatedAt > ORACLE_STALENESS_THRESHOLD) revert OracleStale();
+        if (answeredInRound < roundId) revert OracleStale();
+
+        // Scale to 18 decimals
+        uint8 oracleDecimals = chainlinkPriceFeed.decimals();
+        uint256 price;
+        if (oracleDecimals < 18) {
+            price = uint256(answer) * 10**(18 - oracleDecimals);
+        } else {
+            price = uint256(answer) / 10**(oracleDecimals - 18);
+        }
+
+        // Sanity check bounds
+        if (price < MIN_LUX_PRICE || price > MAX_LUX_PRICE) revert PriceOutOfBounds();
+
+        return price;
+    }
+
+    /**
+     * @notice Get LUX price from AMM reserves (fallback)
+     * @dev Warning: Vulnerable to flash loan manipulation, use Chainlink as primary
+     */
+    function _getAMMPrice() internal view returns (uint256) {
         (uint112 reserve0, uint112 reserve1,) = luxLusdPair.getReserves();
-        
+
+        // Prevent division by zero
+        if (reserve0 == 0 || reserve1 == 0) revert InvalidReserves();
+
+        uint256 price;
         if (luxIsToken0) {
             // LUX is token0, LUSD is token1
             // Price = LUSD reserve / LUX reserve
-            return (uint256(reserve1) * 1e18) / uint256(reserve0);
+            price = (uint256(reserve1) * 1e18) / uint256(reserve0);
         } else {
             // LUX is token1, LUSD is token0
             // Price = LUSD reserve / LUX reserve
-            return (uint256(reserve0) * 1e18) / uint256(reserve1);
+            price = (uint256(reserve0) * 1e18) / uint256(reserve1);
         }
+
+        // Sanity check bounds
+        if (price < MIN_LUX_PRICE || price > MAX_LUX_PRICE) revert PriceOutOfBounds();
+
+        return price;
     }
+
 
     /**
      * @notice Get current discount percentage based on elapsed time
@@ -678,15 +775,30 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
         // Set start timestamp when sales first open (for discount calculation)
         if (open && salesStartTimestamp == 0) {
             salesStartTimestamp = block.timestamp;
+            emit SalesOpened(block.timestamp);
         }
     }
 
     /**
+     * @notice Set Chainlink price feed for secure oracle pricing
+     * @dev Strongly recommended to use Chainlink to prevent flash loan attacks
+     * @param priceFeed Chainlink aggregator address (LUX/USD feed)
+     * @param enabled Whether to use Chainlink as primary oracle
+     */
+    function setChainlinkOracle(address priceFeed, bool enabled) external onlyOwner {
+        if (priceFeed == address(0) && enabled) revert ZeroAddress();
+        chainlinkPriceFeed = IChainlinkAggregator(priceFeed);
+        useChainlinkOracle = enabled;
+    }
+
+    /**
      * @notice Update the AMM pair used for pricing (admin only)
+     * @dev AMM is fallback oracle; prefer Chainlink for security
      * @param newPair New LUX/LUSD pair address
      * @param wluxAddress WLUX token address to determine token order
      */
     function setLuxLusdPair(address newPair, address wluxAddress) external onlyOwner {
+        if (newPair == address(0)) revert ZeroAddress();
         luxLusdPair = ILuxV2Pair(newPair);
         luxIsToken0 = (luxLusdPair.token0() == wluxAddress);
     }

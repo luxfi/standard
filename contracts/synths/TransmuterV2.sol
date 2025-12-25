@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 import "@luxfi/standard/lib-upgradeable/access/AccessControlUpgradeable.sol";
 import "@luxfi/standard/lib-upgradeable/proxy/utils/Initializable.sol";

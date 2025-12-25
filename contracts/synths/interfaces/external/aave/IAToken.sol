@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 import {IERC20Minimal} from "../../IERC20Minimal.sol";
 import {IScaledBalanceToken} from "./IScaledBalanceToken.sol";

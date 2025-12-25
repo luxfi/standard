@@ -4,7 +4,7 @@ import "../access/Governable.sol";
 import "../core/interfaces/IShortsTracker.sol";
 import "./interfaces/IHandlerTarget.sol";
 
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 contract ShortsTrackerTimelock {
     
