@@ -1,6 +1,6 @@
-@luxfi/standard/lib/=lib/openzeppelin-contracts/contracts/
-@luxfi/standard/lib-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
-@luxfi/standard/=./
+@luxfi/contracts/=contracts/
+@luxfi/contracts/lib/=lib/openzeppelin-contracts/contracts/
+@luxfi/contracts/lib-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 @openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
 @account-abstraction/=lib/account-abstraction/contracts/

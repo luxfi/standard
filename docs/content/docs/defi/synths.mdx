@@ -74,7 +74,7 @@ The Synths protocol enables:
 ### Deposit & Mint
 
 ```solidity
-import "@lux/synths/AlchemistV2.sol";
+import "@luxfi/contracts/synths/AlchemistV2.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 AlchemistV2 alchemist = AlchemistV2(ALCHEMIST_ADDRESS);
@@ -147,7 +147,7 @@ The Transmuter allows 1:1 redemption of synthetic tokens for underlying assets.
 ### Queue Redemption
 
 ```solidity
-import "@lux/synths/TransmuterV2.sol";
+import "@luxfi/contracts/synths/TransmuterV2.sol";
 
 TransmuterV2 transmuter = TransmuterV2(TRANSMUTER_ADDRESS);
 
@@ -223,7 +223,7 @@ interface ITokenAdapter {
 All synth tokens support ERC-3156 flash loans:
 
 ```solidity
-import "@lux/synths/interfaces/IERC3156FlashLender.sol";
+import "@luxfi/contracts/synths/interfaces/IERC3156FlashLender.sol";
 
 contract FlashBorrower is IERC3156FlashBorrower {
     function executeFlashLoan(uint256 amount) external {

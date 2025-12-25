@@ -186,9 +186,117 @@ safe.execTransaction(
 );
 ```
 
+## Threshold Signers (MPC)
+
+Safe supports threshold signature schemes as owners, enabling advanced custody solutions without exposing private keys.
+
+### Available Signers
+
+| Signer | Protocol | Curve | Quantum Safe | Use Case |
+|--------|----------|-------|--------------|----------|
+| **SafeCGGMP21Signer** | CGGMP21 | secp256k1 | ❌ | Institutional ECDSA custody |
+| **SafeFROSTSigner** | FROST | secp256k1 | ❌ | Bitcoin Taproot, Schnorr |
+| **SafeFROSTCoSigner** | FROST | secp256k1 | ❌ | Co-signing workflows |
+| **SafeRingtailSigner** | Ringtail | Lattice | ✅ | Post-quantum security |
+| **SafeLSSSigner** | LSS | secp256k1 | ❌ | Dynamic resharing |
+| **SafeMLDSASigner** | ML-DSA | Lattice | ✅ | FIPS 204 compliant |
+
+### CGGMP21 Threshold ECDSA
+
+```solidity
+import "@luxfi/standard/contracts/safe/SafeCGGMP21Signer.sol";
+
+// Deploy with 2-of-3 threshold and aggregated public key
+SafeCGGMP21Signer signer = new SafeCGGMP21Signer(
+    2,           // threshold
+    3,           // total signers
+    publicKey    // 65-byte uncompressed secp256k1
+);
+
+// Add as Safe owner
+safe.addOwnerWithThreshold(address(signer), threshold);
+```
+
+### FROST Schnorr Threshold
+
+```solidity
+import "@luxfi/standard/contracts/safe/SafeFROSTSigner.sol";
+
+// Deploy with public key coordinates
+SafeFROSTSigner signer = new SafeFROSTSigner(px, py);
+
+// Verify signature
+bool valid = signer._isValidSignature(messageHash, signature);
+```
+
+### Post-Quantum (Ringtail)
+
+```solidity
+import "@luxfi/standard/contracts/safe/SafeRingtailSigner.sol";
+
+// Deploy with Ringtail public key
+SafeRingtailSigner signer = new SafeRingtailSigner(
+    threshold,
+    totalSigners,
+    ringtailPublicKey  // Lattice-based public key
+);
+```
+
+### Integration with MPC Nodes
+
+The threshold signers integrate with the Lux MPC node cluster (`github.com/luxfi/mpc`):
+
+1. **Key Generation**: Run distributed key generation across MPC nodes
+2. **Deploy Signer**: Deploy threshold signer contract with aggregated public key
+3. **Add to Safe**: Add signer contract as a Safe owner
+4. **Collaborative Signing**: MPC nodes sign transactions without exposing keys
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           MPC + SAFE INTEGRATION                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐                   │
+│  │  MPC Node 1 │     │  MPC Node 2 │     │  MPC Node 3 │                   │
+│  │  (Share 1)  │     │  (Share 2)  │     │  (Share 3)  │                   │
+│  └──────┬──────┘     └──────┬──────┘     └──────┬──────┘                   │
+│         │                   │                   │                           │
+│         └───────────────────┼───────────────────┘                           │
+│                             │ Threshold Signing (2-of-3)                    │
+│                             ▼                                               │
+│                    ┌─────────────────┐                                      │
+│                    │  CGGMP21/FROST  │                                      │
+│                    │    Signature    │                                      │
+│                    └────────┬────────┘                                      │
+│                             │                                               │
+│                             ▼                                               │
+│         ┌─────────────────────────────────────────┐                         │
+│         │          SafeCGGMP21Signer              │                         │
+│         │  (verifies threshold signature)         │                         │
+│         └─────────────────────┬───────────────────┘                         │
+│                               │                                             │
+│                               ▼                                             │
+│                    ┌─────────────────┐                                      │
+│                    │   Safe Wallet   │                                      │
+│                    │ (executes tx)   │                                      │
+│                    └─────────────────┘                                      │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Related LPs
+
+- [LP-7321](/docs/lp-7321): FROST Threshold Signature Precompile
+- [LP-7322](/docs/lp-7322): CGGMP21 Threshold ECDSA Precompile
+- [LP-7324](/docs/lp-7324): Ringtail Threshold Signature Precompile
+- [LP-7340](/docs/lp-7340): Threshold Cryptography Library
+- [LP-3310](/docs/lp-3310): Safe Multisig Standard
+
 ## Security
 
 - **Threshold Enforcement**: All transactions require threshold confirmations
 - **EIP-712 Signatures**: Typed structured data for secure signing
 - **Guards**: Optional pre/post execution checks
 - **Replay Protection**: Nonce prevents transaction replay
+- **MPC Security**: No single party holds complete private key
+- **Quantum Resistance**: Ringtail and ML-DSA signers provide post-quantum security

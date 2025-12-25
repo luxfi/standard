@@ -13,58 +13,58 @@ Complete contract interface documentation for the Lux Standard Library.
 
 | Contract | Description | Import |
 |----------|-------------|--------|
-| [LUX](/docs/tokens/lux) | Native platform token | `@lux/tokens/LUX.sol` |
-| [LUXD](/docs/tokens/luxd) | Dollar stablecoin | `@lux/tokens/LUXD.sol` |
-| [AI](/docs/tokens/ai) | AI compute mining token | `@lux/tokens/AI.sol` |
-| [LRC20](/docs/tokens/erc20b) | Base ERC20 implementation | `@lux/tokens/LRC20.sol` |
-| [LRC20B](/docs/tokens/erc20b) | Bridgeable ERC20 | `@lux/tokens/LRC20B.sol` |
-| [LRC721B](/docs/tokens/erc721b) | Bridgeable ERC721 | `@lux/tokens/LRC721B.sol` |
+| [LUX](/docs/tokens/lux) | Native platform token | `@luxfi/contracts/tokens/LUX.sol` |
+| [LUXD](/docs/tokens/luxd) | Dollar stablecoin | `@luxfi/contracts/tokens/LUXD.sol` |
+| [AI](/docs/tokens/ai) | AI compute mining token | `@luxfi/contracts/tokens/AI.sol` |
+| [LRC20](/docs/tokens/erc20b) | Base ERC20 implementation | `@luxfi/contracts/tokens/LRC20.sol` |
+| [LRC20B](/docs/tokens/erc20b) | Bridgeable ERC20 | `@luxfi/contracts/tokens/LRC20B.sol` |
+| [LRC721B](/docs/tokens/erc721b) | Bridgeable ERC721 | `@luxfi/contracts/tokens/LRC721B.sol` |
 
 ### DeFi Protocols
 
 | Contract | Description | Import |
 |----------|-------------|--------|
-| [AlchemistV2](/docs/defi/synths) | Self-repaying loans vault | `@lux/synths/AlchemistV2.sol` |
-| [TransmuterV2](/docs/defi/synths) | 1:1 synth redemption | `@lux/synths/TransmuterV2.sol` |
-| [Vault](/docs/defi/vault) | Perps liquidity vault | `@lux/perps/core/Vault.sol` |
-| [Router](/docs/defi/router) | Position management | `@lux/perps/core/Router.sol` |
-| [LLP](/docs/defi/perps) | Liquidity provider token | `@lux/perps/tokens/LLP.sol` |
+| [AlchemistV2](/docs/defi/synths) | Self-repaying loans vault | `@luxfi/contracts/synths/AlchemistV2.sol` |
+| [TransmuterV2](/docs/defi/synths) | 1:1 synth redemption | `@luxfi/contracts/synths/TransmuterV2.sol` |
+| [Vault](/docs/defi/vault) | Perps liquidity vault | `@luxfi/contracts/perps/core/Vault.sol` |
+| [Router](/docs/defi/router) | Position management | `@luxfi/contracts/perps/core/Router.sol` |
+| [LLP](/docs/defi/perps) | Liquidity provider token | `@luxfi/contracts/perps/tokens/LLP.sol` |
 
 ### AMM & DEX
 
 | Contract | Description | Import |
 |----------|-------------|--------|
-| [AMMV2Factory](/docs/amm/pools) | Uniswap V2 factory | `@lux/amm/AMMV2Factory.sol` |
-| [AMMV2Pair](/docs/amm/pools) | V2 liquidity pair | `@lux/amm/AMMV2Pair.sol` |
-| [AMMV3Factory](/docs/amm/pools) | Uniswap V3 factory | `@lux/amm/AMMV3Factory.sol` |
-| [AMMV3Pool](/docs/amm/pools) | V3 concentrated liquidity | `@lux/amm/AMMV3Pool.sol` |
-| [SwapRouter](/docs/amm/router) | Optimized swap routing | `@lux/amm/SwapRouter.sol` |
-| [WLUX](/docs/amm/wlux) | Wrapped LUX | `@lux/amm/WLUX.sol` |
+| [AMMV2Factory](/docs/amm/pools) | Uniswap V2 factory | `@luxfi/contracts/amm/AMMV2Factory.sol` |
+| [AMMV2Pair](/docs/amm/pools) | V2 liquidity pair | `@luxfi/contracts/amm/AMMV2Pair.sol` |
+| [AMMV3Factory](/docs/amm/pools) | Uniswap V3 factory | `@luxfi/contracts/amm/AMMV3Factory.sol` |
+| [AMMV3Pool](/docs/amm/pools) | V3 concentrated liquidity | `@luxfi/contracts/amm/AMMV3Pool.sol` |
+| [SwapRouter](/docs/amm/router) | Optimized swap routing | `@luxfi/contracts/amm/SwapRouter.sol` |
+| [WLUX](/docs/amm/wlux) | Wrapped LUX | `@luxfi/contracts/tokens/WLUX.sol` |
 
 ### Governance
 
 | Contract | Description | Import |
 |----------|-------------|--------|
-| [Governor](/docs/governance/dao) | OpenZeppelin Governor | `@lux/governance/Governor.sol` |
-| [Timelock](/docs/governance/dao) | TimelockController | `@lux/governance/Timelock.sol` |
-| [vLUX](/docs/governance) | Vote-escrowed LUX | `@lux/governance/vLUX.sol` |
-| [DAO](/docs/governance/dao) | Complete DAO contract | `@lux/governance/DAO.sol` |
+| [Governor](/docs/governance/dao) | OpenZeppelin Governor | `@luxfi/contracts/governance/Governor.sol` |
+| [Timelock](/docs/governance/dao) | TimelockController | `@luxfi/contracts/governance/Timelock.sol` |
+| [vLUX](/docs/governance) | Vote-escrowed LUX | `@luxfi/contracts/governance/vLUX.sol` |
+| [DAO](/docs/governance/dao) | Complete DAO contract | `@luxfi/contracts/governance/DAO.sol` |
 
 ### Bridge & Cross-Chain
 
 | Contract | Description | Import |
 |----------|-------------|--------|
-| [Teleport](/docs/bridge/bridge) | Token teleportation | `@lux/bridge/Teleport.sol` |
-| [Bridge](/docs/bridge/bridge) | Core bridge logic | `@lux/bridge/Bridge.sol` |
-| [Warp](/docs/bridge/warp) | BLS messaging | `@lux/bridge/interfaces/IWarpMessenger.sol` |
+| [Teleport](/docs/bridge/bridge) | Token teleportation | `@luxfi/contracts/bridge/Teleport.sol` |
+| [Bridge](/docs/bridge/bridge) | Core bridge logic | `@luxfi/contracts/bridge/Bridge.sol` |
+| [Warp](/docs/bridge/warp) | BLS messaging | `@luxfi/contracts/bridge/interfaces/IWarpMessenger.sol` |
 
 ### Security & Multi-Sig
 
 | Contract | Description | Import |
 |----------|-------------|--------|
-| [Safe](/docs/safe) | Multi-sig wallet | `@lux/safe/Safe.sol` |
-| [SafeFactory](/docs/safe) | Safe deployment | `@lux/safe/SafeFactory.sol` |
-| [LamportBase](/docs/lamport) | Post-quantum signatures | `@lux/crypto/lamport/LamportBase.sol` |
+| [Safe](/docs/safe) | Multi-sig wallet | `@luxfi/contracts/safe/Safe.sol` |
+| [SafeFactory](/docs/safe) | Safe deployment | `@luxfi/contracts/safe/SafeFactory.sol` |
+| [LamportBase](/docs/lamport) | Post-quantum signatures | `@luxfi/contracts/crypto/lamport/LamportBase.sol` |
 
 ---
 
@@ -165,13 +165,13 @@ interface IVault {
 ### Installation
 
 ```bash
-npm install @luxfi/standard
+npm install @luxfi/contracts
 ```
 
 ### Quick Start
 
 ```typescript
-import { LuxClient, Tokens, DeFi } from '@luxfi/standard';
+import { LuxClient, Tokens, DeFi } from '@luxfi/contracts';
 import { ethers } from 'ethers';
 
 // Initialize client
