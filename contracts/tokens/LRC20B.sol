@@ -12,7 +12,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  * @notice Bridgeable ERC20 token with admin roles for cross-chain operations
  * @dev Combines Ownable (single owner) with AccessControl (admin roles) for flexible access control
  */
-contract ERC20B is ERC20, Ownable, AccessControl {
+contract LRC20B is ERC20, Ownable, AccessControl {
     /// @notice Emitted when tokens are minted
     event LogMint(address indexed account, uint256 amount);
 

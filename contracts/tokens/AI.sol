@@ -62,7 +62,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
     - LP-1002: Quasar Consensus (BLS/Ringtail Hybrid)
  */
 
-import "./ERC20B.sol";
+import "./LRC20B.sol";
 // IERC20 is already defined in ERC20B.sol (flattened)
 
 // ============ Precompile Interfaces ============
@@ -430,7 +430,7 @@ contract AIPaymentRouter {
  * 4. AI tokens minted to miner
  * 5. Miner can teleport AI to destination chains
  */
-contract AINative is ERC20B {
+contract AINative is LRC20B {
     // ============ Constants ============
 
     /// @notice Attestation precompile address
@@ -486,7 +486,7 @@ contract AINative is ERC20B {
 
     // ============ Constructor ============
 
-    constructor() ERC20B("AI", "AI") {
+    constructor() LRC20B("AI", "AI") {
         // Set tier multipliers (basis points: 10000 = 1x)
         tierMultiplier[PrivacyLevel.Public] = 2500;       // 0.25x (stake-required)
         tierMultiplier[PrivacyLevel.Private] = 5000;      // 0.5x (SGX/A100)
@@ -670,7 +670,7 @@ contract AINative is ERC20B {
  * @title AIRemote
  * @notice AI Token on destination chains, minted via Warp teleport from A-Chain
  */
-contract AIRemote is ERC20B {
+contract AIRemote is LRC20B {
     // ============ Constants ============
 
     bytes32 public immutable A_CHAIN_ID;
@@ -697,7 +697,7 @@ contract AIRemote is ERC20B {
 
     // ============ Constructor ============
 
-    constructor(bytes32 _aChainId, address _aChainToken) ERC20B("AI", "AI") {
+    constructor(bytes32 _aChainId, address _aChainToken) LRC20B("AI", "AI") {
         A_CHAIN_ID = _aChainId;
         A_CHAIN_TOKEN = _aChainToken;
     }

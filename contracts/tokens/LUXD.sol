@@ -15,11 +15,11 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import "./ERC20B.sol";
+import "./LRC20B.sol";
 
-contract LUXD is ERC20B {
+contract LUXD is LRC20B {
     string public constant _name = 'Lux Dollar';
     string public constant _symbol = 'LUXD';
-    constructor() ERC20B(_name, _symbol) {}
+    constructor() LRC20B(_name, _symbol) {}
 }
 
