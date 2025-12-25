@@ -1,12 +1,39 @@
 # AI Assistant Knowledge Base
 
-**Last Updated**: 2025-12-24
+**Last Updated**: 2025-12-25
 **Project**: Lux Standard (Solidity Contracts & Precompiles)
 **Organization**: Lux Industries
+**Solidity Version**: 0.8.31
+**Test Coverage**: 751 tests passing (100%)
 
 ## Project Overview
 
 This repository contains the standard Solidity contracts and EVM precompiles for the Lux blockchain, including post-quantum cryptography implementations and Quasar consensus integration.
+
+## Test Coverage Summary (2025-12-25)
+
+**Total**: 751 tests passing across 35 test suites
+
+| Protocol | Tests | Status |
+|----------|-------|--------|
+| AMM V2/V3 | 44 | ✅ |
+| Markets (Lending) | 47 | ✅ |
+| LSSVM (NFT AMM) | 32 | ✅ |
+| Perps | 57 | ✅ |
+| Synths | 17 | ✅ |
+| Governance | 37 | ✅ |
+| Identity (DID) | 70 | ✅ |
+| Staking | 43 | ✅ |
+| Bridge Tokens | 47 | ✅ |
+| Treasury | 39 | ✅ |
+| Omnichain | 36 | ✅ |
+| Adapters | 31 | ✅ |
+| AI Token/Mining | 82 | ✅ |
+| YieldStrategies | 30 | ✅ |
+| NFT Marketplace | 26 | ✅ |
+| Other | 113 | ✅ |
+
+**CI Status**: ✅ Passing - https://github.com/luxfi/standard/actions
 
 ---
 
