@@ -7,9 +7,6 @@ on:
     branches: [main]
   workflow_dispatch:
 
-env:
-  FOUNDRY_PROFILE: ci
-
 jobs:
   build:
     strategy:
@@ -30,12 +27,12 @@ jobs:
       - name: Run Forge build
         run: |
           forge --version
-          forge build --sizes
+          forge build
         id: build
 
       - name: Run Forge tests
         run: |
-          forge test -vvv
+          forge test -vvv --summary
         id: test
 
   lint:
