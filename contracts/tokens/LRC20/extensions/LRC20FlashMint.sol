@@ -2,9 +2,9 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import "@luxfi/standard/lib/token/ERC20/ERC20.sol";
-import "@luxfi/standard/lib/interfaces/IERC3156FlashLender.sol";
-import "@luxfi/standard/lib/interfaces/IERC3156FlashBorrower.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC3156FlashLender} from "@openzeppelin/contracts/interfaces/IERC3156FlashLender.sol";
+import {IERC3156FlashBorrower} from "@openzeppelin/contracts/interfaces/IERC3156FlashBorrower.sol";
 
 /**
  * @title LRC20FlashMint
