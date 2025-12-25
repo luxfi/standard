@@ -6,8 +6,8 @@ import {OmnichainLP} from "../../contracts/omnichain/OmnichainLP.sol";
 import {OmnichainLPFactory} from "../../contracts/omnichain/OmnichainLPFactory.sol";
 import {OmnichainLPRouter} from "../../contracts/omnichain/OmnichainLPRouter.sol";
 import {Bridge} from "../../contracts/omnichain/Bridge.sol";
-import {IERC20} from "@luxfi/standard/lib/token/ERC20/IERC20.sol";
-import {ERC20} from "@luxfi/standard/lib/token/ERC20/ERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /// @notice Mock ERC20 token for testing
 contract MockERC20 is ERC20 {

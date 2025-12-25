@@ -17,7 +17,7 @@ A token that can be minted/burned by bridge admins for cross-chain transfers:
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@lux/tokens/LRC20B.sol";
+import "@luxfi/contracts/tokens/LRC20B.sol";
 
 contract BridgedUSDC is LRC20B {
     constructor() LRC20B("Bridged USDC", "USDC.e") {
@@ -36,7 +36,7 @@ contract BridgedUSDC is LRC20B {
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@lux/tokens/LRC20/LRC20Capped.sol";
+import "@luxfi/contracts/tokens/LRC20/LRC20Capped.sol";
 
 contract CappedToken is LRC20Capped {
     constructor()
@@ -57,7 +57,7 @@ Deposit collateral, mint synthetic tokens, and let yield repay your debt:
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@lux/synths/interfaces/IAlchemistV2.sol";
+import "@luxfi/contracts/synths/interfaces/IAlchemistV2.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract SynthLoan {
@@ -101,8 +101,8 @@ Open a leveraged long position on LUX:
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@lux/perps/core/interfaces/IRouter.sol";
-import "@lux/perps/core/interfaces/IVault.sol";
+import "@luxfi/contracts/perps/core/interfaces/IRouter.sol";
+import "@luxfi/contracts/perps/core/interfaces/IVault.sol";
 
 contract PerpTrader {
     IRouter public router;
@@ -161,9 +161,9 @@ Set up a DAO with token voting:
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@lux/governance/Governor.sol";
-import "@lux/governance/Timelock.sol";
-import "@lux/governance/GoveranceToken.sol";
+import "@luxfi/contracts/governance/Governor.sol";
+import "@luxfi/contracts/governance/Timelock.sol";
+import "@luxfi/contracts/governance/GoveranceToken.sol";
 
 contract MyDAO is Governor {
     constructor(
@@ -196,7 +196,7 @@ Use Warp messaging to teleport tokens:
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@lux/bridge/Teleport.sol";
+import "@luxfi/contracts/bridge/Teleport.sol";
 
 contract TokenTeleporter {
     Teleport public teleport;
@@ -230,7 +230,7 @@ contract TokenTeleporter {
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@lux/safe/SafeFactory.sol";
+import "@luxfi/contracts/safe/SafeFactory.sol";
 
 contract DeploySafe {
     SafeFactory public factory;
@@ -262,7 +262,7 @@ contract DeploySafe {
 pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
-import "@lux/synths/AlchemistV2.sol";
+import "@luxfi/contracts/synths/AlchemistV2.sol";
 
 contract IntegrationTest is Test {
     AlchemistV2 alchemist;

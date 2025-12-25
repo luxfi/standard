@@ -13,11 +13,11 @@ script = "contracts/script"
 
 # Remappings - comprehensive library support
 remappings = [
-    # Lux Standard paths
-    "@luxfi/standard/lib/=lib/openzeppelin-contracts/contracts/",
-    "@luxfi/standard/lib-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
-    "@luxfi/standard/=./",
-    "@lux/=contracts/",
+    # Lux Contracts paths
+    "@luxfi/contracts/=contracts/",
+    "@luxfi/contracts/lib/=lib/openzeppelin-contracts/contracts/",
+    "@luxfi/contracts/lib-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+    "@lux/=contracts/",  # Legacy alias
     "manifoldxyz/=lib/manifoldxyz/",
     "@manifoldxyz/=lib/manifoldxyz/",
     
