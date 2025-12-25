@@ -74,6 +74,28 @@ All deployed contracts across the Lux ecosystem networks.
 | NonfungibleTokenPositionDescriptor | `0x043ccF9C207165DA6D4a44ae47488AF49843bADe` |
 | NFTDescriptor | `0x53B1aAA5b6DDFD4eD00D0A7b5Ef333dc74B605b5` |
 
+## Ethereum Mainnet (Chain ID: 1)
+
+### Teleport Bridge Tokens
+
+Bridge tokens deployed on Ethereum for teleporting to Lux:
+
+| Contract | Address |
+|----------|---------|
+| LBTC | `0x526903Ee6118de6737D11b37f82fC7f69B13685D` |
+| LETH | `0xAA3AE951A7925F25aE8Ad65b052a76Bd8f052598` |
+| Teleport | `0x60D9B4552b67792D4E65B4D3e27de0EfbCd219bA` |
+
+### NFT Marketplace
+
+| Contract | Address |
+|----------|---------|
+| App | `0x44A210571E135C6a536564e9B14dc4DA63f3D398` |
+| Drop | `0x941E3B4fC883B1746E52814EB8574b85E6Fa4E66` |
+| Market | `0x7A9AbAB13ad21c3D0c84484bd8dA7da7d722B4ca` |
+| Media | `0x31e0F919C67ceDd2Bc3E294340Dc900735810311` |
+| Multicall | `0x9D3055C28844eB83eb75aC8A9638a8d2E5eF61C9` |
+
 ## Bridge Tokens
 
 ### Lux Chain (L-prefix)
