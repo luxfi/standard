@@ -62,9 +62,15 @@ contract LUX is ERC20, ERC20Burnable, Pausable, Ownable, AccessControl {
         super._mint(to, value);
     }
 
+    /**
+     * @notice Burn tokens from an account for bridge operations
+     * @dev Requires the account to have pre-approved the bridge for the burn amount
+     * @param account The account to burn tokens from
+     * @param amount The amount of tokens to burn
+     */
     function bridgeBurn(address account, uint256 amount) external whenNotPaused onlyBridge {
-        super._approve(account, msg.sender, amount);
-        super._burn(account, amount);
+        _spendAllowance(account, msg.sender, amount);
+        _burn(account, amount);
     }
 
     function pause() public onlyOwner whenNotPaused {

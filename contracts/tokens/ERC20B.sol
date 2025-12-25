@@ -994,12 +994,19 @@ pragma solidity ^0.8.31;
 
 
 
+/**
+ * @title ERC20B
+ * @notice Bridgeable ERC20 token with admin roles
+ * @dev Uses embedded OZ 4.x Ownable (parameterless constructor sets msg.sender as owner automatically)
+ */
 contract ERC20B is ERC20, Ownable, AccessControl {
     event LogMint(address indexed account, uint amount);
     event LogBurn(address indexed account, uint amount);
     event AdminGranted(address to);
     event AdminRevoked(address to);
 
+    /// @notice Initializes the token with name, symbol, and sets deployer as owner/admin
+    /// @dev Ownable base constructor automatically sets msg.sender as owner
     constructor(string memory name, string memory symbol) ERC20(name, symbol) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
