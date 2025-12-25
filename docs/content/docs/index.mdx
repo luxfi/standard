@@ -1,73 +1,215 @@
 ---
-title: Lux Standard Library
-description: Smart contract library for Lux Network - tokens, DeFi, AMM, accounts, and security
+title: Documentation
+description: Complete documentation for the Lux Standard Library
 ---
 
 # Lux Standard Library
 
-Comprehensive smart contract library for the Lux Network ecosystem. One canonical implementation for each protocol - composable, orthogonal, and secure.
+The canonical smart contract library for [Lux Network](https://lux.network). Production-ready implementations for tokens, DeFi, governance, and post-quantum security.
 
-## Core Contracts
+<Callout type="info">
+  **New to Lux?** Start with the [Getting Started](/docs/getting-started) guide to install the library and deploy your first contract.
+</Callout>
+
+## Quick Links
 
 <Cards>
-  <Card title="Tokens" href="/docs/tokens">
-    LUX, LUXD, AI, LBTC, LETH tokens and bridgeable ERC20/ERC721
+  <Card title="Getting Started" href="/docs/getting-started">
+    Install, configure, and deploy your first contract
   </Card>
-  <Card title="AMM" href="/docs/amm">
-    Uniswap V2/V3 pools, swap router, and WLUX
+  <Card title="Examples" href="/docs/examples">
+    Complete working code examples
   </Card>
-  <Card title="DeFi" href="/docs/defi">
-    Margin trading, lending pools, self-repaying loans, and yield farming
-  </Card>
-  <Card title="Smart Accounts" href="/docs/accounts">
-    ERC-4337 account abstraction, session keys, and paymasters
+  <Card title="API Reference" href="/docs/api">
+    Full contract reference documentation
   </Card>
 </Cards>
+
+---
+
+## Core Modules
+
+### Tokens
+
+Native tokens, stablecoins, and token standards for the Lux ecosystem.
+
+<Cards>
+  <Card title="LUX" href="/docs/tokens/lux">
+    Native governance token with staking rewards
+  </Card>
+  <Card title="LUXD" href="/docs/tokens/luxd">
+    Lux Dollar - algorithmic stablecoin
+  </Card>
+  <Card title="AI" href="/docs/tokens/ai">
+    AI token with hardware-attested GPU mining
+  </Card>
+  <Card title="LRC20" href="/docs/tokens/erc20b">
+    Base ERC20 with extensions (bridgeable, capped, wrapped)
+  </Card>
+</Cards>
+
+[View all tokens →](/docs/tokens)
+
+### DeFi
+
+Self-repaying loans, perpetual trading, and yield protocols.
+
+<Cards>
+  <Card title="Synths" href="/docs/defi/synths">
+    Overcollateralized synthetic assets (xUSD, xETH, xBTC)
+  </Card>
+  <Card title="Perpetuals" href="/docs/defi/perps">
+    Up to 50x leveraged trading with LLP liquidity
+  </Card>
+  <Card title="Lending" href="/docs/defi/lending">
+    Lending pools and money markets
+  </Card>
+  <Card title="Yield" href="/docs/defi/farm">
+    Yield farming and liquidity mining
+  </Card>
+</Cards>
+
+[View all DeFi →](/docs/defi)
+
+### AMM
+
+Decentralized exchange with concentrated liquidity.
+
+<Cards>
+  <Card title="Pools" href="/docs/amm/pools">
+    Uniswap V2/V3 style liquidity pools
+  </Card>
+  <Card title="Router" href="/docs/amm/router">
+    Optimized swap routing across pools
+  </Card>
+  <Card title="WLUX" href="/docs/amm/wlux">
+    Wrapped LUX for DeFi compatibility
+  </Card>
+</Cards>
+
+[View all AMM →](/docs/amm)
+
+### Smart Accounts
+
+ERC-4337 account abstraction with advanced features.
+
+<Cards>
+  <Card title="Smart Account" href="/docs/accounts/smart-account">
+    Upgradeable smart contract wallets
+  </Card>
+  <Card title="Factory" href="/docs/accounts/factory">
+    Deploy accounts with CREATE2
+  </Card>
+  <Card title="Paymasters" href="/docs/accounts/paymasters">
+    Sponsor gas fees for users
+  </Card>
+  <Card title="Modules" href="/docs/accounts/modules">
+    Session keys, spending limits, recovery
+  </Card>
+</Cards>
+
+[View all accounts →](/docs/accounts)
+
+---
 
 ## Infrastructure
 
+### Governance
+
+On-chain governance and DAO tooling.
+
 <Cards>
-  <Card title="Governance" href="/docs/governance">
-    DAO, voting, and on-chain governance
+  <Card title="DAO" href="/docs/governance/dao">
+    Full-featured DAO with token voting
   </Card>
-  <Card title="Bridge" href="/docs/bridge">
-    Cross-chain bridge with MPC oracle validation
+  <Card title="Voting" href="/docs/governance/voting">
+    Snapshot and on-chain voting systems
   </Card>
-  <Card title="Utilities" href="/docs/utils">
-    Multicall, batch operations, and helpers
+  <Card title="vLUX" href="/docs/governance">
+    Vote-escrowed LUX tokenomics
   </Card>
 </Cards>
+
+[View all governance →](/docs/governance)
+
+### Bridge
+
+Cross-chain interoperability with Warp messaging.
+
+<Cards>
+  <Card title="Teleport" href="/docs/bridge/bridge">
+    Token transfers across chains
+  </Card>
+  <Card title="Warp" href="/docs/bridge/warp">
+    BLS-validated cross-chain messaging
+  </Card>
+</Cards>
+
+[View all bridge →](/docs/bridge)
+
+### Utilities
+
+Helper contracts and common patterns.
+
+<Cards>
+  <Card title="Multicall" href="/docs/utils/multicall">
+    Batch multiple calls in one transaction
+  </Card>
+  <Card title="Faucet" href="/docs/utils">
+    Testnet token distribution
+  </Card>
+</Cards>
+
+[View all utilities →](/docs/utils)
+
+---
 
 ## Security
 
+### Multi-Signature
+
+Secure asset management with threshold signatures.
+
 <Cards>
   <Card title="Safe" href="/docs/safe">
-    Multi-signature wallet with threshold confirmations
-  </Card>
-  <Card title="Lamport" href="/docs/lamport">
-    Post-quantum signatures for contract ownership
+    Multi-sig wallet with FROST threshold signatures
   </Card>
 </Cards>
 
-## Quick Start
+### Post-Quantum
 
-```bash
-# Install with Foundry
-forge install luxfi/standard
+Quantum-resistant cryptography for future-proof security.
 
-# Or add to remappings
-echo "@luxfi/standard/=lib/standard/src/" >> remappings.txt
-```
+<Cards>
+  <Card title="Lamport" href="/docs/lamport">
+    One-time signatures for quantum safety
+  </Card>
+</Cards>
 
-## Architecture
+---
 
-The standard library follows these principles:
+## Contract Index
 
-- **Composable**: Contracts work together seamlessly
-- **Orthogonal**: Each contract does one thing well
-- **Secure**: Audited and battle-tested implementations
-- **Post-Quantum Ready**: Lamport signatures and threshold cryptography
+| Category | Contracts | Description |
+|----------|-----------|-------------|
+| [Tokens](/docs/tokens) | LUX, LUXD, AI, LRC20, LRC20B, LRC721B | Native tokens and standards |
+| [Synths](/docs/defi/synths) | AlchemistV2, TransmuterV2, SynthToken | Self-repaying synthetic assets |
+| [Perps](/docs/defi/perps) | Vault, Router, PositionRouter, LLP | Perpetual futures trading |
+| [AMM](/docs/amm) | AMMV2Factory, AMMV3Pool, SwapRouter | Decentralized exchange |
+| [Governance](/docs/governance) | Governor, Timelock, DAO, vLUX | On-chain governance |
+| [Bridge](/docs/bridge) | Teleport, Bridge, Warp | Cross-chain transfers |
+| [Safe](/docs/safe) | Safe, SafeFactory, FROST | Multi-signature wallets |
+| [Accounts](/docs/accounts) | EOA, EOAFactory, Paymaster | Account abstraction |
+
+---
+
+## Resources
+
+- **[GitHub Repository](https://github.com/luxfi/standard)** - Source code and issues
+- **[Discord](https://discord.gg/lux)** - Community support
+- **[Twitter](https://twitter.com/luxnetwork)** - Updates and announcements
+- **[Lux Network](https://lux.network)** - Main website
 
 ## License
 
-MIT License - see [LICENSE](https://github.com/luxfi/standard/blob/main/LICENSE)
+MIT License - Free to use in commercial and open source projects.

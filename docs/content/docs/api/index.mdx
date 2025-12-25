@@ -1,0 +1,314 @@
+---
+title: API Reference
+description: Complete contract interface documentation for the Lux Standard Library
+---
+
+# API Reference
+
+Complete contract interface documentation for the Lux Standard Library.
+
+## Core Contract Interfaces
+
+### Tokens
+
+| Contract | Description | Import |
+|----------|-------------|--------|
+| [LUX](/docs/tokens/lux) | Native platform token | `@lux/tokens/LUX.sol` |
+| [LUXD](/docs/tokens/luxd) | Dollar stablecoin | `@lux/tokens/LUXD.sol` |
+| [AI](/docs/tokens/ai) | AI compute mining token | `@lux/tokens/AI.sol` |
+| [LRC20](/docs/tokens/erc20b) | Base ERC20 implementation | `@lux/tokens/LRC20.sol` |
+| [LRC20B](/docs/tokens/erc20b) | Bridgeable ERC20 | `@lux/tokens/LRC20B.sol` |
+| [LRC721B](/docs/tokens/erc721b) | Bridgeable ERC721 | `@lux/tokens/LRC721B.sol` |
+
+### DeFi Protocols
+
+| Contract | Description | Import |
+|----------|-------------|--------|
+| [AlchemistV2](/docs/defi/synths) | Self-repaying loans vault | `@lux/synths/AlchemistV2.sol` |
+| [TransmuterV2](/docs/defi/synths) | 1:1 synth redemption | `@lux/synths/TransmuterV2.sol` |
+| [Vault](/docs/defi/vault) | Perps liquidity vault | `@lux/perps/core/Vault.sol` |
+| [Router](/docs/defi/router) | Position management | `@lux/perps/core/Router.sol` |
+| [LLP](/docs/defi/perps) | Liquidity provider token | `@lux/perps/tokens/LLP.sol` |
+
+### AMM & DEX
+
+| Contract | Description | Import |
+|----------|-------------|--------|
+| [AMMV2Factory](/docs/amm/pools) | Uniswap V2 factory | `@lux/amm/AMMV2Factory.sol` |
+| [AMMV2Pair](/docs/amm/pools) | V2 liquidity pair | `@lux/amm/AMMV2Pair.sol` |
+| [AMMV3Factory](/docs/amm/pools) | Uniswap V3 factory | `@lux/amm/AMMV3Factory.sol` |
+| [AMMV3Pool](/docs/amm/pools) | V3 concentrated liquidity | `@lux/amm/AMMV3Pool.sol` |
+| [SwapRouter](/docs/amm/router) | Optimized swap routing | `@lux/amm/SwapRouter.sol` |
+| [WLUX](/docs/amm/wlux) | Wrapped LUX | `@lux/amm/WLUX.sol` |
+
+### Governance
+
+| Contract | Description | Import |
+|----------|-------------|--------|
+| [Governor](/docs/governance/dao) | OpenZeppelin Governor | `@lux/governance/Governor.sol` |
+| [Timelock](/docs/governance/dao) | TimelockController | `@lux/governance/Timelock.sol` |
+| [vLUX](/docs/governance) | Vote-escrowed LUX | `@lux/governance/vLUX.sol` |
+| [DAO](/docs/governance/dao) | Complete DAO contract | `@lux/governance/DAO.sol` |
+
+### Bridge & Cross-Chain
+
+| Contract | Description | Import |
+|----------|-------------|--------|
+| [Teleport](/docs/bridge/bridge) | Token teleportation | `@lux/bridge/Teleport.sol` |
+| [Bridge](/docs/bridge/bridge) | Core bridge logic | `@lux/bridge/Bridge.sol` |
+| [Warp](/docs/bridge/warp) | BLS messaging | `@lux/bridge/interfaces/IWarpMessenger.sol` |
+
+### Security & Multi-Sig
+
+| Contract | Description | Import |
+|----------|-------------|--------|
+| [Safe](/docs/safe) | Multi-sig wallet | `@lux/safe/Safe.sol` |
+| [SafeFactory](/docs/safe) | Safe deployment | `@lux/safe/SafeFactory.sol` |
+| [LamportBase](/docs/lamport) | Post-quantum signatures | `@lux/crypto/lamport/LamportBase.sol` |
+
+---
+
+## Common Interfaces
+
+### IERC20
+
+Standard ERC20 token interface used throughout the library.
+
+```solidity
+interface IERC20 {
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
+    function transfer(address to, uint256 amount) external returns (bool);
+    function allowance(address owner, address spender) external view returns (uint256);
+    function approve(address spender, uint256 amount) external returns (bool);
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+```
+
+### IERC20B (Bridgeable)
+
+Extended interface for bridge-compatible tokens.
+
+```solidity
+interface IERC20B is IERC20 {
+    function mint(address to, uint256 amount) external;
+    function burn(address from, uint256 amount) external;
+    function hasRole(bytes32 role, address account) external view returns (bool);
+    function grantRole(bytes32 role, address account) external;
+    function revokeRole(bytes32 role, address account) external;
+
+    // Role constants
+    function ADMIN_ROLE() external view returns (bytes32);
+}
+```
+
+### IAlchemistV2
+
+Self-repaying loans interface (synths protocol).
+
+```solidity
+interface IAlchemistV2 {
+    // Deposits
+    function deposit(address yieldToken, uint256 amount, address recipient) external returns (uint256);
+    function depositUnderlying(address yieldToken, uint256 amount, address recipient, uint256 minOut) external returns (uint256);
+
+    // Minting & Burning
+    function mint(uint256 amount, address recipient) external;
+    function burn(uint256 amount, address recipient) external returns (uint256);
+
+    // Withdrawals
+    function withdraw(address yieldToken, uint256 shares, address recipient) external returns (uint256);
+    function withdrawUnderlying(address yieldToken, uint256 shares, address recipient, uint256 minOut) external returns (uint256);
+
+    // Liquidation
+    function liquidate(address owner, uint256 shares, uint256 minOut) external returns (uint256);
+
+    // Views
+    function accounts(address owner) external view returns (int256 debt, address[] memory depositedTokens);
+    function mintAllowance(address owner, address spender) external view returns (uint256);
+    function getMintLimitPerBlock() external view returns (uint256);
+    function getYieldTokensPerShare(address yieldToken) external view returns (uint256);
+}
+```
+
+### IVault (Perps)
+
+Central vault interface for perpetual trading.
+
+```solidity
+interface IVault {
+    // Positions
+    function increasePosition(address account, address collateralToken, address indexToken, uint256 sizeDelta, bool isLong) external;
+    function decreasePosition(address account, address collateralToken, address indexToken, uint256 collateralDelta, uint256 sizeDelta, bool isLong, address receiver) external returns (uint256);
+    function liquidatePosition(address account, address collateralToken, address indexToken, bool isLong, address feeReceiver) external;
+
+    // Swaps
+    function swap(address tokenIn, address tokenOut, address receiver) external returns (uint256);
+
+    // Views
+    function getMaxPrice(address token) external view returns (uint256);
+    function getMinPrice(address token) external view returns (uint256);
+    function getPosition(address account, address collateralToken, address indexToken, bool isLong) external view returns (uint256, uint256, uint256, uint256, uint256, int256, uint256);
+    function getPositionLeverage(address account, address collateralToken, address indexToken, bool isLong) external view returns (uint256);
+    function poolAmounts(address token) external view returns (uint256);
+    function reservedAmounts(address token) external view returns (uint256);
+}
+```
+
+---
+
+## TypeScript SDK
+
+### Installation
+
+```bash
+npm install @luxfi/standard
+```
+
+### Quick Start
+
+```typescript
+import { LuxClient, Tokens, DeFi } from '@luxfi/standard';
+import { ethers } from 'ethers';
+
+// Initialize client
+const client = new LuxClient({
+  chainId: 96369,
+  provider: new ethers.JsonRpcProvider('https://api.lux.network/rpc'),
+});
+
+// Token operations
+const lux = client.tokens.lux();
+const balance = await lux.balanceOf(address);
+
+// DeFi operations
+const alchemist = client.defi.alchemist();
+await alchemist.deposit(yieldToken, amount, recipient);
+
+// Perps trading
+const perps = client.defi.perps();
+await perps.openPosition({
+  indexToken: 'ETH',
+  collateral: parseEther('1'),
+  leverage: 10,
+  isLong: true,
+});
+```
+
+### Available Modules
+
+| Module | Description |
+|--------|-------------|
+| `client.tokens` | Token interactions (LUX, LUXD, AI, LRC20) |
+| `client.defi.alchemist()` | Self-repaying loans |
+| `client.defi.perps()` | Perpetual trading |
+| `client.defi.lending()` | Lending pools |
+| `client.amm` | AMM pool interactions |
+| `client.bridge` | Cross-chain operations |
+| `client.governance` | DAO and voting |
+| `client.safe` | Multi-sig wallets |
+
+---
+
+## Contract Addresses
+
+### Mainnet (Chain ID: 96369)
+
+| Contract | Address |
+|----------|---------|
+| LUX | `0x...` |
+| LUXD | `0x...` |
+| AI | `0x...` |
+| WLUX | `0x...` |
+| SwapRouter | `0x...` |
+| AlchemistV2 | `0x...` |
+| Vault | `0x...` |
+
+### Testnet (Chain ID: 96368)
+
+| Contract | Address |
+|----------|---------|
+| LUX | `0x...` |
+| LUXD | `0x...` |
+| AI | `0x...` |
+| WLUX | `0x...` |
+| SwapRouter | `0x...` |
+| AlchemistV2 | `0x...` |
+| Vault | `0x...` |
+
+<Callout type="info">
+  Contract addresses will be published after mainnet launch. Check [GitHub](https://github.com/luxfi/standard) for the latest deployment addresses.
+</Callout>
+
+---
+
+## Error Codes
+
+### Common Errors
+
+| Error | Code | Description |
+|-------|------|-------------|
+| `InsufficientBalance` | `0x01` | Balance too low for operation |
+| `InsufficientAllowance` | `0x02` | Approval needed |
+| `Unauthorized` | `0x03` | Caller lacks permission |
+| `InvalidAmount` | `0x04` | Amount is zero or invalid |
+| `Paused` | `0x05` | Contract is paused |
+| `Blacklisted` | `0x06` | Address is blacklisted |
+
+### DeFi Errors
+
+| Error | Code | Description |
+|-------|------|-------------|
+| `Undercollateralized` | `0x10` | Below minimum collateral ratio |
+| `ExceedsDebtCeiling` | `0x11` | Global debt limit reached |
+| `SlippageExceeded` | `0x12` | Output below minimum |
+| `PositionNotFound` | `0x13` | Position doesn't exist |
+| `MaxLeverageExceeded` | `0x14` | Leverage too high |
+
+---
+
+## Events
+
+### Token Events
+
+```solidity
+event Transfer(address indexed from, address indexed to, uint256 value);
+event Approval(address indexed owner, address indexed spender, uint256 value);
+event BridgeMint(address indexed to, uint256 value);
+event BridgeBurn(address indexed from, uint256 value);
+```
+
+### DeFi Events
+
+```solidity
+// Synths
+event Deposit(address indexed sender, address indexed yieldToken, uint256 amount, address recipient);
+event Withdraw(address indexed sender, address indexed yieldToken, uint256 shares, address recipient);
+event Mint(address indexed sender, uint256 amount, address recipient);
+event Burn(address indexed sender, uint256 amount, address recipient);
+event Liquidate(address indexed sender, address indexed owner, uint256 shares);
+
+// Perps
+event IncreasePosition(bytes32 key, address account, address collateralToken, address indexToken, uint256 collateralDelta, uint256 sizeDelta, bool isLong, uint256 price, uint256 fee);
+event DecreasePosition(bytes32 key, address account, address collateralToken, address indexToken, uint256 collateralDelta, uint256 sizeDelta, bool isLong, uint256 price, uint256 fee);
+event LiquidatePosition(bytes32 key, address account, address collateralToken, address indexToken, bool isLong, uint256 size, uint256 collateral, uint256 reserveAmount, int256 realisedPnl, uint256 markPrice);
+```
+
+---
+
+## Related
+
+<Cards>
+  <Card title="Getting Started" href="/docs/getting-started">
+    Installation and first contract
+  </Card>
+  <Card title="Examples" href="/docs/examples">
+    Working code examples
+  </Card>
+  <Card title="GitHub" href="https://github.com/luxfi/standard">
+    Source code and issues
+  </Card>
+</Cards>

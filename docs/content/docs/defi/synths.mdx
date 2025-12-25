@@ -1,0 +1,322 @@
+---
+title: Synths
+description: Self-repaying synthetic assets using AlchemistV2
+---
+
+# Synths
+
+Self-repaying synthetic assets that use yield-bearing collateral to automatically repay debt over time. Based on the Alchemix protocol architecture.
+
+## Overview
+
+The Synths protocol enables:
+
+- **Self-Repaying Loans**: Deposit yield-bearing collateral, mint synthetic assets, and watch your debt repay itself
+- **No Liquidation Risk**: Positions cannot be liquidated by price movements
+- **Multiple Synthetics**: xUSD, xETH, xBTC, xLUX, and more
+- **Flexible Collateral**: Any yield-bearing token with approved adapter
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                            SYNTHS PROTOCOL FLOW                                         │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐          │
+│  │   DEPOSIT   │────>│  GENERATE   │────>│    YIELD    │────>│   REPAY     │          │
+│  │  Collateral │     │   Synths    │     │   Accrues   │     │   Auto      │          │
+│  └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘          │
+│         │                  │                    │                   │                  │
+│         ▼                  ▼                    ▼                   ▼                  │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐          │
+│  │ YieldToken  │     │  xUSD/xETH  │     │  Strategy   │     │ Transmuter  │          │
+│  │ (yvWETH,    │     │  Minted     │     │  Returns    │     │ 1:1 Redeem  │          │
+│  │  aWETH)     │     │             │     │             │     │             │          │
+│  └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘          │
+│                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Synthetic Assets
+
+### Available Synths
+
+| Synth | Name | Backed By | Use Case |
+|-------|------|-----------|----------|
+| **xUSD** | Lux Synthetic USD | LUSD, yield vaults | Stablecoin borrowing |
+| **xETH** | Lux Synthetic ETH | LETH, staked ETH | Leveraged ETH exposure |
+| **xBTC** | Lux Synthetic BTC | LBTC, wrapped BTC | Bitcoin borrowing |
+| **xLUX** | Lux Synthetic LUX | sLUX, staked LUX | LUX leverage |
+| **xAI** | Lux Synthetic AI | AI, staked AI | AI token borrowing |
+| **xZOO** | Lux Synthetic ZOO | LZOO | Zoo token borrowing |
+
+### Collateral Types
+
+**Yield-Bearing Tokens:**
+- `yvWETH` - Yearn WETH vault
+- `aWETH` - Aave WETH
+- `stETH` - Lido staked ETH
+- `sLUX` - Staked LUX
+- `yvUSDC` - Yearn USDC vault
+- `aUSDC` - Aave USDC
+
+## Core Contracts
+
+| Contract | Purpose |
+|----------|---------|
+| **AlchemistV2** | Main vault - deposit, mint, repay, liquidate |
+| **TransmuterV2** | 1:1 synth-to-underlying redemption queue |
+| **TransmuterBuffer** | Buffer between Alchemist and Transmuter |
+| **SynthToken** | Base ERC20 for synths (ERC-3156 flash loans) |
+| **TokenAdapter** | Yield token integration adapters |
+
+## Usage
+
+### Deposit & Mint
+
+```solidity
+import "@lux/synths/AlchemistV2.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+AlchemistV2 alchemist = AlchemistV2(ALCHEMIST_ADDRESS);
+
+// Approve yield token
+IERC20(yvWETH).approve(address(alchemist), amount);
+
+// Deposit yield-bearing token
+uint256 shares = alchemist.deposit(yvWETH, amount, msg.sender);
+
+// Check mint limit (50% of collateral value)
+(int256 debt, ) = alchemist.accounts(msg.sender);
+uint256 maxMint = alchemist.getMintLimit(msg.sender);
+
+// Mint synthetic tokens
+alchemist.mint(maxMint / 2, msg.sender);
+```
+
+### Deposit Underlying
+
+```solidity
+// Deposit raw WETH (auto-wraps to yield token)
+IERC20(WETH).approve(address(alchemist), amount);
+
+uint256 shares = alchemist.depositUnderlying(
+    yvWETH,      // Target yield token
+    amount,      // WETH amount
+    msg.sender,  // Recipient
+    minOut       // Minimum shares (slippage)
+);
+```
+
+### Repay Debt
+
+```solidity
+// Option 1: Burn synthetic tokens
+IERC20(xETH).approve(address(alchemist), burnAmount);
+alchemist.burn(burnAmount, msg.sender);
+
+// Option 2: Repay with underlying
+IERC20(WETH).approve(address(alchemist), repayAmount);
+alchemist.repay(WETH, repayAmount, msg.sender);
+
+// Option 3: Just wait - yield auto-repays debt
+```
+
+### Withdraw Collateral
+
+```solidity
+// Withdraw yield token
+uint256 withdrawn = alchemist.withdraw(
+    yvWETH,      // Yield token
+    shares,      // Shares to withdraw
+    msg.sender   // Recipient
+);
+
+// Or withdraw underlying directly
+uint256 underlying = alchemist.withdrawUnderlying(
+    yvWETH,      // Yield token
+    shares,      // Shares to withdraw
+    msg.sender,  // Recipient
+    minOut       // Minimum output (slippage)
+);
+```
+
+## Transmuter
+
+The Transmuter allows 1:1 redemption of synthetic tokens for underlying assets.
+
+### Queue Redemption
+
+```solidity
+import "@lux/synths/TransmuterV2.sol";
+
+TransmuterV2 transmuter = TransmuterV2(TRANSMUTER_ADDRESS);
+
+// Deposit synths for redemption
+IERC20(xUSD).approve(address(transmuter), amount);
+transmuter.deposit(amount, msg.sender);
+
+// Check position in queue
+uint256 exchanged = transmuter.getExchangedBalance(msg.sender);
+uint256 unexchanged = transmuter.getUnexchangedBalance(msg.sender);
+
+// Claim when underlying is available
+transmuter.claim(claimAmount, msg.sender);
+```
+
+### How Transmutation Works
+
+1. Users deposit synthetic tokens into the Transmuter
+2. Protocol yield flows to the Transmuter as underlying tokens
+3. Synthetics are burned as underlying becomes available
+4. Users claim underlying at a 1:1 rate (no slippage)
+
+## Key Parameters
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `minimumCollateralization` | 200% | 2x collateral required (50% LTV) |
+| `liquidationRatio` | 100% | Liquidation when debt > collateral |
+| `repayLimitPerBlock` | Variable | Max repayment per block |
+| `mintLimitPerBlock` | Variable | Max mint per block |
+
+## Self-Repaying Mechanism
+
+```solidity
+// How debt repays itself:
+
+// 1. User deposits 10 yvWETH worth $10,000
+// 2. User mints 5,000 xETH (50% LTV)
+// 3. yvWETH earns 10% APY = $1,000/year
+// 4. Yield converts to credit, reducing debt
+// 5. After ~5 years, debt is fully repaid
+// 6. User can withdraw full collateral
+
+// Check account status
+(int256 debt, address[] memory tokens) = alchemist.accounts(user);
+// debt > 0: User owes synths
+// debt < 0: User has credit (can mint more)
+// debt = 0: No debt, full withdrawal available
+```
+
+## Yield Adapters
+
+### Supported Adapters
+
+```solidity
+interface ITokenAdapter {
+    function token() external view returns (address);      // Yield token address
+    function underlyingToken() external view returns (address);  // Base token
+    function price() external view returns (uint256);      // Yield token price
+    function wrap(uint256 amount, address recipient) external returns (uint256);
+    function unwrap(uint256 amount, address recipient) external returns (uint256);
+}
+```
+
+**Available Adapters:**
+- `YearnTokenAdapter` - Yearn V2 vaults
+- `AaveTokenAdapter` - Aave V3 aTokens
+- `sLUXAdapter` - Staked LUX
+- `LPXYieldAdapter` - LLP perps yield (fee-based)
+
+## Flash Loans
+
+All synth tokens support ERC-3156 flash loans:
+
+```solidity
+import "@lux/synths/interfaces/IERC3156FlashLender.sol";
+
+contract FlashBorrower is IERC3156FlashBorrower {
+    function executeFlashLoan(uint256 amount) external {
+        IERC3156FlashLender(xUSD).flashLoan(
+            this,
+            address(xUSD),
+            amount,
+            ""
+        );
+    }
+
+    function onFlashLoan(
+        address initiator,
+        address token,
+        uint256 amount,
+        uint256 fee,
+        bytes calldata data
+    ) external override returns (bytes32) {
+        // Use the flash loaned synths here
+        // ...
+
+        // Approve repayment (amount + fee)
+        IERC20(token).approve(msg.sender, amount + fee);
+
+        return keccak256("ERC3156FlashBorrower.onFlashLoan");
+    }
+}
+```
+
+## Events
+
+```solidity
+event Deposit(address indexed sender, address indexed yieldToken, uint256 amount, address recipient);
+event Withdraw(address indexed sender, address indexed yieldToken, uint256 shares, address recipient);
+event Mint(address indexed sender, uint256 amount, address recipient);
+event Burn(address indexed sender, uint256 amount, address recipient);
+event Repay(address indexed sender, address indexed underlyingToken, uint256 amount, address recipient);
+event Liquidate(address indexed sender, address indexed account, address yieldToken, uint256 shares);
+event Harvest(address indexed yieldToken, uint256 minimumAmountOut, uint256 totalHarvested);
+```
+
+## TypeScript SDK
+
+```typescript
+import { Synths, AlchemistV2 } from '@luxfi/synths-sdk';
+
+const synths = new Synths({
+  chainId: 96369,
+  signer: wallet,
+});
+
+// Deposit and mint
+async function depositAndMint() {
+  // Deposit yield token
+  await synths.deposit({
+    yieldToken: 'yvWETH',
+    amount: parseEther('10'),
+  });
+
+  // Check mint limit
+  const account = await synths.getAccount(wallet.address);
+  const maxMint = account.mintLimit;
+
+  // Mint synths (50% of max)
+  await synths.mint({
+    amount: maxMint.div(2),
+    recipient: wallet.address,
+  });
+}
+
+// Monitor position
+async function getPosition() {
+  const account = await synths.getAccount(wallet.address);
+
+  return {
+    debt: formatEther(account.debt),
+    collateralValue: formatUsd(account.collateralValue),
+    healthFactor: account.healthFactor,
+    yieldEarned: formatUsd(account.yieldEarned),
+    timeToRepay: account.estimatedRepayTime,
+  };
+}
+```
+
+## Security Considerations
+
+1. **No Price Liquidation**: Positions are only liquidated when debt exceeds collateral value (not by price drops)
+2. **Yield Token Risk**: If yield token loses value, position may become liquidatable
+3. **Debt Ceiling**: Global debt limits prevent excessive minting
+4. **Adapter Risk**: Yield adapters must be audited and trusted
+
+## Related
+
+- [Loans](/docs/defi/loans) - Simplified self-repaying loans
+- [Lending](/docs/defi/lending) - Flash loans and borrowing
+- [Vault](/docs/defi/vault) - Perps liquidity vault

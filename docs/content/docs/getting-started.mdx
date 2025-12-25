@@ -1,0 +1,166 @@
+---
+title: Getting Started
+description: Install the Lux Standard Library and deploy your first contract
+---
+
+# Getting Started
+
+This guide will help you set up the Lux Standard Library and deploy your first contract.
+
+## Prerequisites
+
+- [Foundry](https://book.getfoundry.sh/getting-started/installation) installed
+- Node.js 18+ (for SDK usage)
+- A Lux Network RPC endpoint
+
+## Installation
+
+### With Foundry (Recommended)
+
+```bash
+# Create a new project
+forge init my-lux-project
+cd my-lux-project
+
+# Install the standard library
+forge install luxfi/standard
+
+# Add remappings
+echo "@lux/=lib/standard/contracts/" >> remappings.txt
+```
+
+### With npm (for SDK)
+
+```bash
+npm install @luxfi/standard
+```
+
+## Your First Contract
+
+Create a simple token that extends our base contracts:
+
+```solidity title="src/MyToken.sol"
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import "@lux/tokens/LRC20.sol";
+
+contract MyToken is LRC20 {
+    constructor() LRC20("My Token", "MTK") {
+        _mint(msg.sender, 1_000_000 * 10**18);
+    }
+}
+```
+
+### Compile and Test
+
+```bash
+# Compile
+forge build
+
+# Run tests
+forge test
+```
+
+### Deploy to Lux Testnet
+
+```bash
+# Set your private key
+export PRIVATE_KEY=0x...
+
+# Deploy to Lux Testnet (Chain ID: 96368)
+forge create src/MyToken.sol:MyToken \
+  --rpc-url https://testnet.lux.network/rpc \
+  --private-key $PRIVATE_KEY
+```
+
+## Project Structure
+
+After installation, your project should look like:
+
+```
+my-lux-project/
+├── lib/
+│   └── standard/           # Lux Standard Library
+│       └── contracts/
+│           ├── tokens/     # Token contracts
+│           ├── defi/       # DeFi protocols
+│           ├── governance/ # DAO & voting
+│           └── ...
+├── src/
+│   └── MyToken.sol         # Your contracts
+├── test/
+│   └── MyToken.t.sol       # Your tests
+├── foundry.toml
+└── remappings.txt
+```
+
+## Network Configuration
+
+Add Lux networks to your `foundry.toml`:
+
+```toml title="foundry.toml"
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc = "0.8.24"
+
+[rpc_endpoints]
+lux_mainnet = "https://api.lux.network/rpc"
+lux_testnet = "https://testnet.lux.network/rpc"
+
+[etherscan]
+lux_mainnet = { key = "${LUXSCAN_API_KEY}", url = "https://api.luxscan.io/api" }
+```
+
+## Common Imports
+
+Here are the most commonly used imports:
+
+```solidity
+// Tokens
+import "@lux/tokens/LUX.sol";           // Native LUX token
+import "@lux/tokens/LUXD.sol";          // Lux Dollar stablecoin
+import "@lux/tokens/AI.sol";            // AI token with mining
+import "@lux/tokens/LRC20.sol";         // Base ERC20
+import "@lux/tokens/LRC20B.sol";        // Bridgeable ERC20
+
+// DeFi
+import "@lux/synths/AlchemistV2.sol";   // Self-repaying loans
+import "@lux/synths/SynthToken.sol";    // Synthetic assets
+import "@lux/perps/core/Vault.sol";     // Perpetuals vault
+
+// Governance
+import "@lux/governance/DAO.sol";       // DAO contract
+import "@lux/governance/Vote.sol";      // Voting
+import "@lux/governance/vLUX.sol";      // Vote-escrowed LUX
+
+// Infrastructure
+import "@lux/bridge/Teleport.sol";      // Cross-chain bridge
+import "@lux/safe/Safe.sol";            // Multi-sig wallet
+import "@lux/multicall/Multicall.sol";  // Batch calls
+```
+
+## Next Steps
+
+<Cards>
+  <Card title="Tokens" href="/docs/tokens">
+    Learn about LUX, LUXD, AI, and token standards
+  </Card>
+  <Card title="DeFi" href="/docs/defi">
+    Build with synths, perpetuals, and lending
+  </Card>
+  <Card title="Examples" href="/docs/examples">
+    See complete working examples
+  </Card>
+  <Card title="API Reference" href="/docs/api">
+    Full contract reference documentation
+  </Card>
+</Cards>
+
+## Need Help?
+
+- [GitHub Issues](https://github.com/luxfi/standard/issues) - Report bugs
+- [Discord](https://discord.gg/lux) - Ask questions
+- [Twitter](https://twitter.com/luxnetwork) - Follow for updates
