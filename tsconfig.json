@@ -1,26 +1,26 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
-    "strict": false,
-    "lib": ["dom", "dom.iterable", "esnext", "esnext.asynciterable"],
-    "typeRoots": ["./node_modules/@types", "./types"],
-    "allowJs": false,
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
     "esModuleInterop": true,
-    "experimentalDecorators": true,
-    "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "preserveSymlinks": true,
-    "noEmit": true,
     "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "./dist",
     "rootDir": ".",
-    "types": ["node", "preact"],
-    "allowSyntheticDefaultImports": true,
-    "noFallthroughCasesInSwitch": true,
-    "isolatedModules": true,
-    "jsx": "react"
+    "lib": ["ES2022"],
+    "typeRoots": ["./node_modules/@types", "./types"],
+    "types": ["node", "mocha", "chai"]
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "hardhat.config.ts",
+    "scripts/**/*.ts",
+    "test/**/*.ts",
+    "types/**/*.ts"
+  ],
+  "exclude": ["node_modules", "artifacts", "cache", "cache_hardhat", "dist"]
 }

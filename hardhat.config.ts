@@ -1,100 +1,34 @@
-import '@nomicfoundation/hardhat-ethers'
-import '@nomicfoundation/hardhat-verify'
-import 'hardhat-deploy'
+import { HardhatUserConfig } from "hardhat/config";
+import "@nomicfoundation/hardhat-ethers";
+import "@nomicfoundation/hardhat-verify";
+import "@openzeppelin/hardhat-upgrades";
+import "hardhat-deploy";
 import * as dotenv from "dotenv";
 
 dotenv.config();
 
-const LOW_OPTIMIZER_COMPILER_SETTINGS = {
-  version: '0.7.6',
-  settings: {
-    evmVersion: 'istanbul',
-    optimizer: {
-      enabled: true,
-      runs: 5,
-    },
-    metadata: {
-      bytecodeHash: 'none',
-    },
-  },
-}
+const PRIVATE_KEY = process.env.PRIVATE_KEY || process.env.PK || "";
+const INFURA_KEY = process.env.INFURA_API_KEY || "";
 
-const LOWEST_OPTIMIZER_COMPILER_SETTINGS = {
-  version: '0.7.6',
-  settings: {
-    evmVersion: 'istanbul',
-    optimizer: {
-      enabled: true,
-      runs: 5,
-    },
-    metadata: {
-      bytecodeHash: 'none',
-    },
-  },
-}
-
-const DEFAULT_COMPILER_SETTINGS = {
-  version: '0.6.12',
-  settings: {
-    evmVersion: 'istanbul',
-    optimizer: {
-      enabled: true,
-      runs: 5,
-    },
-    metadata: {
-      bytecodeHash: 'none',
-    },
-  },
-}
-
-export default {
-  networks: {
-    hardhat: {
-      allowUnlimitedContractSize: false,
-    },
-    mainnet: {
-      url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
-    },
-    lux: {
-      url: "https://api.lux.network/",
-      accounts: process.env.PK ? [process.env.PK] : [],
-    },
-    lux_testnet: {
-      url: "https://api.lux-test.network",
-      accounts: process.env.PK ? [process.env.PK] : [],
-    },
-    lux_local: {
-      url: "http://localhost:9630/ext/bc/C/rpc",
-      chainId: 96369,
-      accounts: process.env.PK ? [process.env.PK] : [],
-    }
-  },
-  etherscan: {
-    apiKey:  process.env.ETHERSCAN_API_KEY || "",
-    customChains: [
-      {
-        network: "lux",
-        chainId: 96369,
-        urls: {
-          apiURL: "https://api-explore.lux.network",
-          browserURL: "https://explore.lux.network"
-        }
-      },
-      {
-        network: "lux_testnet",
-        chainId: 96368,
-        urls: {
-          apiURL: "https://api-explore.lux-test.network",
-          browserURL: "https://explore.lux-test.network"
-        }
-      },
-    ]
-  },
+const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.4.18",
+        version: "0.8.28",
         settings: {
+          viaIR: true,
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+          evmVersion: "cancun",
+        },
+      },
+      // Legacy support for older contracts
+      {
+        version: "0.8.24",
+        settings: {
+          viaIR: true,
           optimizer: {
             enabled: true,
             runs: 200,
@@ -102,25 +36,7 @@ export default {
         },
       },
       {
-        version: "0.5.16",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
-      {
-        version: "0.6.6",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
-      {
-        version: "0.6.12",
+        version: "0.8.20",
         settings: {
           optimizer: {
             enabled: true,
@@ -137,41 +53,118 @@ export default {
           },
         },
       },
-      {
-        version: "0.8.26",
-        settings: {
-          viaIR: true,
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
-      DEFAULT_COMPILER_SETTINGS
     ],
-    overrides: {
-      'contracts/NonfungiblePositionManager.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
-      'contracts/test/MockTimeNonfungiblePositionManager.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
-      'contracts/test/NFTDescriptorTest.sol': LOWEST_OPTIMIZER_COMPILER_SETTINGS,
-      'contracts/NonfungibleTokenPositionDescriptor.sol': LOWEST_OPTIMIZER_COMPILER_SETTINGS,
-      'contracts/libraries/NFTDescriptor.sol': LOWEST_OPTIMIZER_COMPILER_SETTINGS,
+  },
+  networks: {
+    hardhat: {
+      allowUnlimitedContractSize: false,
+      chainId: 31337,
+    },
+    localhost: {
+      url: "http://127.0.0.1:8545",
+      chainId: 31337,
+    },
+    // Lux Networks
+    lux: {
+      url: "https://api.lux.network/rpc",
+      chainId: 96369,
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    },
+    lux_testnet: {
+      url: "https://api.lux-test.network/rpc",
+      chainId: 96368,
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    },
+    lux_local: {
+      url: "http://localhost:9630/ext/bc/C/rpc",
+      chainId: 96369,
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    },
+    // Zoo Networks
+    zoo: {
+      url: "https://api.zoo.network/rpc",
+      chainId: 200200,
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    },
+    zoo_testnet: {
+      url: "https://api.zoo-test.network/rpc",
+      chainId: 200201,
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    },
+    // Hanzo Networks
+    hanzo: {
+      url: "https://api.hanzo.network/rpc",
+      chainId: 36963,
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    },
+    hanzo_testnet: {
+      url: "https://api.hanzo-test.network/rpc",
+      chainId: 36964,
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    },
+    // Ethereum Networks
+    mainnet: {
+      url: `https://mainnet.infura.io/v3/${INFURA_KEY}`,
+      chainId: 1,
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    },
+    sepolia: {
+      url: `https://sepolia.infura.io/v3/${INFURA_KEY}`,
+      chainId: 11155111,
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
     },
   },
+  etherscan: {
+    apiKey: {
+      mainnet: process.env.ETHERSCAN_API_KEY || "",
+      sepolia: process.env.ETHERSCAN_API_KEY || "",
+      lux: process.env.LUXSCAN_API_KEY || "",
+      lux_testnet: process.env.LUXSCAN_API_KEY || "",
+    },
+    customChains: [
+      {
+        network: "lux",
+        chainId: 96369,
+        urls: {
+          apiURL: "https://api.explore.lux.network/api",
+          browserURL: "https://explore.lux.network",
+        },
+      },
+      {
+        network: "lux_testnet",
+        chainId: 96368,
+        urls: {
+          apiURL: "https://api.explore.lux-test.network/api",
+          browserURL: "https://explore.lux-test.network",
+        },
+      },
+      {
+        network: "zoo",
+        chainId: 200200,
+        urls: {
+          apiURL: "https://api.explore.zoo.network/api",
+          browserURL: "https://explore.zoo.network",
+        },
+      },
+    ],
+  },
   paths: {
-    sources: "./contracts", // AI contracts in contracts/
+    sources: "./contracts",
     tests: "./test",
     cache: "./cache_hardhat",
     artifacts: "./artifacts",
-  },
-  sourcify: {
-    enabled: false
   },
   namedAccounts: {
     deployer: {
       default: 0,
     },
-    dao: {
-      default: 0,
+    treasury: {
+      default: 1,
     },
   },
-}
+  sourcify: {
+    enabled: false,
+  },
+};
+
+export default config;
