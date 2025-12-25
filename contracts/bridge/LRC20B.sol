@@ -91,7 +91,7 @@ contract LRC20B is LRC20, Ownable, AccessControl {
     /**
      * @dev Override _msgSender for OZ AccessControl/Ownable and LRC20 compatibility
      */
-    function _msgSender() internal view override(Context, LRC20) returns (address) {
+    function _msgSender() internal view override returns (address) {
         return msg.sender;
     }
 }

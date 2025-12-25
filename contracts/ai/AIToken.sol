@@ -585,7 +585,7 @@ contract AIToken is LRC20, AccessControl, ReentrancyGuard, Pausable {
     /**
      * @dev Override _msgSender for OZ AccessControl and LRC20 compatibility
      */
-    function _msgSender() internal view override(Context, LRC20) returns (address) {
+    function _msgSender() internal view override returns (address) {
         return msg.sender;
     }
 
