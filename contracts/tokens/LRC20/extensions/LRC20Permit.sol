@@ -2,11 +2,11 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import "@luxfi/standard/lib/token/ERC20/ERC20.sol";
-import "@luxfi/standard/lib/token/ERC20/extensions/IERC20Permit.sol";
-import "@luxfi/standard/lib/utils/cryptography/ECDSA.sol";
-import "@luxfi/standard/lib/utils/cryptography/EIP712.sol";
-import "@luxfi/standard/lib/utils/Nonces.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 
 /**
  * @title LRC20Permit

@@ -97,12 +97,16 @@ contract LUXTest is Test {
         // Setup: mint tokens first
         vm.prank(address(bridge));
         token.bridgeMint(user1, 1000e18);
-        
-        // Only bridge can burn
+
+        // User must approve bridge before bridge can burn (security fix)
+        vm.prank(user1);
+        token.approve(address(bridge), 500e18);
+
+        // Bridge can burn after approval
         vm.prank(address(bridge));
         token.bridgeBurn(user1, 500e18);
         assertEq(token.balanceOf(user1), 500e18);
-        
+
         // Non-bridge cannot burn
         vm.expectRevert("Caller is not the bridge");
         token.bridgeBurn(user1, 100e18);
