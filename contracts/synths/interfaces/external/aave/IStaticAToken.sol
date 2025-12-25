@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@luxfi/standard/lib/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {IAToken} from "./IAToken.sol";
 import {ILendingPool} from "./ILendingPool.sol";

@@ -2,12 +2,12 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import "@luxfi/standard/lib/token/ERC1155/ERC1155.sol";
-import "@luxfi/standard/lib/token/ERC1155/extensions/ERC1155Burnable.sol";
-import "@luxfi/standard/lib/token/ERC1155/extensions/ERC1155Pausable.sol";
-import "@luxfi/standard/lib/token/ERC1155/extensions/ERC1155Supply.sol";
-import "@luxfi/standard/lib/token/common/ERC2981.sol";
-import "@luxfi/standard/lib/access/AccessControl.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
+import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Pausable.sol";
+import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title LRC1155

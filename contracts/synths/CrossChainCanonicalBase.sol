@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {ERC20PermitUpgradeable} from "@luxfi/standard/lib-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
-import {OwnableUpgradeable} from "@luxfi/standard/lib-upgradeable/access/OwnableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@luxfi/standard/lib-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {ERC20PermitUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 import {IllegalArgument, IllegalState} from "./base/Errors.sol";
 

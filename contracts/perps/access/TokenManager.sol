@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.31;
 
-import "@luxfi/standard/lib/token/ERC20/IERC20.sol";
-import "@luxfi/standard/lib/token/ERC721/IERC721.sol";
-import "@luxfi/standard/lib/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import "../peripherals/interfaces/ITimelock.sol";
 

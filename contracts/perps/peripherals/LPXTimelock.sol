@@ -16,7 +16,7 @@ import "../tokens/interfaces/IMintable.sol";
 import "../tokens/interfaces/ILPUSD.sol";
 import "../staking/interfaces/IVester.sol";
 
-import "@luxfi/standard/lib/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract LPXTimelock is ILPXTimelock {
     

@@ -2,9 +2,9 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@luxfi/standard/lib/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@luxfi/standard/lib/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@luxfi/standard/lib/utils/ReentrancyGuard.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IDEX, DEXLib} from "../precompiles/IDEX.sol";
 import {IOracle, OracleLib} from "../precompiles/IOracle.sol";
 

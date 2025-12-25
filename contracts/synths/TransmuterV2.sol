@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.31;
 
-import "@luxfi/standard/lib-upgradeable/access/AccessControlUpgradeable.sol";
-import "@luxfi/standard/lib-upgradeable/proxy/utils/Initializable.sol";
-import "@luxfi/standard/lib-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 import "./base/Errors.sol";
 

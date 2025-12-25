@@ -2,7 +2,7 @@
 pragma solidity ^0.8.31;
 
 import { OmnichainLP } from "./OmnichainLP.sol";
-import { Ownable } from "@luxfi/standard/lib/access/Ownable.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Bridge } from "./Bridge.sol";
 
 /**
