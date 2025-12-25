@@ -17,9 +17,9 @@ pragma solidity ^0.8.31;
 
 import "./LRC20B.sol";
 
-contract LUXD is LRC20B {
+contract LuxDollar is LRC20B {
     string public constant _name = 'Lux Dollar';
-    string public constant _symbol = 'LUXD';
+    string public constant _symbol = 'LUSD';
     constructor() LRC20B(_name, _symbol) {}
 }
 

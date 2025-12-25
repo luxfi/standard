@@ -57,7 +57,7 @@ Standard token implementations with Lux-native naming:
 | **LRC721B** | Bridgeable ERC721 | `@luxfi/contracts/tokens/LRC721B.sol` |
 | **LRC1155B** | Bridgeable ERC1155 | `@luxfi/contracts/tokens/LRC1155B.sol` |
 | **LUX** | Native platform token | `@luxfi/contracts/tokens/LUX.sol` |
-| **LUXD** | Lux Dollar stablecoin | `@luxfi/contracts/tokens/LUXD.sol` |
+| **LUSD** | Lux Dollar stablecoin | `@luxfi/contracts/tokens/LUSD.sol` |
 | **AI** | AI compute mining token | `@luxfi/contracts/tokens/AI.sol` |
 | **WLUX** | Wrapped LUX | `@luxfi/contracts/tokens/WLUX.sol` |
 
@@ -76,8 +76,9 @@ Cross-chain asset transfers via Warp messaging:
 | **Bridge** | Core bridge with Warp verification | `@luxfi/contracts/bridge/Bridge.sol` |
 | **Teleport** | Token teleportation interface | `@luxfi/contracts/bridge/Teleport.sol` |
 | **LRC20B** | Bridgeable token base | `@luxfi/contracts/bridge/LRC20B.sol` |
-| **LETH** | Bridged ETH on Lux | `@luxfi/contracts/bridge/LETH.sol` |
-| **USDC/USDT/DAI** | Bridged stablecoins | `@luxfi/contracts/bridge/*.sol` |
+| **LETH** | Bridged ETH on Lux | `@luxfi/contracts/bridge/lux/LETH.sol` |
+| **LUSD** | Lux Dollar stablecoin | `@luxfi/contracts/bridge/lux/LUSD.sol` |
+| **LBTC/LSOL/LTON** | Bridged assets (L-prefix) | `@luxfi/contracts/bridge/lux/*.sol` |
 
 ```solidity
 import "@luxfi/contracts/bridge/Teleport.sol";
