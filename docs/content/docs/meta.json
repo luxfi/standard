@@ -1,6 +1,9 @@
 {
   "title": "Lux Standard Library",
   "pages": [
+    "getting-started",
+    "examples",
+    "api",
     "---Core---",
     "tokens",
     "amm",

@@ -1,0 +1,317 @@
+---
+title: Examples
+description: Complete working examples using the Lux Standard Library
+---
+
+# Examples
+
+Learn by example with these complete, working implementations.
+
+## Token Examples
+
+### Create a Bridgeable Token
+
+A token that can be minted/burned by bridge admins for cross-chain transfers:
+
+```solidity title="src/BridgedUSDC.sol"
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import "@lux/tokens/LRC20B.sol";
+
+contract BridgedUSDC is LRC20B {
+    constructor() LRC20B("Bridged USDC", "USDC.e") {
+        // Deployer is admin, can grant admin role to bridge
+    }
+
+    function decimals() public pure override returns (uint8) {
+        return 6; // USDC uses 6 decimals
+    }
+}
+```
+
+### Create a Capped Token
+
+```solidity title="src/CappedToken.sol"
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import "@lux/tokens/LRC20/LRC20Capped.sol";
+
+contract CappedToken is LRC20Capped {
+    constructor()
+        LRC20Capped("Capped Token", "CAP", 1_000_000 * 10**18)
+    {
+        _mint(msg.sender, 100_000 * 10**18); // Initial supply
+    }
+}
+```
+
+## DeFi Examples
+
+### Self-Repaying Loan with Synths
+
+Deposit collateral, mint synthetic tokens, and let yield repay your debt:
+
+```solidity title="src/SynthLoan.sol"
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import "@lux/synths/interfaces/IAlchemistV2.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+contract SynthLoan {
+    IAlchemistV2 public alchemist;
+
+    constructor(address _alchemist) {
+        alchemist = IAlchemistV2(_alchemist);
+    }
+
+    /// @notice Deposit yield token and mint synths
+    function depositAndMint(
+        address yieldToken,
+        uint256 depositAmount,
+        uint256 mintAmount,
+        address recipient
+    ) external {
+        // Transfer yield token from user
+        IERC20(yieldToken).transferFrom(msg.sender, address(this), depositAmount);
+        IERC20(yieldToken).approve(address(alchemist), depositAmount);
+
+        // Deposit collateral
+        alchemist.deposit(yieldToken, depositAmount, msg.sender);
+
+        // Mint synths against collateral
+        alchemist.mint(mintAmount, recipient);
+    }
+
+    /// @notice Check remaining debt (will decrease as yield accrues)
+    function getDebt(address account) external view returns (int256) {
+        (int256 debt, ) = alchemist.accounts(account);
+        return debt;
+    }
+}
+```
+
+### Perpetual Trading Position
+
+Open a leveraged long position on LUX:
+
+```solidity title="src/PerpPosition.sol"
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import "@lux/perps/core/interfaces/IRouter.sol";
+import "@lux/perps/core/interfaces/IVault.sol";
+
+contract PerpTrader {
+    IRouter public router;
+    IVault public vault;
+
+    constructor(address _router, address _vault) {
+        router = IRouter(_router);
+        vault = IVault(_vault);
+    }
+
+    /// @notice Open a long position with leverage
+    function openLong(
+        address collateralToken,
+        address indexToken,
+        uint256 collateralAmount,
+        uint256 sizeDelta
+    ) external payable {
+        router.increasePosition{value: msg.value}(
+            collateralToken,
+            indexToken,
+            collateralAmount,
+            0, // minOut
+            sizeDelta,
+            true, // isLong
+            type(uint256).max // acceptablePrice
+        );
+    }
+
+    /// @notice Close a position
+    function closePosition(
+        address collateralToken,
+        address indexToken,
+        uint256 sizeDelta,
+        bool isLong
+    ) external {
+        router.decreasePosition(
+            collateralToken,
+            indexToken,
+            0, // collateralDelta
+            sizeDelta,
+            isLong,
+            msg.sender, // receiver
+            0 // acceptablePrice
+        );
+    }
+}
+```
+
+## Governance Examples
+
+### Create a DAO
+
+Set up a DAO with token voting:
+
+```solidity title="src/MyDAO.sol"
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import "@lux/governance/Governor.sol";
+import "@lux/governance/Timelock.sol";
+import "@lux/governance/GoveranceToken.sol";
+
+contract MyDAO is Governor {
+    constructor(
+        address _token,
+        address _timelock
+    ) Governor(
+        "My DAO",
+        _token,
+        _timelock,
+        1 days,      // Voting delay
+        7 days,      // Voting period
+        100_000e18   // Proposal threshold (100k tokens)
+    ) {}
+}
+
+// Deploy sequence:
+// 1. Deploy GovernanceToken
+// 2. Deploy Timelock(minDelay, proposers, executors, admin)
+// 3. Deploy MyDAO(token, timelock)
+// 4. Grant proposer/executor roles to DAO
+```
+
+## Bridge Examples
+
+### Cross-Chain Token Transfer
+
+Use Warp messaging to teleport tokens:
+
+```solidity title="src/TokenTeleporter.sol"
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import "@lux/bridge/Teleport.sol";
+
+contract TokenTeleporter {
+    Teleport public teleport;
+
+    constructor(address _teleport) {
+        teleport = Teleport(_teleport);
+    }
+
+    /// @notice Send tokens to another chain
+    function sendCrossChain(
+        bytes32 destinationChainId,
+        address recipient,
+        address token,
+        uint256 amount
+    ) external {
+        // Transfer tokens to this contract first
+        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        IERC20(token).approve(address(teleport), amount);
+
+        // Initiate cross-chain transfer
+        teleport.send(destinationChainId, recipient, token, amount);
+    }
+}
+```
+
+## Multi-Sig Examples
+
+### Create a Safe Wallet
+
+```solidity title="src/TeamSafe.sol"
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import "@lux/safe/SafeFactory.sol";
+
+contract DeploySafe {
+    SafeFactory public factory;
+
+    constructor(address _factory) {
+        factory = SafeFactory(_factory);
+    }
+
+    /// @notice Create a 2-of-3 multisig
+    function createTeamSafe(
+        address[] calldata owners
+    ) external returns (address safe) {
+        require(owners.length == 3, "Need 3 owners");
+
+        safe = factory.createSafe(
+            owners,
+            2 // threshold
+        );
+    }
+}
+```
+
+## Testing Examples
+
+### Foundry Test with Forks
+
+```solidity title="test/Integration.t.sol"
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import "forge-std/Test.sol";
+import "@lux/synths/AlchemistV2.sol";
+
+contract IntegrationTest is Test {
+    AlchemistV2 alchemist;
+
+    function setUp() public {
+        // Fork Lux mainnet at specific block
+        vm.createSelectFork("lux_mainnet", 1_000_000);
+
+        // Get deployed Alchemist
+        alchemist = AlchemistV2(0x...);
+    }
+
+    function testDeposit() public {
+        address user = makeAddr("user");
+        address yieldToken = 0x...; // yvWETH
+
+        deal(yieldToken, user, 10 ether);
+
+        vm.startPrank(user);
+        IERC20(yieldToken).approve(address(alchemist), 10 ether);
+        alchemist.deposit(yieldToken, 10 ether, user);
+        vm.stopPrank();
+
+        assertGt(alchemist.totalDeposited(user), 0);
+    }
+}
+```
+
+## Full Project Template
+
+Clone our starter template for a complete setup:
+
+```bash
+# Clone template
+git clone https://github.com/luxfi/standard-template my-project
+cd my-project
+
+# Install dependencies
+forge install
+
+# Run tests
+forge test
+```
+
+<Cards>
+  <Card title="API Reference" href="/docs/api">
+    Complete contract documentation
+  </Card>
+  <Card title="GitHub Examples" href="https://github.com/luxfi/standard/tree/main/examples">
+    More examples on GitHub
+  </Card>
+</Cards>
