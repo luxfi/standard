@@ -1,0 +1,69 @@
+# Dependencies
+node_modules/
+# lib/ # tracked via submodules
+
+# Build artifacts
+artifacts/
+cache/
+cache_forge/
+out/
+typechain/
+types/
+
+# Foundry
+forge-cache/
+broadcast/
+
+# Hardhat
+cache/
+artifacts/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+coverage.json
+gasReporterOutput.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
+.openzeppelin/
+.history/
+*.orig
+
+
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+GROK.md
+QWEN.md
+
+# Build artifacts
+out/
+cache/
+artifacts/
+cache_forge/
+cache_hardhat/
+
+# Dependencies (use forge install)
+# lib/  # Uncomment to ignore lib/
+out-seaport/
