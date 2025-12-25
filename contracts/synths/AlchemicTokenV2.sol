@@ -226,7 +226,7 @@ contract AlchemicTokenV2 is AccessControl, ReentrancyGuard, LRC20, IERC3156Flash
   }
 
   /// @dev Override _msgSender to resolve conflict between Context (from AccessControl) and LRC20
-  function _msgSender() internal view override(Context, LRC20) returns (address) {
+  function _msgSender() internal view override returns (address) {
     return msg.sender;
   }
 }
