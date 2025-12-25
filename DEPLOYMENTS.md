@@ -74,14 +74,6 @@ All deployed contracts across the Lux ecosystem networks.
 | NonfungibleTokenPositionDescriptor | `0x043ccF9C207165DA6D4a44ae47488AF49843bADe` |
 | NFTDescriptor | `0x53B1aAA5b6DDFD4eD00D0A7b5Ef333dc74B605b5` |
 
-### Test Tokens
-
-| Contract | Address |
-|----------|---------|
-| mockUSDC | `0x44bba88Af6cdA085ff3e52F8d1035605D04e5b89` |
-| mockUSDT | `0xeb9e852752d6dD28814f157E5eA77D6897dd920c` |
-| mockWETH | `0xf143b13385Cd7B21D953095d3197573329ACAEb1` |
-
 ## Bridge Tokens
 
 ### Lux Chain (L-prefix)
