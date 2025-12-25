@@ -3,7 +3,7 @@
 // File: @openzeppelin/contracts/token/ERC20/IERC20.sol
 // OpenZeppelin Contracts v4.4.1 (token/ERC20/IERC20.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.31;
 
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
@@ -86,7 +86,7 @@ interface IERC20 {
 // File: @openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol
 // OpenZeppelin Contracts v4.4.1 (token/ERC20/extensions/IERC20Metadata.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.31;
 
 /**
  * @dev Interface for the optional metadata functions from the ERC20 standard.
@@ -113,7 +113,7 @@ interface IERC20Metadata is IERC20 {
 // File: @openzeppelin/contracts/utils/Context.sol
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.31;
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -138,7 +138,7 @@ abstract contract Context {
 // File: @openzeppelin/contracts/token/ERC20/ERC20.sol
 // OpenZeppelin Contracts v4.4.1 (token/ERC20/ERC20.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.31;
 
 
 
@@ -492,7 +492,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 // File: @openzeppelin/contracts/access/Ownable.sol
 // OpenZeppelin Contracts v4.4.1 (access/Ownable.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.31;
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -567,7 +567,7 @@ abstract contract Ownable is Context {
 // File: @openzeppelin/contracts/access/IAccessControl.sol
 // OpenZeppelin Contracts v4.4.1 (access/IAccessControl.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.31;
 
 /**
  * @dev External interface of AccessControl declared to support ERC165 detection.
@@ -656,7 +656,7 @@ interface IAccessControl {
 // File: @openzeppelin/contracts/utils/Strings.sol
 // OpenZeppelin Contracts v4.4.1 (utils/Strings.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.31;
 
 /**
  * @dev String operations.
@@ -724,7 +724,7 @@ library Strings {
 // File: @openzeppelin/contracts/utils/introspection/IERC165.sol
 // OpenZeppelin Contracts v4.4.1 (utils/introspection/IERC165.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.31;
 
 /**
  * @dev Interface of the ERC165 standard, as defined in the
@@ -750,7 +750,7 @@ interface IERC165 {
 // File: @openzeppelin/contracts/utils/introspection/ERC165.sol
 // OpenZeppelin Contracts v4.4.1 (utils/introspection/ERC165.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.31;
 
 /**
  * @dev Implementation of the {IERC165} interface.
@@ -778,7 +778,7 @@ abstract contract ERC165 is IERC165 {
 // File: @openzeppelin/contracts/access/AccessControl.sol
 // OpenZeppelin Contracts v4.4.1 (access/AccessControl.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.31;
 
 
 
@@ -998,7 +998,7 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
 }
 
 // File: contracts/LRC20B.sol
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.31;
 
 
 
@@ -1044,7 +1044,7 @@ contract LRC20B is ERC20, Ownable, AccessControl {
 // File: @openzeppelin/contracts/utils/math/SafeMath.sol
 // OpenZeppelin Contracts v4.4.1 (utils/math/SafeMath.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.31;
 
 // CAUTION
 // This version of SafeMath should only be used with Solidity 0.8 or later,
@@ -1270,7 +1270,7 @@ library SafeMath {
 }
 
 // File: contracts/Bridge.sol
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.31;
 
 
 contract Bridge is Ownable, AccessControl {

@@ -1,4 +1,4 @@
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 import "../interfaces/IERC20Burnable.sol";
 import "../interfaces/IERC20Metadata.sol";

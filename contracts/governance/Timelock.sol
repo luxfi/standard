@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.31;
 
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 
 /**
- * @title LuxTimelock
- * @author Lux Industries Inc
- * @notice Timelock controller for Lux governance
- * @dev Thin wrapper around OpenZeppelin's TimelockController
- * 
- * Built on audited OpenZeppelin Contracts v5.1.0
+ * @title Timelock
+ * @notice Standard timelock controller for governance
+ * @dev Chain-agnostic wrapper around OpenZeppelin's TimelockController
  */
-contract LuxTimelock is TimelockController {
+contract Timelock is TimelockController {
     /// @notice Contract version
     string public constant VERSION = "1.0.0";
 

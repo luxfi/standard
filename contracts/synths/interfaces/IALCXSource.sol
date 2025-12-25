@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 interface IALCXSource {
     function getStakeTotalDeposited(address _user, uint256 _poolId) external view returns (uint256);

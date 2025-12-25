@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Copyright (c) 2025 Lux Industries Inc.
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 /// @title ILiquidityEngine
 /// @notice Universal interface for cross-chain liquidity aggregation

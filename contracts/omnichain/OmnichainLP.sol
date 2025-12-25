@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 import { IERC20 } from "@luxfi/standard/lib/token/ERC20/IERC20.sol";
 import { ERC20 } from "@luxfi/standard/lib/token/ERC20/ERC20.sol";
@@ -42,6 +42,10 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
     uint256 public constant MINIMUM_LIQUIDITY = 10**3;
     uint256 public constant FEE_DENOMINATOR = 10000;
     uint256 public bridgeFee = 30; // 0.3% bridge fee
+    
+    // Dead address for permanently locking MINIMUM_LIQUIDITY
+    // Using 0xdead instead of address(0) to comply with ERC20 which rejects minting to address(0)
+    address public constant DEAD_ADDRESS = 0x000000000000000000000000000000000000dEaD;
 
     // Events
     event LiquidityAdded(address indexed provider, uint256 amount0, uint256 amount1, uint256 liquidity);
@@ -307,7 +311,7 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
         uint256 _totalSupply = totalSupply();
         if (_totalSupply == 0) {
             liquidity = _sqrt(amount0 * amount1) - MINIMUM_LIQUIDITY;
-            _mint(address(0), MINIMUM_LIQUIDITY); // Permanently lock the first MINIMUM_LIQUIDITY tokens
+            _mint(DEAD_ADDRESS, MINIMUM_LIQUIDITY); // Permanently lock the first MINIMUM_LIQUIDITY tokens
         } else {
             liquidity = _min(
                 (amount0 * _totalSupply) / _reserve0,
@@ -352,7 +356,11 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
         _update(balance0, balance1, _reserve0, _reserve1);
 
         chainLiquidity[block.chainid] = chainLiquidity[block.chainid] - liquidity;
-        userChainBalances[msg.sender][block.chainid] = userChainBalances[msg.sender][block.chainid] - liquidity;
+        // Note: When called via router, msg.sender is the router/pair, not the user
+        // Only update userChainBalances if the sender has a balance to avoid underflow
+        if (userChainBalances[msg.sender][block.chainid] >= liquidity) {
+            userChainBalances[msg.sender][block.chainid] = userChainBalances[msg.sender][block.chainid] - liquidity;
+        }
 
         emit LiquidityRemoved(to, amount0, amount1, liquidity);
     }
@@ -402,7 +410,7 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
         uint256 _totalSupply = totalSupply();
         if (_totalSupply == 0) {
             liquidity = _sqrt(amount0 * amount1) - MINIMUM_LIQUIDITY;
-            _mint(address(0), MINIMUM_LIQUIDITY); // Permanently lock the first MINIMUM_LIQUIDITY tokens
+            _mint(DEAD_ADDRESS, MINIMUM_LIQUIDITY); // Permanently lock the first MINIMUM_LIQUIDITY tokens
         } else {
             liquidity = _min(
                 (amount0 * _totalSupply) / reserve0,

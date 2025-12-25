@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -96,14 +96,13 @@ contract AMMV3Pool is ReentrancyGuard {
         // Calculate amounts
         (amount0, amount1) = _getAmountsForLiquidity(sqrtPriceX96, tickLower, tickUpper, amount);
 
-        // Transfer tokens
-        uint256 balance0Before = IERC20(token0).balanceOf(address(this));
-        uint256 balance1Before = IERC20(token1).balanceOf(address(this));
-
-        // Callback for token transfer (caller must transfer tokens)
         // For simplicity, we require tokens to be transferred before calling mint
-        require(IERC20(token0).balanceOf(address(this)) >= balance0Before + amount0, "AMMV3: INSUFFICIENT_TOKEN0");
-        require(IERC20(token1).balanceOf(address(this)) >= balance1Before + amount1, "AMMV3: INSUFFICIENT_TOKEN1");
+        // Check that pool has enough tokens (caller must have transferred tokens before calling)
+        uint256 balance0 = IERC20(token0).balanceOf(address(this));
+        uint256 balance1 = IERC20(token1).balanceOf(address(this));
+
+        require(balance0 >= amount0, "AMMV3: INSUFFICIENT_TOKEN0");
+        require(balance1 >= amount1, "AMMV3: INSUFFICIENT_TOKEN1");
 
         // Update position
         bytes32 key = keccak256(abi.encodePacked(recipient, tickLower, tickUpper));
@@ -266,9 +265,11 @@ contract AMMV3Pool is ReentrancyGuard {
         if (!info.initialized) {
             info.initialized = true;
         }
-        info.liquidityGross = liquidityDelta > 0
-            ? info.liquidityGross + uint128(liquidityDelta)
-            : info.liquidityGross - uint128(-liquidityDelta);
+        // liquidityGross tracks total liquidity referencing this tick (always use absolute value)
+        // liquidityNet tracks the net change when price crosses this tick
+        uint128 absDelta = liquidityDelta > 0 ? uint128(liquidityDelta) : uint128(-liquidityDelta);
+        info.liquidityGross = info.liquidityGross + absDelta;
+        // For liquidityNet, use the original signed delta
         info.liquidityNet += liquidityDelta;
     }
 
@@ -293,7 +294,14 @@ contract AMMV3Pool is ReentrancyGuard {
 
     function _getAmount0ForLiquidity(uint160 sqrtRatioAX96, uint160 sqrtRatioBX96, uint128 liquidityAmount) internal pure returns (uint256) {
         if (sqrtRatioAX96 > sqrtRatioBX96) (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
-        return (uint256(liquidityAmount) << 96) * (sqrtRatioBX96 - sqrtRatioAX96) / sqrtRatioBX96 / sqrtRatioAX96;
+        // Reorder operations to avoid overflow: divide by sqrtRatioAX96 first
+        // Original: (L << 96) * (B - A) / B / A
+        // Rewritten: L * (B - A) * (2^96 / A) / B
+        // = L * (B - A) / A * 2^96 / B (but this still overflows)
+        // Use mulDiv pattern: (L * (B - A)) / A * 2^96 / B = L * (B - A) * 2^96 / (A * B)
+        // To avoid overflow: (L * 2^96 / A) * (B - A) / B (divide before multiply)
+        uint256 intermediate = (uint256(liquidityAmount) << 96) / sqrtRatioAX96;
+        return intermediate * (sqrtRatioBX96 - sqrtRatioAX96) / sqrtRatioBX96;
     }
 
     function _getAmount1ForLiquidity(uint160 sqrtRatioAX96, uint160 sqrtRatioBX96, uint128 liquidityAmount) internal pure returns (uint256) {

@@ -4,7 +4,7 @@
 import "./interfaces/IFastPriceEvents.sol";
 import "../access/Governable.sol";
 
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 contract FastPriceEvents is IFastPriceEvents, Governable {
 

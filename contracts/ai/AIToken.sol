@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Copyright (c) 2025 Lux Industries Inc.
 // Copyright (C) 2019-2025, Lux Industries Inc. All rights reserved.
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.31;
 
 import {LRC20} from "../tokens/LRC20.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";

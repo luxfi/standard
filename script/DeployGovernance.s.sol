@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BSD-3-Clause
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.31;
 
 import "forge-std/Script.sol";
 import "forge-std/console.sol";

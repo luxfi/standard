@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BSD-3-Clause
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 /// @title IWETH
 /// @notice Wrapped native token interface

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.31;
 
-import {Governor} from "@openzeppelin/contracts/governance/Governor.sol";
+import {Governor as OZGovernor} from "@openzeppelin/contracts/governance/Governor.sol";
 import {GovernorSettings} from "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";
 import {GovernorCountingSimple} from "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
 import {GovernorVotes} from "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
@@ -11,14 +11,10 @@ import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 
 /**
- * @title LuxGovernor
- * @author Lux Industries Inc
- * @notice Governance contract for Lux Network DAOs
- * @dev Extends OpenZeppelin Governor with standard extensions
- * 
- * Built on audited OpenZeppelin Contracts v5.1.0
- * See: https://docs.openzeppelin.com/contracts/5.x/governance
- * 
+ * @title Governor
+ * @notice Standard OpenZeppelin Governor with common extensions
+ * @dev Chain-agnostic governance contract
+ *
  * Features:
  * - Voting with ERC20Votes or ERC721Votes tokens
  * - Configurable voting delay and period
@@ -26,8 +22,8 @@ import {TimelockController} from "@openzeppelin/contracts/governance/TimelockCon
  * - Timelock for proposal execution
  * - Standard For/Against/Abstain voting
  */
-contract LuxGovernor is
-    Governor,
+contract Governor is
+    OZGovernor,
     GovernorSettings,
     GovernorCountingSimple,
     GovernorVotes,
@@ -56,32 +52,32 @@ contract LuxGovernor is
         uint256 proposalThreshold_,
         uint256 quorumPercentage
     )
-        Governor(name)
+        OZGovernor(name)
         GovernorSettings(votingDelay_, votingPeriod_, proposalThreshold_)
         GovernorVotes(token)
         GovernorVotesQuorumFraction(quorumPercentage)
         GovernorTimelockControl(timelock)
     {}
 
-    /// @notice Returns the Lux governor version (not the OZ governor version)
-    function luxVersion() external pure returns (string memory) {
+    /// @notice Returns the governor version
+    function version() public pure override returns (string memory) {
         return VERSION;
     }
 
     // Required overrides
 
-    function votingDelay() public view override(Governor, GovernorSettings) returns (uint256) {
+    function votingDelay() public view override(OZGovernor, GovernorSettings) returns (uint256) {
         return super.votingDelay();
     }
 
-    function votingPeriod() public view override(Governor, GovernorSettings) returns (uint256) {
+    function votingPeriod() public view override(OZGovernor, GovernorSettings) returns (uint256) {
         return super.votingPeriod();
     }
 
     function quorum(uint256 blockNumber)
         public
         view
-        override(Governor, GovernorVotesQuorumFraction)
+        override(OZGovernor, GovernorVotesQuorumFraction)
         returns (uint256)
     {
         return super.quorum(blockNumber);
@@ -90,7 +86,7 @@ contract LuxGovernor is
     function state(uint256 proposalId)
         public
         view
-        override(Governor, GovernorTimelockControl)
+        override(OZGovernor, GovernorTimelockControl)
         returns (ProposalState)
     {
         return super.state(proposalId);
@@ -99,7 +95,7 @@ contract LuxGovernor is
     function proposalNeedsQueuing(uint256 proposalId)
         public
         view
-        override(Governor, GovernorTimelockControl)
+        override(OZGovernor, GovernorTimelockControl)
         returns (bool)
     {
         return super.proposalNeedsQueuing(proposalId);
@@ -108,7 +104,7 @@ contract LuxGovernor is
     function proposalThreshold()
         public
         view
-        override(Governor, GovernorSettings)
+        override(OZGovernor, GovernorSettings)
         returns (uint256)
     {
         return super.proposalThreshold();
@@ -120,7 +116,7 @@ contract LuxGovernor is
         uint256[] memory values,
         bytes[] memory calldatas,
         bytes32 descriptionHash
-    ) internal override(Governor, GovernorTimelockControl) returns (uint48) {
+    ) internal override(OZGovernor, GovernorTimelockControl) returns (uint48) {
         return super._queueOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
 
@@ -130,7 +126,7 @@ contract LuxGovernor is
         uint256[] memory values,
         bytes[] memory calldatas,
         bytes32 descriptionHash
-    ) internal override(Governor, GovernorTimelockControl) {
+    ) internal override(OZGovernor, GovernorTimelockControl) {
         super._executeOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
 
@@ -139,14 +135,14 @@ contract LuxGovernor is
         uint256[] memory values,
         bytes[] memory calldatas,
         bytes32 descriptionHash
-    ) internal override(Governor, GovernorTimelockControl) returns (uint256) {
+    ) internal override(OZGovernor, GovernorTimelockControl) returns (uint256) {
         return super._cancel(targets, values, calldatas, descriptionHash);
     }
 
     function _executor()
         internal
         view
-        override(Governor, GovernorTimelockControl)
+        override(OZGovernor, GovernorTimelockControl)
         returns (address)
     {
         return super._executor();

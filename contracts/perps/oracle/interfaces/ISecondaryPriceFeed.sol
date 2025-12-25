@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 interface ISecondaryPriceFeed {
     function getPrice(address _token, uint256 _referencePrice, bool _maximise) external view returns (uint256);

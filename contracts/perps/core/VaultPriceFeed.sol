@@ -7,7 +7,7 @@ import "../oracle/interfaces/ISecondaryPriceFeed.sol";
 import "../oracle/interfaces/IChainlinkFlags.sol";
 import "../amm/interfaces/IPancakePair.sol";
 
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 contract VaultPriceFeed is IVaultPriceFeed {
     

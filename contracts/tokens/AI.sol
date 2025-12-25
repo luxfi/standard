@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Copyright (c) 2025 Lux Industries Inc.
 // Copyright (C) 2019-2025, Lux Industries Inc. All rights reserved.
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.31;
 
 /**
     ██╗     ██╗   ██╗██╗  ██╗     █████╗ ██╗    ████████╗ ██████╗ ██╗  ██╗███████╗███╗   ██╗

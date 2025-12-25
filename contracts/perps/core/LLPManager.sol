@@ -11,7 +11,7 @@ import "../tokens/interfaces/ILPUSD.sol";
 import "../tokens/interfaces/IMintable.sol";
 import "../access/Governable.sol";
 
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 contract LLPManager is ReentrancyGuard, Governable, ILLPManager {
     

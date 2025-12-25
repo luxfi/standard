@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 import "../tokens/Token.sol";
 import "@luxfi/standard/lib/token/ERC20/IERC20.sol";

@@ -8,7 +8,7 @@ import "../core/interfaces/IVaultPriceFeed.sol";
 import "../core/interfaces/IPositionRouter.sol";
 import "../access/Governable.sol";
 
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 contract FastPriceFeed is ISecondaryPriceFeed, IFastPriceFeed, Governable {
     

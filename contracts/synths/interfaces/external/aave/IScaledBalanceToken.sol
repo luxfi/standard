@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 interface IScaledBalanceToken {
   /// @dev Returns the scaled balance of the user. The scaled balance is the sum of all the updated stored balance

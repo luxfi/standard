@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.31;
 
 import {BasePaymaster} from "@account-abstraction/core/BasePaymaster.sol";
 import {IEntryPoint} from "@account-abstraction/interfaces/IEntryPoint.sol";
@@ -8,14 +8,14 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /**
- * @title LuxPaymaster
+ * @title EOAPaymaster
  * @author Lux Industries Inc
- * @notice Lux Network ERC-4337 paymaster implementation
- * @dev Extends eth-infinitism's BasePaymaster for gas sponsorship
- * 
+ * @notice ERC-4337 paymaster for gas sponsorship
+ * @dev Extends eth-infinitism's BasePaymaster
+ *
  * Built on audited eth-infinitism/account-abstraction v0.9.0
  */
-contract LuxPaymaster is BasePaymaster {
+contract EOAPaymaster is BasePaymaster {
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
 
@@ -44,18 +44,18 @@ contract LuxPaymaster is BasePaymaster {
         uint256 maxCost
     ) internal view override returns (bytes memory context, uint256 validationData) {
         (userOp, maxCost); // silence unused variable warning
-        
+
         // Extract signature from paymasterAndData
         bytes calldata paymasterAndData = userOp.paymasterAndData;
-        require(paymasterAndData.length >= 20 + 65, "LuxPaymaster: invalid signature length");
-        
+        require(paymasterAndData.length >= 20 + 65, "EOAPaymaster: invalid signature length");
+
         bytes calldata signature = paymasterAndData[20:];
         bytes32 hash = userOpHash.toEthSignedMessageHash();
-        
+
         if (hash.recover(signature) != verifyingSigner) {
             return ("", 1); // SIG_VALIDATION_FAILED
         }
-        
+
         return ("", 0); // Success
     }
 

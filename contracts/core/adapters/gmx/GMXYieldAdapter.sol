@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 import {ICapital, RiskTier, CapitalState} from "../../interfaces/ICapital.sol";
 import {IYield, YieldType, AccrualPattern} from "../../interfaces/IYield.sol";

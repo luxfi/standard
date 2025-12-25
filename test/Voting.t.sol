@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BSD-3-Clause
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
@@ -13,8 +13,8 @@ import {SynthFeeSplitter} from "../contracts/treasury/SynthFeeSplitter.sol";
 import {sLUX} from "../contracts/staking/sLUX.sol";
 
 /**
- * @title VeTokenomicsTest
- * @notice Comprehensive tests for Lux ve-tokenomics system
+ * @title VotingTest
+ * @notice Comprehensive tests for Lux voting system
  * 
  * Tests cover:
  * 1. vLUX locking and voting power
@@ -24,7 +24,7 @@ import {sLUX} from "../contracts/staking/sLUX.sol";
  * 5. sLUX staking and rewards
  * 6. Full integration flow
  */
-contract VeTokenomicsTest is Test {
+contract VotingTest is Test {
     // Contracts
     WLUX public wlux;
     vLUX public vlux;

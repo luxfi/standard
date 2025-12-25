@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
 import "../../contracts/tokens/AI.sol";
+import {ILRC20} from "../../contracts/tokens/interfaces/ILRC20.sol";
 
 /**
  * @title MockWarp
@@ -107,7 +108,7 @@ contract MockDEXRouter {
         require(amounts[path.length - 1] >= amountOutMin, "Slippage");
 
         // Transfer tokens (simplified - assumes tokens are already at router)
-        IERC20(path[path.length - 1]).transfer(to, amounts[path.length - 1]);
+        ILRC20(path[path.length - 1]).transfer(to, amounts[path.length - 1]);
 
         return amounts;
     }
@@ -129,7 +130,7 @@ contract MockDEXRouter {
         amounts[path.length - 1] = (msg.value * rate) / 10000;
         require(amounts[path.length - 1] >= amountOutMin, "Slippage");
 
-        IERC20(path[path.length - 1]).transfer(to, amounts[path.length - 1]);
+        ILRC20(path[path.length - 1]).transfer(to, amounts[path.length - 1]);
 
         return amounts;
     }

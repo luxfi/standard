@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.31;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./LSSVMPair.sol";
@@ -111,10 +111,10 @@ contract LSSVMPairFactory is Ownable {
         allPairs.push(pair);
         pairsByNft[_nft].push(pair);
 
-        // Deposit initial NFTs
+        // Deposit initial NFTs (use safeTransferFrom to trigger onERC721Received for tracking)
         if (_initialNFTIds.length > 0) {
             for (uint256 i = 0; i < _initialNFTIds.length; i++) {
-                IERC721(_nft).transferFrom(msg.sender, pair, _initialNFTIds[i]);
+                IERC721(_nft).safeTransferFrom(msg.sender, pair, _initialNFTIds[i]);
             }
         }
 

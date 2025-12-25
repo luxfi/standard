@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: LGPL-3.0-only
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.31;
 
 import {Enum} from "@safe-global/safe-smart-account/interfaces/Enum.sol";
 import {ISafe} from "@safe-global/safe-smart-account/interfaces/ISafe.sol";
 
 /**
- * @title LuxSafeModule
- * @author Lux Industries Inc
- * @notice Base module for Lux-specific Safe extensions
- * @dev Provides common functionality for Lux Safe modules
- * 
+ * @title SafeModule
+ * @notice Base module for Safe extensions
+ * @dev Provides common functionality for Safe modules
+ *
  * Built on audited Safe Global contracts v1.5.0
  */
-abstract contract LuxSafeModule {
+abstract contract SafeModule {
     /// @notice The Safe this module is attached to
     address payable public immutable safe;
 
