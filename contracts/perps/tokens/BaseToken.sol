@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.31;
 
-import "@luxfi/standard/lib/token/ERC20/IERC20.sol";
-import "@luxfi/standard/lib/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./interfaces/IYieldTracker.sol";
 import "./interfaces/IBaseToken.sol";

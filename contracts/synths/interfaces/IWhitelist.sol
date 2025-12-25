@@ -1,7 +1,7 @@
 pragma solidity ^0.8.31;
 
 import "../base/Errors.sol";
-import "@luxfi/standard/lib/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "../libraries/Sets.sol";
 
 /// @title  Whitelist

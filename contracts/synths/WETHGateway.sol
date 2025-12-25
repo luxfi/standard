@@ -1,6 +1,6 @@
 pragma solidity ^0.8.31;
 
-import "@luxfi/standard/lib/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./base/Errors.sol";
 import "./interfaces/IAlchemistV2.sol";
 import "./interfaces/external/IWETH9.sol";

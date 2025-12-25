@@ -1,6 +1,6 @@
 pragma solidity ^0.8.31;
 
-import "@luxfi/standard/lib-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {Unauthorized, IllegalState, IllegalArgument} from "./base/Errors.sol";
 

@@ -2,9 +2,9 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import "@luxfi/standard/lib/token/ERC20/extensions/ERC4626.sol";
-import "@luxfi/standard/lib/token/ERC20/extensions/ERC20Permit.sol";
-import "@luxfi/standard/lib/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title LRC4626

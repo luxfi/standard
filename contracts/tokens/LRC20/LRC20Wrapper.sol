@@ -2,9 +2,9 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import "@luxfi/standard/lib/token/ERC20/ERC20.sol";
-import "@luxfi/standard/lib/token/ERC20/extensions/ERC20Wrapper.sol";
-import "@luxfi/standard/lib/token/ERC20/extensions/ERC20Permit.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Wrapper.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
 /**
  * @title LRC20Wrapper

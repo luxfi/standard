@@ -23,7 +23,7 @@ import "../tokens/interfaces/ILPUSD.sol";
 import "../staking/interfaces/IVester.sol";
 import "../staking/interfaces/IRewardRouter.sol";
 
-import "@luxfi/standard/lib/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Timelock is ITimelock, BasicMulticall {
     
