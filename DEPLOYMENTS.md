@@ -95,6 +95,20 @@ Bridge tokens deployed on Ethereum for teleporting to Lux:
 | Market | `0x7A9AbAB13ad21c3D0c84484bd8dA7da7d722B4ca` |
 | Media | `0x31e0F919C67ceDd2Bc3E294340Dc900735810311` |
 | Multicall | `0x9D3055C28844eB83eb75aC8A9638a8d2E5eF61C9` |
+| Multicall2 | `0xf26cD5d9a7248e51Ef95e181354DaC19641E8469` |
+
+## Ethereum Testnet (Chain ID: 5)
+
+### NFT Marketplace (Testnet)
+
+| Contract | Address |
+|----------|---------|
+| App | `0x2e82FE4a44609853A3462F49700f11722f7e5418` |
+| Drop | `0x7f535f2f82Aa47a49F9f5ceb3433Ff706296008D` |
+| Market | `0xA9b8755d446fD5CfE84aC7b1Feeb84CC3712a86C` |
+| Media | `0xCFE8c0a5BEd4343239dFB74f926832fB812FC985` |
+| Multicall | `0xAbac8d5eA15a8D35794720BD637F0dcF314bfa5B` |
+| Multicall2 | `0x3C9d4506CC2dfaBd8E3471355f4bA791492A1637` |
 
 ## Bridge Tokens
 
@@ -127,24 +141,24 @@ Bridge tokens on Zoo for assets from other chains:
 | ZooLUX | ZLUX | Bridged LUX |
 | ZooXDAI | ZXDAI | Bridged xDAI |
 
-## Synthetic Assets (x-prefix)
+## Synthetic Assets (s-prefix)
 
 Self-repaying synthetic assets from the Synths protocol:
 
 | Synth | Underlying | Category |
 |-------|------------|----------|
-| xUSD | LUSD | Stablecoin |
-| xETH | LETH | Major L1 |
-| xBTC | LBTC | Major L1 |
-| xLUX | LUX/sLUX | Native |
-| xAI | AI/sAI | Native |
-| xZOO | LZOO | Native |
-| xSOL | LSOL | Major L1 |
-| xTON | LTON | Major L1 |
-| xADA | LADA | Major L1 |
-| xAVAX | LAVAX | Major L1 |
-| xBNB | LBNB | Major L1 |
-| xPOL | LPOL | Major L1 |
+| sUSD | LUSD | Stablecoin |
+| sETH | LETH | Major L1 |
+| sBTC | LBTC | Major L1 |
+| sLUX | LUX/stLUX | Native |
+| sAI | AI/stAI | Native |
+| sZOO | LZOO | Native |
+| sSOL | LSOL | Major L1 |
+| sTON | LTON | Major L1 |
+| sADA | LADA | Major L1 |
+| sAVAX | LAVAX | Major L1 |
+| sBNB | LBNB | Major L1 |
+| sPOL | LPOL | Major L1 |
 
 ## Perps Protocol (LPX)
 

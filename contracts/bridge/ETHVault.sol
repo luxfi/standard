@@ -2,9 +2,14 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "../tokens/LRC20.sol";
 
-contract ETHVault is ERC20 {
+/**
+ * @title ETHVault - ETH Vault with Share Tokens
+ * @notice Vault for depositing ETH and receiving share tokens
+ * @dev Built on LRC20 (Lux Request for Comments 20)
+ */
+contract ETHVault is LRC20 {
     // Event to emit when ETH is deposited
     event Deposit(address indexed user, uint256 amount);
 

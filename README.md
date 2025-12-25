@@ -87,30 +87,30 @@ import "@luxfi/contracts/bridge/Teleport.sol";
 teleport.send(destChainId, recipient, token, amount);
 ```
 
-### DeFi - Synths (Self-Repaying Loans)
+### Synths (Self-Repaying Loans)
 
 Deposit yield-bearing collateral, mint synthetic assets, debt repays itself over time:
 
 | Contract | Description |
 |----------|-------------|
-| **AlchemistV2** | Main vault - deposit, mint, repay |
-| **TransmuterV2** | 1:1 synth-to-underlying redemption |
-| **SynthToken** | Base ERC20 for synthetics |
-| **xUSD/xETH/xBTC** | Core synthetic assets |
-| **xLUX/xAI/xZOO** | Lux ecosystem synthetics |
+| **SynthVault** | Main vault - deposit, mint, repay |
+| **Transmuter** | 1:1 synth-to-underlying redemption |
+| **SynthToken** | Base LRC20 for synthetics |
+| **sUSD/sETH/sBTC** | Core synthetic assets |
+| **sLUX/sAI/sZOO** | Lux ecosystem synthetics |
 
 ```solidity
-import "@luxfi/contracts/synths/AlchemistV2.sol";
+import "@luxfi/contracts/synths/SynthVault.sol";
 
 // Deposit yield token, mint synths
-alchemist.deposit(yieldToken, amount, recipient);
-alchemist.mint(synthAmount, recipient);
+vault.deposit(yieldToken, amount, recipient);
+vault.mint(synthAmount, recipient);
 // Yield automatically repays debt over time
 ```
 
-**Available Synths:** xUSD, xETH, xBTC, xLUX, xAI, xZOO, xSOL, xTON, xADA, xAVAX, xBNB, xPOL
+**Available Synths:** sUSD, sETH, sBTC, sLUX, sAI, sZOO, sSOL, sTON, sADA, sAVAX, sBNB, sPOL
 
-### DeFi - Perps (Perpetual Trading)
+### Perps (Perpetual Trading)
 
 Leveraged perpetual futures with up to 50x leverage:
 
@@ -134,7 +134,7 @@ router.increasePosition(
 );
 ```
 
-### DeFi - AMM
+### AMM (Automated Market Maker)
 
 Automated market maker with V2 and V3 pools:
 
@@ -146,7 +146,7 @@ Automated market maker with V2 and V3 pools:
 | **AMMV3Factory** | V3 concentrated liquidity factory |
 | **AMMV3Pool** | V3 concentrated liquidity pool |
 
-### DeFi - Markets (Lending)
+### Markets (Lending)
 
 Morpho-style lending markets:
 
@@ -156,7 +156,7 @@ Morpho-style lending markets:
 | **Allocator** | Capital allocation |
 | **Router** | Lending router |
 
-### DeFi - LSSVM (NFT AMM)
+### LSSVM (NFT AMM)
 
 NFT automated market maker with bonding curves:
 
@@ -380,8 +380,8 @@ forge script script/DeployAll.s.sol --rpc-url lux_testnet --broadcast --verify
 ```
 
 **Available deploy scripts:**
-- `DeployTokens.s.sol` - Core tokens (LUX, LUXD, AI, WLUX)
-- `DeploySynths.s.sol` - Synths protocol (AlchemistV2, Transmuter)
+- `DeployTokens.s.sol` - Core tokens (LUX, LUSD, AI, WLUX)
+- `DeploySynths.s.sol` - Synths protocol (SynthVault, Transmuter)
 - `DeployPerps.s.sol` - Perpetual trading (Vault, Router, LLP)
 - `DeployAMM.s.sol` - AMM pools (V2, V3)
 - `DeployMarkets.s.sol` - Lending markets
