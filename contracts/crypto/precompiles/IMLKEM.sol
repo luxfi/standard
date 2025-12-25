@@ -2,6 +2,14 @@
 // Copyright (C) 2025, Lux Industries, Inc. All rights reserved.
 pragma solidity ^0.8.20;
 
+// ML-KEM Security Levels (NIST):
+// - ML-KEM-512:  Level 1 (128-bit security)
+// - ML-KEM-768:  Level 3 (192-bit security) - Recommended
+// - ML-KEM-1024: Level 5 (256-bit security)
+uint8 constant MODE_MLKEM_512 = 0x00;
+uint8 constant MODE_MLKEM_768 = 0x01;
+uint8 constant MODE_MLKEM_1024 = 0x02;
+
 /**
  * @title IMLKEM
  * @dev Interface for ML-KEM (FIPS 203) key encapsulation precompile
@@ -12,21 +20,8 @@ pragma solidity ^0.8.20;
  * Precompile Address: 0x0200000000000000000000000000000000000007
  *
  * See LP-4318 for full specification.
- *
- * Security Levels (NIST):
- * - ML-KEM-512:  Level 1 (128-bit security)
- * - ML-KEM-768:  Level 3 (192-bit security) - Recommended
- * - ML-KEM-1024: Level 5 (256-bit security)
  */
 interface IMLKEM {
-    /// @notice ML-KEM mode for 128-bit security (NIST Level 1)
-    uint8 constant MODE_MLKEM_512 = 0x00;
-
-    /// @notice ML-KEM mode for 192-bit security (NIST Level 3) - Recommended
-    uint8 constant MODE_MLKEM_768 = 0x01;
-
-    /// @notice ML-KEM mode for 256-bit security (NIST Level 5)
-    uint8 constant MODE_MLKEM_1024 = 0x02;
 
     /**
      * @dev Encapsulates a shared secret using recipient's public key
