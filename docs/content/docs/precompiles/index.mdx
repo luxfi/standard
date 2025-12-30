@@ -1,0 +1,408 @@
+---
+title: Precompiles
+description: Native EVM precompiles for cryptography, DEX, and cross-chain messaging
+---
+
+# Precompiles
+
+Lux EVM includes custom precompiles for post-quantum cryptography, threshold signatures, DEX operations, and cross-chain messaging.
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                          LUX PRECOMPILE ARCHITECTURE                                    │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  POST-QUANTUM CRYPTOGRAPHY              THRESHOLD SIGNATURES                            │
+│  ┌─────────────┐ ┌─────────────┐        ┌─────────────┐ ┌─────────────┐               │
+│  │   ML-DSA    │ │   SLH-DSA   │        │    FROST    │ │  CGGMP21    │               │
+│  │   0x0006    │ │   0x0007    │        │   0x000C    │ │   0x000D    │               │
+│  │ FIPS 204    │ │ FIPS 205    │        │  Schnorr    │ │   ECDSA     │               │
+│  └─────────────┘ └─────────────┘        └─────────────┘ └─────────────┘               │
+│  ┌─────────────┐ ┌─────────────┐        ┌─────────────┐ ┌─────────────┐               │
+│  │   ML-KEM    │ │  PQCrypto   │        │  Ringtail   │ │     LSS     │               │
+│  │   0x0008    │ │   0x0009    │        │   0x000B    │ │   0x000E    │               │
+│  │ FIPS 203    │ │ Multi-algo  │        │ PQ Thresh   │ │  Shamir SS  │               │
+│  └─────────────┘ └─────────────┘        └─────────────┘ └─────────────┘               │
+│                                                                                         │
+│  CROSS-CHAIN & CONSENSUS                DEX PRECOMPILES                                │
+│  ┌─────────────┐ ┌─────────────┐        ┌─────────────┐ ┌─────────────┐               │
+│  │    Warp     │ │   Quasar    │        │PoolManager  │ │   Hooks     │               │
+│  │   0x0005    │ │   0x000A    │        │   0x0400    │ │   0x0402    │               │
+│  │ BLS Aggr    │ │ Quantum Fin │        │ Singleton   │ │  Callbacks  │               │
+│  └─────────────┘ └─────────────┘        └─────────────┘ └─────────────┘               │
+│  ┌─────────────┐ ┌─────────────┐                                                       │
+│  │     BLS     │ │ secp256r1   │        ZK PRECOMPILES (EIP-1108, EIP-2537)           │
+│  │   0x000F    │ │   0x0010    │        ┌─────────────┐ ┌─────────────┐               │
+│  │  BLS12-381  │ │  P-256 Sig  │        │  BN254 ZK   │ │ BLS12-381   │               │
+│  └─────────────┘ └─────────────┘        │  0x06-0x08  │ │ 0x0b-0x11   │               │
+│                                         └─────────────┘ └─────────────┘               │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Precompile Address Map
+
+### Lux Custom Precompiles (0x02...)
+
+| Address | Name | Description | Gas |
+|---------|------|-------------|-----|
+| `0x0200...0005` | **Warp** | Cross-chain messaging via BLS | 20,375 + 8/byte |
+| `0x0200...0006` | **ML-DSA** | Post-quantum signatures (FIPS 204) | 100,000 base |
+| `0x0200...0007` | **SLH-DSA** | Stateless hash-based PQ sigs (FIPS 205) | 150,000 base |
+| `0x0200...0008` | **ML-KEM** | Post-quantum key encapsulation (FIPS 203) | 50,000 base |
+| `0x0200...0009` | **PQCrypto** | Multi-algorithm PQ operations | Variable |
+| `0x0200...000A` | **Quasar** | Quantum consensus operations | Variable |
+| `0x0200...000B` | **Ringtail** | PQ threshold signatures | 150,000 + 10,000/party |
+| `0x0200...000C` | **FROST** | Schnorr threshold signatures | 50,000 + 5,000/signer |
+| `0x0200...000D` | **CGGMP21** | ECDSA threshold signatures | 75,000 + 10,000/signer |
+| `0x0200...000E` | **LSS** | Lattice secret sharing | Variable |
+| `0x0200...000F` | **BLS** | BLS12-381 operations | Variable |
+| `0x0200...0010` | **secp256r1** | P-256 signature verification | 3,450 |
+
+### DEX Precompiles (0x04...)
+
+| Address | Name | Description |
+|---------|------|-------------|
+| `0x0400` | **PoolManager** | Singleton pool manager with flash accounting |
+| `0x0401` | **SwapRouter** | Optimized swap routing |
+| `0x0402` | **HooksRegistry** | Hook contract registry |
+| `0x0403` | **FlashLoan** | Flash loan facility |
+
+### ZK Precompiles (Ethereum Standard)
+
+| Address | Name | Gas | Standard |
+|---------|------|-----|----------|
+| `0x06` | **ECADD** | 150 | EIP-1108 |
+| `0x07` | **ECMUL** | 6,000 | EIP-1108 |
+| `0x08` | **ECPAIRING** | 45,000 + 34,000/pair | EIP-1108 |
+| `0x0b-0x11` | **BLS12-381** | Variable | EIP-2537 |
+
+## Post-Quantum Cryptography
+
+### ML-DSA (FIPS 204)
+
+Module-Lattice Digital Signature Algorithm. Quantum-resistant signatures.
+
+```solidity
+import "@luxfi/contracts/crypto/precompiles/IMLDSA.sol";
+
+// Verify post-quantum signature
+IMLDSA mldsa = IMLDSA(0x0200000000000000000000000000000000000006);
+bool valid = mldsa.verify(publicKey, message, signature);
+
+// Using library with revert on failure
+MLDSALib.verifyOrRevert(publicKey, message, signature);
+```
+
+**Key Sizes (ML-DSA-65)**:
+- Public Key: 1952 bytes
+- Signature: 3309 bytes
+- Security: NIST Level 3 (AES-192 equivalent)
+
+### ML-KEM (FIPS 203)
+
+Module-Lattice Key Encapsulation Mechanism. Quantum-resistant key exchange.
+
+```solidity
+import "@luxfi/contracts/crypto/precompiles/IMLKEM.sol";
+
+// Encapsulate shared secret
+IMLKEM mlkem = IMLKEM(0x0200000000000000000000000000000000000008);
+(bytes memory ciphertext, bytes32 sharedSecret) = mlkem.encapsulate(publicKey);
+
+// Decapsulate on recipient side
+bytes32 recoveredSecret = mlkem.decapsulate(privateKey, ciphertext);
+```
+
+### SLH-DSA (FIPS 205)
+
+Stateless Hash-based Digital Signature Algorithm. Conservative PQ choice.
+
+```solidity
+import "@luxfi/contracts/crypto/precompiles/ISLHDSA.sol";
+
+ISLHDSA slhdsa = ISLHDSA(0x0200000000000000000000000000000000000007);
+bool valid = slhdsa.verify(publicKey, message, signature);
+```
+
+## Threshold Signatures
+
+### FROST (Schnorr Threshold)
+
+Flexible Round-Optimized Schnorr Threshold signatures. Efficient t-of-n signing.
+
+```solidity
+import "@luxfi/contracts/crypto/precompiles/IFROST.sol";
+
+// Verify 2-of-3 threshold signature
+IFROST frost = IFROST(0x020000000000000000000000000000000000000C);
+bool valid = frost.verify(
+    2,              // threshold (t)
+    3,              // total signers (n)
+    publicKey,      // 32-byte aggregated key
+    messageHash,    // 32-byte message hash
+    signature       // 64-byte Schnorr signature
+);
+
+// Using library
+FROSTLib.verifyOrRevert(2, 3, publicKey, messageHash, signature);
+```
+
+**Use Cases**:
+- Bitcoin Taproot multisig
+- Cross-chain bridge guardians
+- DAO governance
+
+### CGGMP21 (ECDSA Threshold)
+
+State-of-the-art threshold ECDSA with identifiable aborts.
+
+```solidity
+import "@luxfi/contracts/crypto/precompiles/ICGGMP21.sol";
+
+// Verify 3-of-5 threshold ECDSA
+ICGGMP21 cggmp = ICGGMP21(0x020000000000000000000000000000000000000D);
+bool valid = cggmp.verify(
+    3,              // threshold
+    5,              // total signers
+    publicKey,      // 65-byte uncompressed pubkey
+    messageHash,    // 32-byte message hash
+    signature       // 65-byte ECDSA signature (r, s, v)
+);
+```
+
+**Use Cases**:
+- Ethereum-compatible custody
+- Institutional wallet management
+- Standard ECDSA compatibility required
+
+### Ringtail (Post-Quantum Threshold)
+
+Lattice-based threshold signatures for quantum resistance.
+
+```solidity
+import "@luxfi/contracts/crypto/precompiles/IRingtailThreshold.sol";
+
+// Verify quantum-resistant threshold signature
+IRingtailThreshold ringtail = IRingtailThreshold(0x020000000000000000000000000000000000000B);
+bool valid = ringtail.verify(
+    3,              // threshold
+    5,              // total parties
+    publicKey,      // aggregated lattice public key
+    messageHash,    // message hash
+    signature       // lattice signature (~4KB)
+);
+```
+
+### Algorithm Comparison
+
+| Algorithm | Signature Size | Gas (3-of-5) | Quantum Safe | Use Case |
+|-----------|---------------|--------------|--------------|----------|
+| **FROST** | 64 bytes | 75,000 | ❌ | Bitcoin Taproot |
+| **CGGMP21** | 65 bytes | 125,000 | ❌ | ECDSA required |
+| **Ringtail** | ~4 KB | 200,000 | ✅ | Future-proof |
+
+## Cross-Chain Messaging
+
+### Warp Messaging
+
+Cross-chain communication with BLS signature aggregation.
+
+```solidity
+import "@luxfi/contracts/crypto/precompiles/IWarp.sol";
+
+// Get current blockchain ID
+IWarp warp = IWarp(0x0200000000000000000000000000000000000005);
+bytes32 chainId = warp.getBlockchainID();
+
+// Send cross-chain message
+bytes32 messageId = warp.sendWarpMessage(payload);
+
+// Receive verified message on destination
+(IWarp.WarpMessage memory msg, bool valid) = warp.getVerifiedWarpMessage(0);
+require(valid, "Message not verified");
+```
+
+**Message Flow**:
+1. Source chain calls `sendWarpMessage(payload)`
+2. Validators sign using BLS aggregation
+3. Relayer submits signed message to destination
+4. Destination calls `getVerifiedWarpMessage(index)`
+
+### Quasar Consensus
+
+Quantum-finality consensus operations.
+
+```solidity
+import "@luxfi/contracts/crypto/precompiles/IQuasar.sol";
+
+IQuasar quasar = IQuasar(0x020000000000000000000000000000000000000A);
+
+// Get quantum-finalized block
+bytes32 finalizedBlock = quasar.getQuantumFinalizedBlock();
+
+// Verify quantum finality proof
+bool valid = quasar.verifyQuantumFinality(blockHash, proof);
+```
+
+## DEX Precompiles
+
+### PoolManager
+
+Uniswap v4-style singleton pool manager with flash accounting.
+
+```solidity
+import "@luxfi/contracts/crypto/precompiles/dex/IPoolManager.sol";
+import "@luxfi/contracts/crypto/precompiles/dex/Types.sol";
+
+IPoolManager poolManager = IPoolManager(0x0400);
+
+// Initialize a new pool
+PoolKey memory key = PoolKey({
+    currency0: Currency.wrap(address(tokenA)),
+    currency1: Currency.wrap(address(tokenB)),
+    fee: 3000,           // 0.30%
+    tickSpacing: 60,
+    hooks: address(0)    // no hooks
+});
+
+int24 tick = poolManager.initialize(key, sqrtPriceX96, "");
+
+// Execute swap within lock context
+poolManager.lock(abi.encode(swapData));
+```
+
+### Hooks System
+
+Custom logic injection points for pool operations.
+
+```solidity
+import "@luxfi/contracts/crypto/precompiles/dex/IHooks.sol";
+
+contract MyHook is BaseHook {
+    constructor(address _poolManager) BaseHook(_poolManager) {}
+
+    function getHookPermissions() public pure override returns (HookPermissions) {
+        return HookPermissionsLib.fromBitmap(
+            1 << 6 |  // beforeSwap
+            1 << 7    // afterSwap
+        );
+    }
+
+    function beforeSwap(
+        PoolKey calldata key,
+        SwapParams calldata params,
+        bytes calldata hookData
+    ) external override returns (uint24 feeOverride) {
+        // Custom pre-swap logic
+        return 0; // no fee override
+    }
+}
+```
+
+### Performance
+
+| Operation | Latency | Throughput |
+|-----------|---------|------------|
+| Swap | 2.26μs | 443K ops/sec |
+| ModifyLiquidity | 2.87μs | 348K ops/sec |
+
+## ZK Precompiles
+
+### BN254 (EIP-1108)
+
+Standard zkSNARK operations on alt_bn128 curve.
+
+```solidity
+// ECADD - Point addition
+(bool success, bytes memory result) = address(0x06).staticcall(
+    abi.encodePacked(x1, y1, x2, y2)
+);
+
+// ECMUL - Scalar multiplication
+(bool success, bytes memory result) = address(0x07).staticcall(
+    abi.encodePacked(x, y, scalar)
+);
+
+// ECPAIRING - Pairing check
+(bool success, bytes memory result) = address(0x08).staticcall(pairingInput);
+```
+
+### BLS12-381 (EIP-2537)
+
+Available with `pragueTime` upgrade.
+
+```solidity
+// G1ADD - BLS12-381 G1 point addition
+(bool success, bytes memory result) = address(0x0b).staticcall(g1Input);
+
+// PAIRING - BLS12-381 pairing
+(bool success, bytes memory result) = address(0x10).staticcall(pairingInput);
+```
+
+## Interface Files
+
+All precompile interfaces are available at:
+
+```
+contracts/crypto/precompiles/
+├── IMLDSA.sol           # ML-DSA (FIPS 204)
+├── ISLHDSA.sol          # SLH-DSA (FIPS 205)
+├── IMLKEM.sol           # ML-KEM (FIPS 203)
+├── IPQCrypto.sol        # Multi-PQ operations
+├── IFROST.sol           # Schnorr threshold
+├── ICGGMP21.sol         # ECDSA threshold
+├── IRingtailThreshold.sol # PQ threshold
+├── ILSS.sol             # Lattice secret sharing
+├── IWarp.sol            # Cross-chain messaging
+├── IQuasar.sol          # Quantum consensus
+├── IBLS.sol             # BLS12-381 operations
+├── ISecp256r1.sol       # P-256 signatures
+└── dex/
+    ├── Types.sol        # DEX types (Currency, PoolKey, etc.)
+    ├── IPoolManager.sol # Singleton pool manager
+    ├── IHooks.sol       # Hook interface + BaseHook
+    └── ILRC20Minimal.sol # Minimal token interface
+```
+
+## Import Paths
+
+```solidity
+// Post-quantum
+import "@luxfi/contracts/crypto/precompiles/IMLDSA.sol";
+import "@luxfi/contracts/crypto/precompiles/IMLKEM.sol";
+
+// Threshold
+import "@luxfi/contracts/crypto/precompiles/IFROST.sol";
+import "@luxfi/contracts/crypto/precompiles/ICGGMP21.sol";
+
+// Cross-chain
+import "@luxfi/contracts/crypto/precompiles/IWarp.sol";
+
+// DEX
+import "@luxfi/contracts/crypto/precompiles/dex/IPoolManager.sol";
+import "@luxfi/contracts/crypto/precompiles/dex/IHooks.sol";
+```
+
+## Security Considerations
+
+1. **Gas Limits**: PQ operations are computationally expensive
+2. **Key Sizes**: ML-DSA public keys are ~2KB, plan storage accordingly
+3. **Threshold Selection**: Use t > n/2 for Byzantine fault tolerance
+4. **Message Hashing**: Always hash messages before signing
+5. **Cross-Chain**: Verify source chain and sender addresses
+
+## Related Documentation
+
+<Cards>
+  <Card title="FHE" href="/docs/fhe">
+    Fully homomorphic encryption
+  </Card>
+  <Card title="Safe" href="/docs/safe">
+    Multi-signature wallets with FROST
+  </Card>
+  <Card title="Bridge" href="/docs/bridge">
+    Cross-chain with Warp messaging
+  </Card>
+</Cards>
