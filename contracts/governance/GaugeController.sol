@@ -32,7 +32,7 @@ interface IvLUX {
  * - ValidatorGauge: Validator/delegator rewards
  * - DAOGauge: DAO treasury
  * - POLGauge: Protocol owned liquidity
- * - SynthGauge: Synth protocol rewards
+ * - LiquidGauge: Synth protocol rewards
  * - [Custom gauges can be added by governance]
  */
 contract GaugeController is ReentrancyGuard, Ownable {

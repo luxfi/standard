@@ -6,10 +6,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "../synths/adapters/IYieldAdapter.sol";
+import "../liquid/interfaces/IYieldAdapter.sol";
 
 /// @title Vault
-/// @notice Lux yield vault - deposit collateral, earn yield, mint synths
+/// @notice Lux yield vault - deposit collateral, earn yield, mint liquid tokens
 /// @dev Multi-strategy vault with yield adapter support (AAVE, Compound, Yearn, etc.)
 contract Vault is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -28,7 +28,7 @@ contract Vault is Ownable, ReentrancyGuard {
 
     struct UserDeposit {
         uint256 shares;             // Vault shares
-        uint256 debt;               // Synth debt owed
+        uint256 debt;               // Liquid debt owed
         uint256 depositTime;        // Deposit timestamp
     }
 
@@ -48,7 +48,7 @@ contract Vault is Ownable, ReentrancyGuard {
     /// @notice Underlying collateral token (e.g., USDC, WETH)
     IERC20 public immutable underlying;
 
-    /// @notice Synthetic token that can be minted (e.g., xUSD)
+    /// @notice Liquidetic token that can be minted (e.g., sUSD)
     address public synth;
 
     /// @notice Treasury for fees
@@ -194,7 +194,7 @@ contract Vault is Ownable, ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice Mint synthetic tokens against collateral
-    /// @param amount Amount of synths to mint
+    /// @param amount Amount of liquid tokens to mint
     function mint(uint256 amount) external nonReentrant {
         if (amount == 0) revert ZeroAmount();
 
@@ -209,22 +209,22 @@ contract Vault is Ownable, ReentrancyGuard {
         deposits[msg.sender].debt = newDebt;
         totalDebt += amount;
 
-        // Mint synths
-        ISynthMinter(synth).mint(msg.sender, amount);
+        // Mint liquid tokens
+        ILiquidMinter(synth).mint(msg.sender, amount);
 
         emit Minted(msg.sender, amount);
     }
 
     /// @notice Burn synthetic tokens to reduce debt
-    /// @param amount Amount of synths to burn
+    /// @param amount Amount of liquid tokens to burn
     function burn(uint256 amount) external nonReentrant {
         if (amount == 0) revert ZeroAmount();
         if (deposits[msg.sender].debt < amount) {
             amount = deposits[msg.sender].debt;
         }
 
-        // Burn synths
-        ISynthMinter(synth).burnFrom(msg.sender, amount);
+        // Burn liquid tokens
+        ILiquidMinter(synth).burnFrom(msg.sender, amount);
 
         // Update debt
         deposits[msg.sender].debt -= amount;
@@ -253,8 +253,8 @@ contract Vault is Ownable, ReentrancyGuard {
         uint256 debt = userDeposit.debt;
         uint256 shares = userDeposit.shares;
 
-        // Burn synths from liquidator
-        ISynthMinter(synth).burnFrom(msg.sender, debt);
+        // Burn liquid tokens from liquidator
+        ILiquidMinter(synth).burnFrom(msg.sender, debt);
 
         // Calculate collateral to give liquidator (debt value + 10% bonus)
         uint256 collateralReward = debt * 11000 / BASIS_POINTS;
@@ -409,7 +409,7 @@ contract Vault is Ownable, ReentrancyGuard {
         return collateralValue * BASIS_POINTS / deposits[user].debt;
     }
 
-    /// @notice Get max mintable synths for user
+    /// @notice Get max mintable liquid tokens for user
     function getMaxMintable(address user) external view returns (uint256) {
         uint256 collateralValue = _sharesToUnderlying(deposits[user].shares);
         uint256 maxDebt = collateralValue * BASIS_POINTS / MINIMUM_COLLATERAL_RATIO;
@@ -525,7 +525,7 @@ contract Vault is Ownable, ReentrancyGuard {
 }
 
 /// @notice Interface for synth minting
-interface ISynthMinter {
+interface ILiquidMinter {
     function mint(address to, uint256 amount) external;
     function burnFrom(address from, uint256 amount) external;
 }

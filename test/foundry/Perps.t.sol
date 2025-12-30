@@ -28,78 +28,8 @@ import "../../contracts/perps/staking/RewardDistributor.sol";
 // Oracle
 import "../../contracts/perps/oracle/PriceFeed.sol";
 
-// Mocks
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
-/// @title MockToken
-/// @notice Simple mock ERC20 for perps testing
-contract MockToken is ERC20 {
-    uint8 private _decimals;
-    
-    constructor(string memory name, string memory symbol, uint8 decimals_) ERC20(name, symbol) {
-        _decimals = decimals_;
-    }
-    
-    function decimals() public view override returns (uint8) {
-        return _decimals;
-    }
-    
-    function mint(address to, uint256 amount) external {
-        _mint(to, amount);
-    }
-    
-    function burn(address from, uint256 amount) external {
-        _burn(from, amount);
-    }
-}
-
-/// @title MockPriceFeed
-/// @notice Mock Chainlink price feed for testing
-contract MockPriceFeed {
-    int256 private _answer;
-    uint8 private _decimals;
-    
-    constructor(int256 answer, uint8 decimals_) {
-        _answer = answer;
-        _decimals = decimals_;
-    }
-    
-    function latestAnswer() external view returns (int256) {
-        return _answer;
-    }
-    
-    function decimals() external view returns (uint8) {
-        return _decimals;
-    }
-    
-    function setAnswer(int256 answer) external {
-        _answer = answer;
-    }
-    
-    function latestRound() external pure returns (uint80) {
-        return 1;
-    }
-    
-    function getRoundData(uint80) external view returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    ) {
-        return (1, _answer, block.timestamp, block.timestamp, 1);
-    }
-    
-    function latestRoundData() external view returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    ) {
-        return (1, _answer, block.timestamp, block.timestamp, 1);
-    }
-}
+// Shared test mocks
+import {MockERC20 as MockToken, MockPriceFeedFull as MockPriceFeed} from "./TestMocks.sol";
 
 /// @title PerpsTest
 /// @notice Comprehensive tests for the Perps (LPX-style) protocol

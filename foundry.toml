@@ -7,6 +7,7 @@ optimizer_runs = 200
 via_ir = true
 solc_version = "0.8.31"
 auto_detect_solc = true
+evm_version = "cancun"
 # Point test and script to empty dirs during migration
 test = "test"
 script = "contracts/script"
@@ -15,6 +16,7 @@ script = "contracts/script"
 remappings = [
     # Lux Contracts paths
     "@luxfi/contracts/=contracts/",
+    "@luxfi/lamport/=../lamport/contracts/",
     "@luxfi/contracts/lib/=lib/openzeppelin-contracts/contracts/",
     "@luxfi/contracts/lib-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
     "@lux/=contracts/",  # Legacy alias

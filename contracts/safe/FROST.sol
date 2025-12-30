@@ -127,16 +127,26 @@ library FROST {
             mstore(ptr, 0)
             ptr := add(ptr, 0x20)
 
-            mcopy(ptr, add(message, 0x20), mload(message))
-            ptr := add(ptr, mload(message))
+            // Copy message to ptr (Paris-compatible, no mcopy)
+            let msgLen := mload(message)
+            let msgSrc := add(message, 0x20)
+            for { let i := 0 } lt(i, msgLen) { i := add(i, 0x20) } {
+                mstore(add(ptr, i), mload(add(msgSrc, i)))
+            }
+            ptr := add(ptr, msgLen)
             mstore(ptr, shl(240, len))
             ptr := add(ptr, 3)
 
             let bPtr := sub(ptr, 0x21)
             let iPtr := sub(ptr, 0x01)
 
-            mcopy(ptr, add(dst, 0x20), mload(dst))
-            ptr := add(ptr, mload(dst))
+            // Copy dst to ptr (Paris-compatible, no mcopy)
+            let dstLen := mload(dst)
+            let dstSrc := add(dst, 0x20)
+            for { let j := 0 } lt(j, dstLen) { j := add(j, 0x20) } {
+                mstore(add(ptr, j), mload(add(dstSrc, j)))
+            }
+            ptr := add(ptr, dstLen)
             mstore8(ptr, mload(dst))
             ptr := add(ptr, 0x01)
 

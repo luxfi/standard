@@ -1,139 +1,217 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import "forge-std/Script.sol";
-import "../contracts/ai/AIToken.sol";
+import {Script, console} from "forge-std/Script.sol";
+import {AINative, AINativeFactory} from "../contracts/tokens/AI.sol";
+import {AMMV3Factory} from "../contracts/amm/AMMV3Factory.sol";
+import {AMMV3Pool} from "../contracts/amm/AMMV3Pool.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title DeployAI
- * @notice Deploy AI token contracts to C-Chain for testing
- *
- * Usage:
- *   forge script script/DeployAI.s.sol:DeployAI --rpc-url http://127.0.0.1:9650/ext/bc/C/rpc --broadcast
+ * @notice Deploys AI token with V3 one-sided liquidity
+ * 
+ * TOKENOMICS:
+ * - Total Supply: 1,000,000,000 AI (1B)
+ * - Initial Liquidity: 100,000,000 AI (10%) → V3 pool
+ * - Mining Allocation: 900,000,000 AI (90%) → GPU attestation rewards
+ * 
+ * LIQUIDITY SETUP (V3 Concentrated):
+ * - One-sided LP (AI only, no LUX needed initially)
+ * - Price range: $0.01 → $10 per AI
+ * - Initial price: $0.01 (LP starts with 100% AI)
+ * - As price rises, AI sells into LUX
+ * - At $10, LP holds 100% LUX
+ * 
+ * TICK MATH:
+ * - tick = log(price) / log(1.0001)
+ * - $0.01: tick ≈ -46054
+ * - $10.00: tick ≈ 23027
  */
 contract DeployAI is Script {
-    // Ewoq account - the default funded account on local networks
-    address constant EWOQ_ADDRESS = 0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC;
+    // Tick constants for price range
+    // Price = 1.0001^tick
+    // $0.01 = 1.0001^(-46054) ≈ 0.01
+    // $10.00 = 1.0001^(23027) ≈ 10.00
+    int24 constant TICK_LOWER = -46080;  // Rounded to tick spacing (60)
+    int24 constant TICK_UPPER = 23040;   // Rounded to tick spacing (60)
+    
+    // sqrtPriceX96 for $0.01 initial price
+    // sqrtPrice = sqrt(0.01) * 2^96 = 0.1 * 2^96
+    uint160 constant INITIAL_SQRT_PRICE = 7922816251426434000000000000; // ~$0.01
+    
+    // Fee tier: 0.3% (3000 bps) with tick spacing 60
+    uint24 constant FEE = 3000;
+    int24 constant TICK_SPACING = 60;
 
-    // Placeholder addresses for testing
-    address constant MOCK_WLUX = 0x0000000000000000000000000000000000000001;
-    address constant MOCK_WETH = 0x0000000000000000000000000000000000000002;
-    address constant MOCK_DEX = 0x0000000000000000000000000000000000000003;
-    bytes32 constant MOCK_A_CHAIN_ID = bytes32(uint256(1));
-
+    // Deployed contracts
+    AINative public aiToken;
+    AMMV3Factory public v3Factory;
+    AMMV3Pool public aiLuxPool;
+    
+    // Addresses
+    address public deployer;
+    address public wlux;
+    
     function run() external {
-        // Load private key from environment or use ewoq default
-        uint256 deployerPrivateKey = vm.envOr(
-            "PRIVATE_KEY",
-            uint256(0x56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027)
-        );
-
-        vm.startBroadcast(deployerPrivateKey);
-
-        console.log("Deploying AI contracts...");
-        console.log("Deployer:", vm.addr(deployerPrivateKey));
-
-        // Deploy AINative for local testing (no TEE verification)
-        AINative aiNative = new AINative();
-        console.log("AINative deployed to:", address(aiNative));
-
-        // Deploy AIRemote for C-Chain
-        AIRemote aiRemote = new AIRemote(MOCK_A_CHAIN_ID, address(aiNative));
-        console.log("AIRemote deployed to:", address(aiRemote));
-
-        // Deploy AIPaymentRouter
-        AIPaymentRouter paymentRouter = new AIPaymentRouter(
-            MOCK_WLUX,
-            MOCK_WETH,
-            MOCK_DEX,
-            MOCK_A_CHAIN_ID,
-            address(aiRemote),
-            0.01 ether // 0.01 LUX attestation cost
-        );
-        console.log("AIPaymentRouter deployed to:", address(paymentRouter));
-
+        console.log("=== Deploying AI Token with V3 Liquidity ===");
+        console.log("");
+        console.log("TOKENOMICS:");
+        console.log("  Total Supply:    1,000,000,000 AI (1B)");
+        console.log("  Liquidity (10%):   100,000,000 AI");
+        console.log("  Mining (90%):      900,000,000 AI");
+        console.log("");
+        console.log("V3 LIQUIDITY:");
+        console.log("  Price Range: $0.01 - $10.00");
+        console.log("  Tick Range: %s to %s", TICK_LOWER, TICK_UPPER);
+        console.log("  One-sided: 100% AI at start");
+        console.log("");
+        
+        // Get deployer from environment
+        string memory mnemonic = vm.envString("LUX_MNEMONIC");
+        require(bytes(mnemonic).length > 0, "LUX_MNEMONIC required");
+        
+        uint256 deployerKey = vm.deriveKey(mnemonic, 0);
+        deployer = vm.addr(deployerKey);
+        console.log("Deployer:", deployer);
+        
+        // Get WLUX address (should be deployed already)
+        wlux = vm.envOr("WLUX", address(0));
+        if (wlux == address(0)) {
+            console.log("WARNING: WLUX not set, using placeholder");
+            wlux = address(0x1); // Placeholder - set proper WLUX address
+        }
+        console.log("WLUX:", wlux);
+        console.log("");
+        
+        vm.startBroadcast(deployerKey);
+        
+        // Phase 1: Deploy AI Token (10% goes to deployer initially)
+        _deployAIToken();
+        
+        // Phase 2: Deploy V3 Factory (if not exists)
+        _deployV3Factory();
+        
+        // Phase 3: Create AI/LUX Pool
+        _createPool();
+        
+        // Phase 4: Add One-Sided Liquidity
+        _addLiquidity();
+        
         vm.stopBroadcast();
-
-        console.log("\n=== Deployment Summary ===");
-        console.log("AINative:", address(aiNative));
-        console.log("AIRemote:", address(aiRemote));
-        console.log("AIPaymentRouter:", address(paymentRouter));
+        
+        _printSummary();
     }
-}
-
-/**
- * @title DeployAIMiningTest
- * @notice Deploy a simpler AI mining contract for local testing without TEE
- */
-contract DeployAIMiningTest is Script {
-    function run() external {
-        uint256 deployerPrivateKey = vm.envOr(
-            "PRIVATE_KEY",
-            uint256(0x56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027)
+    
+    function _deployAIToken() internal {
+        console.log("--- Phase 1: Deploy AI Token ---");
+        
+        // Deploy AINative with deployer as initial liquidity recipient
+        // The 10% (100M AI) will be minted to deployer, then added to V3 pool
+        aiToken = new AINative(deployer);
+        
+        console.log("AI Token deployed:", address(aiToken));
+        console.log("  Initial balance:", aiToken.balanceOf(deployer) / 1e18, "AI");
+        console.log("");
+    }
+    
+    function _deployV3Factory() internal {
+        console.log("--- Phase 2: Deploy V3 Factory ---");
+        
+        // Check if factory exists at expected address
+        address factoryAddr = vm.envOr("V3_FACTORY", address(0));
+        
+        if (factoryAddr != address(0) && factoryAddr.code.length > 0) {
+            v3Factory = AMMV3Factory(factoryAddr);
+            console.log("Using existing V3 Factory:", factoryAddr);
+        } else {
+            v3Factory = new AMMV3Factory();
+            console.log("V3 Factory deployed:", address(v3Factory));
+        }
+        console.log("");
+    }
+    
+    function _createPool() internal {
+        console.log("--- Phase 3: Create AI/LUX Pool ---");
+        
+        // Sort tokens (token0 < token1)
+        (address token0, address token1) = address(aiToken) < wlux 
+            ? (address(aiToken), wlux) 
+            : (wlux, address(aiToken));
+        
+        // Create pool
+        address poolAddr = v3Factory.createPool(token0, token1, FEE);
+        aiLuxPool = AMMV3Pool(poolAddr);
+        
+        console.log("AI/LUX Pool created:", poolAddr);
+        console.log("  Token0:", token0);
+        console.log("  Token1:", token1);
+        console.log("  Fee:", FEE, "bps");
+        console.log("  Tick Spacing:", TICK_SPACING);
+        
+        // Initialize price at $0.01
+        // This means current tick is below TICK_LOWER, so LP holds 100% AI
+        aiLuxPool.initializePrice(INITIAL_SQRT_PRICE);
+        console.log("  Initial Price: ~$0.01");
+        console.log("");
+    }
+    
+    function _addLiquidity() internal {
+        console.log("--- Phase 4: Add One-Sided Liquidity ---");
+        
+        uint256 aiAmount = aiToken.balanceOf(deployer);
+        console.log("AI amount to add:", aiAmount / 1e18, "AI");
+        
+        // Approve pool to spend AI tokens
+        aiToken.approve(address(aiLuxPool), aiAmount);
+        
+        // Transfer AI to pool first (required by pool contract)
+        IERC20(address(aiToken)).transfer(address(aiLuxPool), aiAmount);
+        
+        // Calculate liquidity amount
+        // For one-sided position below current price, we only provide token1 (or token0 depending on ordering)
+        // Liquidity = amount / (sqrtPriceUpper - sqrtPriceLower)
+        uint128 liquidityAmount = uint128(aiAmount / 1e12); // Simplified calculation
+        
+        // Mint liquidity position
+        (uint256 amount0, uint256 amount1) = aiLuxPool.mint(
+            deployer,       // recipient
+            TICK_LOWER,     // tickLower ($0.01)
+            TICK_UPPER,     // tickUpper ($10.00)
+            liquidityAmount // liquidity amount
         );
-
-        vm.startBroadcast(deployerPrivateKey);
-
-        console.log("Deploying AITestMiner...");
-
-        // Deploy test miner
-        AITestMiner miner = new AITestMiner();
-        console.log("AITestMiner deployed to:", address(miner));
-
-        vm.stopBroadcast();
+        
+        console.log("Liquidity added:");
+        console.log("  Tick Range: [%s, %s]", TICK_LOWER, TICK_UPPER);
+        console.log("  Liquidity:", uint256(liquidityAmount));
+        console.log("  Amount0:", amount0);
+        console.log("  Amount1:", amount1);
+        console.log("");
     }
-}
-
-/**
- * @title AITestMiner
- * @notice Simple test contract for AI mining without TEE verification
- */
-contract AITestMiner is ERC20B {
-    uint256 public constant REWARD_PER_TASK = 1e18; // 1 AI per task
-
-    mapping(bytes32 => bool) public completedTasks;
-    mapping(address => uint256) public minerRewards;
-
-    event TaskSubmitted(bytes32 indexed taskHash, address indexed miner, uint256 reward);
-
-    constructor() ERC20B("AI Test Token", "tAI") {}
-
-    /**
-     * @notice Submit a completed compute task and receive AI tokens
-     * @param taskHash Hash of the task (from MLX attestation)
-     * @param resultHash Hash of the compute result
-     * @param computeUnits Number of compute units used
-     * @param attestation Attestation from MLX module
-     */
-    function submitTask(
-        bytes32 taskHash,
-        bytes32 resultHash,
-        uint256 computeUnits,
-        bytes calldata attestation
-    ) external returns (uint256 reward) {
-        require(!completedTasks[taskHash], "Task already completed");
-        require(attestation.length >= 32, "Invalid attestation");
-
-        // Mark task as completed
-        completedTasks[taskHash] = true;
-
-        // Calculate reward based on compute units
-        // Base: 1 AI per 10M compute units
-        reward = (computeUnits * REWARD_PER_TASK) / 10_000_000;
-        if (reward == 0) reward = REWARD_PER_TASK / 10; // Minimum reward
-
-        // Mint reward to miner
-        _mint(msg.sender, reward);
-        minerRewards[msg.sender] += reward;
-
-        emit TaskSubmitted(taskHash, msg.sender, reward);
-        return reward;
-    }
-
-    /**
-     * @notice Get miner's total earned rewards
-     */
-    function getMinerRewards(address miner) external view returns (uint256) {
-        return minerRewards[miner];
+    
+    function _printSummary() internal view {
+        console.log("");
+        console.log("========================================");
+        console.log("           DEPLOYMENT SUMMARY           ");
+        console.log("========================================");
+        console.log("");
+        console.log("AI Token:     ", address(aiToken));
+        console.log("V3 Factory:   ", address(v3Factory));
+        console.log("AI/LUX Pool:  ", address(aiLuxPool));
+        console.log("");
+        console.log("LIQUIDITY POSITION:");
+        console.log("  Price Range:  $0.01 - $10.00");
+        console.log("  Direction:    AI -> LUX as price rises");
+        console.log("  100M AI in LP band");
+        console.log("");
+        console.log("MINING REWARDS:");
+        console.log("  900M AI available for GPU attestation mining");
+        console.log("  Reward rates by privacy level:");
+        console.log("    Public (0.25x):      15 AI/hr");
+        console.log("    Private (0.5x):      30 AI/hr");
+        console.log("    Confidential (1.0x): 60 AI/hr");
+        console.log("    Sovereign (1.5x):    90 AI/hr");
+        console.log("");
+        console.log("========================================");
     }
 }

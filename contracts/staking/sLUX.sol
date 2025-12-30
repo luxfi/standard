@@ -28,7 +28,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  * - DAO governs allocation percentages
  * - sLUX receives yield via addRewards() from Protocol Vault
  *
- * sLUX can be used as collateral in SynthVault to mint xLUX
+ * sLUX can be used as collateral in LiquidVault to mint sLUX synth
  */
 contract sLUX is ERC20, ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;

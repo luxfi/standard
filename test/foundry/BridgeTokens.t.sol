@@ -4,9 +4,9 @@ pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
 import "../../contracts/bridge/LRC20B.sol";
-import "../../contracts/bridge/lux/LETH.sol";
-import "../../contracts/bridge/lux/LBTC.sol";
-import "../../contracts/bridge/lux/LUSD.sol";
+import "../../contracts/liquid/tokens/LETH.sol";
+import "../../contracts/liquid/tokens/LBTC.sol";
+import "../../contracts/liquid/tokens/LUSD.sol";
 import "../../contracts/bridge/zoo/ZETH.sol";
 import "../../contracts/bridge/zoo/ZBTC.sol";
 import "../../contracts/bridge/zoo/ZUSD.sol";

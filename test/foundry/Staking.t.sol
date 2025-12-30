@@ -9,26 +9,8 @@ import {sLUX} from "../../contracts/staking/sLUX.sol";
 // Token contracts
 import {WLUX} from "../../contracts/tokens/WLUX.sol";
 
-// Use solmate ERC20 for mocks
-import {ERC20 as SolmateERC20} from "solmate/tokens/ERC20.sol";
-
-/// @title MockRewardToken
-/// @notice Mock reward token for testing multi-token rewards
-contract MockRewardToken is SolmateERC20 {
-    constructor(
-        string memory name,
-        string memory symbol,
-        uint8 decimals_
-    ) SolmateERC20(name, symbol, decimals_) {}
-
-    function mint(address to, uint256 amount) external {
-        _mint(to, amount);
-    }
-
-    function burn(address from, uint256 amount) external {
-        _burn(from, amount);
-    }
-}
+// Import shared mocks
+import {MockERC20Solmate as MockRewardToken} from "./TestMocks.sol";
 
 /// @title StakingTest
 /// @notice Comprehensive tests for sLUX staking contract

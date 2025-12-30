@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 /// @title SLH-DSA Signature Verification Precompile Interface
 /// @notice FIPS 205 - Stateless Hash-Based Digital Signature Algorithm (SPHINCS+)
 /// @dev Precompile contract for verifying SLH-DSA signatures
-///      Address: 0x0200000000000000000000000000000000000007
+///      Address: 0x0200000000000000000000000000000000000009
 ///
 /// SLH-DSA provides post-quantum security using hash-based cryptography.
 /// Unlike ML-DSA, it relies solely on the security of hash functions,
@@ -35,7 +35,7 @@ interface ISLHDSA {
 /// @notice Utility functions for working with SLH-DSA precompile
 library SLHDSALib {
     /// @notice SLH-DSA precompile address
-    address internal constant SLHDSA_PRECOMPILE = 0x0200000000000000000000000000000000000007;
+    address internal constant SLHDSA_PRECOMPILE = 0x0200000000000000000000000000000000000009;
 
     /// @notice Public key sizes for different security levels
     uint256 internal constant SHA2_128_PUBKEY_SIZE = 32;  // 128-bit security

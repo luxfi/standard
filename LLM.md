@@ -1,18 +1,19 @@
 # AI Assistant Knowledge Base
 
-**Last Updated**: 2025-12-25
+**Last Updated**: 2025-12-28
 **Project**: Lux Standard (Solidity Contracts & Precompiles)
 **Organization**: Lux Industries
 **Solidity Version**: 0.8.31
-**Test Coverage**: 751 tests passing (100%)
+**EVM Version**: Cancun (for FHE transient storage)
+**Test Coverage**: 709 tests passing (100%)
 
 ## Project Overview
 
 This repository contains the standard Solidity contracts and EVM precompiles for the Lux blockchain, including post-quantum cryptography implementations and Quasar consensus integration.
 
-## Test Coverage Summary (2025-12-25)
+## Test Coverage Summary (2025-12-29)
 
-**Total**: 751 tests passing across 35 test suites
+**Total**: 709 tests passing across 34 test suites
 
 | Protocol | Tests | Status |
 |----------|-------|--------|
@@ -20,30 +21,73 @@ This repository contains the standard Solidity contracts and EVM precompiles for
 | Markets (Lending) | 47 | ✅ |
 | LSSVM (NFT AMM) | 32 | ✅ |
 | Perps | 57 | ✅ |
-| Synths | 17 | ✅ |
 | Governance | 37 | ✅ |
 | Identity (DID) | 70 | ✅ |
 | Staking | 43 | ✅ |
 | Bridge Tokens | 47 | ✅ |
-| Treasury | 39 | ✅ |
+| Treasury | 12 | ✅ |
 | Omnichain | 36 | ✅ |
-| Adapters | 31 | ✅ |
 | AI Token/Mining | 82 | ✅ |
 | YieldStrategies | 30 | ✅ |
 | NFT Marketplace | 26 | ✅ |
-| Other | 113 | ✅ |
+| FHE/Confidential | 35 | ✅ |
+| Other | 111 | ✅ |
 
 **CI Status**: ✅ Passing - https://github.com/luxfi/standard/actions
 
 ---
 
-## Synths & Perps Protocol Architecture (2025-12-23)
+## FHE Security Critical Fix (2025-12-28)
+
+### CRITICAL: Noise Generation Vulnerability Fixed
+
+**Issue**: The FHE implementation was using uniform random noise instead of discrete Gaussian, reducing security from 128-bit to <20-bit.
+
+**Root Cause**: `secure_rand_noise(50)` generated uniform ±50 noise instead of discrete Gaussian with σ = α_lwe × q ≈ 13,744.
+
+**Files Fixed**:
+- `/Users/z/work/lux/tfhe/cgo/luxfhe_bridge.cpp` - Added proper Gaussian sampling
+- `/Users/z/work/lux/mlx/fhe/fhe.h` - Added `q` modulus to TFHEParams
+- `/Users/z/work/lux/mlx/fhe/patents/dmafhe.hpp` - Fixed overflow in EVM256 modulus
+
+**Key Changes**:
+```cpp
+// OLD (INSECURE - uniform ±50):
+int noise = secure_rand_noise(50);
+
+// NEW (128-bit security - discrete Gaussian):
+double sigma = compute_sigma(secret->alpha_lwe, q);  // σ ≈ 13,744
+int64_t noise = sample_gaussian(sigma);  // Box-Muller transform
+```
+
+**Security Parameters** (128-bit):
+- n_lwe = 630
+- α_lwe = 3.2e-3
+- q = 2^32
+- σ = α_lwe × q ≈ 13,744
+
+**Agent Reviews Completed**:
+- **Scientist Agent**: Found catastrophic noise vulnerability
+- **Architect Agent**: Complete ecosystem review
+- **Code Reviewer Agent**: 23 critical, 31 major issues identified
+- **CTO Agent**: Patent benchmark audit, XCFHE/VAFHE gaps
+
+**Remaining FHE Work**:
+1. API mismatch between bridge and fhe.h (engineering)
+2. Memory leaks in error paths
+3. EVM256PP carry propagation (stubs only)
+4. ULFHE programmable bootstrap (stubs only)
+5. Patent-specific benchmarks
+
+---
+
+## Liquid & Perps Protocol Architecture (2025-12-29)
 
 ### Overview
 
 The Lux Standard DeFi stack implements two complementary protocols:
 
-1. **Synths Protocol** (`contracts/synths/`) - Alchemix-style self-repaying synthetic assets
+1. **Liquid Protocol** (`contracts/liquid/`) - Yield-bearing liquid tokens with flash loan support
 2. **Perps Protocol** (`contracts/perps/`) - LPX-style perpetual futures with LLP liquidity
 
 ### Token Renaming (2025-12-24)
@@ -60,98 +104,38 @@ The perps protocol tokens have been renamed to use Lux-native naming:
 
 **Internal Variable Names:** Some internal variables (e.g., `usdg` in Vault.sol, `usdgAmounts`) retain original names for code stability while the contract/token names use new convention.
 
-### Mainnet Launch: 12 Synthetic Assets (x* Prefix)
+### Token Naming Convention
 
-**LP-9108 defines 12 synths for Lux Mainnet:**
-
-| Synth | Name | Collateral | Category |
-|-------|------|------------|----------|
-| **xLUX** | Lux Synthetic LUX | WLUX/sLUX | Native |
-| **xAI** | Lux Synthetic AI | AI/sAI | Native |
-| **xZOO** | Lux Synthetic ZOO | LZOO | Native |
-| **xUSD** | Lux Synthetic USD | LUSD | Stablecoin |
-| **xETH** | Lux Synthetic ETH | LETH | Major L1 |
-| **xBTC** | Lux Synthetic BTC | LBTC | Major L1 |
-| **xSOL** | Lux Synthetic SOL | LSOL | Major L1 |
-| **xTON** | Lux Synthetic TON | LTON | Major L1 |
-| **xADA** | Lux Synthetic ADA | LADA | Major L1 |
-| **xAVAX** | Lux Synthetic AVAX | LAVAX | Major L1 |
-| **xBNB** | Lux Synthetic BNB | LBNB | Major L1 |
-| **xPOL** | Lux Synthetic POL | LPOL | Major L1 |
-
-**Token Naming Convention:**
-- `x*` prefix: Synthetic tokens (xUSD, xETH, xBTC...)
 - `L*` prefix: Bridge tokens on Lux (LETH, LBTC, LUSD...)
 - `Z*` prefix: Bridge tokens on Zoo (ZETH, ZBTC, ZUSD...)
+- `x*` prefix: Liquid staked tokens (xLUX, etc.)
 
 **IMPORTANT:**
 - `LUSD` is the native Lux stablecoin (NOT USDC)
 - Bridge tokens are MPC-controlled with `onlyAdmin` modifier
 
-### Synths Protocol Architecture
+### Liquid Protocol Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                            SYNTHS PROTOCOL FLOW                                         │
-├─────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                         │
-│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐          │
-│  │   DEPOSIT   │────>│  GENERATE   │────>│    YIELD    │────>│   REPAY     │          │
-│  │  Collateral │     │   Synths    │     │   Accrues   │     │   Auto      │          │
-│  └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘          │
-│         │                  │                    │                   │                  │
-│         ▼                  ▼                    ▼                   ▼                  │
-│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐          │
-│  │ YieldToken  │     │  xUSD/xETH  │     │  Strategy   │     │ Transmuter  │          │
-│  │ (yvWETH,    │     │  Minted     │     │  Returns    │     │ 1:1 Redeem  │          │
-│  │  aWETH)     │     │             │     │             │     │             │          │
-│  └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘          │
-│                                                                                         │
-└─────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
-**Core Contracts:**
+**Core Contracts** (`contracts/liquid/`):
 
 | Contract | Purpose |
 |----------|---------|
-| `AlchemistV2.sol` | Main vault - deposit, mint, repay, liquidate |
-| `TransmuterV2.sol` | 1:1 synth-to-underlying redemption queue |
-| `TransmuterBuffer.sol` | Buffer between Alchemist and Transmuter |
-| `SynthToken.sol` | Base ERC20 for synths (ERC-3156 flash loans) |
-| `xUSD.sol`, `xETH.sol`, `xBTC.sol`, `xLUX.sol` | Core synth implementations |
-| `xAI.sol`, `xSOL.sol`, `xTON.sol`, `xADA.sol` | Additional synth implementations |
-| `xAVAX.sol`, `xBNB.sol`, `xPOL.sol`, `xZOO.sol` | Additional synth implementations |
+| `LiquidToken.sol` | Base ERC20 with flash loan support (ERC-3156) |
+| `LiquidLUX.sol` | Master yield vault, mints xLUX shares |
 
-**Yield Token Adapters:**
-- `YearnTokenAdapter.sol` - Yearn V2 vaults (yvWETH, yvUSDC)
-- Custom adapters for Aave, Compound, etc.
+**Interfaces** (`contracts/liquid/interfaces/`):
 
-**Key Mechanisms:**
+| Interface | Purpose |
+|-----------|---------|
+| `IYieldAdapter.sol` | Yield-bearing token adapter interface |
+| `IERC3156FlashLender.sol` | Flash loan lender interface |
+| `IERC3156FlashBorrower.sol` | Flash loan borrower interface |
 
-1. **Deposit Flow:**
-   - User deposits yield-bearing token (e.g., yvWETH)
-   - Or deposits underlying (WETH) which is wrapped to yield token
-   - Collateral accrues yield over time
-
-2. **Minting (Borrowing):**
-   - User mints synths against collateral
-   - `minimumCollateralization` (e.g., 200%) enforced
-   - Creates debt position (positive `debt` value)
-
-3. **Self-Repaying Magic:**
-   - Yield accrues continuously
-   - `harvest()` converts yield to credit
-   - Credit automatically reduces debt
-   - Time benefits the user (debt decreases)
-
-4. **Transmutation:**
-   - Queue-based 1:1 redemption of synths
-   - Deposit xUSD, receive USDC when available
-   - Fair ordering via tick system
-
-**Collateral Types Supported:**
-- `underlyingTokens`: Base assets (WETH, USDC, DAI, WBTC)
-- `yieldTokens`: Yield-bearing versions (yvWETH, aWETH, cUSDC)
+**Key Features:**
+- ERC-3156 flash loan support with fee configuration
+- Whitelisted minting/burning with access control
+- Admin-controlled sentinel for emergency actions
+- Gas-efficient LRC20 base implementation
 
 ### Perps Protocol Architecture
 
@@ -237,49 +221,35 @@ The perps protocol tokens have been renamed to use Lux-native naming:
 
 ### Integration Points
 
-**1. Synths as Perps Collateral (POSSIBLE)**
+**1. LiquidLUX as Perps Collateral**
 
 ```solidity
-// xUSD can be used as perps collateral if whitelisted
+// xLUX (LiquidLUX shares) can be used as perps collateral
 vault.setTokenConfig(
-    address(xUSD),
+    address(xLUX),
     18,           // decimals
     10000,        // weight
     50,           // minProfitBps
-    1000000e18,   // maxUsdgAmount
-    true,         // isStable (xUSD is stable)
+    1000000e18,   // maxLpusdAmount
+    false,        // isStable
     false         // isShortable
 );
 ```
 
-**Status**: Architecturally compatible but requires:
-- AlchemistV2 to whitelist Vault as approved recipient
-- Price feed for xUSD (should be $1 peg)
-- Risk parameters tuned for synthetic collateral
+**2. Fee Distribution to LiquidLUX**
 
-**2. Perps Yield for Synths Repayment (INTEGRATED)**
-
-The `LPXYieldAdapter` in `contracts/core/adapters/gmx/` already implements this:
+The `FeeSplitter` routes protocol fees to LiquidLUX via gauge weights:
 
 ```solidity
-// LPXYieldAdapter wraps GLP for synths yield
-contract LPXYieldAdapter {
-    function deposit(address token, uint256 amount, uint256 minGlp) external returns (uint256);
-    function claimFees() external returns (uint256);  // Claims WETH fees
-    function routeToSettlement(address recipient, uint256 maxAmount) external returns (uint256);
-}
+// FeeSplitter pushes fees to LiquidLUX
+feeSplitter.pushFeesToLiquidLUX(FEE_DEX);     // DEX fees
+feeSplitter.pushFeesToLiquidLUX(FEE_PERPS);   // Perps fees
+feeSplitter.pushFeesToLiquidLUX(FEE_LENDING); // Lending fees
 ```
-
-**Flow:**
-1. Synths user deposits collateral
-2. AlchemicCredit deploys to LPXYieldAdapter
-3. Adapter stakes in LLP via RewardRouterV2
-4. Trading fees accrue as WETH
-5. Fees route to transmuter to settle obligations
 
 **3. Shared Price Feeds**
 
-Both protocols can use the same oracle infrastructure:
+All protocols use the same oracle infrastructure:
 - Chainlink for base prices
 - FastPriceFeed for perps-specific fast updates
 - VaultPriceFeed aggregation layer
@@ -288,10 +258,9 @@ Both protocols can use the same oracle infrastructure:
 
 **Strategy 1: Yield Stacking**
 ```
-Deposit WETH → Yearn (yvWETH) → Synths (xUSD) → Perps (Long LUX)
-- Base: Yearn yield (~5% APY)
-- Synths: Self-repaying loan
-- Perps: Leveraged LUX exposure
+Deposit LUX → LiquidLUX (xLUX) → Use as Perps collateral
+- Base: Protocol fee yield
+- Perps: Leveraged exposure
 ```
 
 **Strategy 2: Delta-Neutral Yield**
@@ -301,20 +270,11 @@ Deposit WETH → Yearn (yvWETH) → Synths (xUSD) → Perps (Long LUX)
 Net: ETH-neutral, fee yield only
 ```
 
-**Strategy 3: Self-Repaying Leverage**
+**Strategy 3: Governance + Yield**
 ```
-Deposit ETH collateral
-Mint xUSD (50% LTV)
-Use xUSD to long ETH via perps
-ETH appreciation + yield = accelerated repayment
-```
-
-**Strategy 4: Liquidity Bootstrapping**
-```
-Protocol deposits ETH
-Mints xETH
-Provides xETH/ETH liquidity
-Earns LP fees + self-repayment
+Stake LUX → LiquidLUX (xLUX)
+xLUX → vLUX voting power
+Earn fees + vote on gauge weights
 ```
 
 ### Shariah Compliance Notes
@@ -325,59 +285,22 @@ Earns LP fees + self-repayment
 function isShariahCompliant() external pure returns (bool) {
     return true; // Fee-based yield is permissible
 }
-
-function shariahCompliance() external pure returns (...) {
-    compliant = true;
-    reason = "Fees represent payment for a legitimate service (market making / liquidity provision)";
-    yieldSource = "Trading fees from perpetual traders using LLP liquidity";
-    comparisonToInterest = "Unlike interest (riba), fees are earned through active service provision";
-}
 ```
 
 **Key Distinction:**
 - INTEREST (Compound/Aave): Time-based obligation growth = Riba (forbidden)
 - FEES (LPX/LLP): Activity-based service payment = Halal (permitted)
 
-### Missing Integrations
-
-**1. SynthsCollateralAdapter for Perps**
-Need adapter to:
-- Query AlchemistV2 for xToken value
-- Handle liquidation paths
-- Bridge synth redemption latency
-
-**2. Unified Price Oracle**
-Should consolidate:
-- Chainlink feeds
-- FastPriceFeed
-- TWAP from QuantumSwap
-- Synth peg verification
-
-**3. Cross-Protocol Liquidation**
-When synth position underwater:
-- Can liquidate through perps
-- Or through transmuter
-- Need routing logic
-
-**4. Reward Token Integration**
-- esGMX/GMX rewards from staking
-- Should flow to synth holders if using LLP adapter
-- Currently manual claim required
-
 ### File Structure Summary
 
 ```
 contracts/
-├── synths/                    # Alchemix-style self-repaying
-│   ├── AlchemistV2.sol        # Main vault
-│   ├── TransmuterV2.sol       # 1:1 redemption
-│   ├── SynthToken.sol         # Base synth ERC20
-│   ├── xUSD.sol, xETH.sol...  # Concrete synths
-│   ├── adapters/
-│   │   └── yearn/             # Yield sources
-│   └── interfaces/            # IAlchemistV2, etc.
+├── liquid/                    # Liquid protocol
+│   ├── LiquidLUX.sol          # Master yield vault (xLUX)
+│   ├── LiquidToken.sol        # Base ERC20 with flash loans
+│   └── interfaces/            # IYieldAdapter, IERC3156*
 │
-├── perps/                     # GMX-style perpetuals
+├── perps/                     # LPX-style perpetuals
 │   ├── core/
 │   │   ├── Vault.sol          # Central vault
 │   │   ├── Router.sol         # Position management
@@ -387,15 +310,17 @@ contracts/
 │   ├── staking/
 │   │   └── RewardRouterV2.sol # Staking rewards
 │   ├── tokens/
-│   │   └── USDG.sol           # Internal stable
+│   │   └── LPUSD.sol          # Internal stable
 │   └── oracle/                # Price feeds
 │
-└── core/                      # Integration layer
-    └── adapters/
-        ├── gmx/
-        │   └── LPXYieldAdapter.sol  # GLP yield for synths
-        └── alchemic/
-            └── AlchemicCredit.sol   # Credit engine
+├── governance/                # Governance layer
+│   ├── VotingLUX.sol          # vLUX = xLUX + DLUX
+│   ├── GaugeController.sol    # Gauge weight voting
+│   └── voting/                # IVotingWeight adapters
+│
+└── treasury/                  # Fee distribution
+    ├── FeeSplitter.sol        # Routes fees to LiquidLUX
+    └── ValidatorVault.sol     # Validator rewards
 ```
 
 ---
@@ -1659,3 +1584,402 @@ Note: Full compilation requires ERC20B.sol base contract in same directory.
 **Payment**: Multi-token (AI/ETH/BTC/ZOO/any → LUX)
 **Quantum Safety**: Q-Chain finality integration ✅
 **Standards**: LP-2000, LP-1001, LP-1002, HIP-006, ZIP-005 ✅
+
+---
+
+## Local Development Workflow (2025-12-25)
+
+### Quick Start: Deploy Full Stack to Anvil
+
+**Requirements**: `LUX_MNEMONIC` environment variable set
+
+```bash
+# 1. Start anvil with Lux C-Chain ID and mnemonic-funded accounts
+anvil --chain-id 96369 \
+  --mnemonic "$LUX_MNEMONIC" \
+  --balance 10000000000 \
+  --port 8545
+
+# 2. Deploy full DeFi stack (in another terminal)
+forge script script/DeployFullStack.s.sol:DeployFullStack \
+  --rpc-url http://127.0.0.1:8545 \
+  --broadcast \
+  -vvv
+
+# 3. Run tests
+forge test
+```
+
+**Note**: The deployer address is derived from `LUX_MNEMONIC` index 0. Treasury is at `0x9011E888251AB053B7bD1cdB598Db4f9DEd94714`.
+
+### Deployed Contracts (Verified 2025-12-25)
+
+| Contract | Address | Description |
+|----------|---------|-------------|
+| **WLUX** | `0xc65ea8882020Af7CDa7854d590C6Fcd34BF364ec` | Wrapped LUX |
+| **LUSD** | `0x413e4A820635702Ec199bC5B62dCbCa1749851bf` | Lux USD Bridge Token |
+| **LETH** | `0x9378b62fC172d2A4f715d7ecF49DE0362f1BB702` | Lux ETH Bridge Token |
+| **LBTC** | `0x7fC4f8a926E47Fa3587C0d7658C00E7489e67916` | Lux BTC Bridge Token |
+| **StakedLUX** | `0x977afeE2D1043ecdBc27ff530329837286457988` | Staked LUX |
+| **LiquidLUX** | `0x809d550fca64d94Bd9F66E60752A544199cfAC3D` | Master yield vault (xLUX) |
+| **AMMV2Factory** | `0xDd30113b484671A35Ca236ec5A97C1c5327d72FA` | AMM V2 Factory |
+| **AMMV2Router** | `0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f` | AMM V2 Router |
+
+### LP Pools Created
+
+| Pool | Pair Address |
+|------|--------------|
+| WLUX/xLUX | `0x1134F1268d5d533127ADd93792F83968196273ef` |
+| WLUX/LUSD | `0x278167E70AAf549ca3A628BcDAF133d088070E8d` |
+
+### Development Keys (Anvil Defaults)
+
+```
+Deployer: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+Private Key: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+```
+
+---
+
+## Production Deployments
+
+### C-Chain & Zoo EVM - AMM Production (Shared Addresses via CREATE2)
+
+| Contract | Address | Networks |
+|----------|---------|----------|
+| **V2 Factory** | `0xD173926A10A0C4eCd3A51B1422270b65Df0551c1` | LUX, LUX-TEST, ZOO |
+| **V2 Router** | `0xAe2cf1E403aAFE6C05A5b8Ef63EB19ba591d8511` | LUX, LUX-TEST, ZOO |
+| **V3 Factory** | `0x80bBc7C4C7a59C899D1B37BC14539A22D5830a84` | LUX, LUX-TEST, ZOO |
+| **V3 Swap Router** | `0x939bC0Bca6F9B9c52E6e3AD8A3C590b5d9B9D10E` | LUX, LUX-TEST, ZOO |
+| **Multicall** | `0xd25F88CBdAe3c2CCA3Bb75FC4E723b44C0Ea362F` | LUX, LUX-TEST, ZOO |
+| **Quoter** | `0x12e2B76FaF4dDA5a173a4532916bb6Bfa3645275` | LUX, LUX-TEST, ZOO |
+| **NFT Position Manager** | `0x7a4C48B9dae0b7c396569b34042fcA604150Ee28` | LUX, LUX-TEST, ZOO |
+| **Tick Lens** | `0x57A22965AdA0e52D785A9Aa155beF423D573b879` | LUX, LUX-TEST, ZOO |
+
+**Source**: `~/work/lux/exchange/src/constants/addresses.ts`
+
+### C-Chain Mainnet (96369)
+
+| Contract | Address | Description |
+|----------|---------|-------------|
+| **WLUX** | `0x52c84043cd9c865236f11d9fc9f56aa003c1f922` | Wrapped LUX |
+| **AI** | `0xa4cd3b0eb6e5ab5d8ce4065bccd70040adab1f00` | AI Token |
+| **LUSD** | *pending* | Lux USD (native stablecoin - backed by bridged USDC/USDT) |
+| **LETH** | *pending* | Lux ETH (bridged) |
+| **LBTC** | *pending* | Lux BTC (bridged) |
+
+**RPC**: `https://api.lux.network/ext/bc/C/rpc`
+
+### C-Chain Testnet (96368) - Standard Contracts
+
+| Contract | Address | Description |
+|----------|---------|-------------|
+| **WLUX** | `0xc65ea8882020af7cda7854d590c6fcd34bf364ec` | Wrapped LUX |
+| **LUSD** | `0x413e4a820635702ec199bc5b62dcbca1749851bf` | Lux USD |
+| **LETH** | `0x9378b62fc172d2a4f715d7ecf49de0362f1bb702` | Lux ETH |
+| **LBTC** | `0x7fc4f8a926e47fa3587c0d7658c00e7489e67916` | Lux BTC |
+| **LiquidLUX** | `0x00947bbdc619974b0eddaf103b981f3273a3e8da` | Master yield vault (xLUX) |
+
+**RPC**: `https://api.lux-test.network/ext/bc/C/rpc`
+
+### Zoo EVM (200200/200201)
+
+Zoo uses Z* prefix for bridge tokens: ZUSD, ZETH, ZBNB, ZPOL, ZAVAX, ZTON (ERC20B standard with mint/burn)
+
+**Bridge tokens source**: `~/work/lux/bridge/contracts/contracts/zoo/`
+
+### Token Naming Convention
+
+| Chain | Stablecoin | Bridge Prefix | Example Tokens |
+|-------|------------|---------------|----------------|
+| Lux C-Chain | LUSD | L* | LETH, LBTC, LUSD |
+| Zoo EVM | ZUSD | Z* | ZETH, ZBNB, ZUSD |
+| Liquid | - | x* | xLUX (LiquidLUX shares) |
+
+**Note**: Bridged USDC/USDT → becomes LUSD on Lux (backed by staked assets on Ethereum/Base)
+
+---
+
+### luxd --dev Mode (Anvil-like)
+
+**Status**: ✅ **WORKING** - `luxd --dev` now auto-mines C-Chain blocks when transactions are pending, just like Anvil!
+
+**Features** (as of 2025-12-25):
+- Chain ID: 1337 (default, configurable)
+- Auto-mining: Blocks produced immediately when transactions submitted
+- Pre-funded accounts: Treasury (0x9011) + Anvil accounts (0xf39F...)
+- Single-node mode with skip-bootstrap
+- API on port 9630
+
+**Usage**:
+```bash
+# Start dev mode
+luxd --dev
+
+# Test with RPC
+curl -X POST -H "Content-Type: application/json" \
+  --data '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}' \
+  http://127.0.0.1:9630/ext/bc/C/rpc
+
+# Send transaction (auto-mined instantly)
+cast send --private-key $ANVIL_PRIVATE_KEY \
+  --rpc-url http://127.0.0.1:9630/ext/bc/C/rpc \
+  --value 1wei 0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+```
+
+**Implementation Details** (2025-12-25):
+1. **Config injection**: `manager.go:injectAutominingConfig()` passes `enable-automining: true` to coreth
+2. **Block builder**: `block_builder.go:startAutomining()` subscribes to tx pool events
+3. **Build-Verify-Accept**: Each pending tx triggers `BuildBlock() → Verify() → Accept()`
+4. **100ms interval**: Minimum time between blocks (configurable)
+
+**Files Modified**:
+- `/Users/z/work/lux/node/chains/manager.go` - Added automining config injection
+- `/Users/z/work/lux/coreth/plugin/evm/config/config.go` - Added EnableAutomining field
+- `/Users/z/work/lux/coreth/plugin/evm/block_builder.go` - Added startAutomining/automineBlock
+- `/Users/z/work/lux/coreth/plugin/evm/vm.go` - Added automining startup in initBlockBuilding
+
+**For Full Lux Network** (P-chain, X-chain, cross-chain):
+```bash
+lux network start --testnet
+```
+
+---
+
+## Contracts Directory Cleanup (2025-12-26)
+
+### Duplicate Removal
+
+Cleaned up duplicate and orphaned governance contracts:
+
+**Deleted Files:**
+- `contracts/dao/governance/LuxGovernor.sol` - Duplicate of `contracts/governance/Governor.sol`
+- `contracts/dao/governance/VotesToken.sol` - Moved to canonical location
+- `contracts/dao/interfaces/` - Empty directory
+- `contracts/tokens/GoveranceToken.sol` - Empty stub with typo
+- `contracts/governance/GoveranceToken.sol` - Empty stub with typo
+- `contracts/bridge/LETH.sol` - Duplicate of `contracts/bridge/lux/LETH.sol`
+
+**Moved Files:**
+- `VotesToken.sol` → `contracts/governance/VotesToken.sol` (canonical location)
+
+**Canonical Locations:**
+- **Bridge Tokens**: `contracts/bridge/LRC20B.sol` - All 67+ bridge tokens import from here
+- **Governance**: `contracts/governance/` - Governor, Timelock, VotesToken, vLUX, GaugeController
+- **Identity/DID**: `contracts/identity/` - DIDRegistry, DIDResolver, PremiumDIDRegistry
+
+### Full Stack Deployment Script (12 Phases)
+
+The `script/DeployFullStack.s.sol` now deploys the complete Lux DeFi stack:
+
+| Phase | Components | Description |
+|-------|------------|-------------|
+| 1 | WLUX, LUSD, LETH, LBTC | Core tokens |
+| 2 | StakedLUX | LUX staking |
+| 3 | LiquidLUX | Master yield vault (xLUX) |
+| 4 | AMMV2Factory, AMMV2Router | AMM DEX |
+| 5 | 5 LP pools | Core trading pairs |
+| 6 | FeeSplitter, ValidatorVault | Fee distribution |
+| 7 | DIDRegistry | Identity/DID |
+| 8 | VotesToken, Timelock, Governor, vLUX, GaugeController | Governance |
+| 9 | FeeSplitter | Treasury |
+| 10 | LinearCurve, ExponentialCurve, LSSVMFactory, LSSVMRouter | NFT AMM |
+| 11 | Markets | Morpho-style lending |
+| 12 | Perp | Perpetual futures |
+
+**Usage:**
+```bash
+# Start anvil
+anvil --chain-id 96369 --mnemonic "$LUX_MNEMONIC" --balance 10000000000
+
+# Deploy all 12 phases
+forge script script/DeployFullStack.s.sol --rpc-url http://127.0.0.1:8545 --broadcast -vvv
+```
+
+---
+
+## FHE (Fully Homomorphic Encryption) Contracts (2025-12-28)
+
+### Overview
+
+The `contracts/fhe/` directory contains Fully Homomorphic Encryption contracts for private on-chain computation using the TaskManager precompile at `0xeA30c4B8b44078Bbf8a6ef5b9f1eC1626C7848D9`.
+
+### Core Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| **FHE.sol** | `contracts/fhe/FHE.sol` | Core library with encrypted operations |
+| **ICofhe.sol** | `contracts/fhe/ICofhe.sol` | Interface to TaskManager precompile |
+| **Gateway.sol** | `contracts/fhe/gateway/Gateway.sol` | Decryption request handler |
+
+### Encrypted Types
+
+```solidity
+type ebool is uint256;    // Encrypted boolean
+type euint8 is uint256;   // Encrypted 8-bit unsigned integer
+type euint16 is uint256;  // Encrypted 16-bit unsigned integer
+type euint32 is uint256;  // Encrypted 32-bit unsigned integer
+type euint64 is uint256;  // Encrypted 64-bit unsigned integer
+type euint128 is uint256; // Encrypted 128-bit unsigned integer
+type euint256 is uint256; // Encrypted 256-bit unsigned integer
+type eaddress is uint256; // Encrypted address
+type einput is bytes32;   // Encrypted input handle
+```
+
+### Key Functions
+
+```solidity
+// Arithmetic
+FHE.add(euint64 lhs, euint64 rhs) → euint64
+FHE.sub(euint64 lhs, euint64 rhs) → euint64
+FHE.mul(euint64 lhs, euint64 rhs) → euint64
+FHE.div(euint64 lhs, euint64 rhs) → euint64
+
+// Comparison
+FHE.lt(euint64 lhs, euint64 rhs) → ebool
+FHE.lte(euint64 lhs, euint64 rhs) → ebool
+FHE.gt(euint64 lhs, euint64 rhs) → ebool
+FHE.gte(euint64 lhs, euint64 rhs) → ebool
+
+// Access Control
+FHE.allow(euint64 ctHash, address account)
+FHE.allowThis(euint64 ctHash)
+FHE.allowSender(euint64 ctHash)
+FHE.isSenderAllowed(euint64 ctHash) → bool (view)
+
+// Input Verification
+FHE.asEuint64(einput inputHandle, bytes memory inputProof) → euint64
+FHE.asEuint64(uint64 value) → euint64
+
+// Conditional
+FHE.select(ebool condition, euint64 ifTrue, euint64 ifFalse) → euint64
+```
+
+### Token Contracts
+
+| Contract | Purpose |
+|----------|---------|
+| `ConfidentialERC20.sol` | ERC20 with encrypted balances |
+| `ConfidentialERC20Wrapped.sol` | Wrap/unwrap ERC20 to/from encrypted |
+| `ConfidentialWETH.sol` | Wrapped native token with encryption |
+| `ConfidentialERC20Votes.sol` | Voting with encrypted vote counts |
+
+### Governance
+
+| Contract | Purpose |
+|----------|---------|
+| `ConfidentialGovernorAlpha.sol` | Governor with private voting |
+| `ConfidentialVLUX.sol` | Private vLUX voting power |
+
+### EVM Version Requirement
+
+FHE contracts require **Cancun** EVM version for transient storage opcodes (`tload`/`tstore`):
+
+```toml
+# foundry.toml
+evm_version = "cancun"
+```
+
+### Fixes Applied (2025-12-28)
+
+1. **Type System**: Added `einput` and `euint256` types
+2. **Input Verification**: Added `asEuint64(einput, bytes)` functions
+3. **Gateway Library**: Created wrapper for TaskManager decryption
+4. **ACL Functions**: Added `isSenderAllowed()` for all types
+5. **View Modifiers**: Made `isAllowed` and `isSenderAllowed` view functions
+6. **Type Wrapping**: Fixed calls to wrap `uint64` → `euint64` with `FHE.asEuint64()`
+
+---
+
+## LiquidLUX (xLUX) Unified Yield System (2025-12-27)
+
+### Architecture Overview
+
+LiquidLUX is the master yield vault that receives ALL protocol fees and mints xLUX shares:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           LiquidLUX (xLUX)                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  FEE SOURCES (10% perf fee):                                               │
+│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐        │
+│  │  DEX   │ │ Bridge │ │Lending │ │ Perps  │ │ Liquid │ │  NFT   │        │
+│  └────┬───┘ └────┬───┘ └────┬───┘ └────┬───┘ └────┬───┘ └────┬───┘        │
+│       │          │          │          │          │          │             │
+│       ▼          ▼          ▼          ▼          ▼          ▼             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ FeeSplitter.pushFeesToLiquidLUX(feeType) → receiveFees(amount,type) │   │
+│  │                         → 10% to treasury, 90% to vault             │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  VALIDATOR REWARDS (0% perf fee - exempt):                                 │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ ValidatorVault.forwardRewardsToLiquidLUX() → depositValidatorRewards│   │
+│  │                         → 0% perf fee, 100% to vault                │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  GOVERNANCE:                                                                │
+│  vLUX (Voting Power) = xLUX + DLUX (aggregated by VotingLUX contract)      │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Contracts Created
+
+| Contract | Location | Purpose |
+|----------|----------|---------|
+| **LiquidLUX** | `contracts/liquid/LiquidLUX.sol` | Master yield vault, mints xLUX shares |
+| **VotingLUX** | `contracts/governance/VotingLUX.sol` | vLUX = xLUX + DLUX aggregator |
+| **VotingWeightVLUX** | `contracts/governance/voting/VotingWeightVLUX.sol` | IVotingWeight adapter for Strategy |
+
+### Security Improvements (Production Hardening)
+
+1. **bytes32 feeType constants** - Gas efficient, typo-proof fee categorization
+2. **SafeERC20 everywhere** - No infinite approvals, forceApprove pattern
+3. **GOVERNANCE_ROLE** - Timelock-controlled parameter changes
+4. **ERC20Votes** - Checkpointed voting power (anti-flash-loan)
+5. **Slashing policy** - Reserve buffer + configurable loss socialization
+6. **Pausable** - Emergency pause + withdrawal to treasury
+7. **Full accounting ledgers** - reconcile() view for auditing
+
+### Fee Type Constants
+
+```solidity
+bytes32 public constant FEE_DEX = keccak256("DEX");
+bytes32 public constant FEE_BRIDGE = keccak256("BRIDGE");
+bytes32 public constant FEE_LENDING = keccak256("LENDING");
+bytes32 public constant FEE_PERPS = keccak256("PERPS");
+bytes32 public constant FEE_LIQUID = keccak256("LIQUID");
+bytes32 public constant FEE_NFT = keccak256("NFT");
+bytes32 public constant FEE_VALIDATOR = keccak256("VALIDATOR");
+bytes32 public constant FEE_OTHER = keccak256("OTHER");
+```
+
+### Wiring After Deployment
+
+```solidity
+// 1. Grant roles on LiquidLUX
+liquidLux.addFeeDistributor(address(feeSplitter));
+liquidLux.addValidatorSource(address(validatorVault));
+
+// 2. Configure fee sources
+feeSplitter.setLiquidLUX(address(liquidLux));
+validatorVault.setLiquidLUX(address(liquidLux));
+
+// 3. Configure Strategy with VotingWeightVLUX
+VotingWeightVLUX votingWeight = new VotingWeightVLUX(xLUX, dLUX, 1e18);
+strategy.setVotingWeight(address(votingWeight));
+```
+
+### Governance Formula
+
+- **xLUX**: Yield-bearing liquid staked LUX (LiquidLUX vault shares)
+- **DLUX**: OHM-style governance token (vote-only, no yield)
+- **vLUX**: Non-transferable aggregated voting power (xLUX + DLUX)
+
+---
+
+*Last Updated: 2025-12-27*
+*Dev Workflow Verified: ✅ 745 tests passing*
+*luxd --dev Automining: ✅ Working*
+*Full Stack: ✅ 12 phases deploying*
+*LiquidLUX: ✅ Production-hardened with 7 security improvements*

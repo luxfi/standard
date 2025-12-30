@@ -272,7 +272,7 @@ contract AITest is Test {
         vm.etch(0x0200000000000000000000000000000000000005, address(warpA).code);
         vm.etch(address(0x0300), address(attestation).code);
 
-        aiNative = new AINative();
+        aiNative = new AINative(address(this)); // Initial liquidity to test contract
 
         // Set up trusted chains on AINative
         aiNative.addTrustedChain(C_CHAIN_ID);

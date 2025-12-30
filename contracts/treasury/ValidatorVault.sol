@@ -6,6 +6,10 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+interface ILiquidLUXValidator {
+    function depositValidatorRewards(uint256 amount) external;
+}
+
 /**
  * @title ValidatorVault
  * @notice Manages validator and delegator reward distribution
@@ -18,6 +22,15 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  * │       ▼               ▼               ▼                         │
  * │  Validators      Delegators       Reserve                       │
  * │  (commission)    (pro-rata)       (slashing)                    │
+ * └─────────────────────────────────────────────────────────────────┘
+ *
+ * LIQUIDLUX INTEGRATION (NO PERFORMANCE FEE):
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │  ValidatorVault → LiquidLUX.depositValidatorRewards()           │
+ * │                                                                 │
+ * │  • Validators are EXEMPT from 10% performance fee               │
+ * │  • 100% of validator rewards go to xLUX holders                 │
+ * │  • Use forwardRewardsToLiquidLUX() to push accumulated rewards  │
  * └─────────────────────────────────────────────────────────────────┘
  *
  * Validators register and set commission rates.
@@ -69,9 +82,16 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     uint256 public slashingReserve;
     uint256 public slashingReserveBps = 500; // 5% to reserve
 
+    /// @notice LiquidLUX vault for reward forwarding (no perf fee path)
+    ILiquidLUXValidator public liquidLux;
+    
+    /// @notice Accumulated rewards pending forward to LiquidLUX
+    uint256 public pendingLiquidLuxRewards;
+
     /// @notice Stats
     uint256 public totalReceived;
     uint256 public totalDistributed;
+    uint256 public totalToLiquidLux;
 
     // ============ Events ============
     
@@ -81,6 +101,8 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     event Undelegated(address indexed delegator, bytes32 indexed validatorId, uint256 amount);
     event RewardsClaimed(address indexed delegator, uint256 amount);
     event RewardsDistributed(uint256 amount, uint256 toReserve);
+    event RewardsToLiquidLux(uint256 amount);
+    event LiquidLuxUpdated(address indexed newLiquidLux);
 
     // ============ Errors ============
     
@@ -89,6 +111,8 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     error InvalidCommission();
     error InsufficientDelegation();
     error NothingToClaim();
+    error LiquidLuxNotSet();
+    error NothingToForward();
 
     // ============ Constructor ============
     
@@ -123,6 +147,63 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
         accRewardPerShare += (toDistribute * 1e18) / totalDelegated;
         
         emit RewardsDistributed(toDistribute, toReserve);
+    }
+
+    // ============ LiquidLUX Integration ============
+    
+    /**
+     * @notice Forward accumulated rewards to LiquidLUX (no performance fee)
+     * @dev Validators are exempt from the 10% performance fee
+     */
+    function forwardRewardsToLiquidLUX() external nonReentrant {
+        if (address(liquidLux) == address(0)) revert LiquidLuxNotSet();
+        
+        // Calculate forwardable amount (balance minus delegated and slashing reserve)
+        uint256 balance = lux.balanceOf(address(this));
+        uint256 reserved = totalDelegated + slashingReserve;
+        
+        if (balance <= reserved) revert NothingToForward();
+        
+        uint256 forwardable = balance - reserved;
+        
+        // Approve exact amount (no infinite approvals)
+        lux.forceApprove(address(liquidLux), forwardable);
+        
+        // Push to LiquidLUX (no perf fee path)
+        liquidLux.depositValidatorRewards(forwardable);
+        
+        // Clear approval
+        lux.forceApprove(address(liquidLux), 0);
+        
+        totalToLiquidLux += forwardable;
+        
+        emit RewardsToLiquidLux(forwardable);
+    }
+
+    /**
+     * @notice Forward specific amount to LiquidLUX
+     * @param amount Amount of rewards to forward
+     */
+    function forwardAmountToLiquidLUX(uint256 amount) external nonReentrant {
+        if (address(liquidLux) == address(0)) revert LiquidLuxNotSet();
+        
+        uint256 balance = lux.balanceOf(address(this));
+        uint256 reserved = totalDelegated + slashingReserve;
+        
+        if (balance <= reserved || amount > balance - reserved) revert NothingToForward();
+        
+        // Approve exact amount
+        lux.forceApprove(address(liquidLux), amount);
+        
+        // Push to LiquidLUX
+        liquidLux.depositValidatorRewards(amount);
+        
+        // Clear approval
+        lux.forceApprove(address(liquidLux), 0);
+        
+        totalToLiquidLux += amount;
+        
+        emit RewardsToLiquidLux(amount);
     }
 
     // ============ Validator Management ============
@@ -280,6 +361,20 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
         slashingReserveBps = bps;
     }
     
+    /// @notice Set LiquidLUX vault address
+    function setLiquidLUX(address _liquidLux) external onlyOwner {
+        require(_liquidLux != address(0), "Invalid address");
+        
+        // Clear any existing approval
+        if (address(liquidLux) != address(0)) {
+            lux.forceApprove(address(liquidLux), 0);
+        }
+        
+        liquidLux = ILiquidLUXValidator(_liquidLux);
+        
+        emit LiquidLuxUpdated(_liquidLux);
+    }
+    
     /// @notice Use slashing reserve to cover slashed validator
     function slash(bytes32 validatorId, uint256 amount) external onlyOwner {
         require(amount <= slashingReserve, "Insufficient reserve");
@@ -318,5 +413,24 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     ) {
         Validator memory v = validators[validatorId];
         return (v.rewardAddress, v.commissionBps, v.totalDelegated, v.pendingRewards, v.active);
+    }
+    
+    /// @notice Get stats including LiquidLUX forwarding
+    function getStats() external view returns (
+        uint256 received,
+        uint256 distributed,
+        uint256 toLiquidLux,
+        uint256 inReserve
+    ) {
+        return (totalReceived, totalDistributed, totalToLiquidLux, slashingReserve);
+    }
+    
+    /// @notice Get forwardable amount to LiquidLUX
+    function getForwardableAmount() external view returns (uint256) {
+        uint256 balance = lux.balanceOf(address(this));
+        uint256 reserved = totalDelegated + slashingReserve;
+        
+        if (balance <= reserved) return 0;
+        return balance - reserved;
     }
 }
