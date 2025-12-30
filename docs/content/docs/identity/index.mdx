@@ -1,0 +1,213 @@
+---
+title: Identity (DID)
+description: W3C Decentralized Identifiers on Lux Network
+---
+
+# Identity (DID)
+
+On-chain W3C DID Core specification implementation for decentralized identity management.
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                            LUX IDENTITY ARCHITECTURE                                    │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  DID METHODS                                                                            │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │  did:lux:<identifier>           - Lux Network DID                               │   │
+│  │  did:lux:mainnet:<address>      - Mainnet-specific DID                          │   │
+│  │  did:lux:testnet:<address>      - Testnet-specific DID                          │   │
+│  │  did:hanzo:<username>           - Hanzo username DID                            │   │
+│  │  did:hanzo:eth:<address>        - Hanzo Ethereum address DID                    │   │
+│  └─────────────────────────────────────────────────────────────────────────────────┘   │
+│                                        │                                                │
+│  ┌─────────────────────────────────────┼───────────────────────────────────────────┐   │
+│  │                                     ▼                                            │   │
+│  │  ┌─────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐      │   │
+│  │  │   DIDRegistry   │    │     DIDDocument     │    │  VerificationMethod │      │   │
+│  │  │                 │    │                     │    │                     │      │   │
+│  │  │ Create/Update   │───▶│ Controller list     │───▶│ Ed25519/secp256k1   │      │   │
+│  │  │ Resolve/Revoke  │    │ Also-known-as       │    │ X25519/BLS          │      │   │
+│  │  └─────────────────┘    └─────────────────────┘    └─────────────────────┘      │   │
+│  │                                     │                                            │   │
+│  │                                     ▼                                            │   │
+│  │  ┌─────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐      │   │
+│  │  │  DIDResolver    │    │      Services       │    │ PremiumDIDRegistry  │      │   │
+│  │  │                 │    │                     │    │                     │      │   │
+│  │  │ Cross-chain     │    │ LinkedDomains       │    │ Username auctions   │      │   │
+│  │  │ resolution      │    │ CredentialRegistry  │    │ Premium names       │      │   │
+│  │  └─────────────────┘    └─────────────────────┘    └─────────────────────┘      │   │
+│  └──────────────────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Core Contracts
+
+| Contract | Description | Import |
+|----------|-------------|--------|
+| **DIDRegistry** | Main DID management | `@luxfi/contracts/identity/DIDRegistry.sol` |
+| **DIDResolver** | Cross-chain DID resolution | `@luxfi/contracts/identity/DIDResolver.sol` |
+| **PremiumDIDRegistry** | Premium username auctions | `@luxfi/contracts/identity/PremiumDIDRegistry.sol` |
+
+## Verification Method Types
+
+| Type | Description | Use Case |
+|------|-------------|----------|
+| `Ed25519VerificationKey2020` | Ed25519 signing | General authentication |
+| `EcdsaSecp256k1VerificationKey2019` | secp256k1 ECDSA | Ethereum compatibility |
+| `X25519KeyAgreementKey2020` | X25519 key exchange | Encrypted communication |
+| `Bls12381G2Key2020` | BLS signatures | Threshold signatures |
+| `JsonWebKey2020` | JWK format | Web interoperability |
+
+## Service Types
+
+| Type | Description |
+|------|-------------|
+| `LinkedDomains` | DNS domain verification |
+| `CredentialRegistry` | Verifiable credentials |
+| `DIDCommMessaging` | DIDComm messaging endpoint |
+| `HubService` | Identity hub |
+
+## Creating a DID
+
+```solidity
+import "@luxfi/contracts/identity/DIDRegistry.sol";
+
+DIDRegistry registry = DIDRegistry(DID_REGISTRY_ADDRESS);
+
+// Create DID for msg.sender
+// DID format: did:lux:<address>
+registry.createDID();
+
+// Create DID with custom identifier
+registry.createDIDWithId("my-custom-id");
+
+// Add verification method
+registry.addVerificationMethod(
+    didHash,
+    VerificationMethod({
+        id: "did:lux:0x123...#key-1",
+        methodType: VerificationMethodType.EcdsaSecp256k1VerificationKey2019,
+        controller: "did:lux:0x123...",
+        publicKeyMultibase: "zQ3shokFTS3brHcDQrn82RUDfQ23HnBE...",
+        publicKeyJwk: ""
+    })
+);
+
+// Add service endpoint
+registry.addService(
+    didHash,
+    Service({
+        id: "did:lux:0x123...#website",
+        serviceType: ServiceType.LinkedDomains,
+        serviceEndpoint: "https://example.com"
+    })
+);
+```
+
+## Resolving a DID
+
+```solidity
+import "@luxfi/contracts/identity/DIDResolver.sol";
+
+DIDResolver resolver = DIDResolver(DID_RESOLVER_ADDRESS);
+
+// Resolve DID document
+(DIDDocument memory doc, bool found) = resolver.resolve("did:lux:0x123...");
+
+if (found) {
+    address controller = doc.controller;
+    uint256 updated = doc.updated;
+    bool active = doc.active;
+}
+
+// Get verification methods
+VerificationMethod[] memory methods = resolver.getVerificationMethods(didHash);
+
+// Get services
+Service[] memory services = resolver.getServices(didHash);
+```
+
+## Premium DIDs
+
+```solidity
+import "@luxfi/contracts/identity/PremiumDIDRegistry.sol";
+
+PremiumDIDRegistry premium = PremiumDIDRegistry(PREMIUM_REGISTRY_ADDRESS);
+
+// Check availability
+bool available = premium.isAvailable("alice");
+
+// Start auction for premium name
+premium.startAuction{value: minBid}("alice");
+
+// Place bid
+premium.placeBid{value: bidAmount}("alice");
+
+// Claim after auction ends
+premium.claimPremiumDID("alice");
+// Creates: did:hanzo:alice
+```
+
+## DID Document Structure
+
+```solidity
+struct DIDDocument {
+    string id;                    // did:lux:<identifier>
+    address controller;           // Primary controller address
+    address[] alsoController;     // Additional controllers
+    uint256 created;              // Creation timestamp
+    uint256 updated;              // Last update timestamp
+    bool active;                  // Active/deactivated status
+}
+```
+
+## Access Control Roles
+
+| Role | Permissions |
+|------|-------------|
+| `DEFAULT_ADMIN_ROLE` | Full registry control |
+| `OPERATOR_ROLE` | Assist with DID management |
+| `REGISTRAR_ROLE` | Create DIDs on behalf of users |
+
+## Constants
+
+| Name | Value | Description |
+|------|-------|-------------|
+| `MAX_VERIFICATION_METHODS` | 20 | Max keys per DID |
+| `MAX_SERVICES` | 10 | Max services per DID |
+| `MAX_ALIASES` | 5 | Max also-known-as |
+
+## Events
+
+```solidity
+event DIDCreated(bytes32 indexed didHash, string did, address indexed controller);
+event DIDUpdated(bytes32 indexed didHash, address indexed updater);
+event DIDDeactivated(bytes32 indexed didHash);
+event VerificationMethodAdded(bytes32 indexed didHash, string methodId);
+event ServiceAdded(bytes32 indexed didHash, string serviceId);
+event ControllerChanged(bytes32 indexed didHash, address indexed newController);
+```
+
+## W3C Compliance
+
+This implementation follows the [W3C DID Core](https://www.w3.org/TR/did-core/) specification:
+
+- DID Syntax conformant
+- DID Document structure
+- Verification methods
+- Service endpoints
+- Resolution metadata
+
+## Related Documentation
+
+<Cards>
+  <Card title="Accounts" href="/docs/accounts">
+    Smart contract accounts
+  </Card>
+  <Card title="Safe" href="/docs/safe">
+    Multi-signature wallets
+  </Card>
+</Cards>

@@ -11,10 +11,18 @@
     "accounts",
     "---Infrastructure---",
     "governance",
+    "staking",
+    "treasury",
     "bridge",
     "utils",
+    "---Identity---",
+    "identity",
+    "---AI & Compute---",
+    "ai",
     "---Security---",
     "safe",
-    "lamport"
+    "lamport",
+    "---Privacy---",
+    "fhe"
   ]
 }

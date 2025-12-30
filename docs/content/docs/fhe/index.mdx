@@ -1,0 +1,362 @@
+---
+title: Fully Homomorphic Encryption (FHE)
+description: Confidential computing with encrypted on-chain operations
+---
+
+# Fully Homomorphic Encryption (FHE)
+
+Complete FHE infrastructure for private on-chain computation. Perform arithmetic, comparisons, and logic on encrypted data without decryption.
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                            LUX FHE ARCHITECTURE                                         │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  ENCRYPTED TYPES                                                                        │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ ebool | euint8 | euint16 | euint32 | euint64 | euint128 | euint256 | eaddress  │   │
+│  └─────────────────────────────────────────────────────────────────────────────────┘   │
+│                                        │                                                │
+│  ┌─────────────────────────────────────┼───────────────────────────────────────────┐   │
+│  │                                     ▼                                            │   │
+│  │  ┌─────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐      │   │
+│  │  │   FHE.sol       │    │    TaskManager      │    │     Gateway         │      │   │
+│  │  │                 │    │                     │    │                     │      │   │
+│  │  │ add, sub, mul   │───>│ 0xeA30...7848D9    │───>│ Decryption requests │      │   │
+│  │  │ lt, gt, eq, ne  │    │ (Precompile)       │    │                     │      │   │
+│  │  │ and, or, xor    │    │                     │    │                     │      │   │
+│  │  │ select, cast    │    │                     │    │                     │      │   │
+│  │  └─────────────────┘    └─────────────────────┘    └─────────────────────┘      │   │
+│  │                                                                                  │   │
+│  │  ACCESS CONTROL                                                                  │   │
+│  │  ┌─────────────────────────────────────────────────────────────────────────┐    │   │
+│  │  │ FHE.allow(ctHash, account)  - Grant read access to encrypted value      │    │   │
+│  │  │ FHE.allowThis(ctHash)       - Grant contract read access                 │    │   │
+│  │  │ FHE.isSenderAllowed(ct)     - Check if sender can use encrypted value   │    │   │
+│  │  └─────────────────────────────────────────────────────────────────────────┘    │   │
+│  └──────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                         │
+│  PRECOMPILE ADDRESSES                                                                   │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ 0x0200...0080  FheOS         - Main FHE operations                              │   │
+│  │ 0x0200...0081  ACL           - Access control list                              │   │
+│  │ 0x0200...0082  InputVerifier - Verify encrypted inputs                          │   │
+│  │ 0x0200...0083  Gateway       - Decryption gateway                               │   │
+│  └─────────────────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Core Contracts
+
+| Contract | Description | Import |
+|----------|-------------|--------|
+| **FHE** | Core library - encrypted operations | `@luxfi/contracts/fhe/FHE.sol` |
+| **TFHE** | Low-level TFHE operations | `@luxfi/contracts/fhe/TFHE.sol` |
+| **Gateway** | Decryption request handling | `@luxfi/contracts/fhe/gateway/Gateway.sol` |
+| **Permissioned** | Access control mixin | `@luxfi/contracts/fhe/access/Permissioned.sol` |
+
+## Encrypted Types
+
+```solidity
+type ebool is uint256;    // Encrypted boolean
+type euint8 is uint256;   // Encrypted 8-bit unsigned integer
+type euint16 is uint256;  // Encrypted 16-bit unsigned integer
+type euint32 is uint256;  // Encrypted 32-bit unsigned integer
+type euint64 is uint256;  // Encrypted 64-bit unsigned integer
+type euint128 is uint256; // Encrypted 128-bit unsigned integer
+type euint256 is uint256; // Encrypted 256-bit unsigned integer
+type eaddress is uint256; // Encrypted address
+type einput is bytes32;   // Encrypted input handle
+```
+
+## Basic Operations
+
+### Arithmetic
+
+```solidity
+import "@luxfi/contracts/fhe/FHE.sol";
+
+contract ConfidentialMath {
+    euint64 public encryptedValue;
+
+    function add(euint64 a, euint64 b) public returns (euint64) {
+        return FHE.add(a, b);
+    }
+
+    function sub(euint64 a, euint64 b) public returns (euint64) {
+        return FHE.sub(a, b);
+    }
+
+    function mul(euint64 a, euint64 b) public returns (euint64) {
+        return FHE.mul(a, b);
+    }
+
+    function div(euint64 a, euint64 b) public returns (euint64) {
+        return FHE.div(a, b);
+    }
+}
+```
+
+### Comparison
+
+```solidity
+// Less than
+ebool isLess = FHE.lt(a, b);
+
+// Less than or equal
+ebool isLessOrEqual = FHE.le(a, b);
+
+// Greater than
+ebool isGreater = FHE.gt(a, b);
+
+// Greater than or equal
+ebool isGreaterOrEqual = FHE.ge(a, b);
+
+// Equal
+ebool isEqual = FHE.eq(a, b);
+
+// Not equal
+ebool isNotEqual = FHE.ne(a, b);
+```
+
+### Bitwise Operations
+
+```solidity
+// AND
+euint64 andResult = FHE.and(a, b);
+
+// OR
+euint64 orResult = FHE.or(a, b);
+
+// XOR
+euint64 xorResult = FHE.xor(a, b);
+
+// NOT
+euint64 notResult = FHE.not(a);
+
+// Shift left
+euint64 shlResult = FHE.shl(a, b);
+
+// Shift right
+euint64 shrResult = FHE.shr(a, b);
+```
+
+### Conditional (Select)
+
+```solidity
+// Encrypted if-then-else
+// If condition is true, return ifTrue, else return ifFalse
+euint64 result = FHE.select(condition, ifTrue, ifFalse);
+```
+
+## Access Control
+
+FHE values require explicit access permissions:
+
+```solidity
+import "@luxfi/contracts/fhe/FHE.sol";
+
+contract AccessControlExample {
+    mapping(address => euint64) private balances;
+
+    function deposit(einput encryptedAmount, bytes calldata inputProof) external {
+        euint64 amount = FHE.asEuint64(encryptedAmount, inputProof);
+
+        // Grant this contract access to the encrypted value
+        FHE.allowThis(amount);
+
+        // Grant the depositor access to their balance
+        FHE.allow(amount, msg.sender);
+
+        balances[msg.sender] = FHE.add(balances[msg.sender], amount);
+    }
+
+    function checkBalance() external view returns (euint64) {
+        // Only returns if sender is allowed
+        require(FHE.isSenderAllowed(balances[msg.sender]), "Not allowed");
+        return balances[msg.sender];
+    }
+}
+```
+
+## Input Verification
+
+Convert encrypted inputs to encrypted types:
+
+```solidity
+// From encrypted input with proof
+euint64 amount = FHE.asEuint64(encryptedInput, inputProof);
+
+// From plaintext (trivial encryption)
+euint64 plainValue = FHE.asEuint64(100);
+
+// Type casting between encrypted types
+euint32 smaller = FHE.asEuint32(FHE.asEuint64(value));
+```
+
+## Confidential LRC20
+
+LRC20 (Lux token standard) with encrypted balances:
+
+```solidity
+import "@luxfi/contracts/fhe/token/ERC20/ConfidentialERC20.sol";
+
+contract PrivateToken is ConfidentialERC20 {
+    constructor() ConfidentialERC20("Private Token", "PRIV") {
+        _unsafeMint(msg.sender, 1000000);
+    }
+
+    // Balances are encrypted - only authorized parties can view
+    // mapping(address => euint64) internal _balances;
+}
+```
+
+### ConfidentialLRC20 Functions
+
+```solidity
+// Transfer with encrypted amount
+function transfer(address to, einput encryptedAmount, bytes calldata inputProof)
+    public returns (bool);
+
+// Transfer with euint64 directly
+function transfer(address to, euint64 amount) public returns (bool);
+
+// Approve with encrypted amount
+function approve(address spender, einput encryptedAmount, bytes calldata inputProof)
+    public returns (bool);
+
+// Get encrypted balance (requires permission)
+function balanceOf(address account) public view returns (euint64);
+```
+
+## Confidential Governance
+
+Private voting with encrypted vote counts:
+
+```solidity
+import "@luxfi/contracts/fhe/governance/ConfidentialGovernorAlpha.sol";
+import "@luxfi/contracts/fhe/governance/ConfidentialERC20Votes.sol";
+
+// Governance token with encrypted voting power
+contract GovernanceToken is ConfidentialERC20Votes {
+    // Vote counts are encrypted until tally
+    // Prevents vote buying and coercion
+}
+
+// Governor with private voting
+contract PrivateGovernor is ConfidentialGovernorAlpha {
+    // Votes are encrypted during voting period
+    // Only revealed after voting ends
+}
+```
+
+### Proposal Lifecycle
+
+| State | Description |
+|-------|-------------|
+| `Pending` | Proposal created, awaiting threshold verification |
+| `Active` | Voting in progress (encrypted votes) |
+| `Succeeded` | Quorum reached, more FOR than AGAINST |
+| `Defeated` | Failed to reach quorum or majority |
+| `Queued` | Passed, in timelock queue |
+| `Executed` | Proposal executed |
+
+## Gateway (Decryption)
+
+Request decryption of encrypted values:
+
+```solidity
+import "@luxfi/contracts/fhe/gateway/GatewayCaller.sol";
+import "@luxfi/contracts/fhe/gateway/Gateway.sol";
+
+contract DecryptionExample is GatewayCaller {
+    function requestDecryption(euint64 encryptedValue) external {
+        // Request decryption via gateway
+        uint256[] memory cts = new uint256[](1);
+        cts[0] = euint64.unwrap(encryptedValue);
+
+        Gateway.requestDecryption(
+            cts,
+            this.decryptionCallback.selector,
+            0,  // msgValue
+            block.timestamp + 100,  // maxTimestamp
+            false  // passSignaturesToCaller
+        );
+    }
+
+    function decryptionCallback(
+        uint256 requestId,
+        uint64 decryptedValue
+    ) external onlyGateway {
+        // Handle decrypted value
+    }
+}
+```
+
+## Confidential Vesting
+
+Vesting with encrypted amounts:
+
+```solidity
+import "@luxfi/contracts/fhe/finance/ConfidentialVestingWallet.sol";
+
+// Vesting wallet with private vesting amounts
+contract PrivateVesting is ConfidentialVestingWallet {
+    // Vesting amounts are encrypted
+    // Only beneficiary can see their allocation
+}
+```
+
+## Token Contracts
+
+| Contract | Description |
+|----------|-------------|
+| **ConfidentialERC20** | LRC20 with encrypted balances |
+| **ConfidentialERC20Wrapped** | Wrap/unwrap standard LRC20 to encrypted |
+| **ConfidentialWETH** | Wrapped LUX with encryption |
+| **ConfidentialERC20Mintable** | Mintable confidential token |
+| **ConfidentialERC20WithErrors** | Confidential token with error codes |
+
+## EVM Version Requirement
+
+FHE contracts require **Cancun** EVM for transient storage:
+
+```toml
+# foundry.toml
+evm_version = "cancun"
+```
+
+## Security Considerations
+
+1. **Access Control**: Always use `FHE.allow()` to grant access to encrypted values
+2. **Input Verification**: Verify encrypted inputs with proofs before use
+3. **Decryption Timing**: Decryption requests are async - design accordingly
+4. **Gas Costs**: FHE operations are more expensive than plaintext
+5. **Side Channels**: Avoid conditional logic that reveals encrypted values
+
+## Gas Costs (Approximate)
+
+| Operation | Gas Cost |
+|-----------|----------|
+| Trivial Encrypt | ~50,000 |
+| Add/Sub | ~100,000 |
+| Multiply | ~150,000 |
+| Comparison | ~100,000 |
+| Select | ~120,000 |
+| Decrypt Request | ~200,000 |
+
+## Related Documentation
+
+<Cards>
+  <Card title="Governance" href="/docs/governance">
+    Standard and confidential governance
+  </Card>
+  <Card title="Safe" href="/docs/safe">
+    Multi-signature wallets with FHE support
+  </Card>
+  <Card title="Tokens" href="/docs/tokens">
+    Standard and confidential tokens
+  </Card>
+</Cards>
