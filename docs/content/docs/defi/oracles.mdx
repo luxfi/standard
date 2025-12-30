@@ -42,12 +42,27 @@ The oracle system provides:
 
 ## Oracle Contracts
 
-| Contract | Purpose |
-|----------|---------|
-| **PriceOracle** | Multi-source price aggregation |
-| **TWAPOracle** | Time-weighted average from AMM |
-| **ChainlinkAdapter** | Chainlink feed integration |
-| **PythAdapter** | Pyth Network integration |
+| Contract | Path | Purpose |
+|----------|------|---------|
+| **ChainlinkOracle** | `@luxfi/contracts/markets/oracles/ChainlinkOracle.sol` | Chainlink feed integration for Markets |
+| **PythOracle** | `@luxfi/contracts/markets/oracles/PythOracle.sol` | Pyth Network integration for Markets |
+| **VaultPriceFeed** | `@luxfi/contracts/perps/core/VaultPriceFeed.sol` | Multi-source aggregation for Perps |
+| **FastPriceFeed** | `@luxfi/contracts/perps/oracle/FastPriceFeed.sol` | Low-latency price updates for Perps |
+| **PriceAggregator** | `@luxfi/contracts/amm/PriceAggregator.sol` | TWAP from AMM pools |
+
+## Interface
+
+```solidity
+import "@luxfi/contracts/markets/interfaces/IOracle.sol";
+
+/// @notice Oracle interface for Markets price feeds
+interface IOracle {
+    /// @notice Returns the price of the collateral asset in terms of the loan asset
+    /// @dev Price is scaled by 1e36 (ORACLE_PRICE_SCALE)
+    /// @return The price with 36 decimals of precision
+    function price() external view returns (uint256);
+}
+```
 
 ## PriceOracle
 
@@ -155,69 +170,80 @@ require(deviation < 5, "Price manipulation detected");
 ## Chainlink Integration
 
 ```solidity
-import "@luxfi/standard/src/oracles/ChainlinkAdapter.sol";
+import "@luxfi/contracts/markets/oracles/ChainlinkOracle.sol";
 
-contract ChainlinkAdapter is IPriceSource {
-    mapping(address => address) public feeds; // asset => Chainlink feed
+// Deploy oracle for ETH/USDC market
+ChainlinkOracle oracle = new ChainlinkOracle(
+    0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, // ETH/USD Chainlink feed
+    address(0),                                   // USDC is USD-denominated
+    18,                                           // ETH decimals
+    6,                                            // USDC decimals
+    3600                                          // 1 hour max staleness
+);
 
-    function getPrice(address asset) external view returns (
-        uint256 price,
-        uint256 timestamp
-    ) {
-        AggregatorV3Interface feed = AggregatorV3Interface(feeds[asset]);
+// Get price (scaled to 1e36)
+uint256 ethPriceInUsdc = oracle.price();
+```
 
-        (
-            ,
-            int256 answer,
-            ,
-            uint256 updatedAt,
+### ChainlinkOracle Constructor
 
-        ) = feed.latestRoundData();
-
-        require(answer > 0, "Invalid price");
-
-        // Normalize to 18 decimals
-        uint8 decimals = feed.decimals();
-        price = uint256(answer) * 10**(18 - decimals);
-        timestamp = updatedAt;
-    }
-}
+```solidity
+constructor(
+    address _baseFeed,        // Chainlink feed for collateral (e.g., ETH/USD)
+    address _quoteFeed,       // Chainlink feed for loan asset (address(0) if USD)
+    uint8 _baseTokenDecimals, // Decimals of collateral token
+    uint8 _quoteTokenDecimals,// Decimals of loan token
+    uint256 _maxStaleness     // Maximum age of price data in seconds
+)
 ```
 
 ## Pyth Integration
 
 ```solidity
-import "@luxfi/standard/src/oracles/PythAdapter.sol";
+import "@luxfi/contracts/markets/oracles/PythOracle.sol";
 
-contract PythAdapter is IPriceSource {
-    IPyth public pyth;
-    mapping(address => bytes32) public priceIds;
+// Pyth price feed IDs (from pyth.network)
+bytes32 constant ETH_USD = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
+bytes32 constant BTC_USD = 0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43;
 
-    function getPrice(address asset) external view returns (
-        uint256 price,
-        uint256 timestamp
-    ) {
-        bytes32 priceId = priceIds[asset];
-        PythStructs.Price memory pythPrice = pyth.getPriceUnsafe(priceId);
+// Deploy oracle for ETH/USDC market
+PythOracle oracle = new PythOracle(
+    0x4305FB66699C3B2702D4d05CF36551390A4c69C6, // Pyth contract (mainnet)
+    ETH_USD,                                      // ETH/USD price feed ID
+    bytes32(0),                                   // USDC is USD-denominated
+    18,                                           // ETH decimals
+    6,                                            // USDC decimals
+    60                                            // 60 second max staleness
+);
 
-        // Convert Pyth price format to 18 decimals
-        int64 rawPrice = pythPrice.price;
-        int32 expo = pythPrice.expo;
+// Get price (scaled to 1e36)
+uint256 ethPriceInUsdc = oracle.price();
+```
 
-        if (expo >= 0) {
-            price = uint256(int256(rawPrice)) * 10**(18 + uint32(expo));
-        } else {
-            price = uint256(int256(rawPrice)) * 10**18 / 10**uint32(-expo);
-        }
+### PythOracle Constructor
 
-        timestamp = pythPrice.publishTime;
-    }
+```solidity
+constructor(
+    address _pyth,             // Pyth oracle contract address
+    bytes32 _baseFeedId,       // Pyth feed ID for collateral (e.g., ETH/USD)
+    bytes32 _quoteFeedId,      // Pyth feed ID for loan token (bytes32(0) if USD)
+    uint8 _baseTokenDecimals,  // Decimals of collateral token
+    uint8 _quoteTokenDecimals, // Decimals of loan token
+    uint256 _maxStaleness      // Maximum age of price data in seconds
+)
+```
 
-    function updatePrice(bytes[] calldata updateData) external payable {
-        uint fee = pyth.getUpdateFee(updateData);
-        pyth.updatePriceFeeds{value: fee}(updateData);
-    }
-}
+### Pyth Price Update
+
+Pyth requires explicit price updates. Include update data in your transaction:
+
+```solidity
+// Frontend: fetch update data from Pyth API
+// const updateData = await connection.getPriceFeedsUpdateData([ETH_USD]);
+
+// Contract: update before reading
+pyth.updatePriceFeeds{value: updateFee}(updateData);
+uint256 price = oracle.price();
 ```
 
 ## Cross-Chain Oracle
