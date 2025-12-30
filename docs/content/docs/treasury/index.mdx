@@ -1,0 +1,230 @@
+---
+title: Treasury
+description: Protocol fee collection and distribution
+---
+
+# Treasury
+
+Centralized fee collection and distribution to protocol participants.
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                            LUX TREASURY ARCHITECTURE                                    │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  FEE SOURCES                                                                            │
+│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐                     │
+│  │  DEX   │ │ Bridge │ │Lending │ │ Perps  │ │  NFT   │ │Validator│                    │
+│  │  Fees  │ │  Fees  │ │  Fees  │ │  Fees  │ │  Fees  │ │ Rewards│                     │
+│  └────┬───┘ └────┬───┘ └────┬───┘ └────┬───┘ └────┬───┘ └────┬───┘                     │
+│       │          │          │          │          │          │                          │
+│       └──────────┴──────────┴─────┬────┴──────────┴──────────┘                          │
+│                                   ▼                                                      │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │                            FeeSplitter                                           │   │
+│  │                                                                                  │   │
+│  │  • Collects all protocol fees                                                   │   │
+│  │  • 10% performance fee to Treasury multisig                                     │   │
+│  │  • 90% distributed based on gauge weights                                       │   │
+│  └──────────────────────────────────┬──────────────────────────────────────────────┘   │
+│                                     │                                                   │
+│       ┌─────────────────────────────┼─────────────────────────────────────┐            │
+│       ▼                             ▼                                     ▼            │
+│  ┌─────────────┐            ┌─────────────────┐                 ┌─────────────────┐   │
+│  │ LiquidLUX   │            │ ValidatorVault  │                 │    Treasury     │   │
+│  │ (xLUX)      │            │                 │                 │    Multisig     │   │
+│  │             │            │ P-Chain rewards │                 │                 │   │
+│  │ 90% fees    │            │ to sLUX holders │                 │ 10% perf fee    │   │
+│  └─────────────┘            └─────────────────┘                 └─────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Core Contracts
+
+| Contract | Description | Import |
+|----------|-------------|--------|
+| **FeeSplitter** | Fee collection & distribution | `@luxfi/contracts/treasury/FeeSplitter.sol` |
+| **ValidatorVault** | Validator reward bridging | `@luxfi/contracts/treasury/ValidatorVault.sol` |
+
+## Fee Types
+
+```solidity
+bytes32 public constant FEE_DEX = keccak256("DEX");
+bytes32 public constant FEE_BRIDGE = keccak256("BRIDGE");
+bytes32 public constant FEE_LENDING = keccak256("LENDING");
+bytes32 public constant FEE_PERPS = keccak256("PERPS");
+bytes32 public constant FEE_LIQUID = keccak256("LIQUID");
+bytes32 public constant FEE_NFT = keccak256("NFT");
+bytes32 public constant FEE_VALIDATOR = keccak256("VALIDATOR");
+bytes32 public constant FEE_OTHER = keccak256("OTHER");
+```
+
+## FeeSplitter
+
+Collects fees from all protocol sources and distributes to LiquidLUX:
+
+```solidity
+import "@luxfi/contracts/treasury/FeeSplitter.sol";
+
+FeeSplitter splitter = FeeSplitter(FEE_SPLITTER_ADDRESS);
+
+// Protocol contracts push fees
+splitter.receiveFee{value: feeAmount}(FEE_DEX);
+
+// Push collected fees to LiquidLUX
+splitter.pushFeesToLiquidLUX(FEE_DEX);
+
+// Check collected fees by type
+uint256 dexFees = splitter.collectedFees(FEE_DEX);
+```
+
+### Fee Distribution
+
+| Destination | Percentage | Description |
+|-------------|------------|-------------|
+| LiquidLUX (xLUX) | 90% | Distributed to xLUX holders |
+| Treasury Multisig | 10% | Protocol development fund |
+
+## ValidatorVault
+
+Bridges validator rewards from P-Chain to C-Chain:
+
+```solidity
+import "@luxfi/contracts/treasury/ValidatorVault.sol";
+
+ValidatorVault vault = ValidatorVault(VALIDATOR_VAULT_ADDRESS);
+
+// Receive rewards from P-Chain (via Warp)
+vault.receiveRewards{value: rewardAmount}();
+
+// Forward to LiquidLUX (exempt from performance fee)
+vault.forwardRewardsToLiquidLUX();
+
+// Check pending rewards
+uint256 pending = vault.pendingRewards();
+```
+
+### Validator Reward Flow
+
+```
+P-Chain
+    │
+    │ Staking Rewards
+    ▼
+┌─────────────────┐
+│ Warp Message    │
+│ (Cross-chain)   │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ ValidatorVault  │
+│ (C-Chain)       │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ LiquidLUX       │
+│ (0% perf fee)   │
+└────────┬────────┘
+         │
+         ▼
+    sLUX holders
+```
+
+## Integration
+
+### Protocol Fee Integration
+
+```solidity
+// Example: DEX collecting swap fees
+contract LuxDEX {
+    FeeSplitter public feeSplitter;
+
+    function swap(...) external {
+        // ... swap logic ...
+
+        // Collect fee
+        uint256 fee = calculateFee(amountIn);
+        feeSplitter.receiveFee{value: fee}(FEE_DEX);
+    }
+}
+```
+
+### LiquidLUX Integration
+
+```solidity
+import "@luxfi/contracts/liquid/LiquidLUX.sol";
+
+// FeeSplitter pushes fees
+feeSplitter.setLiquidLUX(address(liquidLux));
+
+// LiquidLUX receives fees
+liquidLux.receiveFees{value: amount}(amount, FEE_DEX);
+
+// xLUX holders earn proportionally
+```
+
+## Fee Accounting
+
+Track fees by source:
+
+```solidity
+// Total fees collected
+uint256 totalCollected = splitter.totalFeesCollected();
+
+// Fees by type
+uint256 dexFees = splitter.feesByType(FEE_DEX);
+uint256 bridgeFees = splitter.feesByType(FEE_BRIDGE);
+uint256 lendingFees = splitter.feesByType(FEE_LENDING);
+uint256 perpsFees = splitter.feesByType(FEE_PERPS);
+
+// Fees distributed to LiquidLUX
+uint256 distributed = splitter.totalDistributed();
+
+// Treasury allocation
+uint256 treasuryShare = splitter.treasuryCollected();
+```
+
+## Events
+
+```solidity
+event FeeReceived(bytes32 indexed feeType, uint256 amount);
+event FeeDistributed(address indexed recipient, uint256 amount);
+event TreasuryWithdrawal(address indexed to, uint256 amount);
+event LiquidLUXUpdated(address indexed newLiquidLUX);
+event ValidatorRewardsReceived(uint256 amount);
+event ValidatorRewardsForwarded(uint256 amount);
+```
+
+## Access Control
+
+| Role | Permissions |
+|------|-------------|
+| `DEFAULT_ADMIN_ROLE` | Configure fee splits, set LiquidLUX |
+| `FEE_DISTRIBUTOR_ROLE` | Push fees to LiquidLUX |
+| `VALIDATOR_SOURCE_ROLE` | Forward validator rewards |
+| `TREASURY_ROLE` | Withdraw treasury allocation |
+
+## Security Considerations
+
+1. **Reentrancy Protection**: All external calls use ReentrancyGuard
+2. **Access Control**: Role-based permissions
+3. **Pausable**: Emergency pause functionality
+4. **No Infinite Approvals**: SafeERC20 patterns
+
+## Related Documentation
+
+<Cards>
+  <Card title="Liquid Protocol" href="/docs/defi/liquid">
+    LiquidLUX (xLUX) unified yield vault
+  </Card>
+  <Card title="Staking" href="/docs/staking">
+    sLUX liquid staking
+  </Card>
+  <Card title="Governance" href="/docs/governance">
+    Gauge weight voting
+  </Card>
+</Cards>

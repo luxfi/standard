@@ -1,0 +1,202 @@
+---
+title: Staking
+description: LUX staking with sLUX liquid staking token
+---
+
+# Staking
+
+Stake LUX to earn validator rewards with liquid staking via sLUX.
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                            LUX STAKING ARCHITECTURE                                     │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  USER FLOW                                                                              │
+│  ┌─────────────────┐                 ┌─────────────────────────────────────────────┐   │
+│  │  Deposit LUX    │────────────────▶│                   sLUX                       │   │
+│  │                 │                 │  • Liquid staking token                      │   │
+│  │  Receive sLUX   │◀────────────────│  • Represents staked LUX + rewards          │   │
+│  └─────────────────┘                 │  • Transferable & composable                │   │
+│                                      └──────────────────────┬──────────────────────┘   │
+│                                                             │                          │
+│  DeFi COMPOSABILITY                                         ▼                          │
+│  ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────────────┐          │
+│  │  Use as         │     │  Provide to     │     │  Stake in               │          │
+│  │  Collateral     │     │  LP Pools       │     │  LiquidLUX (xLUX)       │          │
+│  │  (Lending)      │     │  (AMM)          │     │  (Protocol Fees)        │          │
+│  └─────────────────┘     └─────────────────┘     └─────────────────────────┘          │
+│                                                                                         │
+│  VALIDATOR REWARDS                                                                      │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │  P-Chain Validators → ValidatorVault → sLUX holders (pro-rata)                  │   │
+│  └─────────────────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Core Contracts
+
+| Contract | Description | Import |
+|----------|-------------|--------|
+| **sLUX** | Liquid staking token | `@luxfi/contracts/staking/sLUX.sol` |
+| **ValidatorVault** | Validator rewards distribution | `@luxfi/contracts/treasury/ValidatorVault.sol` |
+
+## sLUX Token
+
+sLUX is a rebasing liquid staking token that represents staked LUX plus accumulated rewards.
+
+### Key Features
+
+- **Liquid**: Trade, transfer, use in DeFi while staked
+- **Yield-bearing**: Automatically accrues validator rewards
+- **1:1 Backed**: Always redeemable for underlying LUX
+- **Composable**: Use as collateral, LP, or stake in LiquidLUX
+
+### Staking
+
+```solidity
+import "@luxfi/contracts/staking/sLUX.sol";
+
+sLUX staking = sLUX(SLUX_ADDRESS);
+
+// Stake LUX, receive sLUX
+wlux.approve(address(staking), amount);
+uint256 shares = staking.stake(amount);
+
+// Check balance (includes rewards)
+uint256 balance = staking.balanceOf(msg.sender);
+
+// Unstake sLUX, receive LUX
+uint256 luxAmount = staking.unstake(shares);
+```
+
+### Exchange Rate
+
+The sLUX exchange rate increases as rewards accrue:
+
+```solidity
+// Get current exchange rate
+uint256 rate = staking.exchangeRate();
+
+// Convert sLUX to LUX value
+uint256 luxValue = staking.sharesToLux(sLuxAmount);
+
+// Convert LUX to sLUX shares
+uint256 shares = staking.luxToShares(luxAmount);
+```
+
+## Validator Rewards Flow
+
+```
+P-Chain Validators
+        │
+        ▼
+┌─────────────────┐
+│ ValidatorVault  │
+│ (Collects fees) │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│      sLUX       │
+│ (Distributes    │
+│  to holders)    │
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    │         │
+    ▼         ▼
+ Direct    LiquidLUX
+ Holders   (xLUX)
+```
+
+## Integration with LiquidLUX
+
+sLUX can be staked in LiquidLUX for additional protocol fee yield:
+
+```solidity
+import "@luxfi/contracts/liquid/LiquidLUX.sol";
+
+LiquidLUX liquidLux = LiquidLUX(LIQUID_LUX_ADDRESS);
+
+// Stake sLUX in LiquidLUX
+sLux.approve(address(liquidLux), amount);
+uint256 xLuxShares = liquidLux.deposit(amount, msg.sender);
+
+// xLUX earns:
+// 1. Validator rewards (from sLUX)
+// 2. Protocol fees (DEX, Bridge, Lending, Perps)
+```
+
+## DeFi Use Cases
+
+### As Collateral
+
+```solidity
+// Use sLUX as collateral for loans
+lendingPool.deposit(address(sLux), amount, msg.sender);
+lendingPool.borrow(LUSD, borrowAmount, msg.sender);
+```
+
+### In LP Pools
+
+```solidity
+// Provide sLUX/LUX liquidity
+router.addLiquidity(
+    address(sLux),
+    address(wlux),
+    amountA,
+    amountB,
+    minA,
+    minB,
+    msg.sender,
+    deadline
+);
+```
+
+### As Perps Collateral
+
+```solidity
+// Use sLUX as margin for perpetual positions
+vault.setTokenConfig(address(sLux), ...);
+router.increasePosition(
+    [address(sLux)], // collateral path
+    indexToken,
+    amountIn,
+    sizeDelta,
+    isLong,
+    price
+);
+```
+
+## Events
+
+```solidity
+event Staked(address indexed user, uint256 luxAmount, uint256 shares);
+event Unstaked(address indexed user, uint256 shares, uint256 luxAmount);
+event RewardsDistributed(uint256 amount);
+event ExchangeRateUpdated(uint256 newRate);
+```
+
+## Security Considerations
+
+1. **Unbonding Period**: Unstaking may have a delay
+2. **Slashing Risk**: Validator misbehavior affects sLUX value
+3. **Exchange Rate**: Rate can only increase (no negative rebases)
+4. **Withdrawal Limits**: May have daily/weekly limits
+
+## Related Documentation
+
+<Cards>
+  <Card title="Liquid Protocol" href="/docs/defi/liquid">
+    LiquidLUX (xLUX) unified yield vault
+  </Card>
+  <Card title="Treasury" href="/docs/treasury">
+    Fee distribution system
+  </Card>
+  <Card title="Governance" href="/docs/governance">
+    Staking for voting power
+  </Card>
+</Cards>

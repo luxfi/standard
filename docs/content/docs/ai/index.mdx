@@ -1,0 +1,179 @@
+---
+title: AI Mining
+description: Proof of AI Token - decentralized GPU compute mining
+---
+
+# AI Mining
+
+Proof of AI (PoAI) token system with hardware-attested GPU compute mining. Bitcoin-aligned halving schedule with 4-year epochs.
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                            AI MINING ARCHITECTURE                                       │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  GPU COMPUTE                         MINING CONTRACTS                                   │
+│  ┌─────────────────┐                 ┌─────────────────────────────────────────────┐   │
+│  │  NVIDIA H100    │                 │                   AIMining                   │   │
+│  │  (TEE Attested) │────────────────▶│  • Work proof validation                    │   │
+│  └─────────────────┘                 │  • GPU tier multipliers                     │   │
+│  ┌─────────────────┐                 │  • Double-spend prevention                  │   │
+│  │  NVIDIA A100    │─────────────────│  • Rate limiting                            │   │
+│  │  (TDX/SGX)      │                 └──────────────────────┬──────────────────────┘   │
+│  └─────────────────┘                                        │                          │
+│  ┌─────────────────┐                                        ▼                          │
+│  │  Consumer GPU   │                 ┌─────────────────────────────────────────────┐   │
+│  │  (Soft Attest)  │                 │                   AIToken                    │   │
+│  └─────────────────┘                 │  • Bitcoin-aligned halving (4-year epochs)  │   │
+│                                      │  • 1B supply cap per chain                  │   │
+│                                      │  • 98% miner / 2% treasury split            │   │
+│                                      └─────────────────────────────────────────────┘   │
+│                                                                                         │
+│  SUPPORTED CHAINS:  C-Chain (96369) | Hanzo EVM (36963) | Zoo EVM (200200)             │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Core Contracts
+
+| Contract | Description | Import |
+|----------|-------------|--------|
+| **AIToken** | LRC20 with halving schedule | `@luxfi/contracts/ai/AIToken.sol` |
+| **AIMining** | Work proof validation & rewards | `@luxfi/contracts/ai/AIMining.sol` |
+| **ChainConfig** | Multi-chain GPU tier config | `@luxfi/contracts/ai/ChainConfig.sol` |
+| **ComputeMarket** | Compute marketplace | `@luxfi/contracts/ai/ComputeMarket.sol` |
+
+## Tokenomics
+
+### Supply Per Chain
+
+| Allocation | Amount | Percentage |
+|------------|--------|------------|
+| Mining Rewards | 900,000,000 AI | 90% |
+| LP Allocation | 100,000,000 AI | 10% |
+| **Total Per Chain** | **1,000,000,000 AI** | **100%** |
+
+### Halving Schedule (Bitcoin-Aligned)
+
+```
+Block time: 2 seconds (vs Bitcoin 10 minutes)
+Halving interval: 63,072,000 blocks = 4 years
+
+Epoch 0 (Years 0-4):   7.14 AI/block  → 450M total
+Epoch 1 (Years 4-8):   3.57 AI/block  → 225M total
+Epoch 2 (Years 8-12):  1.785 AI/block → 112.5M total
+Epoch 3 (Years 12-16): 0.8925 AI/block
+...
+Epoch 63 (~252 years): ~0 AI/block
+```
+
+### Emission Timeline
+
+| Year | Mined % | Total AI |
+|------|---------|----------|
+| 4 | 50% | 450M |
+| 8 | 75% | 675M |
+| 12 | 87.5% | 787.5M |
+| 27 | 99% | 891M |
+| 100+ | 100% | 900M |
+
+## GPU Tiers
+
+| Tier | Hardware | Multiplier | Credits/Min |
+|------|----------|------------|-------------|
+| **Sovereign** (4) | NVIDIA Blackwell | 1.5x | 1.5 AI |
+| **Confidential** (3) | H100/TDX/SEV | 1.0x | 1.0 AI |
+| **Private** (2) | SGX/A100 | 0.5x | 0.5 AI |
+| **Public** (1) | Consumer GPU | 0.25x | 0.25 AI |
+
+## Work Proof Structure
+
+```solidity
+struct WorkProof {
+    bytes32 sessionId;      // Unique compute session
+    uint64 nonce;           // PoW nonce
+    bytes32 gpuId;          // TEE-attested GPU ID
+    bytes32 computeHash;    // Hash of compute work
+    uint64 timestamp;       // Proof timestamp
+    GPUTier tier;           // Hardware tier
+    bytes signature;        // ECDSA signature
+}
+```
+
+## Mining Example
+
+```solidity
+import "@luxfi/contracts/ai/AIMining.sol";
+import "@luxfi/contracts/ai/AIToken.sol";
+
+// Submit work proof
+AIMining.WorkProof memory proof = AIMining.WorkProof({
+    sessionId: sessionId,
+    nonce: nonce,
+    gpuId: attestedGpuId,
+    computeHash: computeHash,
+    timestamp: uint64(block.timestamp),
+    tier: ChainConfig.GPUTier.Confidential,
+    signature: minerSignature
+});
+
+// Validate and receive rewards
+uint256 reward = mining.submitProof(proof);
+// 98% to miner, 2% to treasury
+```
+
+## Multi-Chain Mining
+
+AI can be mined independently on each supported chain:
+
+```solidity
+// C-Chain (96369)
+AIToken cChainAI = AIToken(C_CHAIN_AI_ADDRESS);
+
+// Hanzo EVM (36963)
+AIToken hanzoAI = AIToken(HANZO_AI_ADDRESS);
+
+// Zoo EVM (200200)
+AIToken zooAI = AIToken(ZOO_AI_ADDRESS);
+
+// Same work proof can mint on multiple chains
+// Each chain has independent 1B supply cap
+```
+
+## Double-Spend Prevention
+
+```
+work_id = BLAKE3(device_id || nonce || chain_id)
+
+• Each chain maintains independent SpentSet
+• Proof cannot be submitted twice on same chain
+• Cross-chain: same work can mint on multiple chains (by design)
+```
+
+## Security Features
+
+1. **TEE Attestation**: GPU identity verified via TEE quotes
+2. **Rate Limiting**: Max 10 proofs per block per miner
+3. **Proof Expiry**: 1-hour validity window
+4. **Min Interval**: 30 seconds between proofs
+5. **Signature Verification**: ECDSA signature required
+
+## Events
+
+```solidity
+event ProofSubmitted(address indexed miner, bytes32 proofHash, uint256 reward);
+event MinerRegistered(address indexed miner, bytes32 gpuId);
+event TierUpdated(bytes32 indexed gpuId, GPUTier oldTier, GPUTier newTier);
+```
+
+## Related Documentation
+
+<Cards>
+  <Card title="Tokens" href="/docs/tokens">
+    LRC20 token standard
+  </Card>
+  <Card title="FHE" href="/docs/fhe">
+    Confidential computing
+  </Card>
+</Cards>
