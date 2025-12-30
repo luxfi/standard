@@ -1,11 +1,12 @@
 # AI Assistant Knowledge Base
 
-**Last Updated**: 2025-12-28
+**Last Updated**: 2025-12-30
 **Project**: Lux Standard (Solidity Contracts & Precompiles)
 **Organization**: Lux Industries
 **Solidity Version**: 0.8.31
 **EVM Version**: Cancun (for FHE transient storage)
 **Test Coverage**: 709 tests passing (100%)
+**npm Package**: @luxfi/contracts v1.2.0
 
 ## Project Overview
 
@@ -34,6 +35,97 @@ This repository contains the standard Solidity contracts and EVM precompiles for
 | Other | 111 | ✅ |
 
 **CI Status**: ✅ Passing - https://github.com/luxfi/standard/actions
+
+---
+
+## v1.2.0 Release - Liquid Protocol Rebrand (2025-12-30)
+
+### Summary
+
+Released v1.2.0 with complete Synth → Liquid Protocol rebrand:
+
+**Key Changes**:
+- Removed Alchemix-style synth/transmuter contracts
+- Moved L* tokens from `contracts/bridge/lux/` to `contracts/liquid/tokens/`
+- Updated all documentation to reflect Liquid Protocol
+- LiquidLUX (xLUX) is now the unified yield vault
+
+### Token Structure
+
+| Path | Purpose | Tokens |
+|------|---------|--------|
+| `contracts/liquid/LiquidLUX.sol` | Master yield vault | xLUX |
+| `contracts/liquid/tokens/*.sol` | Bridge tokens | LETH, LBTC, LUSD, 29+ tokens |
+| `contracts/bridge/LRC20B.sol` | Base contract | LRC20B |
+
+### Documentation Updated
+
+| File | Status |
+|------|--------|
+| `README.md` | ✅ Liquid Protocol section |
+| `docs/content/docs/defi/liquid.mdx` | ✅ NEW - comprehensive |
+| `docs/content/docs/defi/synths.mdx` | ❌ DELETED |
+| `docs/content/docs/governance/index.mdx` | ✅ Comprehensive with GaugeController |
+| `docs/content/docs/safe/index.mdx` | ✅ Already comprehensive |
+| `docs/content/docs/examples/index.mdx` | ✅ LiquidLUX examples |
+| `docs/content/docs/api/index.mdx` | ✅ Updated imports |
+| `docs/content/docs/fhe/index.mdx` | ✅ NEW - FHE/confidential computing |
+| `docs/content/docs/ai/index.mdx` | ✅ NEW - AI mining/GPU attestation |
+| `docs/content/docs/identity/index.mdx` | ✅ NEW - W3C DID system |
+| `docs/content/docs/staking/index.mdx` | ✅ NEW - sLUX liquid staking |
+| `docs/content/docs/treasury/index.mdx` | ✅ NEW - FeeSplitter/ValidatorVault |
+
+### Documentation Coverage (2025-12-29)
+
+| Area | Directory | Docs | Status |
+|------|-----------|------|--------|
+| Core Tokens | `contracts/tokens/` | `docs/tokens/` | ✅ |
+| AMM (V2/V3) | `contracts/amm/` | `docs/amm/` | ✅ |
+| DeFi Stack | `contracts/liquid/`, `contracts/perps/`, etc. | `docs/defi/` | ✅ |
+| Accounts | `contracts/account/` | `docs/accounts/` | ✅ |
+| Governance | `contracts/governance/` | `docs/governance/` | ✅ |
+| Bridge | `contracts/bridge/` | `docs/bridge/` | ✅ |
+| Safe/Multisig | `contracts/safe/` | `docs/safe/` | ✅ |
+| Lamport | `contracts/crypto/` | `docs/lamport/` | ✅ |
+| **FHE** | `contracts/fhe/` | `docs/fhe/` | ✅ NEW |
+| **AI Mining** | `contracts/ai/` | `docs/ai/` | ✅ NEW |
+| **Identity** | `contracts/identity/` | `docs/identity/` | ✅ NEW |
+| **Staking** | `contracts/staking/` | `docs/staking/` | ✅ NEW |
+| **Treasury** | `contracts/treasury/` | `docs/treasury/` | ✅ NEW |
+
+### npm Package
+
+```bash
+npm install @luxfi/contracts@1.2.0
+```
+
+---
+
+## FHE Contracts Integration (2025-12-29)
+
+### Status: ✅ COMPLETE
+
+FHE contracts from `~/work/luxfhe/` are fully merged into `contracts/fhe/`:
+
+**29 Solidity Files (16,325 lines)**:
+- Core: `FHE.sol`, `TFHE.sol`, `IFHE.sol`
+- Gateway: `Gateway.sol`, `GatewayCaller.sol`
+- Config: `FHEVMConfig.sol`, `GatewayConfig.sol`
+- Access: `EIP712.sol`, `Permissioned.sol`, `PermissionedV2.sol`
+- Tokens: `ConfidentialERC20.sol`, `ConfidentialERC20Wrapped.sol`, `ConfidentialWETH.sol`
+- Governance: `ConfidentialGovernorAlpha.sol`, `ConfidentialERC20Votes.sol`, `CompoundTimelock.sol`
+- Finance: `ConfidentialVestingWallet.sol`, `ConfidentialVestingWalletCliff.sol`
+- Utils: `EncryptedErrors.sol`, `TFHEErrors.sol`, debug tools
+
+**IFHE.sol consolidates** both `FheOS.sol` and `ICofhe.sol` from luxfhe:
+- Precompile addresses (0x0200...0080-0083)
+- IFheOps interface
+- ITaskManager interface
+- FunctionId enum
+- All encrypted input structs
+- Utils library with type constants
+
+**EVM Requirement**: Cancun (for transient storage in FHE operations)
 
 ---
 
