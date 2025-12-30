@@ -1,13 +1,275 @@
 ---
 title: Governance
-description: DAO, voting, and on-chain governance contracts
+description: Complete on-chain governance system for Lux Network
 ---
 
 # Governance
 
-On-chain governance infrastructure for the Lux Network ecosystem.
+Comprehensive on-chain governance infrastructure for Lux Network. Token holders can create proposals, vote, and execute on-chain governance decisions.
 
-## Contracts
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                           LUX GOVERNANCE ARCHITECTURE                                    │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  VOTING POWER                                                                            │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  vLUX (Voting Power) = xLUX (LiquidLUX shares) + DLUX (Governance Token)        │    │
+│  │                                                                                  │    │
+│  │  • xLUX: Yield-bearing liquid staked LUX (earns protocol fees)                  │    │
+│  │  • DLUX: OHM-style governance token (vote-only, no yield)                       │    │
+│  │  • vLUX: Non-transferable aggregated voting power                               │    │
+│  └─────────────────────────────────────────────────────────────────────────────────┘    │
+│                                        │                                                 │
+│  ┌─────────────────────────────────────┼─────────────────────────────────────────────┐  │
+│  │                                     ▼                                              │  │
+│  │  ┌─────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐        │  │
+│  │  │ GaugeController │    │      Governor       │    │     Timelock        │        │  │
+│  │  │                 │    │                     │    │                     │        │  │
+│  │  │ Fee allocation  │    │ Proposal lifecycle  │    │ Execution delay     │        │  │
+│  │  │ voting          │    │ management          │    │ for security        │        │  │
+│  │  └────────┬────────┘    └──────────┬──────────┘    └──────────┬──────────┘        │  │
+│  │           │                        │                          │                    │  │
+│  │           ▼                        ▼                          ▼                    │  │
+│  │  ┌─────────────────────────────────────────────────────────────────────────────┐  │  │
+│  │  │                         Gnosis Safe (Treasury)                               │  │  │
+│  │  │              Multi-sig + threshold signatures + modules                      │  │  │
+│  │  └─────────────────────────────────────────────────────────────────────────────┘  │  │
+│  └────────────────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Core Contracts
+
+| Contract | Description | Import |
+|----------|-------------|--------|
+| **Governor** | Core governance with Safe integration | `@luxfi/contracts/governance/Governor.sol` |
+| **GaugeController** | vLUX voting for gauge weights | `@luxfi/contracts/governance/GaugeController.sol` |
+| **VotingLUX** | Aggregates xLUX + DLUX voting power | `@luxfi/contracts/governance/VotingLUX.sol` |
+| **Strategy** | Voting weight calculation | `@luxfi/contracts/governance/Strategy.sol` |
+| **Timelock** | TimelockController for execution delay | `@luxfi/contracts/governance/Timelock.sol` |
+| **vLUX** | Vote-escrowed LUX (locking) | `@luxfi/contracts/governance/vLUX.sol` |
+| **DLUX** | Governance-only token | `@luxfi/contracts/governance/DLUX.sol` |
+| **VotesToken** | ERC20 with ERC20Votes extension | `@luxfi/contracts/governance/VotesToken.sol` |
+
+## Voting Power (vLUX)
+
+Voting power is calculated as:
+
+```
+vLUX = xLUX + DLUX
+```
+
+- **xLUX**: LiquidLUX vault shares (yield-bearing)
+- **DLUX**: Governance token (vote-only)
+- **vLUX**: Non-transferable voting power aggregation
+
+```solidity
+import "@luxfi/contracts/governance/VotingLUX.sol";
+
+VotingLUX votingLux = VotingLUX(VOTING_LUX_ADDRESS);
+
+// Get total voting power
+uint256 votingPower = votingLux.balanceOf(account);
+
+// Get breakdown
+(uint256 xLuxBalance, uint256 dLuxBalance, uint256 total) =
+    votingLux.getVotingPowerBreakdown(account);
+
+// Get past voting power (for proposals)
+uint256 pastVotes = votingLux.getPastVotes(account, blockNumber);
+```
+
+## Governor
+
+The Governor contract manages the full proposal lifecycle with Gnosis Safe integration.
+
+### Proposal States
+
+| State | Description |
+|-------|-------------|
+| `ACTIVE` | Voting in progress |
+| `FAILED` | Did not reach quorum or majority |
+| `TIMELOCKED` | Passed, waiting for timelock |
+| `EXECUTABLE` | Ready for execution |
+| `EXECUTED` | All transactions executed |
+| `EXPIRED` | Execution window passed |
+
+### Creating Proposals
+
+```solidity
+import "@luxfi/contracts/governance/Governor.sol";
+import "@luxfi/contracts/governance/base/Transaction.sol";
+
+Governor governor = Governor(GOVERNOR_ADDRESS);
+
+// Define transactions
+Transaction[] memory txs = new Transaction[](1);
+txs[0] = Transaction({
+    to: targetContract,
+    value: 0,
+    data: abi.encodeCall(ITarget.updateParameter, (newValue)),
+    operation: Enum.Operation.Call
+});
+
+// Submit proposal
+governor.submitProposal(
+    txs,
+    "LIP-001: Update protocol parameter",
+    proposerAdapter,
+    proposerAdapterData
+);
+```
+
+### Executing Proposals
+
+```solidity
+// Check proposal state
+Governor.ProposalState state = governor.proposalState(proposalId);
+require(state == Governor.ProposalState.EXECUTABLE, "Not executable");
+
+// Execute
+governor.executeProposal(proposalId, transactions);
+```
+
+## GaugeController
+
+The GaugeController allows vLUX holders to vote on fee distribution weights.
+
+### Gauge Types
+
+| Gauge | Purpose |
+|-------|---------|
+| **BurnGauge** | LUX burning (deflationary) |
+| **ValidatorGauge** | Validator/delegator rewards |
+| **DAOGauge** | DAO treasury |
+| **POLGauge** | Protocol owned liquidity |
+| **LiquidGauge** | LiquidLUX vault rewards |
+
+### Voting on Gauges
+
+```solidity
+import "@luxfi/contracts/governance/GaugeController.sol";
+
+GaugeController gaugeController = GaugeController(GAUGE_CONTROLLER_ADDRESS);
+
+// Vote for a single gauge (50% of your voting power)
+gaugeController.vote(gaugeId, 5000);  // 5000 BPS = 50%
+
+// Vote for multiple gauges at once
+uint256[] memory gaugeIds = new uint256[](3);
+uint256[] memory weights = new uint256[](3);
+gaugeIds[0] = 1; weights[0] = 5000;  // 50% to gauge 1
+gaugeIds[1] = 2; weights[1] = 3000;  // 30% to gauge 2
+gaugeIds[2] = 3; weights[2] = 2000;  // 20% to gauge 3
+
+gaugeController.voteMultiple(gaugeIds, weights);
+
+// Get current gauge weights
+uint256 burnWeight = gaugeController.getGaugeWeightBPS(burnGaugeId);
+```
+
+### Epoch Updates
+
+Gauge weights update weekly:
+
+```solidity
+// Anyone can call to apply pending weight changes (after 1 week)
+gaugeController.updateWeights();
+```
+
+## Timelock
+
+All governance actions go through a timelock for security:
+
+```solidity
+import "@luxfi/contracts/governance/Timelock.sol";
+
+Timelock timelock = Timelock(TIMELOCK_ADDRESS);
+
+// Schedule transaction
+bytes32 id = timelock.schedule(
+    target,
+    value,
+    data,
+    predecessor,
+    salt,
+    delay
+);
+
+// Execute after delay
+timelock.execute(target, value, data, predecessor, salt);
+```
+
+## Deployment
+
+### Full Governance Stack
+
+```solidity
+// 1. Deploy VotesToken (for voting power)
+VotesToken votesToken = new VotesToken("Lux Governance", "DLUX");
+
+// 2. Deploy Timelock
+address[] memory proposers = new address[](0);
+address[] memory executors = new address[](1);
+executors[0] = address(0);  // Anyone can execute
+Timelock timelock = new Timelock(2 days, proposers, executors, admin);
+
+// 3. Deploy Strategy
+Strategy strategy = new Strategy();
+
+// 4. Deploy Governor
+Governor implementation = new Governor();
+ERC1967Proxy proxy = new ERC1967Proxy(
+    address(implementation),
+    abi.encodeCall(Governor.initialize, (
+        admin,
+        safeAddress,      // vault
+        safeAddress,      // target
+        address(strategy),
+        2 days,           // timelockPeriod
+        7 days            // executionPeriod
+    ))
+);
+Governor governor = Governor(address(proxy));
+
+// 5. Deploy GaugeController
+GaugeController gaugeController = new GaugeController(address(vLux));
+
+// 6. Add gauges
+gaugeController.addGauge(burnAddress, "Burn", 0);
+gaugeController.addGauge(validatorVault, "Validators", 0);
+gaugeController.addGauge(daoTreasury, "DAO", 0);
+```
+
+## Integration with LiquidLUX
+
+xLUX (LiquidLUX shares) provide voting power:
+
+```solidity
+import "@luxfi/contracts/liquid/LiquidLUX.sol";
+import "@luxfi/contracts/governance/VotingLUX.sol";
+
+// Deposit to LiquidLUX to get xLUX
+wlux.approve(address(liquidLux), amount);
+uint256 shares = liquidLux.deposit(amount, msg.sender);
+
+// xLUX automatically contributes to vLUX voting power
+uint256 votingPower = votingLux.balanceOf(msg.sender);
+```
+
+## Security Considerations
+
+1. **Timelock Protection**: All governance actions have minimum delay
+2. **Quorum Requirements**: Proposals need minimum participation
+3. **Vote Delay**: Prevents flash-loan voting attacks
+4. **ERC20Votes**: Checkpointed voting power
+5. **Multi-sig Integration**: Governor executes through Gnosis Safe
+6. **Epoch-based Gauges**: Weight changes apply weekly
+
+## Related Documentation
 
 <Cards>
   <Card title="DAO" href="/docs/governance/dao">
@@ -16,30 +278,10 @@ On-chain governance infrastructure for the Lux Network ecosystem.
   <Card title="Voting" href="/docs/governance/voting">
     Token-weighted voting system
   </Card>
+  <Card title="Safe" href="/docs/safe">
+    Multi-signature wallets
+  </Card>
+  <Card title="Liquid Protocol" href="/docs/defi/liquid">
+    xLUX and fee distribution
+  </Card>
 </Cards>
-
-## Overview
-
-The governance system enables token holders to:
-- Create and vote on proposals
-- Execute on-chain governance decisions
-- Manage protocol parameters
-
-## Quick Start
-
-```solidity
-import "@luxdao/DAO.sol";
-import "@luxdao/Vote.sol";
-
-// Create voting contract
-LUXVoting voting = new LUXVoting(IERC20(luxToken));
-
-// Create proposal
-voting.addProposals("LIP-001: Increase staking rewards", startTime, endTime);
-
-// Vote
-voting.voteProposal("LIP-001: Increase staking rewards", true);
-
-// Check results
-Proposal memory prop = voting.proposals("LIP-001: Increase staking rewards");
-```
