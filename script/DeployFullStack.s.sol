@@ -3,269 +3,474 @@ pragma solidity ^0.8.31;
 
 import {Script, console} from "forge-std/Script.sol";
 
-// Core tokens
+// Core native token
 import {WLUX} from "../contracts/tokens/WLUX.sol";
-import {LuxUSD} from "../contracts/bridge/lux/LUSD.sol";
-import {LuxETH} from "../contracts/bridge/lux/LETH.sol";
-import {LuxBTC} from "../contracts/bridge/lux/LBTC.sol";
 
-// Synth tokens
-import {xUSD} from "../contracts/synths/xUSD.sol";
-import {xETH} from "../contracts/synths/xETH.sol";
-import {xBTC} from "../contracts/synths/xBTC.sol";
-import {xLUX} from "../contracts/synths/xLUX.sol";
-import {xAI} from "../contracts/synths/xAI.sol";
-import {xSOL} from "../contracts/synths/xSOL.sol";
-import {xTON} from "../contracts/synths/xTON.sol";
-import {xADA} from "../contracts/synths/xADA.sol";
-import {xAVAX} from "../contracts/synths/xAVAX.sol";
-import {xBNB} from "../contracts/synths/xBNB.sol";
-import {xPOL} from "../contracts/synths/xPOL.sol";
-import {xZOO} from "../contracts/synths/xZOO.sol";
+// Bridged Collateral Tokens (1:1 from source chains, minted by Teleporter)
+import {BridgedETH} from "../contracts/bridge/collateral/ETH.sol";
+import {BridgedBTC} from "../contracts/bridge/collateral/BTC.sol";
+import {BridgedUSDC} from "../contracts/bridge/collateral/USDC.sol";
+import {BridgedUSDT} from "../contracts/bridge/collateral/USDT.sol";
+import {BridgedDAI} from "../contracts/bridge/collateral/DAI.sol";
+
+// Liquid Protocol
+import {LiquidLUX} from "../contracts/liquid/LiquidLUX.sol";
 
 // Staking
-import {sLUX} from "../contracts/staking/sLUX.sol";
+import {sLUX as StakedLUX} from "../contracts/staking/sLUX.sol";
+
+// AI Token (GPU compute mining)
+import {AINative} from "../contracts/tokens/AI.sol";
 
 // AMM
-import {LuxV2Factory} from "../contracts/amm/LuxV2Factory.sol";
-import {LuxV2Router} from "../contracts/amm/LuxV2Router.sol";
-import {LuxV2Pair} from "../contracts/amm/LuxV2Pair.sol";
+import {AMMV2Factory} from "../contracts/amm/AMMV2Factory.sol";
+import {AMMV2Router} from "../contracts/amm/AMMV2Router.sol";
+import {AMMV2Pair} from "../contracts/amm/AMMV2Pair.sol";
 
-// Synths Protocol
-import {AlchemistV2} from "../contracts/synths/AlchemistV2.sol";
-import {TransmuterV2} from "../contracts/synths/TransmuterV2.sol";
+// Teleport (cross-chain vaults)
+import {LiquidVault} from "../contracts/liquid/teleport/LiquidVault.sol";
+
+// Identity/DID
+import {DIDRegistry} from "../contracts/identity/DIDRegistry.sol";
+
+// Governance
+import {VotesToken} from "../contracts/governance/VotesToken.sol";
+import {Timelock} from "../contracts/governance/Timelock.sol";
+import {Governor} from "../contracts/governance/Governor.sol";
+import {vLUX} from "../contracts/governance/vLUX.sol";
+import {GaugeController} from "../contracts/governance/GaugeController.sol";
+
+// Treasury
+import {FeeSplitter} from "../contracts/treasury/FeeSplitter.sol";
+import {ValidatorVault} from "../contracts/treasury/ValidatorVault.sol";
+
+// Safe (Gnosis Safe for Treasury Management)
+import {Safe} from "@safe-global/safe-smart-account/Safe.sol";
+import {SafeProxyFactory} from "@safe-global/safe-smart-account/proxies/SafeProxyFactory.sol";
+import {SafeProxy} from "@safe-global/safe-smart-account/proxies/SafeProxy.sol";
+
+// LSSVM (NFT AMM)
+import {LSSVMPairFactory} from "../contracts/lssvm/LSSVMPairFactory.sol";
+import {LinearCurve} from "../contracts/lssvm/LinearCurve.sol";
+import {ExponentialCurve} from "../contracts/lssvm/ExponentialCurve.sol";
+import {LSSVMRouter} from "../contracts/lssvm/LSSVMRouter.sol";
+
+// Markets (Lending)
+import {Markets} from "../contracts/markets/Markets.sol";
+
+// Perps
+import {Perp} from "../contracts/perps/Perp.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// IVotes and TimelockController not needed - Governor skipped due to Strategy complexity
 
 /**
  * @title DeployFullStack
  * @notice Deploys complete Lux DeFi stack for testing
- * 
- * Includes:
- * - Core tokens (WLUX, LUSD, LETH, LBTC)
- * - All 12 synth tokens
- * - LUX staking (sLUX)
- * - AMM (Factory, Router, Pairs)
- * - Synths protocol (AlchemistV2, TransmuterV2)
- * 
- * Usage:
- *   anvil &
- *   forge script script/DeployFullStack.s.sol --rpc-url http://localhost:8545 --broadcast
+ *
+ * TOKEN MODEL:
+ *
+ * BRIDGED TOKENS (L* prefix on Lux, Z* on Zoo):
+ * - LETH, LBTC, LUSD, etc. - minted by bridge contracts
+ * - See contracts/bridge/lux/ for all bridge tokens
+ *
+ * LIQUID PROTOCOL:
+ * - LiquidLUX (xLUX): Master yield vault - receives ALL protocol fees
+ * - vLUX: Voting power = xLUX + DLUX
+ *
+ * LP POOLS:
+ * - WLUX/xLUX, WLUX/LUSD, WLUX/AI
+ *
+ * FULL STACK DEPLOYMENT:
+ * ┌──────────────────────────────────────────────────────────────────┐
+ * │  Phase 1: Bridged Tokens      - ETH, BTC, USDC collateral       │
+ * │  Phase 2: LiquidLUX           - Master yield vault (xLUX)       │
+ * │  Phase 3: Native & Staking    - WLUX, StakedLUX, AI             │
+ * │  Phase 4: AMM                 - Factory, Router                  │
+ * │  Phase 5: LP Pools            - Core trading pairs              │
+ * │  Phase 6: Teleport Vaults     - Cross-chain yield               │
+ * │  Phase 7: Identity/DID        - DIDRegistry                      │
+ * │  Phase 8: Governance          - VotesToken, Timelock, vLUX      │
+ * │  Phase 9: Treasury            - FeeSplitter, ValidatorVault     │
+ * │  Phase 10: LSSVM              - NFT AMM                          │
+ * │  Phase 11: Markets            - Morpho-style lending             │
+ * │  Phase 12: Perps              - Perpetual futures                │
+ * └──────────────────────────────────────────────────────────────────┘
  */
 contract DeployFullStack is Script {
-    // Anvil default accounts
-    address constant DEPLOYER = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
-    uint256 constant DEPLOYER_KEY = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+    // Deployer
+    address public deployer;
+    uint256 public deployerKey;
 
-    // Core tokens
+    // ========== Phase 1: Bridged Collateral ==========
+    BridgedETH public eth;
+    BridgedBTC public btc;
+    BridgedUSDC public usdc;
+    BridgedUSDT public usdt;
+    BridgedDAI public dai;
+
+    // ========== Phase 2: LiquidLUX ==========
+    LiquidLUX public liquidLux;
+
+    // ========== Phase 3: Native & Staking ==========
     WLUX public wlux;
-    LuxUSD public lusd;
-    LuxETH public leth;
-    LuxBTC public lbtc;
+    StakedLUX public stakedLux;
+    AINative public ai;
 
-    // Staking
-    sLUX public slux;
+    // ========== Phase 4: AMM ==========
+    AMMV2Factory public factory;
+    AMMV2Router public router;
 
-    // Synths
-    xUSD public xUsd;
-    xETH public xEth;
-    xBTC public xBtc;
-    xLUX public xLux;
-    xAI public xAi;
-    xSOL public xSol;
-    xTON public xTon;
-    xADA public xAda;
-    xAVAX public xAvax;
-    xBNB public xBnb;
-    xPOL public xPol;
-    xZOO public xZoo;
+    // ========== Phase 6: Teleport Vaults ==========
+    LiquidVault public liquidVault;
 
-    // AMM
-    LuxV2Factory public factory;
-    LuxV2Router public router;
+    // ========== Phase 7: Identity/DID ==========
+    DIDRegistry public didRegistry;
 
-    // Synths Protocol
-    AlchemistV2 public alchemistImpl;
-    TransmuterV2 public transmuterImpl;
+    // ========== Phase 8: Governance ==========
+    VotesToken public govToken;
+    Timelock public timelock;
+    // Governor skipped - requires Strategy with two-phase init
+    vLUX public voteLux;
+    GaugeController public gaugeController;
 
-    // Initial liquidity amounts (Anvil has 10k ETH per account)
+    // ========== Phase 9: Treasury ==========
+    FeeSplitter public feeSplitter;
+    ValidatorVault public validatorVault;
+    Safe public safeImpl;
+    SafeProxyFactory public safeFactory;
+    address public daoTreasury;      // Safe for DAO funds
+    address public protocolVault;    // Safe for protocol fees (→ sLUX)
+    address public aiTreasury;       // Safe for AI mining rewards
+    address public zooTreasury;      // Safe for ZOO ecosystem
+
+    // ========== Phase 10: LSSVM ==========
+    LinearCurve public linearCurve;
+    ExponentialCurve public exponentialCurve;
+    LSSVMPairFactory public lssvmFactory;
+    LSSVMRouter public lssvmRouter;
+
+    // ========== Phase 11: Markets ==========
+    Markets public markets;
+
+    // ========== Phase 12: Perps ==========
+    Perp public perp;
+
+    // Initial amounts
     uint256 constant INITIAL_LUX = 1_000 ether;
-    uint256 constant INITIAL_LUSD = 100_000 ether;
-    uint256 constant INITIAL_LP = 1_000 ether;
+    uint256 constant INITIAL_ETH = 100 ether;
+    uint256 constant INITIAL_BTC = 10e8; // 10 BTC (8 decimals)
+    uint256 constant INITIAL_STABLES = 100_000e6; // 100k (6 decimals for USDC/USDT)
+    uint256 constant INITIAL_DAI = 100_000 ether; // 18 decimals
+    uint256 constant GOV_TOKEN_SUPPLY = 100_000_000 ether;
+    uint256 constant AI_INITIAL_LIQUIDITY = 100_000_000 ether; // 10% of 1B for LP
 
     function run() external {
         console.log("=== Deploying Lux Full Stack ===");
-        console.log("Deployer:", DEPLOYER);
+        console.log("TOKEN MODEL: Bridged Collateral + Debt Tokens");
         console.log("");
 
-        vm.startBroadcast(DEPLOYER_KEY);
+        // Get deployer from environment
+        string memory mnemonic = vm.envString("LUX_MNEMONIC");
+        require(bytes(mnemonic).length > 0, "LUX_MNEMONIC required");
 
-        // ========== Phase 1: Core Tokens ==========
-        console.log("--- Phase 1: Core Tokens ---");
-        
-        wlux = new WLUX();
-        console.log("WLUX:", address(wlux));
-
-        lusd = new LuxUSD();
-        console.log("LUSD:", address(lusd));
-
-        leth = new LuxETH();
-        console.log("LETH:", address(leth));
-
-        lbtc = new LuxBTC();
-        console.log("LBTC:", address(lbtc));
-
-        // Mint initial supply to deployer
-        lusd.mint(DEPLOYER, INITIAL_LUSD);
-        leth.mint(DEPLOYER, INITIAL_LP);
-        lbtc.mint(DEPLOYER, INITIAL_LP / 100); // BTC has higher value
-
-        // Wrap some ETH to WLUX
-        wlux.deposit{value: INITIAL_LUX}();
-        console.log("Minted initial tokens to deployer");
+        deployerKey = vm.deriveKey(mnemonic, 0);
+        deployer = vm.addr(deployerKey);
+        console.log("Deployer:", deployer);
         console.log("");
 
-        // ========== Phase 2: Staking ==========
-        console.log("--- Phase 2: LUX Staking ---");
-        
-        slux = new sLUX(address(wlux));
-        console.log("sLUX:", address(slux));
+        vm.startBroadcast(deployerKey);
 
-        // Stake some LUX (only 100 so we have 900 left for LPs)
-        uint256 stakeAmount = 100 ether;
-        wlux.approve(address(slux), stakeAmount);
-        slux.stake(stakeAmount);
-        console.log("Staked 100 LUX -> sLUX");
-        console.log("");
-
-        // ========== Phase 3: Synth Tokens ==========
-        console.log("--- Phase 3: Synth Tokens (12) ---");
-        
-        xUsd = new xUSD();
-        xEth = new xETH();
-        xBtc = new xBTC();
-        xLux = new xLUX();
-        xAi = new xAI();
-        xSol = new xSOL();
-        xTon = new xTON();
-        xAda = new xADA();
-        xAvax = new xAVAX();
-        xBnb = new xBNB();
-        xPol = new xPOL();
-        xZoo = new xZOO();
-
-        console.log("xUSD:", address(xUsd));
-        console.log("xETH:", address(xEth));
-        console.log("xBTC:", address(xBtc));
-        console.log("xLUX:", address(xLux));
-        console.log("xAI:", address(xAi));
-        console.log("xSOL:", address(xSol));
-        console.log("xTON:", address(xTon));
-        console.log("xADA:", address(xAda));
-        console.log("xAVAX:", address(xAvax));
-        console.log("xBNB:", address(xBnb));
-        console.log("xPOL:", address(xPol));
-        console.log("xZOO:", address(xZoo));
-        console.log("");
-
-        // ========== Phase 4: AMM ==========
-        console.log("--- Phase 4: AMM ---");
-
-        factory = new LuxV2Factory(DEPLOYER);
-        console.log("LuxV2Factory:", address(factory));
-
-        router = new LuxV2Router(address(factory), address(wlux));
-        console.log("LuxV2Router:", address(router));
-        console.log("");
-
-        // ========== Phase 5: Create LP Pools ==========
-        console.log("--- Phase 5: LP Pools ---");
-
-        // Mint synths for LP creation (temporary - in production done via Alchemist)
-        xUsd.setWhitelist(DEPLOYER, true);
-        xEth.setWhitelist(DEPLOYER, true);
-        xBtc.setWhitelist(DEPLOYER, true);
-        xLux.setWhitelist(DEPLOYER, true);
-
-        xUsd.mint(DEPLOYER, INITIAL_LP);
-        xEth.mint(DEPLOYER, INITIAL_LP);
-        xBtc.mint(DEPLOYER, INITIAL_LP / 100);
-        xLux.mint(DEPLOYER, INITIAL_LP);
-
-        // Create WLUX/xLUX pool
-        _createPool(address(wlux), address(xLux), INITIAL_LP / 10, INITIAL_LP / 10);
-        console.log("Created WLUX/xLUX pool");
-
-        // Create LUSD/xUSD pool
-        _createPool(address(lusd), address(xUsd), INITIAL_LP / 10, INITIAL_LP / 10);
-        console.log("Created LUSD/xUSD pool");
-
-        // Create LETH/xETH pool
-        _createPool(address(leth), address(xEth), INITIAL_LP / 100, INITIAL_LP / 100);
-        console.log("Created LETH/xETH pool");
-
-        // Create LBTC/xBTC pool
-        _createPool(address(lbtc), address(xBtc), INITIAL_LP / 1000, INITIAL_LP / 1000);
-        console.log("Created LBTC/xBTC pool");
-
-        // Create WLUX/LUSD trading pool
-        _createPool(address(wlux), address(lusd), INITIAL_LP / 10, INITIAL_LP / 10);
-        console.log("Created WLUX/LUSD pool");
-
-        console.log("");
-
-        // ========== Phase 6: Synths Protocol ==========
-        console.log("--- Phase 6: Synths Protocol ---");
-
-        alchemistImpl = new AlchemistV2();
-        console.log("AlchemistV2 impl:", address(alchemistImpl));
-
-        transmuterImpl = new TransmuterV2();
-        console.log("TransmuterV2 impl:", address(transmuterImpl));
+        _deployPhase1BridgedCollateral();
+        _deployPhase2LiquidLUX();
+        _deployPhase3NativeAndStaking();
+        _deployPhase4AMM();
+        _deployPhase5LPPools();
+        _deployPhase6TeleportVaults();
+        _deployPhase7Identity();
+        _deployPhase8Governance();
+        _deployPhase9Treasury();
+        _deployPhase10LSSVM();
+        _deployPhase11Markets();
+        _deployPhase12Perps();
 
         vm.stopBroadcast();
 
-        // ========== Summary ==========
+        _printSummary();
+    }
+
+    function _deployPhase1BridgedCollateral() internal {
+        console.log("--- Phase 1: Bridged Collateral (1:1 from source) ---");
+
+        eth = new BridgedETH();
+        console.log("ETH (bridged):", address(eth));
+
+        btc = new BridgedBTC();
+        console.log("BTC (bridged):", address(btc));
+
+        usdc = new BridgedUSDC();
+        console.log("USDC (bridged):", address(usdc));
+
+        usdt = new BridgedUSDT();
+        console.log("USDT (bridged):", address(usdt));
+
+        dai = new BridgedDAI();
+        console.log("DAI (bridged):", address(dai));
+
+        // Mint initial bridged collateral (simulating Teleporter)
+        eth.mint(deployer, INITIAL_ETH);
+        btc.mint(deployer, INITIAL_BTC);
+        usdc.mint(deployer, INITIAL_STABLES);
+        usdt.mint(deployer, INITIAL_STABLES);
+        dai.mint(deployer, INITIAL_DAI);
+        console.log("Minted initial bridged collateral");
         console.log("");
-        console.log("========================================");
-        console.log("       DEPLOYMENT COMPLETE");
-        console.log("========================================");
+    }
+
+    function _deployPhase2LiquidLUX() internal {
+        console.log("--- Phase 2: LiquidLUX (Master Yield Vault) ---");
+
+        // LiquidLUX will be deployed after WLUX in phase 3
+        // Placeholder - actual deployment happens in phase 3 after WLUX
+        console.log("LiquidLUX deployment deferred to phase 3 (needs WLUX)");
         console.log("");
-        console.log("Core Tokens:");
-        console.log("  WLUX:", address(wlux));
-        console.log("  LUSD:", address(lusd));
-        console.log("  LETH:", address(leth));
-        console.log("  LBTC:", address(lbtc));
+    }
+
+    function _deployPhase3NativeAndStaking() internal {
+        console.log("--- Phase 3: Native Token & Staking ---");
+
+        wlux = new WLUX();
+        console.log("WLUX:", address(wlux));
+
+        // Wrap LUX
+        wlux.deposit{value: INITIAL_LUX}();
+        console.log("Wrapped", INITIAL_LUX / 1e18, "LUX");
+
+        stakedLux = new StakedLUX(address(wlux));
+        console.log("StakedLUX:", address(stakedLux));
+
+        // Stake some LUX
+        uint256 stakeAmount = 100 ether;
+        wlux.approve(address(stakedLux), stakeAmount);
+        stakedLux.stake(stakeAmount);
+        console.log("Staked 100 LUX");
+
+        // Deploy AI Token (1B supply, 10% to deployer for liquidity)
+        ai = new AINative(deployer);
+        console.log("AI (1B supply, 10%% liquidity):", address(ai));
+        console.log("  Initial liquidity (100M AI) minted to:", deployer);
         console.log("");
-        console.log("Staking:");
-        console.log("  sLUX:", address(slux));
+    }
+
+    function _deployPhase4AMM() internal {
+        console.log("--- Phase 4: AMM ---");
+
+        factory = new AMMV2Factory(deployer);
+        console.log("AMMV2Factory:", address(factory));
+
+        router = new AMMV2Router(address(factory), address(wlux));
+        console.log("AMMV2Router:", address(router));
         console.log("");
-        console.log("Synth Tokens (12):");
-        console.log("  xLUX:", address(xLux));
-        console.log("  xAI:", address(xAi));
-        console.log("  xZOO:", address(xZoo));
-        console.log("  xUSD:", address(xUsd));
-        console.log("  xETH:", address(xEth));
-        console.log("  xBTC:", address(xBtc));
-        console.log("  xSOL:", address(xSol));
-        console.log("  xTON:", address(xTon));
-        console.log("  xADA:", address(xAda));
-        console.log("  xAVAX:", address(xAvax));
-        console.log("  xBNB:", address(xBnb));
-        console.log("  xPOL:", address(xPol));
+    }
+
+    function _deployPhase5LPPools() internal {
+        console.log("--- Phase 5: LP Pools ---");
+
+        // ===== Core WLUX Pairs =====
+        console.log("Creating WLUX pairs...");
+
+        // WLUX/ETH (bridged ETH)
+        _createPool(address(wlux), address(eth), 50 ether, 10 ether);
+        console.log("  WLUX/ETH pool created");
+
+        // WLUX/BTC (bridged BTC - 8 decimals)
+        _createPool(address(wlux), address(btc), 100 ether, 1e7); // 0.1 BTC
+        console.log("  WLUX/BTC pool created");
+
+        // WLUX/USDC (bridged USDC - 6 decimals)
+        _createPool(address(wlux), address(usdc), 100 ether, 500e6);
+        console.log("  WLUX/USDC pool created");
+
+        // WLUX/AI (AI token liquidity - using 50M of the 100M initial allocation)
+        _createPool(address(wlux), address(ai), 200 ether, 50_000_000 ether);
+        console.log("  WLUX/AI pool created (50M AI liquidity)");
+
+        // ===== Stablecoin pairs =====
+        console.log("Creating stablecoin pairs...");
+
+        // USDC/DAI (6 dec / 18 dec)
+        _createPool(address(usdc), address(dai), 10_000e6, 10_000 ether);
+        console.log("  USDC/DAI pool created");
+
+        // USDC/USDT (6 dec / 6 dec)
+        _createPool(address(usdc), address(usdt), 10_000e6, 10_000e6);
+        console.log("  USDC/USDT pool created");
+
         console.log("");
-        console.log("AMM:");
-        console.log("  Factory:", address(factory));
-        console.log("  Router:", address(router));
+    }
+
+    function _deployPhase6TeleportVaults() internal {
+        console.log("--- Phase 6: Teleport Vaults ---");
+
+        liquidVault = new LiquidVault();
+        console.log("LiquidVault:", address(liquidVault));
         console.log("");
-        console.log("LP Pools Created:");
-        console.log("  WLUX/xLUX, LUSD/xUSD, LETH/xETH, LBTC/xBTC, WLUX/LUSD");
+    }
+
+    function _deployPhase7Identity() internal {
+        console.log("--- Phase 7: Identity/DID ---");
+
+        didRegistry = new DIDRegistry(deployer, "lux", true);
+        console.log("DIDRegistry:", address(didRegistry));
         console.log("");
-        console.log("Protocol:");
-        console.log("  AlchemistV2:", address(alchemistImpl));
-        console.log("  TransmuterV2:", address(transmuterImpl));
-        console.log("========================================");
+    }
+
+    function _deployPhase8Governance() internal {
+        console.log("--- Phase 8: Governance ---");
+
+        VotesToken.Allocation[] memory allocations = new VotesToken.Allocation[](1);
+        allocations[0] = VotesToken.Allocation({
+            recipient: deployer,
+            amount: GOV_TOKEN_SUPPLY
+        });
+
+        govToken = new VotesToken(
+            "Lux Governance",
+            "gLUX",
+            allocations,
+            deployer,
+            GOV_TOKEN_SUPPLY,
+            false
+        );
+        console.log("VotesToken (gLUX):", address(govToken));
+
+        address[] memory proposers = new address[](1);
+        proposers[0] = deployer;
+        address[] memory executors = new address[](1);
+        executors[0] = address(0);
+
+        timelock = new Timelock(1 days, proposers, executors, deployer);
+        console.log("Timelock:", address(timelock));
+
+        // NOTE: Governor requires Strategy with complex two-phase init
+        // For full governance, deploy separately with:
+        // 1. Deploy Strategy impl + proxy
+        // 2. Strategy.initialize(votingPeriod, quorum, basis, proposerAdapters, lightAccountFactory)
+        // 3. Deploy Governor impl + proxy with Strategy address
+        // 4. Strategy.initialize2(governor, votingConfigs)
+        console.log("Governor: SKIPPED (requires Strategy with two-phase init)");
+
+        voteLux = new vLUX(address(wlux));
+        console.log("vLUX:", address(voteLux));
+
+        gaugeController = new GaugeController(address(voteLux));
+        console.log("GaugeController:", address(gaugeController));
+        console.log("");
+    }
+
+    function _deployPhase9Treasury() internal {
+        console.log("--- Phase 9: Treasury ---");
+
+        // Deploy Safe infrastructure
+        safeImpl = new Safe();
+        console.log("Safe impl:", address(safeImpl));
+
+        safeFactory = new SafeProxyFactory();
+        console.log("SafeProxyFactory:", address(safeFactory));
+
+        // Deploy 4 Treasury Safes (all start as 1-of-1 with deployer, upgrade later)
+        address[] memory owners = new address[](1);
+        owners[0] = deployer;
+
+        // DAO Treasury - holds governance funds
+        daoTreasury = _deploySafe(owners, 1, "DAO Treasury");
+
+        // Protocol Vault - receives tx fees, distributes to sLUX stakers
+        protocolVault = _deploySafe(owners, 1, "Protocol Vault");
+
+        // AI Treasury - holds AI token mining rewards/ecosystem funds
+        aiTreasury = _deploySafe(owners, 1, "AI Treasury");
+
+        // ZOO Treasury - holds ZOO ecosystem funds
+        zooTreasury = _deploySafe(owners, 1, "ZOO Treasury");
+
+        // Deploy ValidatorVault for P-Chain reward distribution
+        validatorVault = new ValidatorVault(address(wlux));
+        console.log("ValidatorVault:", address(validatorVault));
+
+        // Deploy FeeSplitter
+        feeSplitter = new FeeSplitter(address(wlux));
+        console.log("FeeSplitter:", address(feeSplitter));
+
+        // Set GaugeController on FeeSplitter (for vLUX voting on fee distribution)
+        feeSplitter.setGaugeController(address(gaugeController));
+
+        // Add recipients to FeeSplitter
+        feeSplitter.addRecipient(address(validatorVault));  // Validators get share
+        feeSplitter.addRecipient(protocolVault);            // Protocol vault → sLUX
+        feeSplitter.addRecipient(daoTreasury);              // DAO gets share
+
+        console.log("");
+    }
+
+    function _deploySafe(address[] memory owners, uint256 threshold, string memory name) internal returns (address) {
+        bytes memory initializer = abi.encodeWithSelector(
+            Safe.setup.selector,
+            owners,
+            threshold,
+            address(0),  // to
+            "",          // data
+            address(0),  // fallbackHandler
+            address(0),  // paymentToken
+            0,           // payment
+            payable(address(0))  // paymentReceiver
+        );
+
+        SafeProxy proxy = safeFactory.createProxyWithNonce(
+            address(safeImpl),
+            initializer,
+            uint256(keccak256(abi.encodePacked(name, block.timestamp)))
+        );
+
+        console.log(name, "Safe:", address(proxy));
+        return address(proxy);
+    }
+
+    function _deployPhase10LSSVM() internal {
+        console.log("--- Phase 10: LSSVM (NFT AMM) ---");
+
+        linearCurve = new LinearCurve();
+        console.log("LinearCurve:", address(linearCurve));
+
+        exponentialCurve = new ExponentialCurve();
+        console.log("ExponentialCurve:", address(exponentialCurve));
+
+        lssvmFactory = new LSSVMPairFactory(deployer);
+        console.log("LSSVMPairFactory:", address(lssvmFactory));
+
+        lssvmFactory.setBondingCurveAllowed(address(linearCurve), true);
+        lssvmFactory.setBondingCurveAllowed(address(exponentialCurve), true);
+
+        lssvmRouter = new LSSVMRouter();
+        console.log("LSSVMRouter:", address(lssvmRouter));
+        console.log("");
+    }
+
+    function _deployPhase11Markets() internal {
+        console.log("--- Phase 11: Markets (Lending) ---");
+
+        markets = new Markets(deployer);
+        console.log("Markets:", address(markets));
+        console.log("");
+    }
+
+    function _deployPhase12Perps() internal {
+        console.log("--- Phase 12: Perps ---");
+
+        perp = new Perp(address(wlux), deployer, deployer);
+        console.log("Perp:", address(perp));
+        console.log("");
     }
 
     function _createPool(address tokenA, address tokenB, uint256 amountA, uint256 amountB) internal {
@@ -273,14 +478,66 @@ contract DeployFullStack is Script {
         IERC20(tokenB).approve(address(router), amountB);
 
         router.addLiquidity(
-            tokenA,
-            tokenB,
-            amountA,
-            amountB,
-            0,
-            0,
-            DEPLOYER,
+            tokenA, tokenB,
+            amountA, amountB,
+            0, 0,
+            deployer,
             block.timestamp + 1 hours
         );
+    }
+
+    function _printSummary() internal view {
+        console.log("");
+        console.log("================================================================================");
+        console.log("                    FULL STACK DEPLOYMENT COMPLETE");
+        console.log("================================================================================");
+        console.log("");
+        console.log("BRIDGED COLLATERAL (1:1 from source chains):");
+        console.log("  ETH:    ", address(eth));
+        console.log("  BTC:    ", address(btc));
+        console.log("  USDC:   ", address(usdc));
+        console.log("  USDT:   ", address(usdt));
+        console.log("  DAI:    ", address(dai));
+        console.log("");
+        console.log("NATIVE & STAKING:");
+        console.log("  WLUX:       ", address(wlux));
+        console.log("  StakedLUX:  ", address(stakedLux));
+        console.log("  AI:         ", address(ai));
+        console.log("");
+        console.log("AMM:");
+        console.log("  Factory:    ", address(factory));
+        console.log("  Router:     ", address(router));
+        console.log("");
+        console.log("LP POOLS CREATED:");
+        console.log("  LUX pairs:   WLUX/ETH, WLUX/BTC, WLUX/USDC, WLUX/AI");
+        console.log("  Stables:     USDC/DAI, USDC/USDT");
+        console.log("");
+        console.log("TELEPORT VAULTS:");
+        console.log("  LiquidVault:     ", address(liquidVault));
+        console.log("");
+        console.log("GOVERNANCE:");
+        console.log("  VotesToken:     ", address(govToken));
+        console.log("  Timelock:       ", address(timelock));
+        console.log("  Governor:        SKIPPED (complex two-phase init)");
+        console.log("  vLUX:           ", address(voteLux));
+        console.log("  GaugeController:", address(gaugeController));
+        console.log("");
+        console.log("TREASURY SAFES:");
+        console.log("  DAO Treasury:   ", daoTreasury);
+        console.log("  Protocol Vault: ", protocolVault);
+        console.log("  AI Treasury:    ", aiTreasury);
+        console.log("  ZOO Treasury:   ", zooTreasury);
+        console.log("  ValidatorVault: ", address(validatorVault));
+        console.log("  FeeSplitter:    ", address(feeSplitter));
+        console.log("");
+        console.log("OTHER:");
+        console.log("  DIDRegistry:    ", address(didRegistry));
+        console.log("  Markets:        ", address(markets));
+        console.log("  Perp:           ", address(perp));
+        console.log("  LSSVM Factory:  ", address(lssvmFactory));
+        console.log("");
+        console.log("================================================================================");
+        console.log("                         ALL 12 PHASES DEPLOYED");
+        console.log("================================================================================");
     }
 }

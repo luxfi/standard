@@ -11,8 +11,8 @@ import {LinearCurve} from "../../contracts/lssvm/LinearCurve.sol";
 import {ExponentialCurve} from "../../contracts/lssvm/ExponentialCurve.sol";
 import {ICurve} from "../../contracts/lssvm/ICurve.sol";
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+// Shared mocks
+import {MockNFTWithId as MockNFT, MockERC20Simple as MockERC20} from "./TestMocks.sol";
 
 /// @title LSSVM Test Suite
 /// @notice Comprehensive tests for Sudoswap-style NFT AMM
@@ -1142,24 +1142,4 @@ contract LSSVMTest is Test {
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// MOCK CONTRACTS
-// ═══════════════════════════════════════════════════════════════════════════
-
-contract MockNFT is ERC721 {
-    uint256 private _nextTokenId = 1;
-
-    constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
-
-    function mint(address to, uint256 tokenId) external {
-        _mint(to, tokenId);
-    }
-}
-
-contract MockERC20 is ERC20 {
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
-
-    function mint(address to, uint256 amount) external {
-        _mint(to, amount);
-    }
-}
+// Mock contracts imported from TestMocks.sol

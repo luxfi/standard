@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 
 // Core tokens - Lux native
 import {WLUX} from "../../contracts/tokens/WLUX.sol";
-import {LuxUSD} from "../../contracts/bridge/lux/LUSD.sol";
+import {LuxUSD} from "../../contracts/liquid/tokens/LUSD.sol";
 import {ILRC20} from "../../contracts/tokens/interfaces/ILRC20.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════

@@ -442,6 +442,15 @@ contract AINative is LRC20B {
     /// @notice Credits per minute of GPU compute (1 AI per minute base rate)
     uint256 public constant CREDITS_PER_MINUTE = 1e18;
 
+    /// @notice Maximum total supply: 1 billion AI
+    uint256 public constant MAX_SUPPLY = 1_000_000_000e18;
+
+    /// @notice Initial liquidity allocation: 10% (100 million AI)
+    uint256 public constant INITIAL_LIQUIDITY = 100_000_000e18;
+
+    /// @notice Mining allocation: 90% (900 million AI)
+    uint256 public constant MINING_ALLOCATION = 900_000_000e18;
+
     // ============ State ============
 
     /// @notice GPU tier to credit multiplier (basis points: 10000 = 1x)
@@ -465,11 +474,18 @@ contract AINative is LRC20B {
     /// @notice Total LUX collected for attestations
     uint256 public totalLuxCollected;
 
+    /// @notice Total AI minted through mining
+    uint256 public totalMined;
+
+    /// @notice Liquidity pool address (receives initial 10%)
+    address public liquidityPool;
+
     // ============ Events ============
 
     event SessionStarted(bytes32 indexed sessionId, address indexed miner, bytes32 gpuId, PrivacyLevel privacy);
     event HeartbeatReceived(bytes32 indexed sessionId, address indexed miner, uint64 timestamp, uint256 reward);
     event SessionCompleted(bytes32 indexed sessionId, address indexed miner, uint64 totalMinutes, uint256 totalReward);
+    event InitialLiquidityMinted(address indexed recipient, uint256 amount);
     event Teleported(bytes32 indexed teleportId, bytes32 indexed destChainId, address indexed recipient, uint256 amount);
     event PaymentReceived(bytes32 indexed requestId, address indexed payer, uint256 luxAmount);
 
@@ -483,15 +499,29 @@ contract AINative is LRC20B {
     error InvalidTEEQuote();
     error InsufficientBalance();
     error UntrustedSource();
+    error MaxSupplyExceeded();
 
     // ============ Constructor ============
 
-    constructor() LRC20B("AI", "AI") {
+    /**
+     * @notice Deploy AI token with initial liquidity allocation
+     * @param _liquidityRecipient Address to receive 10% (100M AI) for liquidity
+     * @dev Tokenomics: 1B total cap, 10% liquidity, 90% mining
+     */
+    constructor(address _liquidityRecipient) LRC20B("AI", "AI") {
+        require(_liquidityRecipient != address(0), "Invalid liquidity recipient");
+
         // Set tier multipliers (basis points: 10000 = 1x)
         tierMultiplier[PrivacyLevel.Public] = 2500;       // 0.25x (stake-required)
         tierMultiplier[PrivacyLevel.Private] = 5000;      // 0.5x (SGX/A100)
         tierMultiplier[PrivacyLevel.Confidential] = 10000; // 1.0x (H100/TDX)
         tierMultiplier[PrivacyLevel.Sovereign] = 15000;   // 1.5x (Blackwell)
+
+        // Mint initial liquidity allocation (10% = 100M AI)
+        liquidityPool = _liquidityRecipient;
+        _mint(_liquidityRecipient, INITIAL_LIQUIDITY);
+
+        emit InitialLiquidityMinted(_liquidityRecipient, INITIAL_LIQUIDITY);
     }
 
     // ============ Payment Reception ============
@@ -570,7 +600,14 @@ contract AINative is LRC20B {
         uint256 multiplier = tierMultiplier[privacy];
         reward = (CREDITS_PER_MINUTE * multiplier) / 10000;
 
-        // Mint reward
+        // Enforce mining cap (900M total for mining)
+        if (totalMined + reward > MINING_ALLOCATION) {
+            reward = MINING_ALLOCATION - totalMined;
+            if (reward == 0) revert MaxSupplyExceeded();
+        }
+
+        // Mint reward and track
+        totalMined += reward;
         _mint(miner, reward);
 
         emit HeartbeatReceived(sessionId, miner, uint64(block.timestamp), reward);
@@ -779,11 +816,16 @@ contract AIRemote is LRC20B {
 // ============================================================================
 
 contract AINativeFactory {
-    event AINativeDeployed(address indexed token, uint256 chainId);
+    event AINativeDeployed(address indexed token, address indexed liquidityRecipient, uint256 chainId);
 
-    function deploy() external returns (address token) {
-        token = address(new AINative());
-        emit AINativeDeployed(token, block.chainid);
+    /**
+     * @notice Deploy AINative with liquidity allocation
+     * @param liquidityRecipient Address to receive 10% (100M AI) initial liquidity
+     * @return token The deployed AI token address
+     */
+    function deploy(address liquidityRecipient) external returns (address token) {
+        token = address(new AINative(liquidityRecipient));
+        emit AINativeDeployed(token, liquidityRecipient, block.chainid);
         return token;
     }
 }

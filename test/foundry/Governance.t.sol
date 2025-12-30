@@ -3,11 +3,12 @@ pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
 
-// Governor contracts
-import {LuxGovernor} from "../../contracts/dao/governance/LuxGovernor.sol";
-import {VotesToken} from "../../contracts/dao/governance/VotesToken.sol";
+// Governance contracts
+// Note: Governor.sol is now Zodiac-style for Safe integration
+// Using DAO for simple governance tests
+import {DAO} from "../../contracts/governance/DAO.sol";
+import {VotesToken} from "../../contracts/governance/VotesToken.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
-import {IGovernor} from "@openzeppelin/contracts/governance/IGovernor.sol";
 
 // vLUX and Gauge contracts
 import {vLUX} from "../../contracts/governance/vLUX.sol";
@@ -16,42 +17,8 @@ import {GaugeController} from "../../contracts/governance/GaugeController.sol";
 // Simple DAO contract
 import {DAO} from "../../contracts/governance/DAO.sol";
 
-// Mock ERC20 using solmate to avoid conflicts
-import {ERC20 as SolmateERC20} from "solmate/tokens/ERC20.sol";
-
-/// @title MockERC20
-/// @notice Simple mock ERC20 for testing
-contract MockERC20 is SolmateERC20 {
-    constructor(
-        string memory name,
-        string memory symbol,
-        uint8 decimals_
-    ) SolmateERC20(name, symbol, decimals_) {}
-
-    function mint(address to, uint256 amount) external {
-        _mint(to, amount);
-    }
-
-    function burn(address from, uint256 amount) external {
-        _burn(from, amount);
-    }
-}
-
-/// @title MockTarget
-/// @notice Mock contract for testing proposal execution
-contract MockTarget {
-    uint256 public value;
-    bool public executed;
-
-    function setValue(uint256 newValue) external {
-        value = newValue;
-        executed = true;
-    }
-
-    function revertingFunction() external pure {
-        revert("Intentional revert");
-    }
-}
+// Shared test mocks
+import {MockERC20Solmate as MockERC20, MockTargetFull as MockTarget} from "./TestMocks.sol";
 
 /// @title GovernanceTest
 /// @notice Comprehensive tests for Lux DAO governance system
@@ -60,8 +27,8 @@ contract GovernanceTest is Test {
     // CONTRACTS
     // ═══════════════════════════════════════════════════════════════════════
 
-    // LuxGovernor system
-    LuxGovernor public governor;
+    // Simple DAO governance (Governor.sol is Zodiac-style for Safe)
+    DAO public governor;
     VotesToken public govToken;
     TimelockController public timelock;
 
@@ -143,21 +110,11 @@ contract GovernanceTest is Test {
             admin
         );
 
-        // Deploy governor
-        governor = new LuxGovernor(
-            govToken,
-            timelock,
-            "Lux Governor",
-            VOTING_DELAY,
-            VOTING_PERIOD,
-            PROPOSAL_THRESHOLD,
-            QUORUM_PERCENTAGE
-        );
+        // Deploy DAO (simple governance - Governor.sol is Zodiac-style for Safe integration)
+        governor = new DAO(address(govToken), admin);
 
-        // Grant governor proposer and executor roles
-        timelock.grantRole(timelock.PROPOSER_ROLE(), address(governor));
-        timelock.grantRole(timelock.EXECUTOR_ROLE(), address(governor));
-        timelock.grantRole(timelock.CANCELLER_ROLE(), address(governor));
+        // Note: DAO uses internal timelock, no separate roles needed
+        // The Zodiac-style Governor uses initialize() with Safe as vault
 
         // ─────────────────────────────────────────────────────────────────
         // Setup vLUX and GaugeController
@@ -223,12 +180,11 @@ contract GovernanceTest is Test {
     // ═══════════════════════════════════════════════════════════════════════
 
     function test_GovernorDeployment() public view {
-        assertEq(governor.name(), "Lux Governor");
-        assertEq(governor.votingDelay(), VOTING_DELAY);
-        assertEq(governor.votingPeriod(), VOTING_PERIOD);
-        assertEq(governor.proposalThreshold(), PROPOSAL_THRESHOLD);
-        assertEq(address(governor.token()), address(govToken));
-        assertEq(address(governor.timelock()), address(timelock));
+        // DAO uses constants, not functions (check via constant accessors)
+        assertEq(governor.VOTING_DELAY(), 1 days);
+        assertEq(governor.VOTING_PERIOD(), 3 days);
+        assertEq(governor.PROPOSAL_THRESHOLD(), 100_000e18);
+        assertEq(governor.QUORUM_VOTES(), 1_000_000e18);
     }
 
     function test_CreateProposal() public {
@@ -253,13 +209,15 @@ contract GovernanceTest is Test {
         );
 
         assertTrue(proposalId > 0);
-        assertEq(uint256(governor.state(proposalId)), uint256(IGovernor.ProposalState.Pending));
+        assertEq(uint256(governor.state(proposalId)), uint256(DAO.ProposalState.Pending));
 
         vm.stopPrank();
     }
 
     function test_RevertProposalBelowThreshold() public {
-        vm.startPrank(charlie); // Charlie has < threshold
+        // DAO requires 100k tokens to propose, use an account with no tokens
+        address nobody = address(0x9999);
+        vm.startPrank(nobody);
 
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
@@ -289,11 +247,11 @@ contract GovernanceTest is Test {
         vm.prank(bob);
         governor.castVote(proposalId, 0); // 0 = Against
 
-        (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes) = governor.proposalVotes(proposalId);
+        DAO.ProposalInfo memory info = governor.getProposal(proposalId);
 
-        assertEq(forVotes, ALICE_TOKENS);
-        assertEq(againstVotes, BOB_TOKENS);
-        assertEq(abstainVotes, 0);
+        assertEq(info.forVotes, ALICE_TOKENS);
+        assertEq(info.againstVotes, BOB_TOKENS);
+        assertEq(info.abstainVotes, 0);
     }
 
     function test_VoteWithReason() public {
@@ -302,7 +260,7 @@ contract GovernanceTest is Test {
 
         vm.prank(alice);
         vm.expectEmit(true, true, true, true);
-        emit IGovernor.VoteCast(alice, proposalId, 1, ALICE_TOKENS, "Great idea!");
+        emit DAO.VoteCast(alice, proposalId, 1, ALICE_TOKENS, "Great idea!");
         governor.castVoteWithReason(proposalId, 1, "Great idea!");
     }
 
@@ -328,29 +286,36 @@ contract GovernanceTest is Test {
         // Wait for voting period to end
         vm.roll(block.number + VOTING_PERIOD + 1);
 
-        assertEq(uint256(governor.state(proposalId)), uint256(IGovernor.ProposalState.Succeeded));
+        assertEq(uint256(governor.state(proposalId)), uint256(DAO.ProposalState.Succeeded));
     }
 
     function test_ProposalDefeatedWithoutQuorum() public {
-        // First mint extra tokens to ensure total supply is > 25M (so 1M < 4%)
-        // Currently: alice 10M + bob 5M + charlie 1M = 16M
-        // Need at least 25M so 1M < 4% (1M/25M = 4%)
+        // DAO uses fixed QUORUM_VOTES = 1M tokens
+        // We need votes < 1M to fail quorum
+        // Give a new user 500k tokens (less than 1M quorum)
+        address smallVoter = address(0x8888);
         vm.prank(admin);
-        govToken.mint(address(0xdead), 10_000_000e18); // Now 26M total
+        govToken.mint(smallVoter, 500_000e18);
         
+        vm.prank(smallVoter);
+        govToken.delegate(smallVoter);
+        
+        // Advance a block for delegation to take effect
+        vm.roll(block.number + 1);
+
         uint256 proposalId = _createProposal();
 
         // Wait for voting to start
         vm.roll(block.number + VOTING_DELAY + 1);
 
-        // Only Charlie votes (1M = ~3.8% < 4% quorum of 26M)
-        vm.prank(charlie);
+        // Only smallVoter votes (500k < 1M quorum)
+        vm.prank(smallVoter);
         governor.castVote(proposalId, 1);
 
         // Wait for voting period to end
         vm.roll(block.number + VOTING_PERIOD + 1);
 
-        assertEq(uint256(governor.state(proposalId)), uint256(IGovernor.ProposalState.Defeated));
+        assertEq(uint256(governor.state(proposalId)), uint256(DAO.ProposalState.Defeated));
     }
 
     function test_QueueAndExecuteProposal() public {
@@ -362,29 +327,20 @@ contract GovernanceTest is Test {
         governor.castVote(proposalId, 1);
         vm.roll(block.number + VOTING_PERIOD + 1);
 
-        // Queue proposal
-        address[] memory targets = new address[](1);
-        uint256[] memory values = new uint256[](1);
-        bytes[] memory calldatas = new bytes[](1);
-        string memory description = "Set value to 42";
+        // Queue proposal (DAO uses simple proposalId-based API)
+        governor.queue(proposalId);
 
-        targets[0] = address(target);
-        values[0] = 0;
-        calldatas[0] = abi.encodeWithSelector(MockTarget.setValue.selector, 42);
-
-        governor.queue(targets, values, calldatas, keccak256(bytes(description)));
-
-        assertEq(uint256(governor.state(proposalId)), uint256(IGovernor.ProposalState.Queued));
+        assertEq(uint256(governor.state(proposalId)), uint256(DAO.ProposalState.Queued));
 
         // Wait for timelock
         vm.warp(block.timestamp + TIMELOCK_DELAY + 1);
 
         // Execute
-        governor.execute(targets, values, calldatas, keccak256(bytes(description)));
+        governor.execute(proposalId);
 
         assertEq(target.value(), 42);
         assertTrue(target.executed());
-        assertEq(uint256(governor.state(proposalId)), uint256(IGovernor.ProposalState.Executed));
+        assertEq(uint256(governor.state(proposalId)), uint256(DAO.ProposalState.Executed));
     }
 
     function test_CancelProposal() public {
@@ -393,20 +349,11 @@ contract GovernanceTest is Test {
         
         uint256 proposalId = _createProposal();
 
-        address[] memory targets = new address[](1);
-        uint256[] memory values = new uint256[](1);
-        bytes[] memory calldatas = new bytes[](1);
-        string memory description = "Set value to 42";
-
-        targets[0] = address(target);
-        values[0] = 0;
-        calldatas[0] = abi.encodeWithSelector(MockTarget.setValue.selector, 42);
-
-        // Alice cancels her own proposal
+        // Alice cancels her own proposal (DAO uses simple proposalId-based API)
         vm.prank(alice);
-        governor.cancel(targets, values, calldatas, keccak256(bytes(description)));
+        governor.cancel(proposalId);
 
-        assertEq(uint256(governor.state(proposalId)), uint256(IGovernor.ProposalState.Canceled));
+        assertEq(uint256(governor.state(proposalId)), uint256(DAO.ProposalState.Canceled));
     }
 
     // ═══════════════════════════════════════════════════════════════════════

@@ -9,7 +9,6 @@ import {vLUX} from "../contracts/governance/vLUX.sol";
 import {GaugeController} from "../contracts/governance/GaugeController.sol";
 import {FeeSplitter} from "../contracts/treasury/FeeSplitter.sol";
 import {ValidatorVault} from "../contracts/treasury/ValidatorVault.sol";
-import {SynthFeeSplitter} from "../contracts/treasury/SynthFeeSplitter.sol";
 import {sLUX} from "../contracts/staking/sLUX.sol";
 
 /**
@@ -31,7 +30,6 @@ contract VotingTest is Test {
     GaugeController public gaugeController;
     FeeSplitter public feeSplitter;
     ValidatorVault public validatorVault;
-    SynthFeeSplitter public synthFeeSplitter;
     sLUX public slux;
     
     // Addresses
@@ -65,13 +63,6 @@ contract VotingTest is Test {
         validatorVault = new ValidatorVault(address(wlux));
         feeSplitter = new FeeSplitter(address(wlux));
         slux = new sLUX(address(wlux));
-        synthFeeSplitter = new SynthFeeSplitter(
-            address(wlux),
-            pol,
-            daoTreasury,
-            address(slux),
-            address(slux)
-        );
         
         // Setup gauges
         burnGaugeId = gaugeController.addGauge(BURN_ADDRESS, "Burn", 0);
@@ -86,7 +77,7 @@ contract VotingTest is Test {
         feeSplitter.addRecipient(daoTreasury);
         feeSplitter.addRecipient(pol);
         
-        slux.setProtocolVault(address(synthFeeSplitter));
+        slux.setProtocolVault(address(feeSplitter));
         
         // Fund test accounts
         vm.deal(deployer, 100000 ether);
@@ -490,52 +481,69 @@ contract VotingTest is Test {
         console.log("   - To DAO:", (wlux.balanceOf(daoTreasury) - daoBefore) / 1e18, "LUX");
         
         // 5. Verify stats
-        (uint256 received, uint256 distributed, uint256 burned) = feeSplitter.getStats();
+        (uint256 received, uint256 distributed, uint256 burned, uint256 toLiquidLux) = feeSplitter.getStats();
         console.log("\n5. FeeSplitter stats:");
         console.log("   - Total received:", received / 1e18, "LUX");
         console.log("   - Total distributed:", distributed / 1e18, "LUX");
         console.log("   - Total burned:", burned / 1e18, "LUX");
+        console.log("   - To LiquidLUX:", toLiquidLux / 1e18, "LUX");
         
         console.log("\n=== FLOW TEST COMPLETE ===\n");
     }
     
-    function test_SynthFeeSplitter_Distribution() public {
-        console.log("\n=== SYNTH FEE SPLITTER TEST ===\n");
+    function test_FeeSplitter_Distribution() public {
+        console.log("\n=== FEE SPLITTER TEST ===\n");
         
-        // Stake some LUX first
-        uint256 stakeAmount = 1000 ether;
-        wlux.approve(address(slux), stakeAmount);
-        slux.stake(stakeAmount);
-        console.log("Staked", stakeAmount / 1e18, "LUX for sLUX");
+        // First, create a lock to get voting power
+        uint256 lockAmount = 1000 ether;
+        wlux.approve(address(vlux), lockAmount);
+        vlux.createLock(lockAmount, block.timestamp + 365 days);
         
-        // Deposit fees to synth fee splitter
+        // Vote for gauges (33% each to POL, DAO, and Validators)
+        uint256[] memory gaugeIds = new uint256[](3);
+        gaugeIds[0] = polGaugeId;
+        gaugeIds[1] = daoGaugeId;
+        gaugeIds[2] = validatorGaugeId;
+        
+        uint256[] memory weights = new uint256[](3);
+        weights[0] = 3333; // 33.33% to POL
+        weights[1] = 3333; // 33.33% to DAO  
+        weights[2] = 3334; // 33.34% to Validators
+        
+        gaugeController.voteMultiple(gaugeIds, weights);
+        
+        // Advance time and update weights
+        vm.warp(block.timestamp + 7 days);
+        gaugeController.updateWeights();
+        
+        // Deposit fees
         uint256 feeAmount = 100 ether;
-        wlux.approve(address(synthFeeSplitter), feeAmount);
-        synthFeeSplitter.depositFees(feeAmount);
+        wlux.approve(address(feeSplitter), feeAmount);
+        feeSplitter.depositFees(feeAmount);
         console.log("Deposited", feeAmount / 1e18, "LUX in fees");
         
         uint256 polBefore = wlux.balanceOf(pol);
         uint256 daoBefore = wlux.balanceOf(daoTreasury);
-        uint256 stakeBefore = slux.totalStaked();
+        uint256 validatorBefore = wlux.balanceOf(address(validatorVault));
         
         // Distribute
-        synthFeeSplitter.distribute();
+        feeSplitter.distribute();
         
         uint256 polReceived = wlux.balanceOf(pol) - polBefore;
         uint256 daoReceived = wlux.balanceOf(daoTreasury) - daoBefore;
-        uint256 stakeIncrease = slux.totalStaked() - stakeBefore;
+        uint256 validatorReceived = wlux.balanceOf(address(validatorVault)) - validatorBefore;
         
-        console.log("\nDistribution (1% POL, 1% DAO, 1% stakers, 97% reserve):");
-        console.log("  - POL received:", polReceived / 1e18, "LUX (expected: 1)");
-        console.log("  - DAO received:", daoReceived / 1e18, "LUX (expected: 1)");
-        console.log("  - sLUX increase:", stakeIncrease / 1e18, "LUX (expected: 1)");
+        console.log("\nDistribution (33% each to POL, DAO, Validators):");
+        console.log("  - POL received:", polReceived / 1e18, "LUX");
+        console.log("  - DAO received:", daoReceived / 1e18, "LUX");
+        console.log("  - Validators received:", validatorReceived / 1e18, "LUX");
         
-        // Verify allocations
-        assertEq(polReceived, 1 ether, "POL should get 1%");
-        assertEq(daoReceived, 1 ether, "DAO should get 1%");
-        assertEq(stakeIncrease, 1 ether, "Stakers should get 1%");
+        // Verify allocations (approximately 33 each from 100)
+        assertGt(polReceived, 30 ether, "POL should get ~33%");
+        assertGt(daoReceived, 30 ether, "DAO should get ~33%");
+        assertGt(validatorReceived, 30 ether, "Validators should get ~33%");
         
-        console.log("\n=== SYNTH FEE TEST COMPLETE ===\n");
+        console.log("\n=== FEE SPLITTER TEST COMPLETE ===\n");
     }
     
     // ============ Helper Functions ============

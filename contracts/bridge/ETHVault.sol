@@ -20,7 +20,7 @@ contract ETHVault is LRC20 {
         uint256 amount
     );
 
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
+    constructor(string memory name, string memory symbol) LRC20(name, symbol) {}
     // Function to receive ETH and mint shares
     receive() external payable {}
 

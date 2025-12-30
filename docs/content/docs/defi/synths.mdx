@@ -13,7 +13,7 @@ The Synths protocol enables:
 
 - **Self-Repaying Loans**: Deposit yield-bearing collateral, mint synthetic assets, and watch your debt repay itself
 - **No Liquidation Risk**: Positions cannot be liquidated by price movements
-- **Multiple Synthetics**: xUSD, xETH, xBTC, xLUX, and more
+- **Multiple Synthetics**: sUSD, sETH, sBTC, sLUX, and more
 - **Flexible Collateral**: Any yield-bearing token with approved adapter
 
 ```
@@ -28,7 +28,7 @@ The Synths protocol enables:
 │         │                  │                    │                   │                  │
 │         ▼                  ▼                    ▼                   ▼                  │
 │  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐          │
-│  │ YieldToken  │     │  xUSD/xETH  │     │  Strategy   │     │ Transmuter  │          │
+│  │ YieldToken  │     │  sUSD/sETH  │     │  Strategy   │     │ Transmuter  │          │
 │  │ (yvWETH,    │     │  Minted     │     │  Returns    │     │ 1:1 Redeem  │          │
 │  │  aWETH)     │     │             │     │             │     │             │          │
 │  └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘          │
@@ -42,12 +42,12 @@ The Synths protocol enables:
 
 | Synth | Name | Backed By | Use Case |
 |-------|------|-----------|----------|
-| **xUSD** | Lux Synthetic USD | LUSD, yield vaults | Stablecoin borrowing |
-| **xETH** | Lux Synthetic ETH | LETH, staked ETH | Leveraged ETH exposure |
-| **xBTC** | Lux Synthetic BTC | LBTC, wrapped BTC | Bitcoin borrowing |
-| **xLUX** | Lux Synthetic LUX | sLUX, staked LUX | LUX leverage |
-| **xAI** | Lux Synthetic AI | AI, staked AI | AI token borrowing |
-| **xZOO** | Lux Synthetic ZOO | LZOO | Zoo token borrowing |
+| **sUSD** | Lux Synthetic USD | LUSD, yield vaults | Stablecoin borrowing |
+| **sETH** | Lux Synthetic ETH | LETH, staked ETH | Leveraged ETH exposure |
+| **sBTC** | Lux Synthetic BTC | LBTC, wrapped BTC | Bitcoin borrowing |
+| **sLUX** | Lux Synthetic LUX | sLUX, staked LUX | LUX leverage |
+| **sAI** | Lux Synthetic AI | AI, staked AI | AI token borrowing |
+| **sZOO** | Lux Synthetic ZOO | LZOO | Zoo token borrowing |
 
 ### Collateral Types
 
@@ -111,7 +111,7 @@ uint256 shares = alchemist.depositUnderlying(
 
 ```solidity
 // Option 1: Burn synthetic tokens
-IERC20(xETH).approve(address(alchemist), burnAmount);
+IERC20(sETH).approve(address(alchemist), burnAmount);
 alchemist.burn(burnAmount, msg.sender);
 
 // Option 2: Repay with underlying
@@ -152,7 +152,7 @@ import "@luxfi/contracts/synths/TransmuterV2.sol";
 TransmuterV2 transmuter = TransmuterV2(TRANSMUTER_ADDRESS);
 
 // Deposit synths for redemption
-IERC20(xUSD).approve(address(transmuter), amount);
+IERC20(sUSD).approve(address(transmuter), amount);
 transmuter.deposit(amount, msg.sender);
 
 // Check position in queue
@@ -185,7 +185,7 @@ transmuter.claim(claimAmount, msg.sender);
 // How debt repays itself:
 
 // 1. User deposits 10 yvWETH worth $10,000
-// 2. User mints 5,000 xETH (50% LTV)
+// 2. User mints 5,000 sETH (50% LTV)
 // 3. yvWETH earns 10% APY = $1,000/year
 // 4. Yield converts to credit, reducing debt
 // 5. After ~5 years, debt is fully repaid
@@ -227,9 +227,9 @@ import "@luxfi/contracts/synths/interfaces/IERC3156FlashLender.sol";
 
 contract FlashBorrower is IERC3156FlashBorrower {
     function executeFlashLoan(uint256 amount) external {
-        IERC3156FlashLender(xUSD).flashLoan(
+        IERC3156FlashLender(sUSD).flashLoan(
             this,
-            address(xUSD),
+            address(sUSD),
             amount,
             ""
         );

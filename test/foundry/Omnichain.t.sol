@@ -8,39 +8,7 @@ import {OmnichainLPRouter} from "../../contracts/omnichain/OmnichainLPRouter.sol
 import {Bridge} from "../../contracts/omnichain/Bridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
-/// @notice Mock ERC20 token for testing
-contract MockERC20 is ERC20 {
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {
-        _mint(msg.sender, 1_000_000 ether);
-    }
-
-    function mint(address to, uint256 amount) external {
-        _mint(to, amount);
-    }
-
-    function burn(address from, uint256 amount) external {
-        _burn(from, amount);
-    }
-}
-
-/// @notice Mock WLUX token
-contract MockWLUX is MockERC20 {
-    constructor() MockERC20("Wrapped LUX", "WLUX") {}
-
-    function deposit() external payable {
-        _mint(msg.sender, msg.value);
-    }
-
-    function withdraw(uint256 amount) external {
-        _burn(msg.sender, amount);
-        payable(msg.sender).transfer(amount);
-    }
-
-    receive() external payable {
-        _mint(msg.sender, msg.value);
-    }
-}
+import {MockERC20Simple as MockERC20, MockWLUX} from "./TestMocks.sol";
 
 /// @notice Mock Bridge implementation for testing
 contract MockBridge is Bridge {

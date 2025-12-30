@@ -21,8 +21,8 @@ Self-repaying loans that use yield from collateral to automatically pay down deb
 - Positions cannot be liquidated by price movements - only by debt ceiling
 
 ### Synthetic Assets
-- **luxUSD**: Synthetic dollar, backed by yield-bearing stablecoins
-- **luxETH**: Synthetic ETH, backed by yield-bearing ETH
+- **sUSD**: Synthetic dollar, backed by yield-bearing stablecoins
+- **sETH**: Synthetic ETH, backed by yield-bearing ETH
 
 ## Functions
 
@@ -93,7 +93,7 @@ import "@luxfi/standard/src/Loans.sol";
 IERC20(yieldUSDC).approve(address(loans), amount);
 loans.deposit(yieldUSDC, amount, msg.sender);
 
-// Mint luxUSD (up to 50% of collateral value)
+// Mint sUSD (up to 50% of collateral value)
 uint256 maxMint = loans.getMintLimit(msg.sender);
 loans.mint(maxMint / 2, msg.sender);
 
