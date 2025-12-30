@@ -49,46 +49,40 @@ contract CappedToken is LRC20Capped {
 
 ## DeFi Examples
 
-### Self-Repaying Loan with Synths
+### Deposit to LiquidLUX Yield Vault
 
-Deposit collateral, mint synthetic tokens, and let yield repay your debt:
+Deposit LUX and receive xLUX shares that earn protocol fees:
 
-```solidity title="src/SynthLoan.sol"
+```solidity title="src/YieldDeposit.sol"
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@luxfi/contracts/synths/interfaces/IAlchemistV2.sol";
+import "@luxfi/contracts/liquid/LiquidLUX.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract SynthLoan {
-    IAlchemistV2 public alchemist;
+contract YieldDeposit {
+    LiquidLUX public liquidLux;
+    IERC20 public wlux;
 
-    constructor(address _alchemist) {
-        alchemist = IAlchemistV2(_alchemist);
+    constructor(address _liquidLux, address _wlux) {
+        liquidLux = LiquidLUX(_liquidLux);
+        wlux = IERC20(_wlux);
     }
 
-    /// @notice Deposit yield token and mint synths
-    function depositAndMint(
-        address yieldToken,
-        uint256 depositAmount,
-        uint256 mintAmount,
-        address recipient
-    ) external {
-        // Transfer yield token from user
-        IERC20(yieldToken).transferFrom(msg.sender, address(this), depositAmount);
-        IERC20(yieldToken).approve(address(alchemist), depositAmount);
+    /// @notice Deposit WLUX and receive xLUX shares
+    function deposit(uint256 amount) external returns (uint256 shares) {
+        // Transfer WLUX from user
+        wlux.transferFrom(msg.sender, address(this), amount);
+        wlux.approve(address(liquidLux), amount);
 
-        // Deposit collateral
-        alchemist.deposit(yieldToken, depositAmount, msg.sender);
-
-        // Mint synths against collateral
-        alchemist.mint(mintAmount, recipient);
+        // Deposit and receive xLUX shares
+        shares = liquidLux.deposit(amount, msg.sender);
     }
 
-    /// @notice Check remaining debt (will decrease as yield accrues)
-    function getDebt(address account) external view returns (int256) {
-        (int256 debt, ) = alchemist.accounts(account);
-        return debt;
+    /// @notice Check current value of xLUX shares
+    function getValue(address account) external view returns (uint256) {
+        uint256 shares = liquidLux.balanceOf(account);
+        return liquidLux.convertToAssets(shares);
     }
 }
 ```
@@ -262,31 +256,32 @@ contract DeploySafe {
 pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
-import "@luxfi/contracts/synths/AlchemistV2.sol";
+import "@luxfi/contracts/liquid/LiquidLUX.sol";
 
 contract IntegrationTest is Test {
-    AlchemistV2 alchemist;
+    LiquidLUX liquidLux;
 
     function setUp() public {
         // Fork Lux mainnet at specific block
         vm.createSelectFork("lux_mainnet", 1_000_000);
 
-        // Get deployed Alchemist
-        alchemist = AlchemistV2(0x...);
+        // Get deployed LiquidLUX
+        liquidLux = LiquidLUX(0x...);
     }
 
     function testDeposit() public {
         address user = makeAddr("user");
-        address yieldToken = 0x...; // yvWETH
+        address wlux = liquidLux.asset();
 
-        deal(yieldToken, user, 10 ether);
+        deal(wlux, user, 10 ether);
 
         vm.startPrank(user);
-        IERC20(yieldToken).approve(address(alchemist), 10 ether);
-        alchemist.deposit(yieldToken, 10 ether, user);
+        IERC20(wlux).approve(address(liquidLux), 10 ether);
+        uint256 shares = liquidLux.deposit(10 ether, user);
         vm.stopPrank();
 
-        assertGt(alchemist.totalDeposited(user), 0);
+        assertGt(shares, 0);
+        assertEq(liquidLux.balanceOf(user), shares);
     }
 }
 ```

@@ -67,6 +67,36 @@ Standard token implementations with Lux-native naming:
 - `LRC20Pausable` - Emergency pause
 - `LRC20Permit` - Gasless approvals (EIP-2612)
 
+### Liquid Protocol
+
+Unified yield vault and liquid staking with xLUX:
+
+| Contract | Description | Import |
+|----------|-------------|--------|
+| **LiquidLUX** | Master yield vault - receives ALL protocol fees | `@luxfi/contracts/liquid/LiquidLUX.sol` |
+| **LiquidToken** | Base ERC20 with flash loan support (ERC-3156) | `@luxfi/contracts/liquid/LiquidToken.sol` |
+| **LiquidVault** | Cross-chain teleport vault | `@luxfi/contracts/liquid/teleport/LiquidVault.sol` |
+| **LETH** | Lux ETH (bridged) | `@luxfi/contracts/liquid/tokens/LETH.sol` |
+| **LBTC** | Lux BTC (bridged) | `@luxfi/contracts/liquid/tokens/LBTC.sol` |
+| **LUSD** | Lux USD stablecoin | `@luxfi/contracts/liquid/tokens/LUSD.sol` |
+
+```solidity
+import "@luxfi/contracts/liquid/LiquidLUX.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+LiquidLUX liquidLux = LiquidLUX(LIQUID_LUX_ADDRESS);
+IERC20 wlux = IERC20(WLUX_ADDRESS);
+
+// Deposit WLUX, receive xLUX shares
+wlux.approve(address(liquidLux), amount);
+uint256 shares = liquidLux.deposit(amount, msg.sender);
+
+// Withdraw - burns xLUX, returns WLUX
+uint256 assets = liquidLux.withdraw(shares, msg.sender, msg.sender);
+```
+
+**Available L* Tokens:** LETH, LBTC, LUSD, LUSDC, LUSDT, LDAI, LSOL, LTON, LBNB, LPOL, LAVAX, LADA
+
 ### Bridge & Cross-Chain
 
 Cross-chain asset transfers via Warp messaging:
@@ -76,9 +106,6 @@ Cross-chain asset transfers via Warp messaging:
 | **Bridge** | Core bridge with Warp verification | `@luxfi/contracts/bridge/Bridge.sol` |
 | **Teleport** | Token teleportation interface | `@luxfi/contracts/bridge/Teleport.sol` |
 | **LRC20B** | Bridgeable token base | `@luxfi/contracts/bridge/LRC20B.sol` |
-| **LETH** | Bridged ETH on Lux | `@luxfi/contracts/bridge/lux/LETH.sol` |
-| **LUSD** | Lux Dollar stablecoin | `@luxfi/contracts/bridge/lux/LUSD.sol` |
-| **LBTC/LSOL/LTON** | Bridged assets (L-prefix) | `@luxfi/contracts/bridge/lux/*.sol` |
 
 ```solidity
 import "@luxfi/contracts/bridge/Teleport.sol";
@@ -86,29 +113,6 @@ import "@luxfi/contracts/bridge/Teleport.sol";
 // Teleport tokens to another chain
 teleport.send(destChainId, recipient, token, amount);
 ```
-
-### Synths (Self-Repaying Loans)
-
-Deposit yield-bearing collateral, mint synthetic assets, debt repays itself over time:
-
-| Contract | Description |
-|----------|-------------|
-| **SynthVault** | Main vault - deposit, mint, repay |
-| **Transmuter** | 1:1 synth-to-underlying redemption |
-| **SynthToken** | Base LRC20 for synthetics |
-| **sUSD/sETH/sBTC** | Core synthetic assets |
-| **sLUX/sAI/sZOO** | Lux ecosystem synthetics |
-
-```solidity
-import "@luxfi/contracts/synths/SynthVault.sol";
-
-// Deposit yield token, mint synths
-vault.deposit(yieldToken, amount, recipient);
-vault.mint(synthAmount, recipient);
-// Yield automatically repays debt over time
-```
-
-**Available Synths:** sUSD, sETH, sBTC, sLUX, sAI, sZOO, sSOL, sTON, sADA, sAVAX, sBNB, sPOL
 
 ### Perps (Perpetual Trading)
 
@@ -273,8 +277,7 @@ AI token mining and compute marketplace:
 
 | Contract | Description |
 |----------|-------------|
-| **FeeSplitter** | Protocol fee distribution |
-| **SynthFeeSplitter** | Synth-specific fees |
+| **FeeSplitter** | Protocol fee distribution to LiquidLUX |
 | **ValidatorVault** | Validator rewards vault |
 
 ### Account Abstraction
@@ -337,7 +340,7 @@ pnpm build:hardhat
 ### Testing
 
 ```bash
-# Foundry (recommended) - 751+ tests
+# Foundry (recommended) - 709 tests
 forge test
 
 # With verbosity
@@ -369,25 +372,19 @@ Deploy scripts are in `script/`:
 
 ```bash
 # Local deployment (start anvil first)
-anvil &
-forge script script/DeployAll.s.sol --rpc-url localhost --broadcast
+anvil --chain-id 96369 &
+forge script script/DeployFullStack.s.sol --rpc-url localhost --broadcast
 
 # Lux Mainnet
-forge script script/DeployAll.s.sol --rpc-url lux --broadcast --verify
+forge script script/DeployFullStack.s.sol --rpc-url lux --broadcast --verify
 
 # Lux Testnet
-forge script script/DeployAll.s.sol --rpc-url lux_testnet --broadcast --verify
+forge script script/DeployFullStack.s.sol --rpc-url lux_testnet --broadcast --verify
 ```
 
 **Available deploy scripts:**
-- `DeployTokens.s.sol` - Core tokens (LUX, LUSD, AI, WLUX)
-- `DeploySynths.s.sol` - Synths protocol (SynthVault, Transmuter)
-- `DeployPerps.s.sol` - Perpetual trading (Vault, Router, LLP)
-- `DeployAMM.s.sol` - AMM pools (V2, V3)
-- `DeployMarkets.s.sol` - Lending markets
-- `DeployGovernance.s.sol` - DAO & governance
-- `DeployAI.s.sol` - AI mining
-- `DeployAll.s.sol` - Full deployment
+- `DeployFullStack.s.sol` - Complete DeFi stack (12 phases)
+- `DeployAI.s.sol` - AI mining token
 
 #### Hardhat
 
@@ -425,7 +422,7 @@ Full documentation available at [standard.lux.network](https://standard.lux.netw
 - All contracts follow Solidity best practices
 - Built on OpenZeppelin libraries where applicable
 - Post-quantum cryptography for future-proofing
-- Comprehensive test coverage (751+ tests)
+- Comprehensive test coverage (709 tests)
 
 ### Audits
 

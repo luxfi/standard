@@ -1,0 +1,206 @@
+---
+title: Liquid Protocol
+description: Unified yield vault and liquid staking with xLUX
+---
+
+# Liquid Protocol
+
+The Liquid Protocol provides unified yield aggregation through LiquidLUX (xLUX), the master yield vault that receives ALL protocol fees across the Lux ecosystem.
+
+## Overview
+
+The Liquid Protocol enables:
+
+- **Unified Yield**: All protocol fees (DEX, bridge, lending, perps, NFT) flow to xLUX holders
+- **Liquid Staking**: Stake LUX, receive xLUX shares representing your portion of the vault
+- **Governance Power**: xLUX contributes to vLUX voting power
+- **Flash Loans**: ERC-3156 compliant flash loan support
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           LiquidLUX (xLUX)                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  FEE SOURCES:                                                               │
+│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐        │
+│  │  DEX   │ │ Bridge │ │Lending │ │ Perps  │ │ Liquid │ │  NFT   │        │
+│  └────┬───┘ └────┬───┘ └────┬───┘ └────┬───┘ └────┬───┘ └────┬───┘        │
+│       │          │          │          │          │          │             │
+│       └──────────┴──────────┴──────────┴──────────┴──────────┘             │
+│                                    │                                        │
+│                                    ▼                                        │
+│                        ┌───────────────────────┐                           │
+│                        │   FeeSplitter         │                           │
+│                        │   10% → Treasury      │                           │
+│                        │   90% → LiquidLUX     │                           │
+│                        └───────────────────────┘                           │
+│                                    │                                        │
+│                                    ▼                                        │
+│                        ┌───────────────────────┐                           │
+│                        │   LiquidLUX Vault     │                           │
+│                        │   Mints xLUX shares   │                           │
+│                        └───────────────────────┘                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Liquid Tokens (L*)
+
+Bridge tokens on Lux Network use the `L*` prefix:
+
+| Token | Name | Description |
+|-------|------|-------------|
+| **LETH** | Lux ETH | Bridged ETH from Ethereum |
+| **LBTC** | Lux BTC | Bridged BTC |
+| **LUSD** | Lux USD | Bridged stablecoins |
+| **LSOL** | Lux SOL | Bridged SOL |
+| **LTON** | Lux TON | Bridged TON |
+| **LBNB** | Lux BNB | Bridged BNB |
+
+All L* tokens are in `contracts/liquid/tokens/` and inherit from `LRC20B`.
+
+## Core Contracts
+
+| Contract | Purpose |
+|----------|---------|
+| **LiquidLUX** | Master yield vault - receives fees, mints xLUX |
+| **LiquidToken** | Base ERC20 with ERC-3156 flash loans |
+| **LiquidVault** | Cross-chain teleport vault |
+| **FeeSplitter** | Routes protocol fees to LiquidLUX |
+
+## Usage
+
+### Deposit & Get xLUX
+
+```solidity
+import "@luxfi/contracts/liquid/LiquidLUX.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+LiquidLUX liquidLux = LiquidLUX(LIQUID_LUX_ADDRESS);
+IERC20 wlux = IERC20(WLUX_ADDRESS);
+
+// Approve WLUX
+wlux.approve(address(liquidLux), amount);
+
+// Deposit WLUX, receive xLUX shares
+uint256 shares = liquidLux.deposit(amount, msg.sender);
+```
+
+### Withdraw
+
+```solidity
+// Check your xLUX balance
+uint256 xLuxBalance = liquidLux.balanceOf(msg.sender);
+
+// Withdraw - burns xLUX, returns WLUX
+uint256 assets = liquidLux.withdraw(shares, msg.sender, msg.sender);
+```
+
+### Check Yield
+
+```solidity
+// Get current share price (increases as fees accrue)
+uint256 sharePrice = liquidLux.convertToAssets(1e18);
+
+// Get total assets under management
+uint256 totalAssets = liquidLux.totalAssets();
+
+// Get your share of the vault
+uint256 myAssets = liquidLux.convertToAssets(liquidLux.balanceOf(msg.sender));
+```
+
+## Fee Distribution
+
+Protocol fees flow through FeeSplitter to LiquidLUX:
+
+```solidity
+// Fee types
+bytes32 FEE_DEX = keccak256("DEX");
+bytes32 FEE_BRIDGE = keccak256("BRIDGE");
+bytes32 FEE_LENDING = keccak256("LENDING");
+bytes32 FEE_PERPS = keccak256("PERPS");
+bytes32 FEE_LIQUID = keccak256("LIQUID");
+bytes32 FEE_NFT = keccak256("NFT");
+
+// FeeSplitter pushes fees to LiquidLUX
+feeSplitter.pushFeesToLiquidLUX(FEE_DEX);
+```
+
+## Flash Loans
+
+LiquidToken supports ERC-3156 flash loans:
+
+```solidity
+import "@luxfi/contracts/liquid/interfaces/IERC3156FlashLender.sol";
+
+contract FlashBorrower is IERC3156FlashBorrower {
+    function executeFlashLoan(address token, uint256 amount) external {
+        IERC3156FlashLender(token).flashLoan(
+            this,
+            token,
+            amount,
+            ""
+        );
+    }
+
+    function onFlashLoan(
+        address initiator,
+        address token,
+        uint256 amount,
+        uint256 fee,
+        bytes calldata data
+    ) external override returns (bytes32) {
+        // Use the flash loaned tokens
+        // ...
+
+        // Approve repayment
+        IERC20(token).approve(msg.sender, amount + fee);
+        return keccak256("ERC3156FlashBorrower.onFlashLoan");
+    }
+}
+```
+
+## Governance Integration
+
+xLUX contributes to vLUX voting power:
+
+```solidity
+// vLUX = xLUX + DLUX
+// VotingLUX aggregates both sources
+
+import "@luxfi/contracts/governance/VotingLUX.sol";
+
+VotingLUX votingLux = VotingLUX(VOTING_LUX_ADDRESS);
+
+// Get total voting power
+uint256 votingPower = votingLux.getVotes(account);
+```
+
+## Teleport Vaults
+
+Cross-chain yield vaults for bridged assets:
+
+| Contract | Purpose |
+|----------|---------|
+| **LiquidETH** | ETH-specific vault with EigenLayer yield |
+| **LiquidVault** | Generic cross-chain vault |
+| **TeleportVault** | Base teleport functionality |
+
+## Events
+
+```solidity
+event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
+event Withdraw(address indexed sender, address indexed receiver, address indexed owner, uint256 assets, uint256 shares);
+event FeesReceived(bytes32 indexed feeType, uint256 amount);
+```
+
+## Security Considerations
+
+1. **ERC-4626 Compliant**: Standard vault interface
+2. **Non-Custodial**: Users maintain control via shares
+3. **Pausable**: Emergency pause capability
+4. **Access Control**: Role-based permissions for fee distributors
+
+## Related
+
+- [Staking](/docs/defi/staking) - LUX staking (sLUX)
+- [Governance](/docs/governance) - vLUX voting
+- [Treasury](/docs/defi/treasury) - Fee distribution

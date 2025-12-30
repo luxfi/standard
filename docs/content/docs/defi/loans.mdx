@@ -1,28 +1,28 @@
 ---
 title: Loans
-description: Self-repaying loans using yield-bearing collateral
+description: Collateralized borrowing with yield-bearing collateral
 ---
 
 # Loans
 
-Self-repaying loans that use yield from collateral to automatically pay down debt over time.
+Collateralized loans that allow borrowing against yield-bearing assets.
 
 ## How It Works
 
-1. **Deposit** yield-bearing tokens (e.g., staked ETH, yield vaults)
-2. **Borrow** synthetic assets up to 50% of collateral value
-3. **Yield accrues** and automatically pays down your debt
-4. **Withdraw** when debt is paid or redeem synthetics 1:1
+1. **Deposit** yield-bearing tokens (e.g., xLUX, staked assets)
+2. **Borrow** up to 50% of collateral value
+3. **Yield accrues** to your collateral position
+4. **Withdraw** collateral when debt is repaid
 
 ## Key Concepts
 
 ### Collateralization
 - Minimum 200% collateralization (50% LTV)
-- Positions cannot be liquidated by price movements - only by debt ceiling
+- Healthy positions protected from liquidation
 
-### Synthetic Assets
-- **sUSD**: Synthetic dollar, backed by yield-bearing stablecoins
-- **sETH**: Synthetic ETH, backed by yield-bearing ETH
+### Supported Collateral
+- **xLUX**: LiquidLUX vault shares (protocol fee yield)
+- **Staked assets**: sLUX and other yield-bearing tokens
 
 ## Functions
 
@@ -87,22 +87,22 @@ Liquidate underwater positions (when debt exceeds collateral value).
 ## Usage Example
 
 ```solidity
-import "@luxfi/standard/src/Loans.sol";
+import "@luxfi/contracts/lending/Loans.sol";
 
-// Deposit yield-bearing USDC
-IERC20(yieldUSDC).approve(address(loans), amount);
-loans.deposit(yieldUSDC, amount, msg.sender);
+// Deposit xLUX as collateral
+IERC20(xLUX).approve(address(loans), amount);
+loans.deposit(xLUX, amount, msg.sender);
 
-// Mint sUSD (up to 50% of collateral value)
-uint256 maxMint = loans.getMintLimit(msg.sender);
-loans.mint(maxMint / 2, msg.sender);
+// Borrow (up to 50% of collateral value)
+uint256 maxBorrow = loans.getBorrowLimit(msg.sender);
+loans.borrow(maxBorrow / 2, msg.sender);
 
 // Check position
 (int256 debt, address[] memory tokens) = loans.accounts(msg.sender);
 
-// Debt auto-repays from yield over time
-// Eventually withdraw collateral when debt is 0
-loans.withdraw(yieldUSDC, shares, msg.sender);
+// Repay debt and withdraw collateral
+loans.repay(debtAmount, msg.sender);
+loans.withdraw(xLUX, shares, msg.sender);
 ```
 
 ## Account Structure
