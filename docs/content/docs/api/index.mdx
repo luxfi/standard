@@ -24,8 +24,8 @@ Complete contract interface documentation for the Lux Standard Library.
 
 | Contract | Description | Import |
 |----------|-------------|--------|
-| [AlchemistV2](/docs/defi/synths) | Self-repaying loans vault | `@luxfi/contracts/synths/AlchemistV2.sol` |
-| [TransmuterV2](/docs/defi/synths) | 1:1 synth redemption | `@luxfi/contracts/synths/TransmuterV2.sol` |
+| [LiquidLUX | Unified yield vault | `@luxfi/contracts/liquid/LiquidLUX.sol`` |
+| [LiquidToken | Flash loan base token | `@luxfi/contracts/liquid/LiquidToken.sol`` |
 | [Vault](/docs/defi/vault) | Perps liquidity vault | `@luxfi/contracts/perps/core/Vault.sol` |
 | [Router](/docs/defi/router) | Position management | `@luxfi/contracts/perps/core/Router.sol` |
 | [LLP](/docs/defi/perps) | Liquidity provider token | `@luxfi/contracts/perps/tokens/LLP.sol` |
@@ -107,7 +107,7 @@ interface IERC20B is IERC20 {
 
 ### IAlchemistV2
 
-Self-repaying loans interface (synths protocol).
+Unified yield vault interface (Liquid protocol).
 
 ```solidity
 interface IAlchemistV2 {
@@ -284,7 +284,7 @@ event BridgeBurn(address indexed from, uint256 value);
 ### DeFi Events
 
 ```solidity
-// Synths
+// Liquid
 event Deposit(address indexed sender, address indexed yieldToken, uint256 amount, address recipient);
 event Withdraw(address indexed sender, address indexed yieldToken, uint256 shares, address recipient);
 event Mint(address indexed sender, uint256 amount, address recipient);

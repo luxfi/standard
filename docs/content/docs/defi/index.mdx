@@ -32,14 +32,14 @@ Complete decentralized finance infrastructure for Lux Network. One canonical imp
   </Card>
 </Cards>
 
-## Lending & Borrowing
+## Yield & Lending
 
 <Cards>
+  <Card title="Liquid Protocol" href="/docs/defi/liquid">
+    Unified yield vault (xLUX) receiving all protocol fees
+  </Card>
   <Card title="Lending Pools" href="/docs/defi/lending">
     Over-collateralized borrowing, flash loans, and dynamic rates
-  </Card>
-  <Card title="Self-Repaying Loans" href="/docs/defi/loans">
-    Alchemix-style loans using yield-bearing collateral
   </Card>
   <Card title="Minimal Lending" href="/docs/defi/minimal-lending">
     Permissionless, gas-efficient lending architecture
@@ -109,8 +109,8 @@ Complete decentralized finance infrastructure for Lux Network. One canonical imp
 |----------|------|----------|-------------|-------------|
 | **Perpetuals** | Derivatives | 1111x | ✅ | LLP liquidity pool |
 | **Intents** | Trading | - | ✅ | Solver competition |
+| **Liquid** | Yield | - | ✅ | Unified fee vault (xLUX) |
 | **Lending** | Borrowing | - | ✅ | Flash loans (ERC-3156) |
-| **Loans** | Synthetics | - | ✅ | Self-repaying debt |
 | **Omnichain** | Liquidity | - | ✅ | Unified reserves |
 | **NFT Market** | Trading | - | ❌ | Bonding curves |
 | **Farm** | Yield | - | ❌ | Emission rewards |
@@ -156,12 +156,12 @@ intentRouter.submitIntent(SwapIntent({
     recipient: msg.sender, deadline: block.timestamp + 1 hours
 }));
 
-// ===== SELF-REPAYING LOAN =====
-import "@luxfi/standard/src/Loans.sol";
+// ===== LIQUID PROTOCOL =====
+import "@luxfi/contracts/liquid/LiquidLUX.sol";
 
-// Deposit yield-bearing collateral, mint synthetic
-loans.deposit(yLUX, 100 ether, msg.sender);
-loans.mint(50 ether, msg.sender);  // Debt repays itself from yield
+// Deposit WLUX, receive xLUX shares
+wlux.approve(address(liquidLux), amount);
+uint256 shares = liquidLux.deposit(amount, msg.sender);
 ```
 
 ## Chain Support
