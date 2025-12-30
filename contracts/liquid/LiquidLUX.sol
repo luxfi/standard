@@ -437,7 +437,7 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
         uint256 bridge,
         uint256 lending,
         uint256 perps,
-        uint256 synths,
+        uint256 liquid,
         uint256 nft,
         uint256 validator,
         uint256 other

@@ -9,7 +9,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title sLUX - Staked LUX
- * @notice Yield-bearing staked LUX token for Synths protocol
+ * @notice Yield-bearing staked LUX token for Liquid protocol
  * @dev Users stake LUX to receive sLUX which accrues staking rewards
  *
  * LUX FEE ARCHITECTURE (differs from Avalanche):
@@ -28,7 +28,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  * - DAO governs allocation percentages
  * - sLUX receives yield via addRewards() from Protocol Vault
  *
- * sLUX can be used as collateral in LiquidVault to mint sLUX synth
+ * sLUX can be used as collateral in LiquidVault to mint L* tokens
  */
 contract sLUX is ERC20, ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
