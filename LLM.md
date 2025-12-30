@@ -101,6 +101,100 @@ npm install @luxfi/contracts@1.2.0
 
 ---
 
+## Oracle Architecture (2025-12-29)
+
+### Status: ✅ COMPLETE
+
+Unified Oracle system for all Lux DeFi protocols (Perps, Lending, AMM, Flash Loans).
+
+### Core Contracts
+
+| Contract | Path | Purpose |
+|----------|------|---------|
+| **Oracle** | `contracts/oracle/Oracle.sol` | THE main oracle for all DeFi apps |
+| **OracleHub** | `contracts/oracle/OracleHub.sol` | On-chain price hub (written by DEX) |
+| **ChainlinkAdapter** | `contracts/oracle/adapters/ChainlinkAdapter.sol` | Chainlink price feeds |
+| **PythAdapter** | `contracts/oracle/adapters/PythAdapter.sol` | Pyth Network feeds |
+| **TWAPSource** | `contracts/oracle/sources/TWAPSource.sol` | AMM TWAP prices |
+| **DEXSource** | `contracts/oracle/sources/DEXSource.sol` | DEX precompile (0x0400) |
+
+### Interfaces
+
+| Interface | Path | Purpose |
+|-----------|------|---------|
+| **IOracle** | `contracts/oracle/IOracle.sol` | Main oracle interface |
+| **IOracleSource** | `contracts/oracle/interfaces/IOracleSource.sol` | Individual price source |
+| **IOracleWriter** | `contracts/oracle/interfaces/IOracleWriter.sol` | Price writing (DEX) |
+| **IOracleStrategy** | `contracts/oracle/interfaces/IOracleStrategy.sol` | Aggregation strategies |
+
+### Architecture
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│   PRICE SOURCES (IOracleSource)                                          │
+│   ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐      │
+│   │Chainlink │ │   Pyth   │ │  TWAP    │ │   DEX    │ │OracleHub │      │
+│   │ Adapter  │ │ Adapter  │ │ Source   │ │Precompile│ │(written) │      │
+│   └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘      │
+│        └────────────┴────────────┴────────────┴────────────┘            │
+│                                  │                                       │
+│                       ┌──────────▼──────────┐                           │
+│                       │  Oracle.sol         │  ← THE interface           │
+│                       │  (aggregates all)   │                           │
+│                       └──────────┬──────────┘                           │
+│              ┌───────────────────┼───────────────────┐                  │
+│   ┌──────────▼─────────┐ ┌──────▼──────┐ ┌──────────▼─────────┐        │
+│   │      Perps         │ │   Markets   │ │    Flash Loans     │        │
+│   └────────────────────┘ └─────────────┘ └────────────────────┘        │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### Key Features
+
+- **Multi-source aggregation**: Chainlink, Pyth, TWAP, DEX precompile
+- **Aggregation strategies**: Median (default), Mean, Min, Max
+- **Circuit breakers**: 10% max change, 5min cooldown
+- **Perps support**: `getPriceForPerps(asset, maximize)` with spread
+- **Batch queries**: `getPrices(assets[])` for gas efficiency
+- **Health monitoring**: `health()` returns (healthy, sourceCount)
+- **DEX integration**: OracleHub receives prices from DEX gateway
+
+### Usage
+
+```solidity
+import "@luxfi/contracts/oracle/IOracle.sol";
+
+IOracle oracle = IOracle(ORACLE_ADDRESS);
+
+// Simple query
+(uint256 price, uint256 timestamp) = oracle.getPrice(WETH);
+
+// For perps
+uint256 longPrice = oracle.getPriceForPerps(WETH, true);  // maximize
+uint256 shortPrice = oracle.getPriceForPerps(WETH, false); // minimize
+
+// Batch query
+(uint256[] memory prices, ) = oracle.getPrices([WETH, WBTC, LUSD]);
+
+// Health check
+(bool healthy, uint256 sources) = oracle.health();
+```
+
+### DEX Gateway Integration
+
+The DEX gateway (`~/work/lux/dex`) writes prices to OracleHub:
+
+| Source | Weight | Description |
+|--------|--------|-------------|
+| X-Chain | 2.0 | Native DEX orderbook (highest trust) |
+| C-Chain AMM | 1.8 | Liquid tokens (LETH, LBTC, etc.) |
+| Zoo Chain | 1.7 | ZOO token pairs |
+| A-Chain | 1.5 | Validator attestations |
+| Pyth | 1.2 | WebSocket streaming |
+| Chainlink | 1.0 | Reference only |
+
+---
+
 ## FHE Contracts Integration (2025-12-29)
 
 ### Status: ✅ COMPLETE
@@ -126,6 +220,32 @@ FHE contracts from `~/work/luxfhe/` are fully merged into `contracts/fhe/`:
 - Utils library with type constants
 
 **EVM Requirement**: Cancun (for transient storage in FHE operations)
+
+### On-Chain Randomness (FHE)
+
+The FHE library provides secure on-chain random number generation:
+
+```solidity
+import "@luxfi/contracts/fhe/FHE.sol";
+
+// Generate encrypted random numbers
+euint8 rand8 = FHE.randomEuint8();    // 0-255
+euint16 rand16 = FHE.randomEuint16(); // 0-65535
+euint32 rand32 = FHE.randomEuint32(); // 0-4.2B
+euint64 rand64 = FHE.randomEuint64(); // 0-18.4e18
+euint128 rand128 = FHE.randomEuint128();
+
+// With security zone parameter
+euint64 zoned = FHE.randomEuint64(1); // security zone 1
+```
+
+**Implementation**: Uses `ITaskManager(TASK_MANAGER_ADDRESS).createRandomTask()` at `0xeA30c4B8b44078Bbf8a6ef5b9f1eC1626C7848D9` for cryptographically secure randomness.
+
+**Use Cases**:
+- Lotteries and raffles (encrypted tickets)
+- Gaming (verifiable randomness)
+- NFT trait generation
+- Fair distribution mechanisms
 
 ---
 
