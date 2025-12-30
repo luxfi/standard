@@ -1,324 +1,428 @@
 ---
 title: Oracles
-description: Price feeds and oracle integration for DeFi protocols
+description: Unified price feeds for all Lux DeFi protocols
 ---
 
 # Oracles
 
-Decentralized price feeds and oracle infrastructure for Lux DeFi protocols.
+THE standard Oracle system for all Lux DeFi protocols - Perps, Lending, AMM, Flash Loans.
 
-## Overview
-
-The oracle system provides:
-
-- **Multi-Source Aggregation**: Chainlink, Pyth, TWAP combined
-- **Manipulation Resistance**: Time-weighted and median pricing
-- **Cross-Chain Prices**: Unified pricing across all Lux chains
-- **Real-Time Updates**: Sub-second price updates via Warp
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    ORACLE AGGREGATOR                         │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│   ┌──────────┐   ┌──────────┐   ┌──────────┐               │
-│   │Chainlink │   │   Pyth   │   │   TWAP   │               │
-│   │  Feed    │   │  Feed    │   │  (AMM)   │               │
-│   └────┬─────┘   └────┬─────┘   └────┬─────┘               │
-│        │              │              │                      │
-│        └──────────────┼──────────────┘                      │
-│                       │                                      │
-│              ┌────────▼────────┐                            │
-│              │  Median Price   │                            │
-│              │  + Deviation    │                            │
-│              │    Check        │                            │
-│              └────────┬────────┘                            │
-│                       │                                      │
-│              ┌────────▼────────┐                            │
-│              │  Final Price    │                            │
-│              └─────────────────┘                            │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                              ORACLE ARCHITECTURE                                         │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│   PRICE SOURCES (IOracleSource)                                                         │
+│   ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐                 │
+│   │Chainlink │  │   Pyth   │  │  TWAP    │  │   DEX    │  │OracleHub │                 │
+│   │ Adapter  │  │ Adapter  │  │ Source   │  │Precompile│  │(written) │                 │
+│   └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘                 │
+│        │             │             │             │             │                        │
+│        └─────────────┴─────────────┴─────────────┴─────────────┘                        │
+│                                    │                                                     │
+│                         ┌──────────▼──────────┐                                         │
+│                         │  Oracle.sol         │  ← THE interface for DeFi apps          │
+│                         │  (aggregates all)   │                                         │
+│                         └──────────┬──────────┘                                         │
+│                                    │                                                     │
+│            ┌───────────────────────┼───────────────────────┐                            │
+│            │                       │                       │                            │
+│   ┌────────▼────────┐   ┌─────────▼────────┐   ┌─────────▼────────┐                    │
+│   │     Perps       │   │     Markets      │   │    Flash Loans   │                    │
+│   │  VaultPriceFeed │   │ (Morpho-style)   │   │   (Atomic ops)   │                    │
+│   └─────────────────┘   └──────────────────┘   └──────────────────┘                    │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+
+DEX Gateway (~/work/lux/dex) writes prices → OracleHub → read by Oracle.sol
 ```
 
-## Oracle Contracts
+## Core Contracts
 
 | Contract | Path | Purpose |
 |----------|------|---------|
-| **ChainlinkOracle** | `@luxfi/contracts/markets/oracles/ChainlinkOracle.sol` | Chainlink feed integration for Markets |
-| **PythOracle** | `@luxfi/contracts/markets/oracles/PythOracle.sol` | Pyth Network integration for Markets |
-| **VaultPriceFeed** | `@luxfi/contracts/perps/core/VaultPriceFeed.sol` | Multi-source aggregation for Perps |
-| **FastPriceFeed** | `@luxfi/contracts/perps/oracle/FastPriceFeed.sol` | Low-latency price updates for Perps |
-| **PriceAggregator** | `@luxfi/contracts/amm/PriceAggregator.sol` | TWAP from AMM pools |
+| **Oracle** | `contracts/oracle/Oracle.sol` | THE main oracle for all DeFi apps |
+| **OracleHub** | `contracts/oracle/OracleHub.sol` | On-chain price hub (written by DEX) |
+| **ChainlinkAdapter** | `contracts/oracle/adapters/ChainlinkAdapter.sol` | Chainlink price feeds |
+| **PythAdapter** | `contracts/oracle/adapters/PythAdapter.sol` | Pyth Network feeds |
+| **TWAPSource** | `contracts/oracle/sources/TWAPSource.sol` | AMM TWAP prices |
+| **DEXSource** | `contracts/oracle/sources/DEXSource.sol` | DEX precompile (0x0400) |
 
-## Interface
+## Interfaces
+
+| Interface | Path | Purpose |
+|-----------|------|---------|
+| **IOracle** | `contracts/oracle/IOracle.sol` | Main oracle interface |
+| **IOracleSource** | `contracts/oracle/interfaces/IOracleSource.sol` | Individual price source |
+| **IOracleWriter** | `contracts/oracle/interfaces/IOracleWriter.sol` | Price writing (DEX) |
+| **IOracleStrategy** | `contracts/oracle/interfaces/IOracleStrategy.sol` | Aggregation strategies |
+
+## Quick Start
 
 ```solidity
-import "@luxfi/contracts/markets/interfaces/IOracle.sol";
+import "@luxfi/contracts/oracle/IOracle.sol";
 
-/// @notice Oracle interface for Markets price feeds
+contract MyDeFiApp {
+    IOracle public oracle;
+
+    constructor(address _oracle) {
+        oracle = IOracle(_oracle);
+    }
+
+    // Simple price query
+    function getAssetPrice(address asset) public view returns (uint256) {
+        (uint256 price, ) = oracle.getPrice(asset);
+        return price; // 18 decimals, USD
+    }
+
+    // For perps: use maximize param
+    function getPerpsPrice(address asset, bool isLong) public view returns (uint256) {
+        return oracle.getPriceForPerps(asset, isLong);
+    }
+
+    // Batch query for gas efficiency
+    function getMultiplePrices(address[] calldata assets) public view returns (uint256[] memory) {
+        (uint256[] memory prices, ) = oracle.getPrices(assets);
+        return prices;
+    }
+
+    // Check oracle health before critical ops
+    function isOracleHealthy() public view returns (bool) {
+        (bool healthy, uint256 sources) = oracle.health();
+        return healthy && sources >= 2;
+    }
+}
+```
+
+## IOracle Interface
+
+```solidity
 interface IOracle {
-    /// @notice Returns the price of the collateral asset in terms of the loan asset
-    /// @dev Price is scaled by 1e36 (ORACLE_PRICE_SCALE)
-    /// @return The price with 36 decimals of precision
-    function price() external view returns (uint256);
+    // Core price functions
+    function getPrice(address asset) external view returns (uint256 price, uint256 timestamp);
+    function getPriceIfFresh(address asset, uint256 maxAge) external view returns (uint256 price);
+    function price(address asset) external view returns (uint256 price);
+    function isSupported(address asset) external view returns (bool);
+
+    // Batch operations (gas efficient)
+    function getPrices(address[] calldata assets) external view returns (uint256[] memory, uint256[] memory);
+
+    // Perps-specific
+    function getPriceForPerps(address asset, bool maximize) external view returns (uint256 price);
+    function isPriceConsistent(address asset, uint256 maxDeviationBps) external view returns (bool);
+
+    // Health monitoring
+    function health() external view returns (bool healthy, uint256 activeSourceCount);
+    function isCircuitBreakerTripped(address asset) external view returns (bool);
 }
 ```
 
-## PriceOracle
+## Price Sources
 
-Aggregates prices from multiple sources with deviation checks.
+### 1. Chainlink (Push Oracle)
 
 ```solidity
-interface IPriceOracle {
-    /// @notice Get the latest price for an asset
-    /// @param asset The asset address
-    /// @return price The price in USD (18 decimals)
-    /// @return timestamp When the price was updated
-    function getPrice(address asset) external view returns (
-        uint256 price,
-        uint256 timestamp
-    );
+import "@luxfi/contracts/oracle/adapters/ChainlinkAdapter.sol";
 
-    /// @notice Get price with validation
-    /// @param asset The asset address
-    /// @param maxAge Maximum age in seconds
-    /// @return price The validated price
-    function getPriceValidated(address asset, uint256 maxAge)
-        external view returns (uint256 price);
+// Deploy
+ChainlinkAdapter chainlink = new ChainlinkAdapter(
+    3600  // max 1 hour staleness
+);
 
-    /// @notice Check if price is fresh
-    function isPriceFresh(address asset, uint256 maxAge)
-        external view returns (bool);
+// Configure feeds
+chainlink.setFeed(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419); // ETH/USD
+chainlink.setFeed(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c); // BTC/USD
+
+// Get price
+(uint256 price, uint256 timestamp) = chainlink.getPrice(WETH);
+```
+
+### 2. Pyth (Pull Oracle)
+
+```solidity
+import "@luxfi/contracts/oracle/adapters/PythAdapter.sol";
+
+// Pyth price IDs
+bytes32 constant ETH_USD = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
+bytes32 constant BTC_USD = 0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43;
+
+// Deploy
+PythAdapter pyth = new PythAdapter(
+    0x4305FB66699C3B2702D4d05CF36551390A4c69C6, // Pyth contract
+    60  // max 60s staleness
+);
+
+// Configure feeds
+pyth.setFeed(WETH, ETH_USD);
+pyth.setFeed(WBTC, BTC_USD);
+
+// Update prices (required before reading)
+pyth.updatePrices{value: updateFee}(pythUpdateData);
+
+// Get price
+(uint256 price, uint256 timestamp) = pyth.getPrice(WETH);
+```
+
+### 3. TWAP (AMM-based)
+
+```solidity
+import "@luxfi/contracts/oracle/sources/TWAPSource.sol";
+
+// Deploy
+TWAPSource twap = new TWAPSource(
+    USDC,  // quote token
+    6      // USDC decimals
+);
+
+// Configure pairs
+twap.setPair(WETH, WETH_USDC_PAIR);
+twap.setPair(WBTC, WBTC_USDC_PAIR);
+
+// Get TWAP (30 min default)
+(uint256 price, uint256 timestamp) = twap.getPrice(WETH);
+```
+
+### 4. DEX Precompile (Native)
+
+```solidity
+import "@luxfi/contracts/oracle/sources/DEXSource.sol";
+
+// Deploy
+DEXSource dex = new DEXSource(LUSD); // quote token
+
+// Configure pools
+dex.setPool(
+    WETH,           // asset
+    3000,           // fee tier (0.3%)
+    60,             // tick spacing
+    address(0)      // no hooks
+);
+
+// Get spot price from DEX precompile (0x0400)
+(uint256 price, uint256 timestamp) = dex.getPrice(WETH);
+```
+
+### 5. OracleHub (DEX-Written Prices)
+
+The DEX gateway (`~/work/lux/dex`) writes prices to OracleHub:
+
+```solidity
+import "@luxfi/contracts/oracle/OracleHub.sol";
+
+// DEX gateway writes prices
+oracleHub.writePrice(WETH, 4000e18, block.timestamp);
+
+// Or with validator signatures (trustless)
+oracleHub.writeQuorumPrice(signedUpdates, 3); // 3-of-5 quorum
+
+// DeFi apps read via Oracle.sol
+(uint256 price, ) = oracle.getPrice(WETH);
+```
+
+## Aggregation Strategies
+
+```solidity
+import "@luxfi/contracts/oracle/interfaces/IOracleStrategy.sol";
+
+// Available strategies
+MedianStrategy median = new MedianStrategy();  // Default, manipulation-resistant
+MeanStrategy mean = new MeanStrategy();        // Simple average
+MinStrategy min = new MinStrategy();           // Conservative (liquidations)
+MaxStrategy max = new MaxStrategy();           // Aggressive (borrowing limits)
+
+// Set strategy on Oracle
+oracle.setStrategy(IOracleStrategy(address(median)));
+```
+
+## Perps Integration
+
+For perpetual futures, use `getPriceForPerps` with spread:
+
+```solidity
+contract PerpsVault {
+    IOracle public oracle;
+
+    function openPosition(
+        address asset,
+        uint256 size,
+        bool isLong
+    ) external {
+        // Use maximize=true for longs (worse entry price)
+        // Use maximize=false for shorts
+        uint256 entryPrice = oracle.getPriceForPerps(asset, isLong);
+
+        // Check price consistency before large trades
+        require(oracle.isPriceConsistent(asset, 100), "Price deviation >1%");
+
+        // Open position at entry price...
+    }
+
+    function liquidate(address user, address asset) external {
+        // Check circuit breaker before liquidation
+        require(!oracle.isCircuitBreakerTripped(asset), "Circuit breaker active");
+
+        // Get liquidation price
+        (uint256 price, ) = oracle.getPrice(asset);
+
+        // Execute liquidation...
+    }
 }
 ```
 
-### Usage
+## Lending Integration
+
+For Morpho-style lending markets:
 
 ```solidity
-import "@luxfi/standard/src/oracles/PriceOracle.sol";
-
-contract LendingPool {
-    IPriceOracle public oracle;
+contract LendingMarket {
+    IOracle public oracle;
 
     function getCollateralValue(
         address asset,
         uint256 amount
-    ) public view returns (uint256) {
-        (uint256 price,) = oracle.getPrice(asset);
-        return (amount * price) / 1e18;
+    ) public view returns (uint256 valueUsd) {
+        (uint256 price, uint256 timestamp) = oracle.getPrice(asset);
+
+        // Validate freshness for critical operations
+        require(block.timestamp - timestamp < 1 hours, "Stale price");
+
+        valueUsd = (amount * price) / 1e18;
     }
 
-    function isPositionHealthy(
-        address user,
-        address collateral,
-        address debt
-    ) public view returns (bool) {
-        uint256 collateralValue = getCollateralValue(
-            collateral,
-            userCollateral[user]
-        );
-        uint256 debtValue = getCollateralValue(debt, userDebt[user]);
+    function isLiquidatable(address user) public view returns (bool) {
+        // Batch query for gas efficiency
+        address[] memory assets = getUserAssets(user);
+        (uint256[] memory prices, ) = oracle.getPrices(assets);
 
-        return collateralValue * 100 >= debtValue * 150; // 150% collateral ratio
+        // Calculate health factor...
     }
 }
 ```
 
-## TWAP Oracle
+## Flash Loan Safety
 
-Time-weighted average price from AMM pools.
+Oracle provides atomic price guarantees within transactions:
 
 ```solidity
-interface ITWAPOracle {
-    /// @notice Get TWAP over a period
-    /// @param tokenA First token
-    /// @param tokenB Second token
-    /// @param period TWAP period in seconds
-    /// @return price Time-weighted average price
-    function getTWAP(
-        address tokenA,
-        address tokenB,
-        uint256 period
-    ) external view returns (uint256 price);
+contract FlashLoanArbitrage {
+    IOracle public oracle;
 
-    /// @notice Update price accumulator
-    function update(address tokenA, address tokenB) external;
+    function executeArbitrage(
+        address asset,
+        uint256 amount
+    ) external {
+        // Get price at start (view function = atomic)
+        (uint256 startPrice, ) = oracle.getPrice(asset);
 
-    /// @notice Get current spot price
-    function getSpotPrice(address tokenA, address tokenB)
-        external view returns (uint256);
+        // Execute flash loan and swaps...
+
+        // Same price guaranteed within tx
+        (uint256 endPrice, ) = oracle.getPrice(asset);
+        assert(startPrice == endPrice); // Always true within same block
+    }
 }
 ```
 
-### TWAP Calculation
+## DEX Integration
+
+The DEX gateway (`~/work/lux/dex`) provides:
+
+| Source | Weight | Update Interval | Description |
+|--------|--------|-----------------|-------------|
+| X-Chain | 2.0 | 50ms | Native DEX orderbook (highest trust) |
+| C-Chain AMM | 1.8 | 100ms | Liquid tokens (LETH, LBTC, etc.) |
+| Zoo Chain | 1.7 | 100ms | ZOO token pairs |
+| A-Chain | 1.5 | 100-200ms | Validator attestations |
+| Pyth | 1.2 | Real-time | WebSocket streaming |
+| Chainlink | 1.0 | ~1s | Reference only |
+
+The DEX aggregates all sources and writes to OracleHub via:
+- `writePrice()` - Keeper-based updates
+- `writeSignedPrice()` - Single validator signature
+- `writeQuorumPrice()` - Multi-validator consensus
+
+## Circuit Breakers
+
+Automatic protection against price manipulation:
 
 ```solidity
-// Get 30-minute TWAP for LUX/USDC
-uint256 twap = twapOracle.getTWAP(WLUX, USDC, 30 minutes);
-
-// Compare with spot for manipulation detection
-uint256 spot = twapOracle.getSpotPrice(WLUX, USDC);
-
-// Deviation check
-uint256 deviation = spot > twap
-    ? ((spot - twap) * 100) / twap
-    : ((twap - spot) * 100) / twap;
-
-require(deviation < 5, "Price manipulation detected");
-```
-
-## Chainlink Integration
-
-```solidity
-import "@luxfi/contracts/markets/oracles/ChainlinkOracle.sol";
-
-// Deploy oracle for ETH/USDC market
-ChainlinkOracle oracle = new ChainlinkOracle(
-    0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, // ETH/USD Chainlink feed
-    address(0),                                   // USDC is USD-denominated
-    18,                                           // ETH decimals
-    6,                                            // USDC decimals
-    3600                                          // 1 hour max staleness
+// Oracle configuration
+oracle.setCircuitBreakerConfig(
+    1000,     // 10% max price change
+    5 minutes // cooldown period
 );
 
-// Get price (scaled to 1e36)
-uint256 ethPriceInUsdc = oracle.price();
+// Check before critical operations
+if (oracle.isCircuitBreakerTripped(asset)) {
+    revert("Circuit breaker active, try later");
+}
+
+// Manual reset by guardian
+oracle.resetCircuitBreaker(asset);
 ```
 
-### ChainlinkOracle Constructor
+## Health Monitoring
 
 ```solidity
-constructor(
-    address _baseFeed,        // Chainlink feed for collateral (e.g., ETH/USD)
-    address _quoteFeed,       // Chainlink feed for loan asset (address(0) if USD)
-    uint8 _baseTokenDecimals, // Decimals of collateral token
-    uint8 _quoteTokenDecimals,// Decimals of loan token
-    uint256 _maxStaleness     // Maximum age of price data in seconds
-)
+// Check overall health
+(bool healthy, uint256 sourceCount) = oracle.health();
+require(healthy && sourceCount >= 2, "Oracle unhealthy");
+
+// Check individual source health
+(bool srcHealthy, uint256 lastHb) = chainlinkAdapter.health();
 ```
 
-## Pyth Integration
+## Gas Optimization
 
 ```solidity
-import "@luxfi/contracts/markets/oracles/PythOracle.sol";
+// BAD: Multiple individual calls
+uint256 ethPrice = oracle.price(WETH);
+uint256 btcPrice = oracle.price(WBTC);
+uint256 luxPrice = oracle.price(LUX);
 
-// Pyth price feed IDs (from pyth.network)
-bytes32 constant ETH_USD = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
-bytes32 constant BTC_USD = 0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43;
+// GOOD: Single batch call
+address[] memory assets = new address[](3);
+assets[0] = WETH;
+assets[1] = WBTC;
+assets[2] = LUX;
 
-// Deploy oracle for ETH/USDC market
-PythOracle oracle = new PythOracle(
-    0x4305FB66699C3B2702D4d05CF36551390A4c69C6, // Pyth contract (mainnet)
-    ETH_USD,                                      // ETH/USD price feed ID
-    bytes32(0),                                   // USDC is USD-denominated
-    18,                                           // ETH decimals
-    6,                                            // USDC decimals
-    60                                            // 60 second max staleness
+(uint256[] memory prices, ) = oracle.getPrices(assets);
+```
+
+## Deployment
+
+```solidity
+// 1. Deploy strategies
+MedianStrategy medianStrategy = new MedianStrategy();
+
+// 2. Deploy main Oracle
+Oracle oracle = new Oracle(address(medianStrategy));
+
+// 3. Deploy and add sources
+ChainlinkAdapter chainlink = new ChainlinkAdapter(3600);
+PythAdapter pyth = new PythAdapter(PYTH_CONTRACT, 60);
+TWAPSource twap = new TWAPSource(USDC, 6);
+DEXSource dex = new DEXSource(LUSD);
+OracleHub hub = new OracleHub();
+
+oracle.addSource(IOracleSource(address(chainlink)));
+oracle.addSource(IOracleSource(address(pyth)));
+oracle.addSource(IOracleSource(address(twap)));
+oracle.addSource(IOracleSource(address(dex)));
+oracle.addSource(IOracleSource(address(hub)));
+
+// 4. Configure
+oracle.setConfig(
+    1 hours,  // maxAge
+    500,      // maxDeviationBps (5%)
+    2         // minSources
 );
 
-// Get price (scaled to 1e36)
-uint256 ethPriceInUsdc = oracle.price();
+// 5. Grant DEX gateway writer access to OracleHub
+hub.addWriter(DEX_GATEWAY);
 ```
-
-### PythOracle Constructor
-
-```solidity
-constructor(
-    address _pyth,             // Pyth oracle contract address
-    bytes32 _baseFeedId,       // Pyth feed ID for collateral (e.g., ETH/USD)
-    bytes32 _quoteFeedId,      // Pyth feed ID for loan token (bytes32(0) if USD)
-    uint8 _baseTokenDecimals,  // Decimals of collateral token
-    uint8 _quoteTokenDecimals, // Decimals of loan token
-    uint256 _maxStaleness      // Maximum age of price data in seconds
-)
-```
-
-### Pyth Price Update
-
-Pyth requires explicit price updates. Include update data in your transaction:
-
-```solidity
-// Frontend: fetch update data from Pyth API
-// const updateData = await connection.getPriceFeedsUpdateData([ETH_USD]);
-
-// Contract: update before reading
-pyth.updatePriceFeeds{value: updateFee}(updateData);
-uint256 price = oracle.price();
-```
-
-## Cross-Chain Oracle
-
-Propagate prices across chains via Warp.
-
-```solidity
-contract CrossChainOracle {
-    IWarpMessenger constant WARP = IWarpMessenger(0x0200000000000000000000000000000000000008);
-
-    mapping(address => uint256) public prices;
-    mapping(address => uint256) public timestamps;
-
-    bytes32 public trustedSourceChain;
-    address public trustedPriceRelayer;
-
-    /// @notice Receive price update from another chain
-    function receivePriceUpdate(uint32 warpIndex) external {
-        WarpMessage memory message = WARP.getVerifiedWarpMessage(warpIndex);
-
-        require(message.sourceChainID == trustedSourceChain, "Untrusted chain");
-        require(message.originSenderAddress == trustedPriceRelayer, "Untrusted relayer");
-
-        (address[] memory assets, uint256[] memory newPrices, uint256 timestamp) =
-            abi.decode(message.payload, (address[], uint256[], uint256));
-
-        for (uint i = 0; i < assets.length; i++) {
-            prices[assets[i]] = newPrices[i];
-            timestamps[assets[i]] = timestamp;
-        }
-    }
-
-    /// @notice Broadcast prices to other chains
-    function broadcastPrices(address[] calldata assets) external {
-        uint256[] memory currentPrices = new uint256[](assets.length);
-
-        for (uint i = 0; i < assets.length; i++) {
-            (currentPrices[i],) = mainOracle.getPrice(assets[i]);
-        }
-
-        bytes memory payload = abi.encode(assets, currentPrices, block.timestamp);
-        WARP.sendWarpMessage(payload);
-    }
-}
-```
-
-## Supported Assets
-
-| Asset | Sources | Update Frequency |
-|-------|---------|------------------|
-| LUX | Chainlink, TWAP | 1 min |
-| LUXD | Chainlink, Pyth | 1 min |
-| WETH | Chainlink, Pyth, TWAP | 10 sec |
-| WBTC | Chainlink, Pyth | 10 sec |
-| USDC | Chainlink, Pyth | 1 min |
-| USDT | Chainlink, Pyth | 1 min |
-| AI | TWAP | 1 min |
-
-## Price Feed Addresses
-
-```solidity
-// C-Chain Price Feeds
-address constant ORACLE = 0x...;
-address constant LUX_USD_FEED = 0x...;
-address constant ETH_USD_FEED = 0x...;
-address constant BTC_USD_FEED = 0x...;
-```
-
-## Best Practices
-
-1. **Always validate freshness**: Check `timestamp` against `maxAge`
-2. **Use multiple sources**: Aggregate Chainlink + TWAP for resilience
-3. **Deviation checks**: Compare sources, reject if deviation > 5%
-4. **Fallback handling**: Have backup sources if primary fails
-5. **Gas optimization**: Cache prices when possible
 
 ## Security Considerations
 
@@ -326,11 +430,14 @@ address constant BTC_USD_FEED = 0x...;
 |------|------------|
 | Stale prices | Freshness checks with maxAge |
 | Flash loan manipulation | TWAP over 30+ minutes |
-| Single source failure | Multi-source aggregation |
-| Front-running | Commit-reveal for sensitive ops |
+| Single source failure | Multi-source aggregation (minSources=2) |
+| Price manipulation | Median aggregation + deviation checks |
+| Oracle downtime | Multiple sources + fallback logic |
+| Large price swings | Circuit breakers (10% max change) |
 
 ## Related
 
+- [Perpetuals](/docs/defi/perps) - Uses `getPriceForPerps` with spread
 - [Lending](/docs/defi/lending) - Uses oracles for collateral valuation
-- [Perpetuals](/docs/defi/perps) - Uses oracles for mark price
-- [Liquidations](/docs/defi/lending#liquidation) - Oracle-triggered liquidations
+- [AMM](/docs/defi/amm) - TWAP source integration
+- [DEX Precompile](/docs/crypto/dex) - Native on-chain pricing at 0x0400
