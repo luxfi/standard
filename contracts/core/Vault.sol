@@ -48,8 +48,8 @@ contract Vault is Ownable, ReentrancyGuard {
     /// @notice Underlying collateral token (e.g., USDC, WETH)
     IERC20 public immutable underlying;
 
-    /// @notice Liquidetic token that can be minted (e.g., sUSD)
-    address public synth;
+    /// @notice Liquid token that can be minted (e.g., LUSD)
+    address public liquidToken;
 
     /// @notice Treasury for fees
     address public treasury;
@@ -107,11 +107,11 @@ contract Vault is Ownable, ReentrancyGuard {
 
     constructor(
         address _underlying,
-        address _synth,
+        address _liquidToken,
         address _treasury
     ) Ownable(msg.sender) {
         underlying = IERC20(_underlying);
-        synth = _synth;
+        liquidToken = _liquidToken;
         treasury = _treasury;
     }
 
@@ -190,10 +190,10 @@ contract Vault is Ownable, ReentrancyGuard {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // SYNTH MINTING
+    // LIQUID TOKEN MINTING
     // ═══════════════════════════════════════════════════════════════════════
 
-    /// @notice Mint synthetic tokens against collateral
+    /// @notice Mint liquid tokens against collateral
     /// @param amount Amount of liquid tokens to mint
     function mint(uint256 amount) external nonReentrant {
         if (amount == 0) revert ZeroAmount();
@@ -210,12 +210,12 @@ contract Vault is Ownable, ReentrancyGuard {
         totalDebt += amount;
 
         // Mint liquid tokens
-        ILiquidMinter(synth).mint(msg.sender, amount);
+        ILiquidMinter(liquidToken).mint(msg.sender, amount);
 
         emit Minted(msg.sender, amount);
     }
 
-    /// @notice Burn synthetic tokens to reduce debt
+    /// @notice Burn liquid tokens to reduce debt
     /// @param amount Amount of liquid tokens to burn
     function burn(uint256 amount) external nonReentrant {
         if (amount == 0) revert ZeroAmount();
@@ -224,7 +224,7 @@ contract Vault is Ownable, ReentrancyGuard {
         }
 
         // Burn liquid tokens
-        ILiquidMinter(synth).burnFrom(msg.sender, amount);
+        ILiquidMinter(liquidToken).burnFrom(msg.sender, amount);
 
         // Update debt
         deposits[msg.sender].debt -= amount;
@@ -254,7 +254,7 @@ contract Vault is Ownable, ReentrancyGuard {
         uint256 shares = userDeposit.shares;
 
         // Burn liquid tokens from liquidator
-        ILiquidMinter(synth).burnFrom(msg.sender, debt);
+        ILiquidMinter(liquidToken).burnFrom(msg.sender, debt);
 
         // Calculate collateral to give liquidator (debt value + 10% bonus)
         uint256 collateralReward = debt * 11000 / BASIS_POINTS;
@@ -524,7 +524,7 @@ contract Vault is Ownable, ReentrancyGuard {
     }
 }
 
-/// @notice Interface for synth minting
+/// @notice Interface for liquid token minting
 interface ILiquidMinter {
     function mint(address to, uint256 amount) external;
     function burnFrom(address from, uint256 amount) external;
