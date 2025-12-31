@@ -1919,7 +1919,7 @@ library FHE {
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
-    function decrypt(ebool input1) internal {
+    function requestDecrypt(ebool input1) internal {
         if (!_isInit(input1)) {
             input1 = asEbool(false);
         }
@@ -1929,7 +1929,7 @@ library FHE {
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
-    function decrypt(euint8 input1) internal {
+    function requestDecrypt(euint8 input1) internal {
         if (!_isInit(input1)) {
             input1 = asEuint8(0);
         }
@@ -1939,7 +1939,7 @@ library FHE {
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
-    function decrypt(euint16 input1) internal {
+    function requestDecrypt(euint16 input1) internal {
         if (!_isInit(input1)) {
             input1 = asEuint16(0);
         }
@@ -1949,7 +1949,7 @@ library FHE {
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
-    function decrypt(euint32 input1) internal {
+    function requestDecrypt(euint32 input1) internal {
         if (!_isInit(input1)) {
             input1 = asEuint32(0);
         }
@@ -1959,7 +1959,7 @@ library FHE {
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
-    function decrypt(euint64 input1) internal {
+    function requestDecrypt(euint64 input1) internal {
         if (!_isInit(input1)) {
             input1 = asEuint64(0);
         }
@@ -1969,7 +1969,7 @@ library FHE {
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
-    function decrypt(euint128 input1) internal {
+    function requestDecrypt(euint128 input1) internal {
         if (!_isInit(input1)) {
             input1 = asEuint128(0);
         }
@@ -1980,7 +1980,7 @@ library FHE {
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
-    function decrypt(euint256 input1) internal {
+    function requestDecrypt(euint256 input1) internal {
         if (!_isInit(euint256.unwrap(input1))) {
             input1 = asEuint256(0);
         }
@@ -1991,7 +1991,7 @@ library FHE {
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
-    function decrypt(eaddress input1) internal {
+    function requestDecrypt(eaddress input1) internal {
         if (!_isInit(input1)) {
             input1 = asEaddress(address(0));
         }
@@ -1999,49 +1999,51 @@ library FHE {
         FHENetwork.decrypt(eaddress.unwrap(input1));
     }
 
-    // ===== Synchronous Decrypt Functions =====
-    // These combine decrypt + getDecryptResult for simple use cases
-    // They work when the T-Chain precompile supports synchronous decryption
+    // ===== Decrypt with Return Value =====
+    // These request decryption and immediately retrieve the result.
+    // For multi-step flows, use requestDecrypt() + getDecryptResult().
 
-    /// @notice Synchronously decrypt an ebool to bool
-    function syncDecrypt(ebool input) internal returns (bool) {
-        decrypt(input);
+    /// @notice Decrypt an ebool and return the plaintext value
+    /// @param input The encrypted boolean
+    /// @return The decrypted boolean value
+    function reveal(ebool input) internal returns (bool) {
+        requestDecrypt(input);
         return getDecryptResult(input);
     }
 
-    /// @notice Synchronously decrypt a euint8 to uint8
-    function syncDecrypt(euint8 input) internal returns (uint8) {
-        decrypt(input);
+    /// @notice Decrypt a euint8 and return the plaintext value
+    function reveal(euint8 input) internal returns (uint8) {
+        requestDecrypt(input);
         return getDecryptResult(input);
     }
 
-    /// @notice Synchronously decrypt a euint16 to uint16
-    function syncDecrypt(euint16 input) internal returns (uint16) {
-        decrypt(input);
+    /// @notice Decrypt a euint16 and return the plaintext value
+    function reveal(euint16 input) internal returns (uint16) {
+        requestDecrypt(input);
         return getDecryptResult(input);
     }
 
-    /// @notice Synchronously decrypt a euint32 to uint32
-    function syncDecrypt(euint32 input) internal returns (uint32) {
-        decrypt(input);
+    /// @notice Decrypt a euint32 and return the plaintext value
+    function reveal(euint32 input) internal returns (uint32) {
+        requestDecrypt(input);
         return getDecryptResult(input);
     }
 
-    /// @notice Synchronously decrypt a euint64 to uint64
-    function syncDecrypt(euint64 input) internal returns (uint64) {
-        decrypt(input);
+    /// @notice Decrypt a euint64 and return the plaintext value
+    function reveal(euint64 input) internal returns (uint64) {
+        requestDecrypt(input);
         return getDecryptResult(input);
     }
 
-    /// @notice Synchronously decrypt a euint128 to uint128
-    function syncDecrypt(euint128 input) internal returns (uint128) {
-        decrypt(input);
+    /// @notice Decrypt a euint128 and return the plaintext value
+    function reveal(euint128 input) internal returns (uint128) {
+        requestDecrypt(input);
         return getDecryptResult(input);
     }
 
-    /// @notice Synchronously decrypt an eaddress to address
-    function syncDecrypt(eaddress input) internal returns (address) {
-        decrypt(input);
+    /// @notice Decrypt an eaddress and return the plaintext value
+    function reveal(eaddress input) internal returns (address) {
+        requestDecrypt(input);
         return getDecryptResult(input);
     }
 
@@ -2893,7 +2895,7 @@ library FHE {
     }
 
     // ======== Encrypted Input (einput) Conversion Functions ========
-    
+
     /// @notice Converts an encrypted input to ebool
     /// @param encryptedInput The encrypted input handle
     /// @param inputProof The ZK proof validating the input
@@ -4309,12 +4311,12 @@ library BindingsEuint64 {
     function lte(euint64 lhs, euint64 rhs) internal returns (ebool) {
         return FHE.lte(lhs, rhs);
     }
-    
+
     /// @notice Alias for lte (less than or equal)
     function le(euint64 lhs, euint64 rhs) internal returns (ebool) {
         return FHE.lte(lhs, rhs);
     }
-    
+
     /// @notice Alias for gte (greater than or equal)
     function ge(euint64 lhs, euint64 rhs) internal returns (ebool) {
         return FHE.gte(lhs, rhs);
