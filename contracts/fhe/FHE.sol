@@ -9,7 +9,7 @@ import {FHECommon} from "./FHECommon.sol";
 // T-Chain network interface in FHENetwork.sol
 import {FHENetwork} from "./FHENetwork.sol";
 // Interfaces and structs from IFHE.sol
-import {FunctionId, ITaskManager, Utils, EncryptedInput, Ebool, Euint8, Euint16, Euint32, Euint64, Euint128, Euint256, Eaddress, SealedBool, SealedUint, SealedAddress} from "./IFHE.sol";
+import {FunctionId, IFHENetwork, Utils, EncryptedInput, Ebool, Euint8, Euint16, Euint32, Euint64, Euint128, Euint256, Eaddress, SealedBool, SealedUint, SealedAddress} from "./IFHE.sol";
 
 // ===== Encrypted Value Types =====
 // Types must be defined here (not imported) for "using ... global" to work
@@ -1919,7 +1919,7 @@ library FHE {
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
-    function requestDecrypt(ebool input1) internal {
+    function decrypt(ebool input1) internal {
         if (!_isInit(input1)) {
             input1 = asEbool(false);
         }
@@ -1929,7 +1929,7 @@ library FHE {
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
-    function requestDecrypt(euint8 input1) internal {
+    function decrypt(euint8 input1) internal {
         if (!_isInit(input1)) {
             input1 = asEuint8(0);
         }
@@ -1939,7 +1939,7 @@ library FHE {
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
-    function requestDecrypt(euint16 input1) internal {
+    function decrypt(euint16 input1) internal {
         if (!_isInit(input1)) {
             input1 = asEuint16(0);
         }
@@ -1949,7 +1949,7 @@ library FHE {
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
-    function requestDecrypt(euint32 input1) internal {
+    function decrypt(euint32 input1) internal {
         if (!_isInit(input1)) {
             input1 = asEuint32(0);
         }
@@ -1959,7 +1959,7 @@ library FHE {
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
-    function requestDecrypt(euint64 input1) internal {
+    function decrypt(euint64 input1) internal {
         if (!_isInit(input1)) {
             input1 = asEuint64(0);
         }
@@ -1969,7 +1969,7 @@ library FHE {
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
-    function requestDecrypt(euint128 input1) internal {
+    function decrypt(euint128 input1) internal {
         if (!_isInit(input1)) {
             input1 = asEuint128(0);
         }
@@ -1980,7 +1980,7 @@ library FHE {
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
-    function requestDecrypt(euint256 input1) internal {
+    function decrypt(euint256 input1) internal {
         if (!_isInit(euint256.unwrap(input1))) {
             input1 = asEuint256(0);
         }
@@ -1991,7 +1991,7 @@ library FHE {
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
-    function requestDecrypt(eaddress input1) internal {
+    function decrypt(eaddress input1) internal {
         if (!_isInit(input1)) {
             input1 = asEaddress(address(0));
         }
@@ -1999,198 +1999,157 @@ library FHE {
         FHENetwork.decrypt(eaddress.unwrap(input1));
     }
 
-    // ===== Decrypt with Return Value =====
-    // These request decryption and immediately retrieve the result.
-    // For multi-step flows, use requestDecrypt() + getDecryptResult().
-
-    /// @notice Decrypt an ebool and return the plaintext value
-    /// @param input The encrypted boolean
-    /// @return The decrypted boolean value
-    function reveal(ebool input) internal returns (bool) {
-        requestDecrypt(input);
-        return getDecryptResult(input);
-    }
-
-    /// @notice Decrypt a euint8 and return the plaintext value
-    function reveal(euint8 input) internal returns (uint8) {
-        requestDecrypt(input);
-        return getDecryptResult(input);
-    }
-
-    /// @notice Decrypt a euint16 and return the plaintext value
-    function reveal(euint16 input) internal returns (uint16) {
-        requestDecrypt(input);
-        return getDecryptResult(input);
-    }
-
-    /// @notice Decrypt a euint32 and return the plaintext value
-    function reveal(euint32 input) internal returns (uint32) {
-        requestDecrypt(input);
-        return getDecryptResult(input);
-    }
-
-    /// @notice Decrypt a euint64 and return the plaintext value
-    function reveal(euint64 input) internal returns (uint64) {
-        requestDecrypt(input);
-        return getDecryptResult(input);
-    }
-
-    /// @notice Decrypt a euint128 and return the plaintext value
-    function reveal(euint128 input) internal returns (uint128) {
-        requestDecrypt(input);
-        return getDecryptResult(input);
-    }
-
-    /// @notice Decrypt an eaddress and return the plaintext value
-    function reveal(eaddress input) internal returns (address) {
-        requestDecrypt(input);
-        return getDecryptResult(input);
-    }
+    // ===== Reveal =====
+    // Get the result of a previous decrypt() call.
+    // Pattern: FHE.decrypt(value) → wait → FHE.reveal(value)
 
     /// @notice Gets the decrypted value from a previously decrypted ebool ciphertext
-    /// @dev This function will revert if the ciphertext is not yet decrypted. Use getDecryptResultSafe for a non-reverting version.
-    /// @param input1 The ebool ciphertext to get the decrypted value from
+    /// @dev This function will revert if the ciphertext is not yet decrypted. Use revealSafe for a non-reverting version.
+    /// @param input The ebool ciphertext to get the decrypted value from
     /// @return The decrypted boolean value
-    function getDecryptResult(ebool input1) internal view returns (bool) {
-        uint256 result = FHENetwork.getDecryptResult(ebool.unwrap(input1));
+    function reveal(ebool input) internal view returns (bool) {
+        uint256 result = FHENetwork.reveal(ebool.unwrap(input));
         return result != 0;
     }
 
     /// @notice Gets the decrypted value from a previously decrypted euint8 ciphertext
-    /// @dev This function will revert if the ciphertext is not yet decrypted. Use getDecryptResultSafe for a non-reverting version.
-    /// @param input1 The euint8 ciphertext to get the decrypted value from
+    /// @dev This function will revert if the ciphertext is not yet decrypted. Use revealSafe for a non-reverting version.
+    /// @param input The euint8 ciphertext to get the decrypted value from
     /// @return The decrypted uint8 value
-    function getDecryptResult(euint8 input1) internal view returns (uint8) {
-        return uint8(FHENetwork.getDecryptResult(euint8.unwrap(input1)));
+    function reveal(euint8 input) internal view returns (uint8) {
+        return uint8(FHENetwork.reveal(euint8.unwrap(input)));
     }
 
     /// @notice Gets the decrypted value from a previously decrypted euint16 ciphertext
-    /// @dev This function will revert if the ciphertext is not yet decrypted. Use getDecryptResultSafe for a non-reverting version.
-    /// @param input1 The euint16 ciphertext to get the decrypted value from
+    /// @dev This function will revert if the ciphertext is not yet decrypted. Use revealSafe for a non-reverting version.
+    /// @param input The euint16 ciphertext to get the decrypted value from
     /// @return The decrypted uint16 value
-    function getDecryptResult(euint16 input1) internal view returns (uint16) {
-        return uint16(FHENetwork.getDecryptResult(euint16.unwrap(input1)));
+    function reveal(euint16 input) internal view returns (uint16) {
+        return uint16(FHENetwork.reveal(euint16.unwrap(input)));
     }
 
     /// @notice Gets the decrypted value from a previously decrypted euint32 ciphertext
-    /// @dev This function will revert if the ciphertext is not yet decrypted. Use getDecryptResultSafe for a non-reverting version.
-    /// @param input1 The euint32 ciphertext to get the decrypted value from
+    /// @dev This function will revert if the ciphertext is not yet decrypted. Use revealSafe for a non-reverting version.
+    /// @param input The euint32 ciphertext to get the decrypted value from
     /// @return The decrypted uint32 value
-    function getDecryptResult(euint32 input1) internal view returns (uint32) {
-        return uint32(FHENetwork.getDecryptResult(euint32.unwrap(input1)));
+    function reveal(euint32 input) internal view returns (uint32) {
+        return uint32(FHENetwork.reveal(euint32.unwrap(input)));
     }
 
     /// @notice Gets the decrypted value from a previously decrypted euint64 ciphertext
-    /// @dev This function will revert if the ciphertext is not yet decrypted. Use getDecryptResultSafe for a non-reverting version.
-    /// @param input1 The euint64 ciphertext to get the decrypted value from
+    /// @dev This function will revert if the ciphertext is not yet decrypted. Use revealSafe for a non-reverting version.
+    /// @param input The euint64 ciphertext to get the decrypted value from
     /// @return The decrypted uint64 value
-    function getDecryptResult(euint64 input1) internal view returns (uint64) {
-        return uint64(FHENetwork.getDecryptResult(euint64.unwrap(input1)));
+    function reveal(euint64 input) internal view returns (uint64) {
+        return uint64(FHENetwork.reveal(euint64.unwrap(input)));
     }
 
     /// @notice Gets the decrypted value from a previously decrypted euint128 ciphertext
-    /// @dev This function will revert if the ciphertext is not yet decrypted. Use getDecryptResultSafe for a non-reverting version.
-    /// @param input1 The euint128 ciphertext to get the decrypted value from
+    /// @dev This function will revert if the ciphertext is not yet decrypted. Use revealSafe for a non-reverting version.
+    /// @param input The euint128 ciphertext to get the decrypted value from
     /// @return The decrypted uint128 value
-    function getDecryptResult(euint128 input1) internal view returns (uint128) {
-        return uint128(FHENetwork.getDecryptResult(euint128.unwrap(input1)));
+    function reveal(euint128 input) internal view returns (uint128) {
+        return uint128(FHENetwork.reveal(euint128.unwrap(input)));
     }
 
     /// @notice Gets the decrypted value from a previously decrypted eaddress ciphertext
-    /// @dev This function will revert if the ciphertext is not yet decrypted. Use getDecryptResultSafe for a non-reverting version.
-    /// @param input1 The eaddress ciphertext to get the decrypted value from
+    /// @dev This function will revert if the ciphertext is not yet decrypted. Use revealSafe for a non-reverting version.
+    /// @param input The eaddress ciphertext to get the decrypted value from
     /// @return The decrypted address value
-    function getDecryptResult(eaddress input1) internal view returns (address) {
-        return address(uint160(FHENetwork.getDecryptResult(eaddress.unwrap(input1))));
+    function reveal(eaddress input) internal view returns (address) {
+        return address(uint160(FHENetwork.reveal(eaddress.unwrap(input))));
     }
 
     /// @notice Gets the decrypted value from a previously decrypted raw ciphertext
-    /// @dev This function will revert if the ciphertext is not yet decrypted. Use getDecryptResultSafe for a non-reverting version.
-    /// @param input1 The raw ciphertext to get the decrypted value from
+    /// @dev This function will revert if the ciphertext is not yet decrypted. Use revealSafe for a non-reverting version.
+    /// @param input The raw ciphertext to get the decrypted value from
     /// @return The decrypted uint256 value
-    function getDecryptResult(uint256 input1) internal view returns (uint256) {
-        return FHENetwork.getDecryptResult(input1);
+    function reveal(uint256 input) internal view returns (uint256) {
+        return FHENetwork.reveal(input);
     }
+
+    // ===== RevealSafe =====
+    // Safely get result without reverting if not yet decrypted.
+    // Returns (value, isReady) tuple.
 
     /// @notice Safely gets the decrypted value from an ebool ciphertext
     /// @dev Returns the decrypted value and a flag indicating whether the decryption has finished
-    /// @param input1 The ebool ciphertext to get the decrypted value from
+    /// @param input The ebool ciphertext to get the decrypted value from
     /// @return result The decrypted boolean value
-    /// @return decrypted Flag indicating if the value was successfully decrypted
-    function getDecryptResultSafe(ebool input1) internal view returns (bool result, bool decrypted) {
-        (uint256 _result, bool _decrypted) = FHENetwork.getDecryptResultSafe(ebool.unwrap(input1));
-        return (_result != 0, _decrypted);
+    /// @return ready Flag indicating if the value was successfully decrypted
+    function revealSafe(ebool input) internal view returns (bool result, bool ready) {
+        (uint256 _result, bool _ready) = FHENetwork.revealSafe(ebool.unwrap(input));
+        return (_result != 0, _ready);
     }
 
     /// @notice Safely gets the decrypted value from a euint8 ciphertext
     /// @dev Returns the decrypted value and a flag indicating whether the decryption has finished
-    /// @param input1 The euint8 ciphertext to get the decrypted value from
+    /// @param input The euint8 ciphertext to get the decrypted value from
     /// @return result The decrypted uint8 value
-    /// @return decrypted Flag indicating if the value was successfully decrypted
-    function getDecryptResultSafe(euint8 input1) internal view returns (uint8 result, bool decrypted) {
-        (uint256 _result, bool _decrypted) = FHENetwork.getDecryptResultSafe(euint8.unwrap(input1));
-        return (uint8(_result), _decrypted);
+    /// @return ready Flag indicating if the value was successfully decrypted
+    function revealSafe(euint8 input) internal view returns (uint8 result, bool ready) {
+        (uint256 _result, bool _ready) = FHENetwork.revealSafe(euint8.unwrap(input));
+        return (uint8(_result), _ready);
     }
 
     /// @notice Safely gets the decrypted value from a euint16 ciphertext
     /// @dev Returns the decrypted value and a flag indicating whether the decryption has finished
-    /// @param input1 The euint16 ciphertext to get the decrypted value from
+    /// @param input The euint16 ciphertext to get the decrypted value from
     /// @return result The decrypted uint16 value
-    /// @return decrypted Flag indicating if the value was successfully decrypted
-    function getDecryptResultSafe(euint16 input1) internal view returns (uint16 result, bool decrypted) {
-        (uint256 _result, bool _decrypted) = FHENetwork.getDecryptResultSafe(euint16.unwrap(input1));
-        return (uint16(_result), _decrypted);
+    /// @return ready Flag indicating if the value was successfully decrypted
+    function revealSafe(euint16 input) internal view returns (uint16 result, bool ready) {
+        (uint256 _result, bool _ready) = FHENetwork.revealSafe(euint16.unwrap(input));
+        return (uint16(_result), _ready);
     }
 
     /// @notice Safely gets the decrypted value from a euint32 ciphertext
     /// @dev Returns the decrypted value and a flag indicating whether the decryption has finished
-    /// @param input1 The euint32 ciphertext to get the decrypted value from
+    /// @param input The euint32 ciphertext to get the decrypted value from
     /// @return result The decrypted uint32 value
-    /// @return decrypted Flag indicating if the value was successfully decrypted
-    function getDecryptResultSafe(euint32 input1) internal view returns (uint32 result, bool decrypted) {
-        (uint256 _result, bool _decrypted) = FHENetwork.getDecryptResultSafe(euint32.unwrap(input1));
-        return (uint32(_result), _decrypted);
+    /// @return ready Flag indicating if the value was successfully decrypted
+    function revealSafe(euint32 input) internal view returns (uint32 result, bool ready) {
+        (uint256 _result, bool _ready) = FHENetwork.revealSafe(euint32.unwrap(input));
+        return (uint32(_result), _ready);
     }
 
     /// @notice Safely gets the decrypted value from a euint64 ciphertext
     /// @dev Returns the decrypted value and a flag indicating whether the decryption has finished
-    /// @param input1 The euint64 ciphertext to get the decrypted value from
+    /// @param input The euint64 ciphertext to get the decrypted value from
     /// @return result The decrypted uint64 value
-    /// @return decrypted Flag indicating if the value was successfully decrypted
-    function getDecryptResultSafe(euint64 input1) internal view returns (uint64 result, bool decrypted) {
-        (uint256 _result, bool _decrypted) = FHENetwork.getDecryptResultSafe(euint64.unwrap(input1));
-        return (uint64(_result), _decrypted);
+    /// @return ready Flag indicating if the value was successfully decrypted
+    function revealSafe(euint64 input) internal view returns (uint64 result, bool ready) {
+        (uint256 _result, bool _ready) = FHENetwork.revealSafe(euint64.unwrap(input));
+        return (uint64(_result), _ready);
     }
 
     /// @notice Safely gets the decrypted value from a euint128 ciphertext
     /// @dev Returns the decrypted value and a flag indicating whether the decryption has finished
-    /// @param input1 The euint128 ciphertext to get the decrypted value from
+    /// @param input The euint128 ciphertext to get the decrypted value from
     /// @return result The decrypted uint128 value
-    /// @return decrypted Flag indicating if the value was successfully decrypted
-    function getDecryptResultSafe(euint128 input1) internal view returns (uint128 result, bool decrypted) {
-        (uint256 _result, bool _decrypted) = FHENetwork.getDecryptResultSafe(euint128.unwrap(input1));
-        return (uint128(_result), _decrypted);
+    /// @return ready Flag indicating if the value was successfully decrypted
+    function revealSafe(euint128 input) internal view returns (uint128 result, bool ready) {
+        (uint256 _result, bool _ready) = FHENetwork.revealSafe(euint128.unwrap(input));
+        return (uint128(_result), _ready);
     }
-
 
     /// @notice Safely gets the decrypted value from an eaddress ciphertext
     /// @dev Returns the decrypted value and a flag indicating whether the decryption has finished
-    /// @param input1 The eaddress ciphertext to get the decrypted value from
+    /// @param input The eaddress ciphertext to get the decrypted value from
     /// @return result The decrypted address value
-    /// @return decrypted Flag indicating if the value was successfully decrypted
-    function getDecryptResultSafe(eaddress input1) internal view returns (address result, bool decrypted) {
-        (uint256 _result, bool _decrypted) = FHENetwork.getDecryptResultSafe(eaddress.unwrap(input1));
-        return (address(uint160(_result)), _decrypted);
+    /// @return ready Flag indicating if the value was successfully decrypted
+    function revealSafe(eaddress input) internal view returns (address result, bool ready) {
+        (uint256 _result, bool _ready) = FHENetwork.revealSafe(eaddress.unwrap(input));
+        return (address(uint160(_result)), _ready);
     }
 
     /// @notice Safely gets the decrypted value from a raw ciphertext
     /// @dev Returns the decrypted value and a flag indicating whether the decryption has finished
-    /// @param input1 The raw ciphertext to get the decrypted value from
+    /// @param input The raw ciphertext to get the decrypted value from
     /// @return result The decrypted uint256 value
-    /// @return decrypted Flag indicating if the value was successfully decrypted
-    function getDecryptResultSafe(uint256 input1) internal view returns (uint256 result, bool decrypted) {
-        (uint256 _result, bool _decrypted) = FHENetwork.getDecryptResultSafe(input1);
-        return (_result, _decrypted);
+    /// @return ready Flag indicating if the value was successfully decrypted
+    function revealSafe(uint256 input) internal view returns (uint256 result, bool ready) {
+        (uint256 _result, bool _ready) = FHENetwork.revealSafe(input);
+        return (_result, _ready);
     }
 
     /// @notice Performs a multiplexer operation between two ebool values based on a selector
@@ -2949,7 +2908,7 @@ library FHE {
     /// @param ctHash The encrypted boolean value to grant access to
     /// @param account The address being granted permission
     function allow(ebool ctHash, address account) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(ebool.unwrap(ctHash), account);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(ebool.unwrap(ctHash), account);
     }
 
     /// @notice Grants permission to an account to operate on the encrypted 8-bit unsigned integer
@@ -2957,7 +2916,7 @@ library FHE {
     /// @param ctHash The encrypted uint8 value to grant access to
     /// @param account The address being granted permission
     function allow(euint8 ctHash, address account) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint8.unwrap(ctHash), account);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(euint8.unwrap(ctHash), account);
     }
 
     /// @notice Grants permission to an account to operate on the encrypted 16-bit unsigned integer
@@ -2965,7 +2924,7 @@ library FHE {
     /// @param ctHash The encrypted uint16 value to grant access to
     /// @param account The address being granted permission
     function allow(euint16 ctHash, address account) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint16.unwrap(ctHash), account);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(euint16.unwrap(ctHash), account);
     }
 
     /// @notice Grants permission to an account to operate on the encrypted 32-bit unsigned integer
@@ -2973,7 +2932,7 @@ library FHE {
     /// @param ctHash The encrypted uint32 value to grant access to
     /// @param account The address being granted permission
     function allow(euint32 ctHash, address account) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint32.unwrap(ctHash), account);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(euint32.unwrap(ctHash), account);
     }
 
     /// @notice Grants permission to an account to operate on the encrypted 64-bit unsigned integer
@@ -2981,7 +2940,7 @@ library FHE {
     /// @param ctHash The encrypted uint64 value to grant access to
     /// @param account The address being granted permission
     function allow(euint64 ctHash, address account) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint64.unwrap(ctHash), account);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(euint64.unwrap(ctHash), account);
     }
 
     /// @notice Grants permission to an account to operate on the encrypted 128-bit unsigned integer
@@ -2989,7 +2948,7 @@ library FHE {
     /// @param ctHash The encrypted uint128 value to grant access to
     /// @param account The address being granted permission
     function allow(euint128 ctHash, address account) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint128.unwrap(ctHash), account);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(euint128.unwrap(ctHash), account);
     }
 
     /// @notice Grants permission to an account to operate on the encrypted address
@@ -2997,56 +2956,56 @@ library FHE {
     /// @param ctHash The encrypted address value to grant access to
     /// @param account The address being granted permission
     function allow(eaddress ctHash, address account) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(eaddress.unwrap(ctHash), account);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(eaddress.unwrap(ctHash), account);
     }
 
     /// @notice Grants global permission to operate on the encrypted boolean value
     /// @dev Allows all accounts to access the ciphertext
     /// @param ctHash The encrypted boolean value to grant global access to
     function allowGlobal(ebool ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allowGlobal(ebool.unwrap(ctHash));
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allowGlobal(ebool.unwrap(ctHash));
     }
 
     /// @notice Grants global permission to operate on the encrypted 8-bit unsigned integer
     /// @dev Allows all accounts to access the ciphertext
     /// @param ctHash The encrypted uint8 value to grant global access to
     function allowGlobal(euint8 ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allowGlobal(euint8.unwrap(ctHash));
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allowGlobal(euint8.unwrap(ctHash));
     }
 
     /// @notice Grants global permission to operate on the encrypted 16-bit unsigned integer
     /// @dev Allows all accounts to access the ciphertext
     /// @param ctHash The encrypted uint16 value to grant global access to
     function allowGlobal(euint16 ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allowGlobal(euint16.unwrap(ctHash));
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allowGlobal(euint16.unwrap(ctHash));
     }
 
     /// @notice Grants global permission to operate on the encrypted 32-bit unsigned integer
     /// @dev Allows all accounts to access the ciphertext
     /// @param ctHash The encrypted uint32 value to grant global access to
     function allowGlobal(euint32 ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allowGlobal(euint32.unwrap(ctHash));
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allowGlobal(euint32.unwrap(ctHash));
     }
 
     /// @notice Grants global permission to operate on the encrypted 64-bit unsigned integer
     /// @dev Allows all accounts to access the ciphertext
     /// @param ctHash The encrypted uint64 value to grant global access to
     function allowGlobal(euint64 ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allowGlobal(euint64.unwrap(ctHash));
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allowGlobal(euint64.unwrap(ctHash));
     }
 
     /// @notice Grants global permission to operate on the encrypted 128-bit unsigned integer
     /// @dev Allows all accounts to access the ciphertext
     /// @param ctHash The encrypted uint128 value to grant global access to
     function allowGlobal(euint128 ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allowGlobal(euint128.unwrap(ctHash));
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allowGlobal(euint128.unwrap(ctHash));
     }
 
     /// @notice Grants global permission to operate on the encrypted address
     /// @dev Allows all accounts to access the ciphertext
     /// @param ctHash The encrypted address value to grant global access to
     function allowGlobal(eaddress ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allowGlobal(eaddress.unwrap(ctHash));
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allowGlobal(eaddress.unwrap(ctHash));
     }
 
     /// @notice Checks if an account has permission to operate on the encrypted boolean value
@@ -3055,7 +3014,7 @@ library FHE {
     /// @param account The address to check permissions for
     /// @return True if the account has permission, false otherwise
     function isAllowed(ebool ctHash, address account) internal returns (bool) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).isAllowed(ebool.unwrap(ctHash), account);
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).isAllowed(ebool.unwrap(ctHash), account);
     }
 
     /// @notice Checks if an account has permission to operate on the encrypted 8-bit unsigned integer
@@ -3064,7 +3023,7 @@ library FHE {
     /// @param account The address to check permissions for
     /// @return True if the account has permission, false otherwise
     function isAllowed(euint8 ctHash, address account) internal returns (bool) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).isAllowed(euint8.unwrap(ctHash), account);
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).isAllowed(euint8.unwrap(ctHash), account);
     }
 
     /// @notice Checks if an account has permission to operate on the encrypted 16-bit unsigned integer
@@ -3073,7 +3032,7 @@ library FHE {
     /// @param account The address to check permissions for
     /// @return True if the account has permission, false otherwise
     function isAllowed(euint16 ctHash, address account) internal returns (bool) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).isAllowed(euint16.unwrap(ctHash), account);
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).isAllowed(euint16.unwrap(ctHash), account);
     }
 
     /// @notice Checks if an account has permission to operate on the encrypted 32-bit unsigned integer
@@ -3082,7 +3041,7 @@ library FHE {
     /// @param account The address to check permissions for
     /// @return True if the account has permission, false otherwise
     function isAllowed(euint32 ctHash, address account) internal returns (bool) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).isAllowed(euint32.unwrap(ctHash), account);
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).isAllowed(euint32.unwrap(ctHash), account);
     }
 
     /// @notice Checks if an account has permission to operate on the encrypted 64-bit unsigned integer
@@ -3091,7 +3050,7 @@ library FHE {
     /// @param account The address to check permissions for
     /// @return True if the account has permission, false otherwise
     function isAllowed(euint64 ctHash, address account) internal returns (bool) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).isAllowed(euint64.unwrap(ctHash), account);
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).isAllowed(euint64.unwrap(ctHash), account);
     }
 
     /// @notice Checks if an account has permission to operate on the encrypted 128-bit unsigned integer
@@ -3100,7 +3059,7 @@ library FHE {
     /// @param account The address to check permissions for
     /// @return True if the account has permission, false otherwise
     function isAllowed(euint128 ctHash, address account) internal returns (bool) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).isAllowed(euint128.unwrap(ctHash), account);
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).isAllowed(euint128.unwrap(ctHash), account);
     }
 
 
@@ -3110,7 +3069,7 @@ library FHE {
     /// @param account The address to check permissions for
     /// @return True if the account has permission, false otherwise
     function isAllowed(eaddress ctHash, address account) internal returns (bool) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).isAllowed(eaddress.unwrap(ctHash), account);
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).isAllowed(eaddress.unwrap(ctHash), account);
     }
 
     // isSenderAllowed functions - check if msg.sender is allowed
@@ -3140,98 +3099,98 @@ library FHE {
     /// @dev Allows this contract to access the ciphertext
     /// @param ctHash The encrypted boolean value to grant access to
     function allowThis(ebool ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(ebool.unwrap(ctHash), address(this));
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(ebool.unwrap(ctHash), address(this));
     }
 
     /// @notice Grants permission to the current contract to operate on the encrypted 8-bit unsigned integer
     /// @dev Allows this contract to access the ciphertext
     /// @param ctHash The encrypted uint8 value to grant access to
     function allowThis(euint8 ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint8.unwrap(ctHash), address(this));
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(euint8.unwrap(ctHash), address(this));
     }
 
     /// @notice Grants permission to the current contract to operate on the encrypted 16-bit unsigned integer
     /// @dev Allows this contract to access the ciphertext
     /// @param ctHash The encrypted uint16 value to grant access to
     function allowThis(euint16 ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint16.unwrap(ctHash), address(this));
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(euint16.unwrap(ctHash), address(this));
     }
 
     /// @notice Grants permission to the current contract to operate on the encrypted 32-bit unsigned integer
     /// @dev Allows this contract to access the ciphertext
     /// @param ctHash The encrypted uint32 value to grant access to
     function allowThis(euint32 ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint32.unwrap(ctHash), address(this));
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(euint32.unwrap(ctHash), address(this));
     }
 
     /// @notice Grants permission to the current contract to operate on the encrypted 64-bit unsigned integer
     /// @dev Allows this contract to access the ciphertext
     /// @param ctHash The encrypted uint64 value to grant access to
     function allowThis(euint64 ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint64.unwrap(ctHash), address(this));
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(euint64.unwrap(ctHash), address(this));
     }
 
     /// @notice Grants permission to the current contract to operate on the encrypted 128-bit unsigned integer
     /// @dev Allows this contract to access the ciphertext
     /// @param ctHash The encrypted uint128 value to grant access to
     function allowThis(euint128 ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint128.unwrap(ctHash), address(this));
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(euint128.unwrap(ctHash), address(this));
     }
 
     /// @notice Grants permission to the current contract to operate on the encrypted address
     /// @dev Allows this contract to access the ciphertext
     /// @param ctHash The encrypted address value to grant access to
     function allowThis(eaddress ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(eaddress.unwrap(ctHash), address(this));
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(eaddress.unwrap(ctHash), address(this));
     }
 
     /// @notice Grants permission to the message sender to operate on the encrypted boolean value
     /// @dev Allows the transaction sender to access the ciphertext
     /// @param ctHash The encrypted boolean value to grant access to
     function allowSender(ebool ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(ebool.unwrap(ctHash), msg.sender);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(ebool.unwrap(ctHash), msg.sender);
     }
 
     /// @notice Grants permission to the message sender to operate on the encrypted 8-bit unsigned integer
     /// @dev Allows the transaction sender to access the ciphertext
     /// @param ctHash The encrypted uint8 value to grant access to
     function allowSender(euint8 ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint8.unwrap(ctHash), msg.sender);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(euint8.unwrap(ctHash), msg.sender);
     }
 
     /// @notice Grants permission to the message sender to operate on the encrypted 16-bit unsigned integer
     /// @dev Allows the transaction sender to access the ciphertext
     /// @param ctHash The encrypted uint16 value to grant access to
     function allowSender(euint16 ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint16.unwrap(ctHash), msg.sender);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(euint16.unwrap(ctHash), msg.sender);
     }
 
     /// @notice Grants permission to the message sender to operate on the encrypted 32-bit unsigned integer
     /// @dev Allows the transaction sender to access the ciphertext
     /// @param ctHash The encrypted uint32 value to grant access to
     function allowSender(euint32 ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint32.unwrap(ctHash), msg.sender);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(euint32.unwrap(ctHash), msg.sender);
     }
 
     /// @notice Grants permission to the message sender to operate on the encrypted 64-bit unsigned integer
     /// @dev Allows the transaction sender to access the ciphertext
     /// @param ctHash The encrypted uint64 value to grant access to
     function allowSender(euint64 ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint64.unwrap(ctHash), msg.sender);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(euint64.unwrap(ctHash), msg.sender);
     }
 
     /// @notice Grants permission to the message sender to operate on the encrypted 128-bit unsigned integer
     /// @dev Allows the transaction sender to access the ciphertext
     /// @param ctHash The encrypted uint128 value to grant access to
     function allowSender(euint128 ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint128.unwrap(ctHash), msg.sender);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(euint128.unwrap(ctHash), msg.sender);
     }
 
     /// @notice Grants permission to the message sender to operate on the encrypted address
     /// @dev Allows the transaction sender to access the ciphertext
     /// @param ctHash The encrypted address value to grant access to
     function allowSender(eaddress ctHash) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(eaddress.unwrap(ctHash), msg.sender);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allow(eaddress.unwrap(ctHash), msg.sender);
     }
 
     /// @notice Grants temporary permission to an account to operate on the encrypted boolean value
@@ -3239,7 +3198,7 @@ library FHE {
     /// @param ctHash The encrypted boolean value to grant temporary access to
     /// @param account The address being granted temporary permission
     function allowTransient(ebool ctHash, address account) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allowTransient(ebool.unwrap(ctHash), account);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allowTransient(ebool.unwrap(ctHash), account);
     }
 
     /// @notice Grants temporary permission to an account to operate on the encrypted 8-bit unsigned integer
@@ -3247,7 +3206,7 @@ library FHE {
     /// @param ctHash The encrypted uint8 value to grant temporary access to
     /// @param account The address being granted temporary permission
     function allowTransient(euint8 ctHash, address account) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allowTransient(euint8.unwrap(ctHash), account);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allowTransient(euint8.unwrap(ctHash), account);
     }
 
     /// @notice Grants temporary permission to an account to operate on the encrypted 16-bit unsigned integer
@@ -3255,7 +3214,7 @@ library FHE {
     /// @param ctHash The encrypted uint16 value to grant temporary access to
     /// @param account The address being granted temporary permission
     function allowTransient(euint16 ctHash, address account) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allowTransient(euint16.unwrap(ctHash), account);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allowTransient(euint16.unwrap(ctHash), account);
     }
 
     /// @notice Grants temporary permission to an account to operate on the encrypted 32-bit unsigned integer
@@ -3263,7 +3222,7 @@ library FHE {
     /// @param ctHash The encrypted uint32 value to grant temporary access to
     /// @param account The address being granted temporary permission
     function allowTransient(euint32 ctHash, address account) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allowTransient(euint32.unwrap(ctHash), account);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allowTransient(euint32.unwrap(ctHash), account);
     }
 
     /// @notice Grants temporary permission to an account to operate on the encrypted 64-bit unsigned integer
@@ -3271,7 +3230,7 @@ library FHE {
     /// @param ctHash The encrypted uint64 value to grant temporary access to
     /// @param account The address being granted temporary permission
     function allowTransient(euint64 ctHash, address account) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allowTransient(euint64.unwrap(ctHash), account);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allowTransient(euint64.unwrap(ctHash), account);
     }
 
     /// @notice Grants temporary permission to an account to operate on the encrypted 128-bit unsigned integer
@@ -3279,7 +3238,7 @@ library FHE {
     /// @param ctHash The encrypted uint128 value to grant temporary access to
     /// @param account The address being granted temporary permission
     function allowTransient(euint128 ctHash, address account) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allowTransient(euint128.unwrap(ctHash), account);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allowTransient(euint128.unwrap(ctHash), account);
     }
 
     /// @notice Grants temporary permission to an account to operate on the encrypted address
@@ -3287,7 +3246,7 @@ library FHE {
     /// @param ctHash The encrypted address value to grant temporary access to
     /// @param account The address being granted temporary permission
     function allowTransient(eaddress ctHash, address account) internal {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).allowTransient(eaddress.unwrap(ctHash), account);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).allowTransient(eaddress.unwrap(ctHash), account);
     }
 
     // ********** SEALED OUTPUTS ************* //
