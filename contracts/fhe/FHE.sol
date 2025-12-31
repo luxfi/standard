@@ -1,11 +1,19 @@
 // SPDX-License-Identifier: MIT
+// FHE.sol - Lux FHE Library for encrypted computation on the T-Chain
 // solhint-disable one-contract-per-file
-
 pragma solidity >=0.8.19 <0.9.0;
 
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+// ===== Split File Imports =====
+// Common utilities in FHECommon.sol
+import {FHECommon} from "./FHECommon.sol";
+// T-Chain network interface in FHENetwork.sol
+import {FHENetwork} from "./FHENetwork.sol";
+// Interfaces and structs from IFHE.sol
 import {FunctionId, ITaskManager, Utils, EncryptedInput, Ebool, Euint8, Euint16, Euint32, Euint64, Euint128, Euint256, Eaddress, SealedBool, SealedUint, SealedAddress} from "./IFHE.sol";
 
+// ===== Encrypted Value Types =====
+// Types must be defined here (not imported) for "using ... global" to work
+// This is a Solidity language limitation
 type ebool is uint256;
 type euint8 is uint256;
 type euint16 is uint256;
@@ -16,197 +24,62 @@ type euint256 is uint256;
 type eaddress is uint256;
 type einput is bytes32;
 
-// ================================
-// \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/
-// TODO : CHANGE ME AFTER DEPLOYING
-// /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\
-// ================================
-//solhint-disable const-name-snakecase
-address constant TASK_MANAGER_ADDRESS = 0xeA30c4B8b44078Bbf8a6ef5b9f1eC1626C7848D9;
+// ===== T-Chain FHE Gateway Address =====
+// This is the gateway address for FHE operations on the Lux T-Chain (Threshold Chain)
+// The T-Chain is powered by ThresholdVM and provides FHE compute
+address constant T_CHAIN_FHE_ADDRESS = 0xeA30c4B8b44078Bbf8a6ef5b9f1eC1626C7848D9;
 
-library Common {
-    error InvalidHexCharacter(bytes1 char);
-    error SecurityZoneOutOfBounds(int32 value);
-
-    // Default value for temp hash calculation in unary operations
-    string private constant DEFAULT_VALUE = "0";
-
-    function convertInt32ToUint256(int32 value) internal pure returns (uint256) {
-        if (value < 0) {
-            revert SecurityZoneOutOfBounds(value);
-        }
-        return uint256(uint32(value));
-    }
-
-    function isInitialized(uint256 hash) internal pure returns (bool) {
-        return hash != 0;
-    }
-
-    // Return true if the encrypted integer is initialized and false otherwise.
-    function isInitialized(ebool v) internal pure returns (bool) {
-        return isInitialized(ebool.unwrap(v));
-    }
-
-    // Return true if the encrypted integer is initialized and false otherwise.
-    function isInitialized(euint8 v) internal pure returns (bool) {
-        return isInitialized(euint8.unwrap(v));
-    }
-
-    // Return true if the encrypted integer is initialized and false otherwise.
-    function isInitialized(euint16 v) internal pure returns (bool) {
-        return isInitialized(euint16.unwrap(v));
-    }
-
-    // Return true if the encrypted integer is initialized and false otherwise.
-    function isInitialized(euint32 v) internal pure returns (bool) {
-        return isInitialized(euint32.unwrap(v));
-    }
-
-    // Return true if the encrypted integer is initialized and false otherwise.
-    function isInitialized(euint64 v) internal pure returns (bool) {
-        return isInitialized(euint64.unwrap(v));
-    }
-
-    // Return true if the encrypted integer is initialized and false otherwise.
-    function isInitialized(euint128 v) internal pure returns (bool) {
-        return isInitialized(euint128.unwrap(v));
-    }
-
-
-    function isInitialized(eaddress v) internal pure returns (bool) {
-        return isInitialized(eaddress.unwrap(v));
-    }
-
-    function createUint256Inputs(uint256 input1) internal pure returns (uint256[] memory) {
-        uint256[] memory inputs = new uint256[](1);
-        inputs[0] = input1;
-        return inputs;
-    }
-
-    function createUint256Inputs(uint256 input1, uint256 input2) internal pure returns (uint256[] memory) {
-        uint256[] memory inputs = new uint256[](2);
-        inputs[0] = input1;
-        inputs[1] = input2;
-        return inputs;
-    }
-
-    function createUint256Inputs(uint256 input1, uint256 input2, uint256 input3) internal pure returns (uint256[] memory) {
-        uint256[] memory inputs = new uint256[](3);
-        inputs[0] = input1;
-        inputs[1] = input2;
-        inputs[2] = input3;
-        return inputs;
-    }
-}
-
-library Impl {
-    function trivialEncrypt(uint256 value, uint8 toType, int32 securityZone) internal returns (uint256) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).createTask(toType, FunctionId.trivialEncrypt, new uint256[](0), Common.createUint256Inputs(value, toType, Common.convertInt32ToUint256(securityZone)));
-    }
-
-    function cast(uint256 key, uint8 toType) internal returns (uint256) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).createTask(toType, FunctionId.cast, Common.createUint256Inputs(key), Common.createUint256Inputs(toType));
-    }
-
-    function select(uint8 returnType, ebool control, uint256 ifTrue, uint256 ifFalse) internal returns (uint256 result) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).createTask(returnType,
-            FunctionId.select,
-            Common.createUint256Inputs(ebool.unwrap(control), ifTrue, ifFalse),
-            new uint256[](0));
-    }
-
-    function mathOp(uint8 returnType, uint256 lhs, uint256 rhs, FunctionId functionId) internal returns (uint256) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).createTask(returnType, functionId, Common.createUint256Inputs(lhs, rhs), new uint256[](0));
-    }
-
-    function decrypt(uint256 input) internal returns (uint256) {
-        ITaskManager(TASK_MANAGER_ADDRESS).createDecryptTask(input, msg.sender);
-        return input;
-    }
-
-    function getDecryptResult(uint256 input) internal view returns (uint256) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).getDecryptResult(input);
-    }
-
-    function getDecryptResultSafe(uint256 input) internal view returns (uint256 result, bool decrypted) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).getDecryptResultSafe(input);
-    }
-
-    function not(uint8 returnType, uint256 input) internal returns (uint256) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).createTask(returnType, FunctionId.not, Common.createUint256Inputs(input), new uint256[](0));
-    }
-
-    function square(uint8 returnType, uint256 input) internal returns (uint256) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).createTask(returnType, FunctionId.square, Common.createUint256Inputs(input), new uint256[](0));
-    }
-
-    function verifyInput(EncryptedInput memory input) internal returns (uint256) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).verifyInput(input, msg.sender);
-    }
-
-    /// @notice Verifies an encrypted input handle with proof
-    /// @param handle The encrypted input handle (from einput)
-    /// @param proof The ZK proof validating the input
-    /// @param utype The expected type of the encrypted value
-    /// @return The verified ciphertext handle
-    function verifyInput(uint256 handle, bytes memory proof, uint8 utype) internal returns (uint256) {
-        // Create EncryptedInput struct from the handle and proof
-        // The proof contains: ctHash (32) + securityZone (1) + utype (1) + signature (variable)
-        require(proof.length >= 34, "Invalid proof length");
-        
-        // For simplicity, we verify and return the handle
-        // In production, this would do full ZK verification
-        EncryptedInput memory input = EncryptedInput({
-            ctHash: handle,
-            securityZone: 0,
-            utype: utype,
-            signature: proof
-        });
-        return ITaskManager(TASK_MANAGER_ADDRESS).verifyInput(input, msg.sender);
-    }
-
-    /// @notice Generates a random value of a given type with the given seed, for the provided securityZone
-    /// @dev Calls the desired function
-    /// @param uintType the type of the random value to generate
-    /// @param seed the seed to use to create a random value from
-    /// @param securityZone the security zone to use for the random value
-    function random(uint8 uintType, uint256 seed, int32 securityZone) internal returns (uint256) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).createRandomTask(uintType, seed, securityZone);
-    }
-
-    /// @notice Generates a random value of a given type with the given seed
-    /// @dev Calls the desired function
-    /// @param uintType the type of the random value to generate
-    /// @param seed the seed to use to create a random value from
-    function random(uint8 uintType, uint256 seed) internal returns (uint256) {
-        return random(uintType, seed, 0);
-    }
-
-    /// @notice Generates a random value of a given type
-    /// @dev Calls the desired function
-    /// @param uintType the type of the random value to generate
-    function random(uint8 uintType) internal returns (uint256) {
-        return random(uintType, 0, 0);
-    }
-}
-
+/// @title FHE
+/// @notice Main library for FHE operations on the Lux T-Chain (Threshold Chain)
+/// @dev The T-Chain is powered by ThresholdVM and provides FHE compute
 library FHE {
 
     error InvalidEncryptedInput(uint8 got, uint8 expected);
+
+    // ===== Internal isInitialized helpers =====
+    // These wrap FHECommon.isInitialized(uint256) for typed values
+    function _isInit(uint256 v) private pure returns (bool) { return FHECommon.isInitialized(v); }
+    function _isInit(ebool v) private pure returns (bool) { return FHECommon.isInitialized(ebool.unwrap(v)); }
+    function _isInit(euint8 v) private pure returns (bool) { return FHECommon.isInitialized(euint8.unwrap(v)); }
+    function _isInit(euint16 v) private pure returns (bool) { return FHECommon.isInitialized(euint16.unwrap(v)); }
+    function _isInit(euint32 v) private pure returns (bool) { return FHECommon.isInitialized(euint32.unwrap(v)); }
+    function _isInit(euint64 v) private pure returns (bool) { return FHECommon.isInitialized(euint64.unwrap(v)); }
+    function _isInit(euint128 v) private pure returns (bool) { return FHECommon.isInitialized(euint128.unwrap(v)); }
+    function _isInit(euint256 v) private pure returns (bool) { return FHECommon.isInitialized(euint256.unwrap(v)); }
+    function _isInit(eaddress v) private pure returns (bool) { return FHECommon.isInitialized(eaddress.unwrap(v)); }
+
+    // ===== Public isInitialized - for developer convenience =====
+    /// @notice Check if an encrypted boolean is initialized (non-zero ciphertext hash)
+    function isInitialized(ebool v) internal pure returns (bool) { return _isInit(v); }
+    /// @notice Check if an encrypted uint8 is initialized
+    function isInitialized(euint8 v) internal pure returns (bool) { return _isInit(v); }
+    /// @notice Check if an encrypted uint16 is initialized
+    function isInitialized(euint16 v) internal pure returns (bool) { return _isInit(v); }
+    /// @notice Check if an encrypted uint32 is initialized
+    function isInitialized(euint32 v) internal pure returns (bool) { return _isInit(v); }
+    /// @notice Check if an encrypted uint64 is initialized
+    function isInitialized(euint64 v) internal pure returns (bool) { return _isInit(v); }
+    /// @notice Check if an encrypted uint128 is initialized
+    function isInitialized(euint128 v) internal pure returns (bool) { return _isInit(v); }
+    /// @notice Check if an encrypted uint256 is initialized
+    function isInitialized(euint256 v) internal pure returns (bool) { return _isInit(v); }
+    /// @notice Check if an encrypted address is initialized
+    function isInitialized(eaddress v) internal pure returns (bool) { return _isInit(v); }
+
     /// @notice Perform the addition operation on two parameters of type euint8
     /// @dev Verifies that inputs are initialized, performs encrypted addition
     /// @param lhs input of type euint8
     /// @param rhs second input of type euint8
     /// @return result of type euint8 containing the addition result
     function add(euint8 lhs, euint8 rhs) internal returns (euint8) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.add));
+        return euint8.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.add));
     }
 
     /// @notice Perform the addition operation on two parameters of type euint16
@@ -215,14 +88,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type euint16 containing the addition result
     function add(euint16 lhs, euint16 rhs) internal returns (euint16) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.add));
+        return euint16.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.add));
     }
 
     /// @notice Perform the addition operation on two parameters of type euint32
@@ -231,14 +104,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type euint32 containing the addition result
     function add(euint32 lhs, euint32 rhs) internal returns (euint32) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.add));
+        return euint32.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.add));
     }
 
     /// @notice Perform the addition operation on two parameters of type euint64
@@ -247,14 +120,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type euint64 containing the addition result
     function add(euint64 lhs, euint64 rhs) internal returns (euint64) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.add));
+        return euint64.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.add));
     }
 
     /// @notice Perform the addition operation on two parameters of type euint128
@@ -263,25 +136,25 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type euint128 containing the addition result
     function add(euint128 lhs, euint128 rhs) internal returns (euint128) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.add));
+        return euint128.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.add));
     }
 
     /// @notice Perform the addition operation on two parameters of type euint256
     function add(euint256 lhs, euint256 rhs) internal returns (euint256) {
-        if (!Common.isInitialized(euint256.unwrap(lhs))) {
+        if (!_isInit(euint256.unwrap(lhs))) {
             lhs = asEuint256(0);
         }
-        if (!Common.isInitialized(euint256.unwrap(rhs))) {
+        if (!_isInit(euint256.unwrap(rhs))) {
             rhs = asEuint256(0);
         }
-        return euint256.wrap(Impl.mathOp(Utils.EUINT256_TFHE, euint256.unwrap(lhs), euint256.unwrap(rhs), FunctionId.add));
+        return euint256.wrap(FHENetwork.mathOp(Utils.EUINT256_TFHE, euint256.unwrap(lhs), euint256.unwrap(rhs), FunctionId.add));
     }
 
     /// @notice Perform the less than or equal to operation on two parameters of type euint8
@@ -290,14 +163,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type ebool containing the comparison result
     function lte(euint8 lhs, euint8 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.lte));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.lte));
     }
 
     /// @notice Perform the less than or equal to operation on two parameters of type euint16
@@ -306,14 +179,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type ebool containing the comparison result
     function lte(euint16 lhs, euint16 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.lte));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.lte));
     }
 
     /// @notice Perform the less than or equal to operation on two parameters of type euint32
@@ -322,14 +195,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type ebool containing the comparison result
     function lte(euint32 lhs, euint32 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.lte));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.lte));
     }
 
     /// @notice Perform the less than or equal to operation on two parameters of type euint64
@@ -338,14 +211,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type ebool containing the comparison result
     function lte(euint64 lhs, euint64 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.lte));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.lte));
     }
 
     /// @notice Alias for lte (less than or equal) for euint64
@@ -359,14 +232,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type ebool containing the comparison result
     function lte(euint128 lhs, euint128 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.lte));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.lte));
     }
 
 
@@ -376,14 +249,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type euint8 containing the subtraction result
     function sub(euint8 lhs, euint8 rhs) internal returns (euint8) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.sub));
+        return euint8.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.sub));
     }
 
     /// @notice Perform the subtraction operation on two parameters of type euint16
@@ -392,14 +265,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type euint16 containing the subtraction result
     function sub(euint16 lhs, euint16 rhs) internal returns (euint16) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.sub));
+        return euint16.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.sub));
     }
 
     /// @notice Perform the subtraction operation on two parameters of type euint32
@@ -408,14 +281,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type euint32 containing the subtraction result
     function sub(euint32 lhs, euint32 rhs) internal returns (euint32) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.sub));
+        return euint32.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.sub));
     }
 
     /// @notice Perform the subtraction operation on two parameters of type euint64
@@ -424,14 +297,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type euint64 containing the subtraction result
     function sub(euint64 lhs, euint64 rhs) internal returns (euint64) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.sub));
+        return euint64.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.sub));
     }
 
     /// @notice Perform the subtraction operation on two parameters of type euint128
@@ -440,14 +313,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type euint128 containing the subtraction result
     function sub(euint128 lhs, euint128 rhs) internal returns (euint128) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.sub));
+        return euint128.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.sub));
     }
 
 
@@ -457,14 +330,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type euint8 containing the multiplication result
     function mul(euint8 lhs, euint8 rhs) internal returns (euint8) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.mul));
+        return euint8.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.mul));
     }
 
     /// @notice Perform the multiplication operation on two parameters of type euint16
@@ -473,14 +346,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type euint16 containing the multiplication result
     function mul(euint16 lhs, euint16 rhs) internal returns (euint16) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.mul));
+        return euint16.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.mul));
     }
 
     /// @notice Perform the multiplication operation on two parameters of type euint32
@@ -489,14 +362,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type euint32 containing the multiplication result
     function mul(euint32 lhs, euint32 rhs) internal returns (euint32) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.mul));
+        return euint32.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.mul));
     }
 
     /// @notice Perform the multiplication operation on two parameters of type euint64
@@ -505,14 +378,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type euint64 containing the multiplication result
     function mul(euint64 lhs, euint64 rhs) internal returns (euint64) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.mul));
+        return euint64.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.mul));
     }
 
     /// @notice Perform the multiplication operation on two parameters of type euint128
@@ -521,14 +394,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type euint128 containing the multiplication result
     function mul(euint128 lhs, euint128 rhs) internal returns (euint128) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.mul));
+        return euint128.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.mul));
     }
 
 
@@ -538,14 +411,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type ebool containing the comparison result
     function lt(euint8 lhs, euint8 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.lt));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.lt));
     }
 
     /// @notice Perform the less than operation on two parameters of type euint16
@@ -554,14 +427,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type ebool containing the comparison result
     function lt(euint16 lhs, euint16 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.lt));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.lt));
     }
 
     /// @notice Perform the less than operation on two parameters of type euint32
@@ -570,14 +443,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type ebool containing the comparison result
     function lt(euint32 lhs, euint32 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.lt));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.lt));
     }
 
     /// @notice Perform the less than operation on two parameters of type euint64
@@ -586,14 +459,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type ebool containing the comparison result
     function lt(euint64 lhs, euint64 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.lt));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.lt));
     }
 
     /// @notice Perform the less than operation on two parameters of type euint128
@@ -602,14 +475,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type ebool containing the comparison result
     function lt(euint128 lhs, euint128 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.lt));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.lt));
     }
 
 
@@ -619,14 +492,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type euint8 containing the division result
     function div(euint8 lhs, euint8 rhs) internal returns (euint8) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.div));
+        return euint8.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.div));
     }
 
     /// @notice Perform the division operation on two parameters of type euint16
@@ -635,14 +508,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type euint16 containing the division result
     function div(euint16 lhs, euint16 rhs) internal returns (euint16) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.div));
+        return euint16.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.div));
     }
 
     /// @notice Perform the division operation on two parameters of type euint32
@@ -651,14 +524,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type euint32 containing the division result
     function div(euint32 lhs, euint32 rhs) internal returns (euint32) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.div));
+        return euint32.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.div));
     }
 
     /// @notice Perform the division operation on two parameters of type euint64
@@ -667,14 +540,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type euint64 containing the division result
     function div(euint64 lhs, euint64 rhs) internal returns (euint64) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.div));
+        return euint64.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.div));
     }
 
     /// @notice Perform the division operation on two parameters of type euint128
@@ -683,14 +556,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type euint128 containing the division result
     function div(euint128 lhs, euint128 rhs) internal returns (euint128) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.div));
+        return euint128.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.div));
     }
 
     /// @notice Perform the div operation on two parameters of type euint256
@@ -798,14 +671,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type ebool containing the comparison result
     function gt(euint8 lhs, euint8 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.gt));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.gt));
     }
 
     /// @notice Perform the greater than operation on two parameters of type euint16
@@ -814,14 +687,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type ebool containing the comparison result
     function gt(euint16 lhs, euint16 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.gt));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.gt));
     }
 
     /// @notice Perform the greater than operation on two parameters of type euint32
@@ -830,14 +703,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type ebool containing the comparison result
     function gt(euint32 lhs, euint32 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.gt));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.gt));
     }
 
     /// @notice Perform the greater than operation on two parameters of type euint64
@@ -846,14 +719,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type ebool containing the comparison result
     function gt(euint64 lhs, euint64 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.gt));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.gt));
     }
 
     /// @notice Perform the greater than operation on two parameters of type euint128
@@ -862,14 +735,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type ebool containing the comparison result
     function gt(euint128 lhs, euint128 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.gt));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.gt));
     }
 
 
@@ -879,14 +752,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type ebool containing the comparison result
     function gte(euint8 lhs, euint8 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.gte));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.gte));
     }
 
     /// @notice Perform the greater than or equal to operation on two parameters of type euint16
@@ -895,14 +768,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type ebool containing the comparison result
     function gte(euint16 lhs, euint16 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.gte));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.gte));
     }
 
     /// @notice Perform the greater than or equal to operation on two parameters of type euint32
@@ -911,14 +784,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type ebool containing the comparison result
     function gte(euint32 lhs, euint32 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.gte));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.gte));
     }
 
     /// @notice Perform the greater than or equal to operation on two parameters of type euint64
@@ -927,14 +800,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type ebool containing the comparison result
     function gte(euint64 lhs, euint64 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.gte));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.gte));
     }
 
     /// @notice Alias for gte (greater than or equal) for euint64
@@ -948,14 +821,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type ebool containing the comparison result
     function gte(euint128 lhs, euint128 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.gte));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.gte));
     }
 
 
@@ -965,14 +838,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type euint8 containing the remainder result
     function rem(euint8 lhs, euint8 rhs) internal returns (euint8) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.rem));
+        return euint8.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.rem));
     }
 
     /// @notice Perform the remainder operation on two parameters of type euint16
@@ -981,14 +854,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type euint16 containing the remainder result
     function rem(euint16 lhs, euint16 rhs) internal returns (euint16) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.rem));
+        return euint16.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.rem));
     }
 
     /// @notice Perform the remainder operation on two parameters of type euint32
@@ -997,14 +870,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type euint32 containing the remainder result
     function rem(euint32 lhs, euint32 rhs) internal returns (euint32) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.rem));
+        return euint32.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.rem));
     }
 
     /// @notice Perform the remainder operation on two parameters of type euint64
@@ -1013,14 +886,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type euint64 containing the remainder result
     function rem(euint64 lhs, euint64 rhs) internal returns (euint64) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.rem));
+        return euint64.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.rem));
     }
 
     /// @notice Perform the remainder operation on two parameters of type euint128
@@ -1029,14 +902,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type euint128 containing the remainder result
     function rem(euint128 lhs, euint128 rhs) internal returns (euint128) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.rem));
+        return euint128.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.rem));
     }
 
 
@@ -1046,14 +919,14 @@ library FHE {
     /// @param rhs second input of type ebool
     /// @return result of type ebool containing the AND result
     function and(ebool lhs, ebool rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEbool(true);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEbool(true);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EBOOL_TFHE, ebool.unwrap(lhs), ebool.unwrap(rhs), FunctionId.and));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EBOOL_TFHE, ebool.unwrap(lhs), ebool.unwrap(rhs), FunctionId.and));
     }
 
     /// @notice Perform the bitwise AND operation on two parameters of type euint8
@@ -1062,14 +935,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type euint8 containing the AND result
     function and(euint8 lhs, euint8 rhs) internal returns (euint8) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.and));
+        return euint8.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.and));
     }
 
     /// @notice Perform the bitwise AND operation on two parameters of type euint16
@@ -1078,14 +951,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type euint16 containing the AND result
     function and(euint16 lhs, euint16 rhs) internal returns (euint16) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.and));
+        return euint16.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.and));
     }
 
     /// @notice Perform the bitwise AND operation on two parameters of type euint32
@@ -1094,14 +967,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type euint32 containing the AND result
     function and(euint32 lhs, euint32 rhs) internal returns (euint32) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.and));
+        return euint32.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.and));
     }
 
     /// @notice Perform the bitwise AND operation on two parameters of type euint64
@@ -1110,14 +983,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type euint64 containing the AND result
     function and(euint64 lhs, euint64 rhs) internal returns (euint64) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.and));
+        return euint64.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.and));
     }
 
     /// @notice Perform the bitwise AND operation on two parameters of type euint128
@@ -1126,14 +999,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type euint128 containing the AND result
     function and(euint128 lhs, euint128 rhs) internal returns (euint128) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.and));
+        return euint128.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.and));
     }
 
 
@@ -1143,14 +1016,14 @@ library FHE {
     /// @param rhs second input of type ebool
     /// @return result of type ebool containing the OR result
     function or(ebool lhs, ebool rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEbool(true);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEbool(true);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EBOOL_TFHE, ebool.unwrap(lhs), ebool.unwrap(rhs), FunctionId.or));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EBOOL_TFHE, ebool.unwrap(lhs), ebool.unwrap(rhs), FunctionId.or));
     }
 
     /// @notice Perform the bitwise OR operation on two parameters of type euint8
@@ -1159,14 +1032,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type euint8 containing the OR result
     function or(euint8 lhs, euint8 rhs) internal returns (euint8) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.or));
+        return euint8.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.or));
     }
 
     /// @notice Perform the bitwise OR operation on two parameters of type euint16
@@ -1175,14 +1048,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type euint16 containing the OR result
     function or(euint16 lhs, euint16 rhs) internal returns (euint16) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.or));
+        return euint16.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.or));
     }
 
     /// @notice Perform the bitwise OR operation on two parameters of type euint32
@@ -1191,14 +1064,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type euint32 containing the OR result
     function or(euint32 lhs, euint32 rhs) internal returns (euint32) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.or));
+        return euint32.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.or));
     }
 
     /// @notice Perform the bitwise OR operation on two parameters of type euint64
@@ -1207,14 +1080,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type euint64 containing the OR result
     function or(euint64 lhs, euint64 rhs) internal returns (euint64) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.or));
+        return euint64.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.or));
     }
 
     /// @notice Perform the bitwise OR operation on two parameters of type euint128
@@ -1223,14 +1096,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type euint128 containing the OR result
     function or(euint128 lhs, euint128 rhs) internal returns (euint128) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.or));
+        return euint128.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.or));
     }
 
 
@@ -1240,14 +1113,14 @@ library FHE {
     /// @param rhs second input of type ebool
     /// @return result of type ebool containing the XOR result
     function xor(ebool lhs, ebool rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEbool(true);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEbool(true);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EBOOL_TFHE, ebool.unwrap(lhs), ebool.unwrap(rhs), FunctionId.xor));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EBOOL_TFHE, ebool.unwrap(lhs), ebool.unwrap(rhs), FunctionId.xor));
     }
 
     /// @notice Perform the bitwise XOR operation on two parameters of type euint8
@@ -1256,14 +1129,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type euint8 containing the XOR result
     function xor(euint8 lhs, euint8 rhs) internal returns (euint8) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.xor));
+        return euint8.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.xor));
     }
 
     /// @notice Perform the bitwise XOR operation on two parameters of type euint16
@@ -1272,14 +1145,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type euint16 containing the XOR result
     function xor(euint16 lhs, euint16 rhs) internal returns (euint16) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.xor));
+        return euint16.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.xor));
     }
 
     /// @notice Perform the bitwise XOR operation on two parameters of type euint32
@@ -1288,14 +1161,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type euint32 containing the XOR result
     function xor(euint32 lhs, euint32 rhs) internal returns (euint32) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.xor));
+        return euint32.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.xor));
     }
 
     /// @notice Perform the bitwise XOR operation on two parameters of type euint64
@@ -1304,14 +1177,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type euint64 containing the XOR result
     function xor(euint64 lhs, euint64 rhs) internal returns (euint64) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.xor));
+        return euint64.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.xor));
     }
 
     /// @notice Perform the bitwise XOR operation on two parameters of type euint128
@@ -1320,14 +1193,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type euint128 containing the XOR result
     function xor(euint128 lhs, euint128 rhs) internal returns (euint128) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.xor));
+        return euint128.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.xor));
     }
 
 
@@ -1337,14 +1210,14 @@ library FHE {
     /// @param rhs second input of type ebool
     /// @return result of type ebool containing the equality result
     function eq(ebool lhs, ebool rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEbool(true);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEbool(true);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EBOOL_TFHE, ebool.unwrap(lhs), ebool.unwrap(rhs), FunctionId.eq));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EBOOL_TFHE, ebool.unwrap(lhs), ebool.unwrap(rhs), FunctionId.eq));
     }
 
     /// @notice Perform the equality operation on two parameters of type euint8
@@ -1353,14 +1226,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type ebool containing the equality result
     function eq(euint8 lhs, euint8 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.eq));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.eq));
     }
 
     /// @notice Perform the equality operation on two parameters of type euint16
@@ -1369,14 +1242,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type ebool containing the equality result
     function eq(euint16 lhs, euint16 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.eq));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.eq));
     }
 
     /// @notice Perform the equality operation on two parameters of type euint32
@@ -1385,14 +1258,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type ebool containing the equality result
     function eq(euint32 lhs, euint32 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.eq));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.eq));
     }
 
     /// @notice Perform the equality operation on two parameters of type euint64
@@ -1401,14 +1274,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type ebool containing the equality result
     function eq(euint64 lhs, euint64 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.eq));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.eq));
     }
 
     /// @notice Perform the equality operation on two parameters of type euint128
@@ -1417,14 +1290,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type ebool containing the equality result
     function eq(euint128 lhs, euint128 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.eq));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.eq));
     }
 
 
@@ -1434,14 +1307,14 @@ library FHE {
     /// @param rhs second input of type eaddress
     /// @return result of type ebool containing the equality result
     function eq(eaddress lhs, eaddress rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEaddress(address(0));
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEaddress(address(0));
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EADDRESS_TFHE, eaddress.unwrap(lhs), eaddress.unwrap(rhs), FunctionId.eq));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EADDRESS_TFHE, eaddress.unwrap(lhs), eaddress.unwrap(rhs), FunctionId.eq));
     }
 
     /// @notice Perform the inequality operation on two parameters of type ebool
@@ -1450,14 +1323,14 @@ library FHE {
     /// @param rhs second input of type ebool
     /// @return result of type ebool containing the inequality result
     function ne(ebool lhs, ebool rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEbool(true);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEbool(true);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EBOOL_TFHE, ebool.unwrap(lhs), ebool.unwrap(rhs), FunctionId.ne));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EBOOL_TFHE, ebool.unwrap(lhs), ebool.unwrap(rhs), FunctionId.ne));
     }
 
     /// @notice Perform the inequality operation on two parameters of type euint8
@@ -1466,14 +1339,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type ebool containing the inequality result
     function ne(euint8 lhs, euint8 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.ne));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.ne));
     }
 
     /// @notice Perform the inequality operation on two parameters of type euint16
@@ -1482,14 +1355,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type ebool containing the inequality result
     function ne(euint16 lhs, euint16 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.ne));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.ne));
     }
 
     /// @notice Perform the inequality operation on two parameters of type euint32
@@ -1498,14 +1371,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type ebool containing the inequality result
     function ne(euint32 lhs, euint32 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.ne));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.ne));
     }
 
     /// @notice Perform the inequality operation on two parameters of type euint64
@@ -1514,14 +1387,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type ebool containing the inequality result
     function ne(euint64 lhs, euint64 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.ne));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.ne));
     }
 
     /// @notice Perform the inequality operation on two parameters of type euint128
@@ -1530,14 +1403,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type ebool containing the inequality result
     function ne(euint128 lhs, euint128 rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.ne));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.ne));
     }
 
 
@@ -1547,14 +1420,14 @@ library FHE {
     /// @param rhs second input of type eaddress
     /// @return result of type ebool containing the inequality result
     function ne(eaddress lhs, eaddress rhs) internal returns (ebool) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEaddress(address(0));
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEaddress(address(0));
         }
 
-        return ebool.wrap(Impl.mathOp(Utils.EADDRESS_TFHE, eaddress.unwrap(lhs), eaddress.unwrap(rhs), FunctionId.ne));
+        return ebool.wrap(FHENetwork.mathOp(Utils.EADDRESS_TFHE, eaddress.unwrap(lhs), eaddress.unwrap(rhs), FunctionId.ne));
     }
 
     /// @notice Perform the minimum operation on two parameters of type euint8
@@ -1563,14 +1436,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type euint8 containing the minimum value
     function min(euint8 lhs, euint8 rhs) internal returns (euint8) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.min));
+        return euint8.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.min));
     }
 
     /// @notice Perform the minimum operation on two parameters of type euint16
@@ -1579,14 +1452,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type euint16 containing the minimum value
     function min(euint16 lhs, euint16 rhs) internal returns (euint16) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.min));
+        return euint16.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.min));
     }
 
     /// @notice Perform the minimum operation on two parameters of type euint32
@@ -1595,14 +1468,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type euint32 containing the minimum value
     function min(euint32 lhs, euint32 rhs) internal returns (euint32) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.min));
+        return euint32.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.min));
     }
 
     /// @notice Perform the minimum operation on two parameters of type euint64
@@ -1611,14 +1484,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type euint64 containing the minimum value
     function min(euint64 lhs, euint64 rhs) internal returns (euint64) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.min));
+        return euint64.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.min));
     }
 
     /// @notice Perform the minimum operation on two parameters of type euint128
@@ -1627,14 +1500,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type euint128 containing the minimum value
     function min(euint128 lhs, euint128 rhs) internal returns (euint128) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.min));
+        return euint128.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.min));
     }
 
 
@@ -1644,14 +1517,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type euint8 containing the maximum result
     function max(euint8 lhs, euint8 rhs) internal returns (euint8) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.max));
+        return euint8.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.max));
     }
 
     /// @notice Perform the maximum operation on two parameters of type euint16
@@ -1660,14 +1533,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type euint16 containing the maximum result
     function max(euint16 lhs, euint16 rhs) internal returns (euint16) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.max));
+        return euint16.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.max));
     }
 
     /// @notice Perform the maximum operation on two parameters of type euint32
@@ -1676,14 +1549,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type euint32 containing the maximum result
     function max(euint32 lhs, euint32 rhs) internal returns (euint32) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.max));
+        return euint32.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.max));
     }
 
     /// @notice Perform the maximum operation on two parameters of type euint64
@@ -1692,14 +1565,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type euint64 containing the maximum value
     function max(euint64 lhs, euint64 rhs) internal returns (euint64) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.max));
+        return euint64.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.max));
     }
 
     /// @notice Perform the maximum operation on two parameters of type euint128
@@ -1708,14 +1581,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type euint128 containing the maximum value
     function max(euint128 lhs, euint128 rhs) internal returns (euint128) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.max));
+        return euint128.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.max));
     }
 
 
@@ -1725,14 +1598,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type euint8 containing the left shift result
     function shl(euint8 lhs, euint8 rhs) internal returns (euint8) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.shl));
+        return euint8.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.shl));
     }
 
     /// @notice Perform the shift left operation on two parameters of type euint16
@@ -1741,14 +1614,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type euint16 containing the left shift result
     function shl(euint16 lhs, euint16 rhs) internal returns (euint16) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.shl));
+        return euint16.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.shl));
     }
 
     /// @notice Perform the shift left operation on two parameters of type euint32
@@ -1757,14 +1630,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type euint32 containing the left shift result
     function shl(euint32 lhs, euint32 rhs) internal returns (euint32) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.shl));
+        return euint32.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.shl));
     }
 
     /// @notice Perform the shift left operation on two parameters of type euint64
@@ -1773,14 +1646,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type euint64 containing the left shift result
     function shl(euint64 lhs, euint64 rhs) internal returns (euint64) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.shl));
+        return euint64.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.shl));
     }
 
     /// @notice Perform the shift left operation on two parameters of type euint128
@@ -1789,14 +1662,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type euint128 containing the left shift result
     function shl(euint128 lhs, euint128 rhs) internal returns (euint128) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.shl));
+        return euint128.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.shl));
     }
 
 
@@ -1806,14 +1679,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type euint8 containing the right shift result
     function shr(euint8 lhs, euint8 rhs) internal returns (euint8) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.shr));
+        return euint8.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.shr));
     }
 
     /// @notice Perform the shift right operation on two parameters of type euint16
@@ -1822,14 +1695,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type euint16 containing the right shift result
     function shr(euint16 lhs, euint16 rhs) internal returns (euint16) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.shr));
+        return euint16.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.shr));
     }
 
     /// @notice Perform the shift right operation on two parameters of type euint32
@@ -1838,14 +1711,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type euint32 containing the right shift result
     function shr(euint32 lhs, euint32 rhs) internal returns (euint32) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.shr));
+        return euint32.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.shr));
     }
 
     /// @notice Perform the shift right operation on two parameters of type euint64
@@ -1854,14 +1727,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type euint64 containing the right shift result
     function shr(euint64 lhs, euint64 rhs) internal returns (euint64) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.shr));
+        return euint64.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.shr));
     }
 
     /// @notice Perform the shift right operation on two parameters of type euint128
@@ -1870,14 +1743,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type euint128 containing the right shift result
     function shr(euint128 lhs, euint128 rhs) internal returns (euint128) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.shr));
+        return euint128.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.shr));
     }
 
 
@@ -1887,14 +1760,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type euint8 containing the left rotation result
     function rol(euint8 lhs, euint8 rhs) internal returns (euint8) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.rol));
+        return euint8.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.rol));
     }
 
     /// @notice Perform the rotate left operation on two parameters of type euint16
@@ -1903,14 +1776,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type euint16 containing the left rotation result
     function rol(euint16 lhs, euint16 rhs) internal returns (euint16) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.rol));
+        return euint16.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.rol));
     }
 
     /// @notice Perform the rotate left operation on two parameters of type euint32
@@ -1919,14 +1792,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type euint32 containing the left rotation result
     function rol(euint32 lhs, euint32 rhs) internal returns (euint32) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.rol));
+        return euint32.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.rol));
     }
 
     /// @notice Perform the rotate left operation on two parameters of type euint64
@@ -1935,14 +1808,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type euint64 containing the left rotation result
     function rol(euint64 lhs, euint64 rhs) internal returns (euint64) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.rol));
+        return euint64.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.rol));
     }
 
     /// @notice Perform the rotate left operation on two parameters of type euint128
@@ -1951,14 +1824,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type euint128 containing the left rotation result
     function rol(euint128 lhs, euint128 rhs) internal returns (euint128) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.rol));
+        return euint128.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.rol));
     }
 
 
@@ -1968,14 +1841,14 @@ library FHE {
     /// @param rhs second input of type euint8
     /// @return result of type euint8 containing the right rotation result
     function ror(euint8 lhs, euint8 rhs) internal returns (euint8) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint8(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.ror));
+        return euint8.wrap(FHENetwork.mathOp(Utils.EUINT8_TFHE, euint8.unwrap(lhs), euint8.unwrap(rhs), FunctionId.ror));
     }
 
     /// @notice Perform the rotate right operation on two parameters of type euint16
@@ -1984,14 +1857,14 @@ library FHE {
     /// @param rhs second input of type euint16
     /// @return result of type euint16 containing the right rotation result
     function ror(euint16 lhs, euint16 rhs) internal returns (euint16) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint16(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.ror));
+        return euint16.wrap(FHENetwork.mathOp(Utils.EUINT16_TFHE, euint16.unwrap(lhs), euint16.unwrap(rhs), FunctionId.ror));
     }
 
     /// @notice Perform the rotate right operation on two parameters of type euint32
@@ -2000,14 +1873,14 @@ library FHE {
     /// @param rhs second input of type euint32
     /// @return result of type euint32 containing the right rotation result
     function ror(euint32 lhs, euint32 rhs) internal returns (euint32) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint32(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.ror));
+        return euint32.wrap(FHENetwork.mathOp(Utils.EUINT32_TFHE, euint32.unwrap(lhs), euint32.unwrap(rhs), FunctionId.ror));
     }
 
     /// @notice Perform the rotate right operation on two parameters of type euint64
@@ -2016,14 +1889,14 @@ library FHE {
     /// @param rhs second input of type euint64
     /// @return result of type euint64 containing the right rotation result
     function ror(euint64 lhs, euint64 rhs) internal returns (euint64) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint64(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.ror));
+        return euint64.wrap(FHENetwork.mathOp(Utils.EUINT64_TFHE, euint64.unwrap(lhs), euint64.unwrap(rhs), FunctionId.ror));
     }
 
     /// @notice Perform the rotate right operation on two parameters of type euint128
@@ -2032,14 +1905,14 @@ library FHE {
     /// @param rhs second input of type euint128
     /// @return result of type euint128 containing the right rotation result
     function ror(euint128 lhs, euint128 rhs) internal returns (euint128) {
-        if (!Common.isInitialized(lhs)) {
+        if (!_isInit(lhs)) {
             lhs = asEuint128(0);
         }
-        if (!Common.isInitialized(rhs)) {
+        if (!_isInit(rhs)) {
             rhs = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.ror));
+        return euint128.wrap(FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.ror));
     }
 
 
@@ -2047,83 +1920,83 @@ library FHE {
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
     function decrypt(ebool input1) internal {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEbool(false);
         }
 
-        ebool.wrap(Impl.decrypt(ebool.unwrap(input1)));
+        ebool.wrap(FHENetwork.decrypt(ebool.unwrap(input1)));
     }
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
     function decrypt(euint8 input1) internal {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEuint8(0);
         }
 
-        euint8.wrap(Impl.decrypt(euint8.unwrap(input1)));
+        euint8.wrap(FHENetwork.decrypt(euint8.unwrap(input1)));
     }
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
     function decrypt(euint16 input1) internal {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEuint16(0);
         }
 
-        euint16.wrap(Impl.decrypt(euint16.unwrap(input1)));
+        euint16.wrap(FHENetwork.decrypt(euint16.unwrap(input1)));
     }
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
     function decrypt(euint32 input1) internal {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEuint32(0);
         }
 
-        euint32.wrap(Impl.decrypt(euint32.unwrap(input1)));
+        euint32.wrap(FHENetwork.decrypt(euint32.unwrap(input1)));
     }
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
     function decrypt(euint64 input1) internal {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEuint64(0);
         }
 
-        euint64.wrap(Impl.decrypt(euint64.unwrap(input1)));
+        euint64.wrap(FHENetwork.decrypt(euint64.unwrap(input1)));
     }
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
     function decrypt(euint128 input1) internal {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEuint128(0);
         }
 
-        euint128.wrap(Impl.decrypt(euint128.unwrap(input1)));
+        euint128.wrap(FHENetwork.decrypt(euint128.unwrap(input1)));
     }
 
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
     function decrypt(euint256 input1) internal {
-        if (!Common.isInitialized(euint256.unwrap(input1))) {
+        if (!_isInit(euint256.unwrap(input1))) {
             input1 = asEuint256(0);
         }
 
-        euint256.wrap(Impl.decrypt(euint256.unwrap(input1)));
+        euint256.wrap(FHENetwork.decrypt(euint256.unwrap(input1)));
     }
 
     /// @notice Performs the async decrypt operation on a ciphertext
     /// @dev The decrypted output should be asynchronously handled by the IAsyncFHEReceiver implementation
     /// @param input1 the input ciphertext
     function decrypt(eaddress input1) internal {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEaddress(address(0));
         }
 
-        Impl.decrypt(eaddress.unwrap(input1));
+        FHENetwork.decrypt(eaddress.unwrap(input1));
     }
 
     /// @notice Gets the decrypted value from a previously decrypted ebool ciphertext
@@ -2131,7 +2004,7 @@ library FHE {
     /// @param input1 The ebool ciphertext to get the decrypted value from
     /// @return The decrypted boolean value
     function getDecryptResult(ebool input1) internal view returns (bool) {
-        uint256 result = Impl.getDecryptResult(ebool.unwrap(input1));
+        uint256 result = FHENetwork.getDecryptResult(ebool.unwrap(input1));
         return result != 0;
     }
 
@@ -2140,7 +2013,7 @@ library FHE {
     /// @param input1 The euint8 ciphertext to get the decrypted value from
     /// @return The decrypted uint8 value
     function getDecryptResult(euint8 input1) internal view returns (uint8) {
-        return uint8(Impl.getDecryptResult(euint8.unwrap(input1)));
+        return uint8(FHENetwork.getDecryptResult(euint8.unwrap(input1)));
     }
 
     /// @notice Gets the decrypted value from a previously decrypted euint16 ciphertext
@@ -2148,7 +2021,7 @@ library FHE {
     /// @param input1 The euint16 ciphertext to get the decrypted value from
     /// @return The decrypted uint16 value
     function getDecryptResult(euint16 input1) internal view returns (uint16) {
-        return uint16(Impl.getDecryptResult(euint16.unwrap(input1)));
+        return uint16(FHENetwork.getDecryptResult(euint16.unwrap(input1)));
     }
 
     /// @notice Gets the decrypted value from a previously decrypted euint32 ciphertext
@@ -2156,7 +2029,7 @@ library FHE {
     /// @param input1 The euint32 ciphertext to get the decrypted value from
     /// @return The decrypted uint32 value
     function getDecryptResult(euint32 input1) internal view returns (uint32) {
-        return uint32(Impl.getDecryptResult(euint32.unwrap(input1)));
+        return uint32(FHENetwork.getDecryptResult(euint32.unwrap(input1)));
     }
 
     /// @notice Gets the decrypted value from a previously decrypted euint64 ciphertext
@@ -2164,7 +2037,7 @@ library FHE {
     /// @param input1 The euint64 ciphertext to get the decrypted value from
     /// @return The decrypted uint64 value
     function getDecryptResult(euint64 input1) internal view returns (uint64) {
-        return uint64(Impl.getDecryptResult(euint64.unwrap(input1)));
+        return uint64(FHENetwork.getDecryptResult(euint64.unwrap(input1)));
     }
 
     /// @notice Gets the decrypted value from a previously decrypted euint128 ciphertext
@@ -2172,7 +2045,7 @@ library FHE {
     /// @param input1 The euint128 ciphertext to get the decrypted value from
     /// @return The decrypted uint128 value
     function getDecryptResult(euint128 input1) internal view returns (uint128) {
-        return uint128(Impl.getDecryptResult(euint128.unwrap(input1)));
+        return uint128(FHENetwork.getDecryptResult(euint128.unwrap(input1)));
     }
 
     /// @notice Gets the decrypted value from a previously decrypted eaddress ciphertext
@@ -2180,7 +2053,7 @@ library FHE {
     /// @param input1 The eaddress ciphertext to get the decrypted value from
     /// @return The decrypted address value
     function getDecryptResult(eaddress input1) internal view returns (address) {
-        return address(uint160(Impl.getDecryptResult(eaddress.unwrap(input1))));
+        return address(uint160(FHENetwork.getDecryptResult(eaddress.unwrap(input1))));
     }
 
     /// @notice Gets the decrypted value from a previously decrypted raw ciphertext
@@ -2188,7 +2061,7 @@ library FHE {
     /// @param input1 The raw ciphertext to get the decrypted value from
     /// @return The decrypted uint256 value
     function getDecryptResult(uint256 input1) internal view returns (uint256) {
-        return Impl.getDecryptResult(input1);
+        return FHENetwork.getDecryptResult(input1);
     }
 
     /// @notice Safely gets the decrypted value from an ebool ciphertext
@@ -2197,7 +2070,7 @@ library FHE {
     /// @return result The decrypted boolean value
     /// @return decrypted Flag indicating if the value was successfully decrypted
     function getDecryptResultSafe(ebool input1) internal view returns (bool result, bool decrypted) {
-        (uint256 _result, bool _decrypted) = Impl.getDecryptResultSafe(ebool.unwrap(input1));
+        (uint256 _result, bool _decrypted) = FHENetwork.getDecryptResultSafe(ebool.unwrap(input1));
         return (_result != 0, _decrypted);
     }
 
@@ -2207,7 +2080,7 @@ library FHE {
     /// @return result The decrypted uint8 value
     /// @return decrypted Flag indicating if the value was successfully decrypted
     function getDecryptResultSafe(euint8 input1) internal view returns (uint8 result, bool decrypted) {
-        (uint256 _result, bool _decrypted) = Impl.getDecryptResultSafe(euint8.unwrap(input1));
+        (uint256 _result, bool _decrypted) = FHENetwork.getDecryptResultSafe(euint8.unwrap(input1));
         return (uint8(_result), _decrypted);
     }
 
@@ -2217,7 +2090,7 @@ library FHE {
     /// @return result The decrypted uint16 value
     /// @return decrypted Flag indicating if the value was successfully decrypted
     function getDecryptResultSafe(euint16 input1) internal view returns (uint16 result, bool decrypted) {
-        (uint256 _result, bool _decrypted) = Impl.getDecryptResultSafe(euint16.unwrap(input1));
+        (uint256 _result, bool _decrypted) = FHENetwork.getDecryptResultSafe(euint16.unwrap(input1));
         return (uint16(_result), _decrypted);
     }
 
@@ -2227,7 +2100,7 @@ library FHE {
     /// @return result The decrypted uint32 value
     /// @return decrypted Flag indicating if the value was successfully decrypted
     function getDecryptResultSafe(euint32 input1) internal view returns (uint32 result, bool decrypted) {
-        (uint256 _result, bool _decrypted) = Impl.getDecryptResultSafe(euint32.unwrap(input1));
+        (uint256 _result, bool _decrypted) = FHENetwork.getDecryptResultSafe(euint32.unwrap(input1));
         return (uint32(_result), _decrypted);
     }
 
@@ -2237,7 +2110,7 @@ library FHE {
     /// @return result The decrypted uint64 value
     /// @return decrypted Flag indicating if the value was successfully decrypted
     function getDecryptResultSafe(euint64 input1) internal view returns (uint64 result, bool decrypted) {
-        (uint256 _result, bool _decrypted) = Impl.getDecryptResultSafe(euint64.unwrap(input1));
+        (uint256 _result, bool _decrypted) = FHENetwork.getDecryptResultSafe(euint64.unwrap(input1));
         return (uint64(_result), _decrypted);
     }
 
@@ -2247,7 +2120,7 @@ library FHE {
     /// @return result The decrypted uint128 value
     /// @return decrypted Flag indicating if the value was successfully decrypted
     function getDecryptResultSafe(euint128 input1) internal view returns (uint128 result, bool decrypted) {
-        (uint256 _result, bool _decrypted) = Impl.getDecryptResultSafe(euint128.unwrap(input1));
+        (uint256 _result, bool _decrypted) = FHENetwork.getDecryptResultSafe(euint128.unwrap(input1));
         return (uint128(_result), _decrypted);
     }
 
@@ -2258,7 +2131,7 @@ library FHE {
     /// @return result The decrypted address value
     /// @return decrypted Flag indicating if the value was successfully decrypted
     function getDecryptResultSafe(eaddress input1) internal view returns (address result, bool decrypted) {
-        (uint256 _result, bool _decrypted) = Impl.getDecryptResultSafe(eaddress.unwrap(input1));
+        (uint256 _result, bool _decrypted) = FHENetwork.getDecryptResultSafe(eaddress.unwrap(input1));
         return (address(uint160(_result)), _decrypted);
     }
 
@@ -2268,7 +2141,7 @@ library FHE {
     /// @return result The decrypted uint256 value
     /// @return decrypted Flag indicating if the value was successfully decrypted
     function getDecryptResultSafe(uint256 input1) internal view returns (uint256 result, bool decrypted) {
-        (uint256 _result, bool _decrypted) = Impl.getDecryptResultSafe(input1);
+        (uint256 _result, bool _decrypted) = FHENetwork.getDecryptResultSafe(input1);
         return (_result, _decrypted);
     }
 
@@ -2279,17 +2152,17 @@ library FHE {
     /// @param input3 Second choice of type ebool
     /// @return result of type ebool containing the selected value
     function select(ebool input1, ebool input2, ebool input3) internal returns (ebool) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEbool(false);
         }
-        if (!Common.isInitialized(input2)) {
+        if (!_isInit(input2)) {
             input2 = asEbool(false);
         }
-        if (!Common.isInitialized(input3)) {
+        if (!_isInit(input3)) {
             input3 = asEbool(false);
         }
 
-        return ebool.wrap(Impl.select(Utils.EBOOL_TFHE, input1, ebool.unwrap(input2), ebool.unwrap(input3)));
+        return ebool.wrap(FHENetwork.select(Utils.EBOOL_TFHE, ebool.unwrap(input1), ebool.unwrap(input2), ebool.unwrap(input3)));
     }
 
     /// @notice Performs a multiplexer operation between two euint8 values based on a selector
@@ -2299,17 +2172,17 @@ library FHE {
     /// @param input3 Second choice of type euint8
     /// @return result of type euint8 containing the selected value
     function select(ebool input1, euint8 input2, euint8 input3) internal returns (euint8) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEbool(false);
         }
-        if (!Common.isInitialized(input2)) {
+        if (!_isInit(input2)) {
             input2 = asEuint8(0);
         }
-        if (!Common.isInitialized(input3)) {
+        if (!_isInit(input3)) {
             input3 = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.select(Utils.EUINT8_TFHE, input1, euint8.unwrap(input2), euint8.unwrap(input3)));
+        return euint8.wrap(FHENetwork.select(Utils.EUINT8_TFHE, ebool.unwrap(input1), euint8.unwrap(input2), euint8.unwrap(input3)));
     }
 
     /// @notice Performs a multiplexer operation between two euint16 values based on a selector
@@ -2319,17 +2192,17 @@ library FHE {
     /// @param input3 Second choice of type euint16
     /// @return result of type euint16 containing the selected value
     function select(ebool input1, euint16 input2, euint16 input3) internal returns (euint16) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEbool(false);
         }
-        if (!Common.isInitialized(input2)) {
+        if (!_isInit(input2)) {
             input2 = asEuint16(0);
         }
-        if (!Common.isInitialized(input3)) {
+        if (!_isInit(input3)) {
             input3 = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.select(Utils.EUINT16_TFHE, input1, euint16.unwrap(input2), euint16.unwrap(input3)));
+        return euint16.wrap(FHENetwork.select(Utils.EUINT16_TFHE, ebool.unwrap(input1), euint16.unwrap(input2), euint16.unwrap(input3)));
     }
 
     /// @notice Performs a multiplexer operation between two euint32 values based on a selector
@@ -2339,17 +2212,17 @@ library FHE {
     /// @param input3 Second choice of type euint32
     /// @return result of type euint32 containing the selected value
     function select(ebool input1, euint32 input2, euint32 input3) internal returns (euint32) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEbool(false);
         }
-        if (!Common.isInitialized(input2)) {
+        if (!_isInit(input2)) {
             input2 = asEuint32(0);
         }
-        if (!Common.isInitialized(input3)) {
+        if (!_isInit(input3)) {
             input3 = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.select(Utils.EUINT32_TFHE, input1, euint32.unwrap(input2), euint32.unwrap(input3)));
+        return euint32.wrap(FHENetwork.select(Utils.EUINT32_TFHE, ebool.unwrap(input1), euint32.unwrap(input2), euint32.unwrap(input3)));
     }
 
     /// @notice Performs a multiplexer operation between two euint64 values based on a selector
@@ -2359,17 +2232,17 @@ library FHE {
     /// @param input3 Second choice of type euint64
     /// @return result of type euint64 containing the selected value
     function select(ebool input1, euint64 input2, euint64 input3) internal returns (euint64) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEbool(false);
         }
-        if (!Common.isInitialized(input2)) {
+        if (!_isInit(input2)) {
             input2 = asEuint64(0);
         }
-        if (!Common.isInitialized(input3)) {
+        if (!_isInit(input3)) {
             input3 = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.select(Utils.EUINT64_TFHE, input1, euint64.unwrap(input2), euint64.unwrap(input3)));
+        return euint64.wrap(FHENetwork.select(Utils.EUINT64_TFHE, ebool.unwrap(input1), euint64.unwrap(input2), euint64.unwrap(input3)));
     }
 
     /// @notice Performs a multiplexer operation between two euint128 values based on a selector
@@ -2379,17 +2252,17 @@ library FHE {
     /// @param input3 Second choice of type euint128
     /// @return result of type euint128 containing the selected value
     function select(ebool input1, euint128 input2, euint128 input3) internal returns (euint128) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEbool(false);
         }
-        if (!Common.isInitialized(input2)) {
+        if (!_isInit(input2)) {
             input2 = asEuint128(0);
         }
-        if (!Common.isInitialized(input3)) {
+        if (!_isInit(input3)) {
             input3 = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.select(Utils.EUINT128_TFHE, input1, euint128.unwrap(input2), euint128.unwrap(input3)));
+        return euint128.wrap(FHENetwork.select(Utils.EUINT128_TFHE, ebool.unwrap(input1), euint128.unwrap(input2), euint128.unwrap(input3)));
     }
 
 
@@ -2400,59 +2273,59 @@ library FHE {
     /// @param input3 Second choice of type eaddress
     /// @return result of type eaddress containing the selected value
     function select(ebool input1, eaddress input2, eaddress input3) internal returns (eaddress) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEbool(false);
         }
-        if (!Common.isInitialized(input2)) {
+        if (!_isInit(input2)) {
             input2 = asEaddress(address(0));
         }
-        if (!Common.isInitialized(input3)) {
+        if (!_isInit(input3)) {
             input3 = asEaddress(address(0));
         }
 
-        return eaddress.wrap(Impl.select(Utils.EADDRESS_TFHE, input1, eaddress.unwrap(input2), eaddress.unwrap(input3)));
+        return eaddress.wrap(FHENetwork.select(Utils.EADDRESS_TFHE, ebool.unwrap(input1), eaddress.unwrap(input2), eaddress.unwrap(input3)));
     }
 
     /// @notice Performs the not operation on a ciphertext
     /// @dev Verifies that the input value matches a valid ciphertext.
     /// @param input1 the input ciphertext
     function not(ebool input1) internal returns (ebool) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEbool(false);
         }
 
-        return ebool.wrap(Impl.not(Utils.EBOOL_TFHE, ebool.unwrap(input1)));
+        return ebool.wrap(FHENetwork.not(Utils.EBOOL_TFHE, ebool.unwrap(input1)));
     }
 
     /// @notice Performs the not operation on a ciphertext
     /// @dev Verifies that the input value matches a valid ciphertext.
     /// @param input1 the input ciphertext
     function not(euint8 input1) internal returns (euint8) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.not(Utils.EUINT8_TFHE, euint8.unwrap(input1)));
+        return euint8.wrap(FHENetwork.not(Utils.EUINT8_TFHE, euint8.unwrap(input1)));
     }
     /// @notice Performs the not operation on a ciphertext
     /// @dev Verifies that the input value matches a valid ciphertext.
     /// @param input1 the input ciphertext
     function not(euint16 input1) internal returns (euint16) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.not(Utils.EUINT16_TFHE, euint16.unwrap(input1)));
+        return euint16.wrap(FHENetwork.not(Utils.EUINT16_TFHE, euint16.unwrap(input1)));
     }
     /// @notice Performs the not operation on a ciphertext
     /// @dev Verifies that the input value matches a valid ciphertext.
     /// @param input1 the input ciphertext
     function not(euint32 input1) internal returns (euint32) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.not(Utils.EUINT32_TFHE, euint32.unwrap(input1)));
+        return euint32.wrap(FHENetwork.not(Utils.EUINT32_TFHE, euint32.unwrap(input1)));
     }
 
     /// @notice Performs the bitwise NOT operation on an encrypted 64-bit unsigned integer
@@ -2461,11 +2334,11 @@ library FHE {
     /// @param input1 The input ciphertext to negate
     /// @return An euint64 containing the bitwise NOT of the input
     function not(euint64 input1) internal returns (euint64) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.not(Utils.EUINT64_TFHE, euint64.unwrap(input1)));
+        return euint64.wrap(FHENetwork.not(Utils.EUINT64_TFHE, euint64.unwrap(input1)));
     }
 
     /// @notice Performs the bitwise NOT operation on an encrypted 128-bit unsigned integer
@@ -2474,11 +2347,11 @@ library FHE {
     /// @param input1 The input ciphertext to negate
     /// @return An euint128 containing the bitwise NOT of the input
     function not(euint128 input1) internal returns (euint128) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.not(Utils.EUINT128_TFHE, euint128.unwrap(input1)));
+        return euint128.wrap(FHENetwork.not(Utils.EUINT128_TFHE, euint128.unwrap(input1)));
     }
 
 
@@ -2488,11 +2361,11 @@ library FHE {
     /// @param input1 The input ciphertext to square
     /// @return An euint8 containing the square of the input
     function square(euint8 input1) internal returns (euint8) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEuint8(0);
         }
 
-        return euint8.wrap(Impl.square(Utils.EUINT8_TFHE, euint8.unwrap(input1)));
+        return euint8.wrap(FHENetwork.square(Utils.EUINT8_TFHE, euint8.unwrap(input1)));
     }
 
     /// @notice Performs the square operation on an encrypted 16-bit unsigned integer
@@ -2501,11 +2374,11 @@ library FHE {
     /// @param input1 The input ciphertext to square
     /// @return An euint16 containing the square of the input
     function square(euint16 input1) internal returns (euint16) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEuint16(0);
         }
 
-        return euint16.wrap(Impl.square(Utils.EUINT16_TFHE, euint16.unwrap(input1)));
+        return euint16.wrap(FHENetwork.square(Utils.EUINT16_TFHE, euint16.unwrap(input1)));
     }
 
     /// @notice Performs the square operation on an encrypted 32-bit unsigned integer
@@ -2514,11 +2387,11 @@ library FHE {
     /// @param input1 The input ciphertext to square
     /// @return An euint32 containing the square of the input
     function square(euint32 input1) internal returns (euint32) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEuint32(0);
         }
 
-        return euint32.wrap(Impl.square(Utils.EUINT32_TFHE, euint32.unwrap(input1)));
+        return euint32.wrap(FHENetwork.square(Utils.EUINT32_TFHE, euint32.unwrap(input1)));
     }
 
     /// @notice Performs the square operation on an encrypted 64-bit unsigned integer
@@ -2527,11 +2400,11 @@ library FHE {
     /// @param input1 The input ciphertext to square
     /// @return An euint64 containing the square of the input
     function square(euint64 input1) internal returns (euint64) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEuint64(0);
         }
 
-        return euint64.wrap(Impl.square(Utils.EUINT64_TFHE, euint64.unwrap(input1)));
+        return euint64.wrap(FHENetwork.square(Utils.EUINT64_TFHE, euint64.unwrap(input1)));
     }
 
     /// @notice Performs the square operation on an encrypted 128-bit unsigned integer
@@ -2540,11 +2413,11 @@ library FHE {
     /// @param input1 The input ciphertext to square
     /// @return An euint128 containing the square of the input
     function square(euint128 input1) internal returns (euint128) {
-        if (!Common.isInitialized(input1)) {
+        if (!_isInit(input1)) {
             input1 = asEuint128(0);
         }
 
-        return euint128.wrap(Impl.square(Utils.EUINT128_TFHE, euint128.unwrap(input1)));
+        return euint128.wrap(FHENetwork.square(Utils.EUINT128_TFHE, euint128.unwrap(input1)));
     }
 
     /// @notice Generates a random value of a euint8 type for provided securityZone
@@ -2553,7 +2426,7 @@ library FHE {
     /// @param securityZone The security zone identifier to use for random value generation.
     /// @return A randomly generated encrypted 8-bit unsigned integer (euint8)
     function randomEuint8(int32 securityZone) internal returns (euint8) {
-        return euint8.wrap(Impl.random(Utils.EUINT8_TFHE, 0, securityZone));
+        return euint8.wrap(FHENetwork.random(Utils.EUINT8_TFHE, 0, securityZone));
     }
     /// @notice Generates a random value of a euint8 type
     /// @dev Generates a cryptographically secure random 8-bit unsigned integer in encrypted form
@@ -2569,7 +2442,7 @@ library FHE {
     /// @param securityZone The security zone identifier to use for random value generation.
     /// @return A randomly generated encrypted 16-bit unsigned integer (euint16)
     function randomEuint16(int32 securityZone) internal returns (euint16) {
-        return euint16.wrap(Impl.random(Utils.EUINT16_TFHE, 0, securityZone));
+        return euint16.wrap(FHENetwork.random(Utils.EUINT16_TFHE, 0, securityZone));
     }
     /// @notice Generates a random value of a euint16 type
     /// @dev Generates a cryptographically secure random 16-bit unsigned integer in encrypted form
@@ -2585,7 +2458,7 @@ library FHE {
     /// @param securityZone The security zone identifier to use for random value generation.
     /// @return A randomly generated encrypted 32-bit unsigned integer (euint32)
     function randomEuint32(int32 securityZone) internal returns (euint32) {
-        return euint32.wrap(Impl.random(Utils.EUINT32_TFHE, 0, securityZone));
+        return euint32.wrap(FHENetwork.random(Utils.EUINT32_TFHE, 0, securityZone));
     }
     /// @notice Generates a random value of a euint32 type
     /// @dev Generates a cryptographically secure random 32-bit unsigned integer in encrypted form
@@ -2601,7 +2474,7 @@ library FHE {
     /// @param securityZone The security zone identifier to use for random value generation.
     /// @return A randomly generated encrypted 64-bit unsigned integer (euint64)
     function randomEuint64(int32 securityZone) internal returns (euint64) {
-        return euint64.wrap(Impl.random(Utils.EUINT64_TFHE, 0, securityZone));
+        return euint64.wrap(FHENetwork.random(Utils.EUINT64_TFHE, 0, securityZone));
     }
     /// @notice Generates a random value of a euint64 type
     /// @dev Generates a cryptographically secure random 64-bit unsigned integer in encrypted form
@@ -2617,7 +2490,7 @@ library FHE {
     /// @param securityZone The security zone identifier to use for random value generation.
     /// @return A randomly generated encrypted 128-bit unsigned integer (euint128)
     function randomEuint128(int32 securityZone) internal returns (euint128) {
-        return euint128.wrap(Impl.random(Utils.EUINT128_TFHE, 0, securityZone));
+        return euint128.wrap(FHENetwork.random(Utils.EUINT128_TFHE, 0, securityZone));
     }
     /// @notice Generates a random value of a euint128 type
     /// @dev Generates a cryptographically secure random 128-bit unsigned integer in encrypted form
@@ -2638,7 +2511,7 @@ library FHE {
             revert InvalidEncryptedInput(value.utype, expectedUtype);
         }
 
-        return ebool.wrap(Impl.verifyInput(Utils.inputFromEbool(value)));
+        return ebool.wrap(FHENetwork.verifyInput(Utils.inputFromEbool(value)));
     }
 
     /// @notice Verifies and converts an Euint8 input to an euint8 encrypted type
@@ -2652,7 +2525,7 @@ library FHE {
         }
 
 
-        return euint8.wrap(Impl.verifyInput(Utils.inputFromEuint8(value)));
+        return euint8.wrap(FHENetwork.verifyInput(Utils.inputFromEuint8(value)));
     }
 
     /// @notice Verifies and converts an Euint16 input to an euint16 encrypted type
@@ -2666,7 +2539,7 @@ library FHE {
         }
 
 
-        return euint16.wrap(Impl.verifyInput(Utils.inputFromEuint16(value)));
+        return euint16.wrap(FHENetwork.verifyInput(Utils.inputFromEuint16(value)));
     }
 
     /// @notice Verifies and converts an Euint32 input to an euint32 encrypted type
@@ -2680,7 +2553,7 @@ library FHE {
         }
 
 
-        return euint32.wrap(Impl.verifyInput(Utils.inputFromEuint32(value)));
+        return euint32.wrap(FHENetwork.verifyInput(Utils.inputFromEuint32(value)));
     }
 
     /// @notice Verifies and converts an Euint64 input to an euint64 encrypted type
@@ -2694,7 +2567,7 @@ library FHE {
         }
 
 
-        return euint64.wrap(Impl.verifyInput(Utils.inputFromEuint64(value)));
+        return euint64.wrap(FHENetwork.verifyInput(Utils.inputFromEuint64(value)));
     }
 
     /// @notice Verifies and converts an Euint128 input to an euint128 encrypted type
@@ -2708,7 +2581,7 @@ library FHE {
         }
 
 
-        return euint128.wrap(Impl.verifyInput(Utils.inputFromEuint128(value)));
+        return euint128.wrap(FHENetwork.verifyInput(Utils.inputFromEuint128(value)));
     }
 
     /// @notice Verifies and converts an Eaddress input to an eaddress encrypted type
@@ -2722,29 +2595,29 @@ library FHE {
         }
 
 
-        return eaddress.wrap(Impl.verifyInput(Utils.inputFromEaddress(value)));
+        return eaddress.wrap(FHENetwork.verifyInput(Utils.inputFromEaddress(value)));
     }
 
     // ********** TYPE CASTING ************* //
     /// @notice Converts a ebool to an euint8
     function asEuint8(ebool value) internal returns (euint8) {
-        return euint8.wrap(Impl.cast(ebool.unwrap(value), Utils.EUINT8_TFHE));
+        return euint8.wrap(FHENetwork.cast(ebool.unwrap(value), Utils.EUINT8_TFHE));
     }
     /// @notice Converts a ebool to an euint16
     function asEuint16(ebool value) internal returns (euint16) {
-        return euint16.wrap(Impl.cast(ebool.unwrap(value), Utils.EUINT16_TFHE));
+        return euint16.wrap(FHENetwork.cast(ebool.unwrap(value), Utils.EUINT16_TFHE));
     }
     /// @notice Converts a ebool to an euint32
     function asEuint32(ebool value) internal returns (euint32) {
-        return euint32.wrap(Impl.cast(ebool.unwrap(value), Utils.EUINT32_TFHE));
+        return euint32.wrap(FHENetwork.cast(ebool.unwrap(value), Utils.EUINT32_TFHE));
     }
     /// @notice Converts a ebool to an euint64
     function asEuint64(ebool value) internal returns (euint64) {
-        return euint64.wrap(Impl.cast(ebool.unwrap(value), Utils.EUINT64_TFHE));
+        return euint64.wrap(FHENetwork.cast(ebool.unwrap(value), Utils.EUINT64_TFHE));
     }
     /// @notice Converts a ebool to an euint128
     function asEuint128(ebool value) internal returns (euint128) {
-        return euint128.wrap(Impl.cast(ebool.unwrap(value), Utils.EUINT128_TFHE));
+        return euint128.wrap(FHENetwork.cast(ebool.unwrap(value), Utils.EUINT128_TFHE));
     }
 
     /// @notice Converts a euint8 to an ebool
@@ -2753,19 +2626,19 @@ library FHE {
     }
     /// @notice Converts a euint8 to an euint16
     function asEuint16(euint8 value) internal returns (euint16) {
-        return euint16.wrap(Impl.cast(euint8.unwrap(value), Utils.EUINT16_TFHE));
+        return euint16.wrap(FHENetwork.cast(euint8.unwrap(value), Utils.EUINT16_TFHE));
     }
     /// @notice Converts a euint8 to an euint32
     function asEuint32(euint8 value) internal returns (euint32) {
-        return euint32.wrap(Impl.cast(euint8.unwrap(value), Utils.EUINT32_TFHE));
+        return euint32.wrap(FHENetwork.cast(euint8.unwrap(value), Utils.EUINT32_TFHE));
     }
     /// @notice Converts a euint8 to an euint64
     function asEuint64(euint8 value) internal returns (euint64) {
-        return euint64.wrap(Impl.cast(euint8.unwrap(value), Utils.EUINT64_TFHE));
+        return euint64.wrap(FHENetwork.cast(euint8.unwrap(value), Utils.EUINT64_TFHE));
     }
     /// @notice Converts a euint8 to an euint128
     function asEuint128(euint8 value) internal returns (euint128) {
-        return euint128.wrap(Impl.cast(euint8.unwrap(value), Utils.EUINT128_TFHE));
+        return euint128.wrap(FHENetwork.cast(euint8.unwrap(value), Utils.EUINT128_TFHE));
     }
 
     /// @notice Converts a euint16 to an ebool
@@ -2774,19 +2647,19 @@ library FHE {
     }
     /// @notice Converts a euint16 to an euint8
     function asEuint8(euint16 value) internal returns (euint8) {
-        return euint8.wrap(Impl.cast(euint16.unwrap(value), Utils.EUINT8_TFHE));
+        return euint8.wrap(FHENetwork.cast(euint16.unwrap(value), Utils.EUINT8_TFHE));
     }
     /// @notice Converts a euint16 to an euint32
     function asEuint32(euint16 value) internal returns (euint32) {
-        return euint32.wrap(Impl.cast(euint16.unwrap(value), Utils.EUINT32_TFHE));
+        return euint32.wrap(FHENetwork.cast(euint16.unwrap(value), Utils.EUINT32_TFHE));
     }
     /// @notice Converts a euint16 to an euint64
     function asEuint64(euint16 value) internal returns (euint64) {
-        return euint64.wrap(Impl.cast(euint16.unwrap(value), Utils.EUINT64_TFHE));
+        return euint64.wrap(FHENetwork.cast(euint16.unwrap(value), Utils.EUINT64_TFHE));
     }
     /// @notice Converts a euint16 to an euint128
     function asEuint128(euint16 value) internal returns (euint128) {
-        return euint128.wrap(Impl.cast(euint16.unwrap(value), Utils.EUINT128_TFHE));
+        return euint128.wrap(FHENetwork.cast(euint16.unwrap(value), Utils.EUINT128_TFHE));
     }
 
     /// @notice Converts a euint32 to an ebool
@@ -2795,19 +2668,19 @@ library FHE {
     }
     /// @notice Converts a euint32 to an euint8
     function asEuint8(euint32 value) internal returns (euint8) {
-        return euint8.wrap(Impl.cast(euint32.unwrap(value), Utils.EUINT8_TFHE));
+        return euint8.wrap(FHENetwork.cast(euint32.unwrap(value), Utils.EUINT8_TFHE));
     }
     /// @notice Converts a euint32 to an euint16
     function asEuint16(euint32 value) internal returns (euint16) {
-        return euint16.wrap(Impl.cast(euint32.unwrap(value), Utils.EUINT16_TFHE));
+        return euint16.wrap(FHENetwork.cast(euint32.unwrap(value), Utils.EUINT16_TFHE));
     }
     /// @notice Converts a euint32 to an euint64
     function asEuint64(euint32 value) internal returns (euint64) {
-        return euint64.wrap(Impl.cast(euint32.unwrap(value), Utils.EUINT64_TFHE));
+        return euint64.wrap(FHENetwork.cast(euint32.unwrap(value), Utils.EUINT64_TFHE));
     }
     /// @notice Converts a euint32 to an euint128
     function asEuint128(euint32 value) internal returns (euint128) {
-        return euint128.wrap(Impl.cast(euint32.unwrap(value), Utils.EUINT128_TFHE));
+        return euint128.wrap(FHENetwork.cast(euint32.unwrap(value), Utils.EUINT128_TFHE));
     }
 
     /// @notice Converts a euint64 to an ebool
@@ -2816,19 +2689,19 @@ library FHE {
     }
     /// @notice Converts a euint64 to an euint8
     function asEuint8(euint64 value) internal returns (euint8) {
-        return euint8.wrap(Impl.cast(euint64.unwrap(value), Utils.EUINT8_TFHE));
+        return euint8.wrap(FHENetwork.cast(euint64.unwrap(value), Utils.EUINT8_TFHE));
     }
     /// @notice Converts a euint64 to an euint16
     function asEuint16(euint64 value) internal returns (euint16) {
-        return euint16.wrap(Impl.cast(euint64.unwrap(value), Utils.EUINT16_TFHE));
+        return euint16.wrap(FHENetwork.cast(euint64.unwrap(value), Utils.EUINT16_TFHE));
     }
     /// @notice Converts a euint64 to an euint32
     function asEuint32(euint64 value) internal returns (euint32) {
-        return euint32.wrap(Impl.cast(euint64.unwrap(value), Utils.EUINT32_TFHE));
+        return euint32.wrap(FHENetwork.cast(euint64.unwrap(value), Utils.EUINT32_TFHE));
     }
     /// @notice Converts a euint64 to an euint128
     function asEuint128(euint64 value) internal returns (euint128) {
-        return euint128.wrap(Impl.cast(euint64.unwrap(value), Utils.EUINT128_TFHE));
+        return euint128.wrap(FHENetwork.cast(euint64.unwrap(value), Utils.EUINT128_TFHE));
     }
 
     /// @notice Converts a euint128 to an ebool
@@ -2837,19 +2710,19 @@ library FHE {
     }
     /// @notice Converts a euint128 to an euint8
     function asEuint8(euint128 value) internal returns (euint8) {
-        return euint8.wrap(Impl.cast(euint128.unwrap(value), Utils.EUINT8_TFHE));
+        return euint8.wrap(FHENetwork.cast(euint128.unwrap(value), Utils.EUINT8_TFHE));
     }
     /// @notice Converts a euint128 to an euint16
     function asEuint16(euint128 value) internal returns (euint16) {
-        return euint16.wrap(Impl.cast(euint128.unwrap(value), Utils.EUINT16_TFHE));
+        return euint16.wrap(FHENetwork.cast(euint128.unwrap(value), Utils.EUINT16_TFHE));
     }
     /// @notice Converts a euint128 to an euint32
     function asEuint32(euint128 value) internal returns (euint32) {
-        return euint32.wrap(Impl.cast(euint128.unwrap(value), Utils.EUINT32_TFHE));
+        return euint32.wrap(FHENetwork.cast(euint128.unwrap(value), Utils.EUINT32_TFHE));
     }
     /// @notice Converts a euint128 to an euint64
     function asEuint64(euint128 value) internal returns (euint64) {
-        return euint64.wrap(Impl.cast(euint128.unwrap(value), Utils.EUINT64_TFHE));
+        return euint64.wrap(FHENetwork.cast(euint128.unwrap(value), Utils.EUINT64_TFHE));
     }
 
     /// @notice Converts a eaddress to an ebool
@@ -2858,23 +2731,23 @@ library FHE {
     }
     /// @notice Converts a eaddress to an euint8
     function asEuint8(eaddress value) internal returns (euint8) {
-        return euint8.wrap(Impl.cast(eaddress.unwrap(value), Utils.EUINT8_TFHE));
+        return euint8.wrap(FHENetwork.cast(eaddress.unwrap(value), Utils.EUINT8_TFHE));
     }
     /// @notice Converts a eaddress to an euint16
     function asEuint16(eaddress value) internal returns (euint16) {
-        return euint16.wrap(Impl.cast(eaddress.unwrap(value), Utils.EUINT16_TFHE));
+        return euint16.wrap(FHENetwork.cast(eaddress.unwrap(value), Utils.EUINT16_TFHE));
     }
     /// @notice Converts a eaddress to an euint32
     function asEuint32(eaddress value) internal returns (euint32) {
-        return euint32.wrap(Impl.cast(eaddress.unwrap(value), Utils.EUINT32_TFHE));
+        return euint32.wrap(FHENetwork.cast(eaddress.unwrap(value), Utils.EUINT32_TFHE));
     }
     /// @notice Converts a eaddress to an euint64
     function asEuint64(eaddress value) internal returns (euint64) {
-        return euint64.wrap(Impl.cast(eaddress.unwrap(value), Utils.EUINT64_TFHE));
+        return euint64.wrap(FHENetwork.cast(eaddress.unwrap(value), Utils.EUINT64_TFHE));
     }
     /// @notice Converts a eaddress to an euint128
     function asEuint128(eaddress value) internal returns (euint128) {
-        return euint128.wrap(Impl.cast(eaddress.unwrap(value), Utils.EUINT128_TFHE));
+        return euint128.wrap(FHENetwork.cast(eaddress.unwrap(value), Utils.EUINT128_TFHE));
     }
     /// @notice Converts a plaintext boolean value to a ciphertext ebool
     /// @dev Privacy: The input value is public, therefore the resulting ciphertext should be considered public until involved in an fhe operation
@@ -2890,7 +2763,7 @@ library FHE {
         if (value) {
             sVal = 1;
         }
-        uint256 ct = Impl.trivialEncrypt(sVal, Utils.EBOOL_TFHE, securityZone);
+        uint256 ct = FHENetwork.trivialEncrypt(sVal, Utils.EBOOL_TFHE, securityZone);
         return ebool.wrap(ct);
     }
     /// @notice Converts a uint256 to an euint8
@@ -2901,7 +2774,7 @@ library FHE {
     /// @notice Converts a uint256 to an euint8, specifying security zone
     /// @dev Privacy: The input value is public, therefore the resulting ciphertext should be considered public until involved in an fhe operation
     function asEuint8(uint256 value, int32 securityZone) internal returns (euint8) {
-        uint256 ct = Impl.trivialEncrypt(value, Utils.EUINT8_TFHE, securityZone);
+        uint256 ct = FHENetwork.trivialEncrypt(value, Utils.EUINT8_TFHE, securityZone);
         return euint8.wrap(ct);
     }
     /// @notice Converts a uint256 to an euint16
@@ -2912,7 +2785,7 @@ library FHE {
     /// @notice Converts a uint256 to an euint16, specifying security zone
     /// @dev Privacy: The input value is public, therefore the resulting ciphertext should be considered public until involved in an fhe operation
     function asEuint16(uint256 value, int32 securityZone) internal returns (euint16) {
-        uint256 ct = Impl.trivialEncrypt(value, Utils.EUINT16_TFHE, securityZone);
+        uint256 ct = FHENetwork.trivialEncrypt(value, Utils.EUINT16_TFHE, securityZone);
         return euint16.wrap(ct);
     }
     /// @notice Converts a uint256 to an euint32
@@ -2923,7 +2796,7 @@ library FHE {
     /// @notice Converts a uint256 to an euint32, specifying security zone
     /// @dev Privacy: The input value is public, therefore the resulting ciphertext should be considered public until involved in an fhe operation
     function asEuint32(uint256 value, int32 securityZone) internal returns (euint32) {
-        uint256 ct = Impl.trivialEncrypt(value, Utils.EUINT32_TFHE, securityZone);
+        uint256 ct = FHENetwork.trivialEncrypt(value, Utils.EUINT32_TFHE, securityZone);
         return euint32.wrap(ct);
     }
     /// @notice Converts a uint256 to an euint64
@@ -2934,7 +2807,7 @@ library FHE {
     /// @notice Converts a uint256 to an euint64, specifying security zone
     /// @dev Privacy: The input value is public, therefore the resulting ciphertext should be considered public until involved in an fhe operation
     function asEuint64(uint256 value, int32 securityZone) internal returns (euint64) {
-        uint256 ct = Impl.trivialEncrypt(value, Utils.EUINT64_TFHE, securityZone);
+        uint256 ct = FHENetwork.trivialEncrypt(value, Utils.EUINT64_TFHE, securityZone);
         return euint64.wrap(ct);
     }
     /// @notice Converts a uint256 to an euint128
@@ -2945,7 +2818,7 @@ library FHE {
     /// @notice Converts a uint256 to an euint128, specifying security zone
     /// @dev Privacy: The input value is public, therefore the resulting ciphertext should be considered public until involved in an fhe operation
     function asEuint128(uint256 value, int32 securityZone) internal returns (euint128) {
-        uint256 ct = Impl.trivialEncrypt(value, Utils.EUINT128_TFHE, securityZone);
+        uint256 ct = FHENetwork.trivialEncrypt(value, Utils.EUINT128_TFHE, securityZone);
         return euint128.wrap(ct);
     }
     /// @notice Converts a uint256 to an euint256
@@ -2956,7 +2829,7 @@ library FHE {
     /// @notice Converts a uint256 to an euint256, specifying security zone
     /// @dev Privacy: The input value is public, therefore the resulting ciphertext should be considered public until involved in an fhe operation
     function asEuint256(uint256 value, int32 securityZone) internal returns (euint256) {
-        uint256 ct = Impl.trivialEncrypt(value, Utils.EUINT256_TFHE, securityZone);
+        uint256 ct = FHENetwork.trivialEncrypt(value, Utils.EUINT256_TFHE, securityZone);
         return euint256.wrap(ct);
     }
     /// @notice Converts a address to an eaddress
@@ -2969,7 +2842,7 @@ library FHE {
     /// @dev Privacy: The input value is public, therefore the resulting ciphertext should be considered public until involved in an fhe operation
     /// Allows for a better user experience when working with eaddresses
     function asEaddress(address value, int32 securityZone) internal returns (eaddress) {
-        uint256 ct = Impl.trivialEncrypt(uint256(uint160(value)), Utils.EADDRESS_TFHE, securityZone);
+        uint256 ct = FHENetwork.trivialEncrypt(uint256(uint160(value)), Utils.EADDRESS_TFHE, securityZone);
         return eaddress.wrap(ct);
     }
 
@@ -2980,47 +2853,47 @@ library FHE {
     /// @param inputProof The ZK proof validating the input
     /// @return An ebool containing the verified encrypted value
     function asEbool(einput encryptedInput, bytes memory inputProof) internal returns (ebool) {
-        return ebool.wrap(Impl.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EBOOL_TFHE));
+        return ebool.wrap(FHENetwork.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EBOOL_TFHE));
     }
 
     /// @notice Converts an encrypted input to euint8
     function asEuint8(einput encryptedInput, bytes memory inputProof) internal returns (euint8) {
-        return euint8.wrap(Impl.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EUINT8_TFHE));
+        return euint8.wrap(FHENetwork.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EUINT8_TFHE));
     }
 
     /// @notice Converts an encrypted input to euint16
     function asEuint16(einput encryptedInput, bytes memory inputProof) internal returns (euint16) {
-        return euint16.wrap(Impl.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EUINT16_TFHE));
+        return euint16.wrap(FHENetwork.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EUINT16_TFHE));
     }
 
     /// @notice Converts an encrypted input to euint32
     function asEuint32(einput encryptedInput, bytes memory inputProof) internal returns (euint32) {
-        return euint32.wrap(Impl.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EUINT32_TFHE));
+        return euint32.wrap(FHENetwork.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EUINT32_TFHE));
     }
 
     /// @notice Converts an encrypted input to euint64
     function asEuint64(einput encryptedInput, bytes memory inputProof) internal returns (euint64) {
-        return euint64.wrap(Impl.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EUINT64_TFHE));
+        return euint64.wrap(FHENetwork.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EUINT64_TFHE));
     }
 
     /// @notice Converts an encrypted input to euint128
     function asEuint128(einput encryptedInput, bytes memory inputProof) internal returns (euint128) {
-        return euint128.wrap(Impl.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EUINT128_TFHE));
+        return euint128.wrap(FHENetwork.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EUINT128_TFHE));
     }
 
     /// @notice Converts an encrypted input to euint256
     function asEuint256(einput encryptedInput, bytes memory inputProof) internal returns (euint256) {
-        return euint256.wrap(Impl.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EUINT256_TFHE));
+        return euint256.wrap(FHENetwork.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EUINT256_TFHE));
     }
 
     /// @notice Converts a euint128 to an euint256
     function asEuint256(euint128 value) internal returns (euint256) {
-        return euint256.wrap(Impl.cast(euint128.unwrap(value), Utils.EUINT256_TFHE));
+        return euint256.wrap(FHENetwork.cast(euint128.unwrap(value), Utils.EUINT256_TFHE));
     }
 
     /// @notice Converts an encrypted input to eaddress
     function asEaddress(einput encryptedInput, bytes memory inputProof) internal returns (eaddress) {
-        return eaddress.wrap(Impl.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EADDRESS_TFHE));
+        return eaddress.wrap(FHENetwork.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EADDRESS_TFHE));
     }
 
     /// @notice Grants permission to an account to operate on the encrypted boolean value
@@ -3028,7 +2901,7 @@ library FHE {
     /// @param ctHash The encrypted boolean value to grant access to
     /// @param account The address being granted permission
     function allow(ebool ctHash, address account) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(ebool.unwrap(ctHash), account);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(ebool.unwrap(ctHash), account);
     }
 
     /// @notice Grants permission to an account to operate on the encrypted 8-bit unsigned integer
@@ -3036,7 +2909,7 @@ library FHE {
     /// @param ctHash The encrypted uint8 value to grant access to
     /// @param account The address being granted permission
     function allow(euint8 ctHash, address account) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(euint8.unwrap(ctHash), account);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint8.unwrap(ctHash), account);
     }
 
     /// @notice Grants permission to an account to operate on the encrypted 16-bit unsigned integer
@@ -3044,7 +2917,7 @@ library FHE {
     /// @param ctHash The encrypted uint16 value to grant access to
     /// @param account The address being granted permission
     function allow(euint16 ctHash, address account) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(euint16.unwrap(ctHash), account);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint16.unwrap(ctHash), account);
     }
 
     /// @notice Grants permission to an account to operate on the encrypted 32-bit unsigned integer
@@ -3052,7 +2925,7 @@ library FHE {
     /// @param ctHash The encrypted uint32 value to grant access to
     /// @param account The address being granted permission
     function allow(euint32 ctHash, address account) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(euint32.unwrap(ctHash), account);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint32.unwrap(ctHash), account);
     }
 
     /// @notice Grants permission to an account to operate on the encrypted 64-bit unsigned integer
@@ -3060,7 +2933,7 @@ library FHE {
     /// @param ctHash The encrypted uint64 value to grant access to
     /// @param account The address being granted permission
     function allow(euint64 ctHash, address account) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(euint64.unwrap(ctHash), account);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint64.unwrap(ctHash), account);
     }
 
     /// @notice Grants permission to an account to operate on the encrypted 128-bit unsigned integer
@@ -3068,7 +2941,7 @@ library FHE {
     /// @param ctHash The encrypted uint128 value to grant access to
     /// @param account The address being granted permission
     function allow(euint128 ctHash, address account) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(euint128.unwrap(ctHash), account);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint128.unwrap(ctHash), account);
     }
 
     /// @notice Grants permission to an account to operate on the encrypted address
@@ -3076,56 +2949,56 @@ library FHE {
     /// @param ctHash The encrypted address value to grant access to
     /// @param account The address being granted permission
     function allow(eaddress ctHash, address account) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(eaddress.unwrap(ctHash), account);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(eaddress.unwrap(ctHash), account);
     }
 
     /// @notice Grants global permission to operate on the encrypted boolean value
     /// @dev Allows all accounts to access the ciphertext
     /// @param ctHash The encrypted boolean value to grant global access to
     function allowGlobal(ebool ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allowGlobal(ebool.unwrap(ctHash));
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allowGlobal(ebool.unwrap(ctHash));
     }
 
     /// @notice Grants global permission to operate on the encrypted 8-bit unsigned integer
     /// @dev Allows all accounts to access the ciphertext
     /// @param ctHash The encrypted uint8 value to grant global access to
     function allowGlobal(euint8 ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allowGlobal(euint8.unwrap(ctHash));
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allowGlobal(euint8.unwrap(ctHash));
     }
 
     /// @notice Grants global permission to operate on the encrypted 16-bit unsigned integer
     /// @dev Allows all accounts to access the ciphertext
     /// @param ctHash The encrypted uint16 value to grant global access to
     function allowGlobal(euint16 ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allowGlobal(euint16.unwrap(ctHash));
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allowGlobal(euint16.unwrap(ctHash));
     }
 
     /// @notice Grants global permission to operate on the encrypted 32-bit unsigned integer
     /// @dev Allows all accounts to access the ciphertext
     /// @param ctHash The encrypted uint32 value to grant global access to
     function allowGlobal(euint32 ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allowGlobal(euint32.unwrap(ctHash));
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allowGlobal(euint32.unwrap(ctHash));
     }
 
     /// @notice Grants global permission to operate on the encrypted 64-bit unsigned integer
     /// @dev Allows all accounts to access the ciphertext
     /// @param ctHash The encrypted uint64 value to grant global access to
     function allowGlobal(euint64 ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allowGlobal(euint64.unwrap(ctHash));
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allowGlobal(euint64.unwrap(ctHash));
     }
 
     /// @notice Grants global permission to operate on the encrypted 128-bit unsigned integer
     /// @dev Allows all accounts to access the ciphertext
     /// @param ctHash The encrypted uint128 value to grant global access to
     function allowGlobal(euint128 ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allowGlobal(euint128.unwrap(ctHash));
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allowGlobal(euint128.unwrap(ctHash));
     }
 
     /// @notice Grants global permission to operate on the encrypted address
     /// @dev Allows all accounts to access the ciphertext
     /// @param ctHash The encrypted address value to grant global access to
     function allowGlobal(eaddress ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allowGlobal(eaddress.unwrap(ctHash));
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allowGlobal(eaddress.unwrap(ctHash));
     }
 
     /// @notice Checks if an account has permission to operate on the encrypted boolean value
@@ -3134,7 +3007,7 @@ library FHE {
     /// @param account The address to check permissions for
     /// @return True if the account has permission, false otherwise
     function isAllowed(ebool ctHash, address account) internal returns (bool) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).isAllowed(ebool.unwrap(ctHash), account);
+        return ITaskManager(T_CHAIN_FHE_ADDRESS).isAllowed(ebool.unwrap(ctHash), account);
     }
 
     /// @notice Checks if an account has permission to operate on the encrypted 8-bit unsigned integer
@@ -3143,7 +3016,7 @@ library FHE {
     /// @param account The address to check permissions for
     /// @return True if the account has permission, false otherwise
     function isAllowed(euint8 ctHash, address account) internal returns (bool) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).isAllowed(euint8.unwrap(ctHash), account);
+        return ITaskManager(T_CHAIN_FHE_ADDRESS).isAllowed(euint8.unwrap(ctHash), account);
     }
 
     /// @notice Checks if an account has permission to operate on the encrypted 16-bit unsigned integer
@@ -3152,7 +3025,7 @@ library FHE {
     /// @param account The address to check permissions for
     /// @return True if the account has permission, false otherwise
     function isAllowed(euint16 ctHash, address account) internal returns (bool) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).isAllowed(euint16.unwrap(ctHash), account);
+        return ITaskManager(T_CHAIN_FHE_ADDRESS).isAllowed(euint16.unwrap(ctHash), account);
     }
 
     /// @notice Checks if an account has permission to operate on the encrypted 32-bit unsigned integer
@@ -3161,7 +3034,7 @@ library FHE {
     /// @param account The address to check permissions for
     /// @return True if the account has permission, false otherwise
     function isAllowed(euint32 ctHash, address account) internal returns (bool) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).isAllowed(euint32.unwrap(ctHash), account);
+        return ITaskManager(T_CHAIN_FHE_ADDRESS).isAllowed(euint32.unwrap(ctHash), account);
     }
 
     /// @notice Checks if an account has permission to operate on the encrypted 64-bit unsigned integer
@@ -3170,7 +3043,7 @@ library FHE {
     /// @param account The address to check permissions for
     /// @return True if the account has permission, false otherwise
     function isAllowed(euint64 ctHash, address account) internal returns (bool) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).isAllowed(euint64.unwrap(ctHash), account);
+        return ITaskManager(T_CHAIN_FHE_ADDRESS).isAllowed(euint64.unwrap(ctHash), account);
     }
 
     /// @notice Checks if an account has permission to operate on the encrypted 128-bit unsigned integer
@@ -3179,7 +3052,7 @@ library FHE {
     /// @param account The address to check permissions for
     /// @return True if the account has permission, false otherwise
     function isAllowed(euint128 ctHash, address account) internal returns (bool) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).isAllowed(euint128.unwrap(ctHash), account);
+        return ITaskManager(T_CHAIN_FHE_ADDRESS).isAllowed(euint128.unwrap(ctHash), account);
     }
 
 
@@ -3189,7 +3062,7 @@ library FHE {
     /// @param account The address to check permissions for
     /// @return True if the account has permission, false otherwise
     function isAllowed(eaddress ctHash, address account) internal returns (bool) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).isAllowed(eaddress.unwrap(ctHash), account);
+        return ITaskManager(T_CHAIN_FHE_ADDRESS).isAllowed(eaddress.unwrap(ctHash), account);
     }
 
     // isSenderAllowed functions - check if msg.sender is allowed
@@ -3219,98 +3092,98 @@ library FHE {
     /// @dev Allows this contract to access the ciphertext
     /// @param ctHash The encrypted boolean value to grant access to
     function allowThis(ebool ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(ebool.unwrap(ctHash), address(this));
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(ebool.unwrap(ctHash), address(this));
     }
 
     /// @notice Grants permission to the current contract to operate on the encrypted 8-bit unsigned integer
     /// @dev Allows this contract to access the ciphertext
     /// @param ctHash The encrypted uint8 value to grant access to
     function allowThis(euint8 ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(euint8.unwrap(ctHash), address(this));
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint8.unwrap(ctHash), address(this));
     }
 
     /// @notice Grants permission to the current contract to operate on the encrypted 16-bit unsigned integer
     /// @dev Allows this contract to access the ciphertext
     /// @param ctHash The encrypted uint16 value to grant access to
     function allowThis(euint16 ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(euint16.unwrap(ctHash), address(this));
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint16.unwrap(ctHash), address(this));
     }
 
     /// @notice Grants permission to the current contract to operate on the encrypted 32-bit unsigned integer
     /// @dev Allows this contract to access the ciphertext
     /// @param ctHash The encrypted uint32 value to grant access to
     function allowThis(euint32 ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(euint32.unwrap(ctHash), address(this));
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint32.unwrap(ctHash), address(this));
     }
 
     /// @notice Grants permission to the current contract to operate on the encrypted 64-bit unsigned integer
     /// @dev Allows this contract to access the ciphertext
     /// @param ctHash The encrypted uint64 value to grant access to
     function allowThis(euint64 ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(euint64.unwrap(ctHash), address(this));
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint64.unwrap(ctHash), address(this));
     }
 
     /// @notice Grants permission to the current contract to operate on the encrypted 128-bit unsigned integer
     /// @dev Allows this contract to access the ciphertext
     /// @param ctHash The encrypted uint128 value to grant access to
     function allowThis(euint128 ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(euint128.unwrap(ctHash), address(this));
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint128.unwrap(ctHash), address(this));
     }
 
     /// @notice Grants permission to the current contract to operate on the encrypted address
     /// @dev Allows this contract to access the ciphertext
     /// @param ctHash The encrypted address value to grant access to
     function allowThis(eaddress ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(eaddress.unwrap(ctHash), address(this));
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(eaddress.unwrap(ctHash), address(this));
     }
 
     /// @notice Grants permission to the message sender to operate on the encrypted boolean value
     /// @dev Allows the transaction sender to access the ciphertext
     /// @param ctHash The encrypted boolean value to grant access to
     function allowSender(ebool ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(ebool.unwrap(ctHash), msg.sender);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(ebool.unwrap(ctHash), msg.sender);
     }
 
     /// @notice Grants permission to the message sender to operate on the encrypted 8-bit unsigned integer
     /// @dev Allows the transaction sender to access the ciphertext
     /// @param ctHash The encrypted uint8 value to grant access to
     function allowSender(euint8 ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(euint8.unwrap(ctHash), msg.sender);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint8.unwrap(ctHash), msg.sender);
     }
 
     /// @notice Grants permission to the message sender to operate on the encrypted 16-bit unsigned integer
     /// @dev Allows the transaction sender to access the ciphertext
     /// @param ctHash The encrypted uint16 value to grant access to
     function allowSender(euint16 ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(euint16.unwrap(ctHash), msg.sender);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint16.unwrap(ctHash), msg.sender);
     }
 
     /// @notice Grants permission to the message sender to operate on the encrypted 32-bit unsigned integer
     /// @dev Allows the transaction sender to access the ciphertext
     /// @param ctHash The encrypted uint32 value to grant access to
     function allowSender(euint32 ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(euint32.unwrap(ctHash), msg.sender);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint32.unwrap(ctHash), msg.sender);
     }
 
     /// @notice Grants permission to the message sender to operate on the encrypted 64-bit unsigned integer
     /// @dev Allows the transaction sender to access the ciphertext
     /// @param ctHash The encrypted uint64 value to grant access to
     function allowSender(euint64 ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(euint64.unwrap(ctHash), msg.sender);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint64.unwrap(ctHash), msg.sender);
     }
 
     /// @notice Grants permission to the message sender to operate on the encrypted 128-bit unsigned integer
     /// @dev Allows the transaction sender to access the ciphertext
     /// @param ctHash The encrypted uint128 value to grant access to
     function allowSender(euint128 ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(euint128.unwrap(ctHash), msg.sender);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(euint128.unwrap(ctHash), msg.sender);
     }
 
     /// @notice Grants permission to the message sender to operate on the encrypted address
     /// @dev Allows the transaction sender to access the ciphertext
     /// @param ctHash The encrypted address value to grant access to
     function allowSender(eaddress ctHash) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allow(eaddress.unwrap(ctHash), msg.sender);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allow(eaddress.unwrap(ctHash), msg.sender);
     }
 
     /// @notice Grants temporary permission to an account to operate on the encrypted boolean value
@@ -3318,7 +3191,7 @@ library FHE {
     /// @param ctHash The encrypted boolean value to grant temporary access to
     /// @param account The address being granted temporary permission
     function allowTransient(ebool ctHash, address account) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allowTransient(ebool.unwrap(ctHash), account);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allowTransient(ebool.unwrap(ctHash), account);
     }
 
     /// @notice Grants temporary permission to an account to operate on the encrypted 8-bit unsigned integer
@@ -3326,7 +3199,7 @@ library FHE {
     /// @param ctHash The encrypted uint8 value to grant temporary access to
     /// @param account The address being granted temporary permission
     function allowTransient(euint8 ctHash, address account) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allowTransient(euint8.unwrap(ctHash), account);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allowTransient(euint8.unwrap(ctHash), account);
     }
 
     /// @notice Grants temporary permission to an account to operate on the encrypted 16-bit unsigned integer
@@ -3334,7 +3207,7 @@ library FHE {
     /// @param ctHash The encrypted uint16 value to grant temporary access to
     /// @param account The address being granted temporary permission
     function allowTransient(euint16 ctHash, address account) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allowTransient(euint16.unwrap(ctHash), account);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allowTransient(euint16.unwrap(ctHash), account);
     }
 
     /// @notice Grants temporary permission to an account to operate on the encrypted 32-bit unsigned integer
@@ -3342,7 +3215,7 @@ library FHE {
     /// @param ctHash The encrypted uint32 value to grant temporary access to
     /// @param account The address being granted temporary permission
     function allowTransient(euint32 ctHash, address account) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allowTransient(euint32.unwrap(ctHash), account);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allowTransient(euint32.unwrap(ctHash), account);
     }
 
     /// @notice Grants temporary permission to an account to operate on the encrypted 64-bit unsigned integer
@@ -3350,7 +3223,7 @@ library FHE {
     /// @param ctHash The encrypted uint64 value to grant temporary access to
     /// @param account The address being granted temporary permission
     function allowTransient(euint64 ctHash, address account) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allowTransient(euint64.unwrap(ctHash), account);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allowTransient(euint64.unwrap(ctHash), account);
     }
 
     /// @notice Grants temporary permission to an account to operate on the encrypted 128-bit unsigned integer
@@ -3358,7 +3231,7 @@ library FHE {
     /// @param ctHash The encrypted uint128 value to grant temporary access to
     /// @param account The address being granted temporary permission
     function allowTransient(euint128 ctHash, address account) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allowTransient(euint128.unwrap(ctHash), account);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allowTransient(euint128.unwrap(ctHash), account);
     }
 
     /// @notice Grants temporary permission to an account to operate on the encrypted address
@@ -3366,7 +3239,7 @@ library FHE {
     /// @param ctHash The encrypted address value to grant temporary access to
     /// @param account The address being granted temporary permission
     function allowTransient(eaddress ctHash, address account) internal {
-        ITaskManager(TASK_MANAGER_ADDRESS).allowTransient(eaddress.unwrap(ctHash), account);
+        ITaskManager(T_CHAIN_FHE_ADDRESS).allowTransient(eaddress.unwrap(ctHash), account);
     }
 
     // ********** SEALED OUTPUTS ************* //

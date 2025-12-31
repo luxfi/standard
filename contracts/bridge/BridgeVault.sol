@@ -18,6 +18,7 @@ import {ETHVault} from "./ETHVault.sol";
 import {LRC20} from "../tokens/LRC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title BridgeVault
@@ -25,7 +26,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  * @dev Manages ERC20 and ETH vaults for cross-chain bridging
  * Used by: Lux mainnet, Zoo, Hanzo, and all ecosystem chains
  */
-contract BridgeVault is Ownable {
+contract BridgeVault is Ownable, ReentrancyGuard {
     mapping(address => address) public erc20Vault;
     address payable public ethVaultAddress;
     uint256 public totalVaultLength;
@@ -105,7 +106,7 @@ contract BridgeVault is Ownable {
     function deposit(
         address asset_,
         uint256 amount_
-    ) external payable onlyOwner {
+    ) external payable onlyOwner nonReentrant {
         if (asset_ == address(0)) {
             if (ethVaultAddress == payable(0)) {
                 _addNewVault(address(0));
@@ -130,7 +131,7 @@ contract BridgeVault is Ownable {
         address asset_,
         address receiver_,
         uint256 amount_
-    ) external onlyOwner {
+    ) external onlyOwner nonReentrant {
         if (asset_ == address(0)) {
             require(ethVaultAddress != payable(0), "ETH vault does not exist!");
             ETHVault(ethVaultAddress).withdraw(amount_, receiver_, owner());

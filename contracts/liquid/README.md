@@ -52,15 +52,15 @@ Core cross-chain infrastructure:
 | `LiquidETH.sol` | In-kind lending vault with 90% LTV |
 | `LiquidYield.sol` | Yield processor (burn→notify) |
 
-### synths/
-Synthetic token system (self-repaying):
+### tokens/
+Liquid token system (self-repaying L* tokens):
 
 | Contract | Description |
 |----------|-------------|
-| `SynthVault.sol` | Alchemist-style vault wrapper |
-| `SynthRedeemer.sol` | Transmuter wrapper for 1:1 redemption |
-| `SynthToken.sol` | Base ERC20 for synths |
-| `s*.sol` | Concrete synths (sUSD, sETH, sBTC, etc.) |
+| `LiquidLUX.sol` | Master yield vault (xLUX shares) |
+| `LETH.sol` | Liquid ETH (bridged + yield) |
+| `LBTC.sol` | Liquid BTC (bridged + yield) |
+| `LUSD.sol` | Liquid USD (stablecoin) |
 
 ## Key Parameters
 
@@ -112,4 +112,4 @@ uint256 healthFactor = collateral * LT / debt; // Must be > 1e18
 
 - `contracts/yield/` - Yield strategy interfaces and implementations
 - `contracts/bridge/` - Cross-chain bridge infrastructure
-- `contracts/synths/` - Legacy synth contracts (being consolidated here)
+- `contracts/governance/` - Governance contracts (GaugeController, VotingLUX)

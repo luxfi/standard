@@ -5,9 +5,9 @@
 **Organization**: Lux Industries
 **Solidity Version**: 0.8.31
 **EVM Version**: Cancun (for FHE transient storage)
-**Test Coverage**: 745 tests passing (100%)
+**Test Coverage**: 725 tests passing (100%)
 **npm Package**: @luxfi/contracts v1.2.0
-**Build Status**: ✅ All 23 AMM contracts compile, 45 AMM tests passing
+**Build Status**: ✅ All contracts compile, full test suite passing
 
 ## Project Overview
 
@@ -15,7 +15,7 @@ This repository contains the standard Solidity contracts and EVM precompiles for
 
 ## Test Coverage Summary (2025-12-30)
 
-**Total**: 745 tests passing across 34 test suites
+**Total**: 725 tests passing across 35 test suites
 
 | Protocol | Tests | Status |
 |----------|-------|--------|
@@ -98,6 +98,508 @@ Released v1.2.0 with complete Synth → Liquid Protocol rebrand:
 
 ```bash
 npm install @luxfi/contracts@1.2.0
+```
+
+---
+
+## Treasury V2 - Simplified Cross-Chain Fee Architecture (2025-12-30)
+
+### Status: ✅ COMPLETE
+
+Implemented radically simplified treasury architecture following first principles:
+- **C-Chain governs, other chains collect**
+- **Warp messaging, not trusted reporters**
+- **No dynamic fees in contracts** (EIP-1559 at consensus)
+- **Single-word naming**: rate, floor, cap, version
+- **Pull pattern for claims**: no unbounded loops
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│  C-CHAIN (GOVERNANCE & PAYOUT)                                                          │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐                                 │
+│  │   FeeGov    │───>│   Vault     │───>│   Router    │                                 │
+│  │ (settings)  │    │(receive via │    │(distribute) │                                 │
+│  │  broadcast  │    │   Warp)     │    │ pull claims │                                 │
+│  └─────────────┘    └─────────────┘    └─────────────┘                                 │
+│         │                   ▲                   │                                        │
+│         │ Warp             │ Warp              │                                        │
+│         ▼                   │                   ▼                                        │
+│  ┌──────────────────────────┴───────────────────────────────────────┐                  │
+│  │   OTHER CHAINS (P, X, A, B, D, T, G, Q, K, Z)                     │                  │
+│  │   ┌─────────────┐                                                 │                  │
+│  │   │   Collect   │ ← same contract on each chain                   │                  │
+│  │   │ sync(rate)  │ ← receives settings via Warp                    │                  │
+│  │   │ push(fees)  │ ← protocols push fees here                      │                  │
+│  │   │ bridge()    │ ← permissionless bridge back to C-Chain         │                  │
+│  │   └─────────────┘                                                 │                  │
+│  └───────────────────────────────────────────────────────────────────┘                  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Contracts
+
+| Contract | Location | Lines | Purpose |
+|----------|----------|-------|---------|
+| **FeeGov** | `contracts/treasury/FeeGov.sol` | ~100 | Governance: set rate, broadcast via Warp |
+| **Vault** | `contracts/treasury/Vault.sol` | ~120 | Receive fees via Warp, replay protection |
+| **Router** | `contracts/treasury/Router.sol` | ~150 | Distribute to recipients, pull claims |
+| **Collect** | `contracts/treasury/Collect.sol` | ~100 | Collector on each chain, minimal |
+
+**Total**: ~470 lines (vs 2,947 in v1 = **84% reduction**)
+
+### Key Design Decisions
+
+1. **No REPORTER_ROLE**: Warp proofs are validator-signed, cryptographically secure
+2. **No dynamic fee mechanism**: EIP-1559 handles this at consensus layer
+3. **Permissionless bridging**: Anyone can relay valid Warp proofs
+4. **Pull claims**: Recipients call `claim()`, no unbounded push loops
+5. **Version monotonicity**: Prevents stale/replay settings attacks
+
+### Tests
+
+```bash
+forge test --match-contract TreasuryV2Test
+# 23 tests passing
+```
+
+| Test Category | Count | Status |
+|--------------|-------|--------|
+| FeeGov | 8 | ✅ |
+| Vault | 3 | ✅ |
+| Router | 4 | ✅ |
+| Collect | 6 | ✅ |
+| Integration | 2 | ✅ |
+
+### Migration from V1
+
+The v2 architecture deprecates:
+- `FeeRegistry.sol` (641 lines) → **DELETE**
+- `DynamicFeeTest.t.sol` → **ARCHIVE**
+- `ChainFeeE2E.t.sol` → **ARCHIVE**
+- 12 role types → **3 roles** (owner, router, recipient)
+
+---
+
+## Karma Activity-Driven Decay (2025-12-30)
+
+### Status: ✅ COMPLETE (1000+ Year Sustainable)
+
+Updated `contracts/governance/Karma.sol` to implement activity-driven decay with long-term sustainability guarantees.
+
+**Key Features**:
+- **Activity-Driven Decay**: 1% if active (≥1 tx/month), 10% if inactive
+- **Verified DID Floor**: 50 K minimum for verified users (prevents total decay)
+- **1000+ Year Sustainability**: Mathematical analysis ensures no deadlocks
+
+**Constants**:
+```solidity
+uint256 public constant ACTIVE_DECAY_RATE = 100;      // 1% per year
+uint256 public constant INACTIVE_DECAY_RATE = 1000;   // 10% per year
+uint256 public constant MIN_VERIFIED_KARMA = 50e18;   // Floor for verified DIDs
+uint256 public constant MAX_KARMA = 1000e18;          // Soft cap
+uint256 public constant ACTIVITY_PERIOD = 30 days;    // Monthly tracking
+```
+
+**New State Variables**:
+```solidity
+mapping(address => mapping(uint256 => uint256)) public monthlyTxCount;
+mapping(address => bool) public wasActiveLastMonth;
+```
+
+**New Functions**:
+```solidity
+function currentMonth() public view returns (uint256);
+function isActive(address account) public view returns (bool);
+function getTxCountForMonth(address account, uint256 month) external view returns (uint256);
+function getDecayRate(address account) external view returns (uint256);
+function batchRecordActivity(address[] calldata accounts) external;
+function getActivityStatus(address account) external view returns (
+    uint256 karma, bool verified, bool activeThisMonth, bool activeLastMonth,
+    uint256 currentDecayRate, bool hasKarmaFloor
+);
+```
+
+**Long-Term Projections (starting 1000 K)**:
+
+| Years | Active (1%) | Inactive (10%) | Verified Floor |
+|-------|-------------|----------------|----------------|
+| 10 | 904 K | 349 K | 50 K |
+| 100 | 366 K | ~0 K | 50 K |
+| 1000 | ~0 K | ~0 K | 50 K |
+
+**Key Guarantee**: Verified DID holders always retain MIN_VERIFIED_KARMA (50 K), ensuring voting power for 1000+ years.
+
+### Governance Math Analysis
+
+Created comprehensive analysis at `docs/architecture/governance-math-analysis.md`:
+- Voting power formula: `VLUX = DLUX × sqrt(K/100) × (1 + lock_months×0.1)`
+- Quadratic voting reduces whale dominance
+- No mathematical deadlocks possible
+- Scale-tested for 100 to 1M+ users
+- All governance tests passing (37/37)
+
+### Updated Documentation
+
+| Document | Status |
+|----------|--------|
+| `~/work/lux/lps/LPs/lp-3002-governance-token-stack-k-dlux-vlux.md` | ✅ Updated with activity decay, MIN_VERIFIED_KARMA, 1000-year sustainability |
+| `docs/content/docs/governance/index.mdx` | ✅ Added Karma section, activity decay, voting formula |
+| `docs/architecture/governance-math-analysis.md` | ✅ NEW - comprehensive 385-line analysis |
+
+---
+
+## KarmaMinter - DAO-Controlled Event Rewards (2025-12-30)
+
+### Status: ✅ COMPLETE
+
+Created `contracts/governance/KarmaMinter.sol` for DAO-controlled Karma minting with configurable parameters for positive events.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                           KARMA MINTING FLOW                                            │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  HOOKS (Protocol Contracts)           KARMAMINTER                    KARMA              │
+│  ┌─────────────────────────┐    ┌──────────────────────┐    ┌──────────────────────┐   │
+│  │ Governor (proposals)    │───>│ rewardKarma()        │───>│ mint(to, amount)     │   │
+│  │ Staking (long-term)     │    │ - validate config    │    │ recordActivity()     │   │
+│  │ AMM (liquidity)         │    │ - check cooldown     │    └──────────────────────┘   │
+│  │ Bridge (usage)          │    │ - enforce daily caps │                               │
+│  │ DID Registry (verify)   │    │ - emit events        │                               │
+│  └─────────────────────────┘    └──────────────────────┘                               │
+│         HOOK_ROLE                    GOVERNOR_ROLE (DAO/Timelock)                       │
+│                                                                                          │
+│  ┌───────────────────────────────────────────────────────────────────────────────────┐  │
+│  │  DAO Controls via Timelock:                                                        │  │
+│  │  - setMintConfig(eventType, config) - full param control                          │  │
+│  │  - setEventEnabled(eventType, bool) - enable/disable events                       │  │
+│  │  - setBaseAmount/setCooldown/setGlobalDailyLimit - individual params              │  │
+│  │  - addHook/removeHook - authorize/revoke minting contracts                        │  │
+│  │  - pause/unpause - emergency controls                                              │  │
+│  └───────────────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Event Types & Default Configs
+
+| Event Type | Base K | Max K | Cooldown | Daily Limit | Description |
+|------------|--------|-------|----------|-------------|-------------|
+| `DID_VERIFICATION` | 100 | 100 | 1 year | 10,000 | Link/verify DID |
+| `HUMANITY_PROOF` | 200 | 200 | 1 year | 20,000 | Proof of humanity |
+| `PROPOSAL_CREATED` | 25 | 50 | 7 days | 500 | Create proposal |
+| `PROPOSAL_PASSED` | 50 | 100 | none | 1,000 | Proposal passes |
+| `VOTE_CAST` | 1 | 5 | none | 10,000 | Vote on proposal |
+| `LIQUIDITY_PROVIDED` | 10 | 50 | 1 day | 50,000 | Add DEX liquidity |
+| `STAKE_LONG_TERM` | 5 | 100 | 30 days | 100,000 | Long-term stake |
+| `BUG_BOUNTY` | 100 | 500 | none | 5,000 | Security report |
+| `CONTRIBUTION` | 25 | 100 | 7 days | 10,000 | Community contrib |
+| `REFERRAL` | 10 | 10 | none | 50,000 | New user referral |
+
+**Global Daily Limit**: 1,000,000 K across all event types
+
+### MintConfig Struct
+
+```solidity
+struct MintConfig {
+    uint256 baseAmount;      // Base K amount to mint
+    uint256 maxAmount;       // Max K per event (for variable rewards)
+    uint256 cooldown;        // Cooldown between rewards for same user
+    uint256 dailyLimit;      // Max K per day for this event type
+    uint256 dailyMinted;     // K minted today (auto-reset)
+    uint256 lastResetDay;    // Last day dailyMinted was reset
+    bool enabled;            // Whether this event type is active
+    bool requiresVerified;   // Whether user must be verified DID
+}
+```
+
+### Key Functions
+
+```solidity
+// Hook contracts call to reward users
+function rewardKarma(address recipient, bytes32 eventType, uint256 amount, bytes32 reason) external onlyRole(HOOK_ROLE);
+function batchRewardKarma(address[] calldata recipients, bytes32 eventType, uint256[] calldata amounts, bytes32 reason) external onlyRole(HOOK_ROLE);
+
+// DAO governance functions (via Timelock)
+function setMintConfig(bytes32 eventType, MintConfig calldata config) external onlyRole(GOVERNOR_ROLE);
+function setEventEnabled(bytes32 eventType, bool enabled) external onlyRole(GOVERNOR_ROLE);
+function setBaseAmount(bytes32 eventType, uint256 baseAmount) external onlyRole(GOVERNOR_ROLE);
+function setCooldown(bytes32 eventType, uint256 cooldown) external onlyRole(GOVERNOR_ROLE);
+function setGlobalDailyLimit(uint256 newLimit) external onlyRole(GOVERNOR_ROLE);
+function addHook(address hook, string calldata description) external onlyRole(GOVERNOR_ROLE);
+function removeHook(address hook) external onlyRole(GOVERNOR_ROLE);
+
+// View functions
+function canReceiveReward(address recipient, bytes32 eventType) external view returns (bool canReceive, string memory reason);
+function getRemainingDailyQuota(bytes32 eventType) external view returns (uint256);
+```
+
+### Deployment (DeployFullStack.s.sol - Phase 8)
+
+```solidity
+// Deploy Karma (soul-bound reputation)
+karma = new Karma(deployer);
+
+// Deploy KarmaMinter with DAO control
+karmaMinter = new KarmaMinter(address(karma), deployer, address(timelock));
+
+// Grant ATTESTOR_ROLE to KarmaMinter
+karma.grantRole(karma.ATTESTOR_ROLE(), address(karmaMinter));
+
+// Deploy DLUX (rebasing governance token)
+dlux = new DLUX(address(wlux), deployer, deployer);
+
+// Grant GOVERNOR_ROLE to Timelock for DAO control
+dlux.grantRole(dlux.GOVERNOR_ROLE(), address(timelock));
+
+// Later in Phase 9: dlux.setTreasury(daoTreasury);
+```
+
+### Role Hierarchy
+
+| Role | Holder | Permissions |
+|------|--------|-------------|
+| `DEFAULT_ADMIN_ROLE` | Deployer → Multisig | Manage all roles |
+| `GOVERNOR_ROLE` | Timelock (DAO) | Configure mint params, add/remove hooks |
+| `HOOK_ROLE` | Protocol contracts | Trigger `rewardKarma()` |
+| `ATTESTOR_ROLE` (Karma) | KarmaMinter | Call `karma.mint()` |
+
+### Integration Example
+
+```solidity
+// In Governor.sol after proposal passes
+function _onProposalPassed(uint256 proposalId, address proposer) internal {
+    karmaMinter.rewardKarma(
+        proposer,
+        karmaMinter.EVENT_PROPOSAL_PASSED(),
+        0, // Use baseAmount
+        bytes32(proposalId)
+    );
+}
+
+// In Staking.sol for long-term stakes
+function _onStakeMilestone(address staker, uint256 months) internal {
+    karmaMinter.rewardKarma(
+        staker,
+        karmaMinter.EVENT_STAKE_LONG_TERM(),
+        months * 5e18, // 5 K per month
+        keccak256(abi.encode(staker, months))
+    );
+}
+```
+
+---
+
+## DLUXMinter - DAO-Controlled Strategic Emissions (2025-12-30)
+
+### Status: ✅ COMPLETE
+
+Created `contracts/governance/DLUXMinter.sol` for DAO-controlled DLUX emissions with collateral-backed minting.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                           DLUX EMISSION FLOW                                            │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  PROTOCOL CONTRACTS                     DLUXMINTER                       DLUX           │
+│  ┌─────────────────────────┐    ┌──────────────────────┐    ┌──────────────────────┐   │
+│  │ Validators              │───>│ emitDLUX()           │───>│ mint(to, amount)     │   │
+│  │ Bridge                  │    │ - validate config    │    │                      │   │
+│  │ AMM/LP                  │    │ - check cooldown     │    └──────────────────────┘   │
+│  │ Staking                 │    │ - enforce daily caps │                               │
+│  │ Markets/Lending         │    │ - emit events        │                               │
+│  └─────────────────────────┘    └──────────────────────┘                               │
+│         EMITTER_ROLE                  GOVERNOR_ROLE (DAO/Timelock)                      │
+│                                                                                          │
+│  COLLATERAL MINTING                                                                      │
+│  ┌───────────────────────────────────────────────────────────────────────────────────┐  │
+│  │ User Flow:                                                                         │  │
+│  │   deposit LUX → receive DLUX (1:1 collateral ratio)                               │  │
+│  │   burn DLUX   → receive LUX (unlock collateral)                                   │  │
+│  │                                                                                    │  │
+│  │ Functions:                                                                         │  │
+│  │ - depositCollateral(luxAmount) → dluxMinted                                       │  │
+│  │ - withdrawCollateral(dluxAmount) → luxReturned                                    │  │
+│  └───────────────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Emission Types & Default Configs
+
+| Emission Type | Base DLUX | Max DLUX | Cooldown | Daily Limit | Description |
+|---------------|-----------|----------|----------|-------------|-------------|
+| `VALIDATOR_EMISSION` | 100 | 1000 | 1 day | 100,000 | Validator bonus |
+| `BRIDGE_USAGE` | 10 | 100 | 1 hour | 500,000 | Bridge activity |
+| `LP_PROVISION` | 50 | 500 | 1 day | 500,000 | DEX LP rewards |
+| `STAKING_BONUS` | 25 | 250 | 7 days | 250,000 | Long-term stake |
+| `LENDING_REWARD` | 20 | 200 | 1 day | 300,000 | Lending/borrowing |
+| `REFERRAL` | 50 | 50 | none | 100,000 | New user referral |
+| `COMMUNITY_GRANT` | 500 | 10000 | 30 days | 50,000 | Community work |
+| `TREASURY_ALLOCATION` | 1000 | 100000 | none | 1,000,000 | Strategic alloc |
+| `AIRDROP` | 100 | 10000 | none | 500,000 | Airdrop events |
+
+**Global Daily Limit**: 10,000,000 DLUX across all emission types
+
+### EmissionConfig Struct
+
+```solidity
+struct EmissionConfig {
+    uint256 baseAmount;       // Base DLUX amount per emission
+    uint256 maxAmount;        // Max DLUX per single emission
+    uint256 cooldown;         // Cooldown between emissions
+    uint256 dailyLimit;       // Max DLUX per day for this type
+    uint256 dailyEmitted;     // DLUX emitted today (auto-reset)
+    uint256 lastResetDay;     // Last day dailyEmitted was reset
+    uint256 multiplierBps;    // Emission multiplier (10000 = 1x)
+    bool enabled;             // Whether this emission type is active
+    bool requiresCollateral;  // Whether collateral required
+}
+```
+
+### Key Functions
+
+```solidity
+// Collateral-backed minting
+function depositCollateral(uint256 luxAmount) external returns (uint256 dluxMinted);
+function withdrawCollateral(uint256 dluxAmount) external returns (uint256 luxReturned);
+
+// Protocol contracts emit DLUX to users
+function emitDLUX(address recipient, bytes32 emissionType, uint256 amount, bytes32 reason) external onlyRole(EMITTER_ROLE);
+function batchEmitDLUX(address[] calldata recipients, bytes32 emissionType, uint256[] calldata amounts, bytes32 reason) external onlyRole(EMITTER_ROLE);
+
+// DAO governance functions (via Timelock)
+function setEmissionConfig(bytes32 emissionType, EmissionConfig calldata config) external onlyRole(GOVERNOR_ROLE);
+function setEmissionEnabled(bytes32 emissionType, bool enabled) external onlyRole(GOVERNOR_ROLE);
+function setMultiplier(bytes32 emissionType, uint256 multiplierBps) external onlyRole(GOVERNOR_ROLE);
+function setGlobalDailyLimit(uint256 newLimit) external onlyRole(GOVERNOR_ROLE);
+function addEmitter(address emitter, string calldata description) external onlyRole(GOVERNOR_ROLE);
+function removeEmitter(address emitter) external onlyRole(GOVERNOR_ROLE);
+
+// View functions
+function canReceiveEmission(address recipient, bytes32 emissionType) external view returns (bool, string memory);
+function getRemainingDailyQuota(bytes32 emissionType) external view returns (uint256);
+function getCollateralRatio() external view returns (uint256);
+```
+
+### Deployment (DeployFullStack.s.sol - Phase 8)
+
+```solidity
+// Deploy DLUX (rebasing governance token)
+dlux = new DLUX(address(wlux), deployer, deployer);
+
+// Deploy DLUXMinter with DAO control
+dluxMinter = new DLUXMinter(
+    address(dlux),
+    address(wlux),
+    deployer,      // treasury (updated after Phase 9)
+    deployer,      // admin
+    address(timelock)  // dao
+);
+
+// Grant MINTER_ROLE to DLUXMinter on DLUX
+dlux.grantRole(dlux.MINTER_ROLE(), address(dluxMinter));
+
+// Later in Phase 9: dluxMinter.setTreasury(daoTreasury);
+```
+
+### Role Hierarchy
+
+| Role | Holder | Permissions |
+|------|--------|-------------|
+| `DEFAULT_ADMIN_ROLE` | Deployer → Multisig | Manage all roles |
+| `GOVERNOR_ROLE` | Timelock (DAO) | Configure emission params, add/remove emitters |
+| `EMITTER_ROLE` | Protocol contracts | Trigger `emitDLUX()` |
+| `MINTER_ROLE` (DLUX) | DLUXMinter | Call `dlux.mint()` |
+
+### K vs DLUX: Key Differences
+
+| Aspect | K (Karma) | DLUX |
+|--------|-----------|------|
+| **Nature** | Soul-bound reputation | Transferable governance token |
+| **Mint by** | Humans for humans (via KarmaMinter) | Protocol for strategic activities |
+| **Self-mint** | ❌ Cannot mint for self | ✅ Can receive via collateral deposit |
+| **Purpose** | Reputation, DID-based floor | Governance power, economic rewards |
+| **Decay** | Activity-driven (1%/10%) | Rebasing (demurrage) |
+| **Burning** | Can burn to strike others (2:1) | Burn to withdraw collateral |
+| **Use in vLUX** | sqrt(K) factor in voting | Direct voting weight component |
+
+### Integration Example
+
+```solidity
+// In AMM.sol for LP provision
+function _onLiquidityProvided(address provider, uint256 lpTokens) internal {
+    dluxMinter.emitDLUX(
+        provider,
+        dluxMinter.EMISSION_LP(),
+        lpTokens / 100, // 1% of LP tokens as DLUX
+        keccak256(abi.encode(provider, lpTokens))
+    );
+}
+
+// In Staking.sol for long-term stakes
+function _onStakeMilestone(address staker, uint256 months) internal {
+    dluxMinter.emitDLUX(
+        staker,
+        dluxMinter.EMISSION_STAKING(),
+        months * 25e18, // 25 DLUX per month
+        keccak256(abi.encode(staker, months))
+    );
+}
+```
+
+---
+
+## KarmaMinter Strike Mechanism (2025-12-30)
+
+### Status: ✅ COMPLETE
+
+Added strike mechanism to KarmaMinter allowing users to burn their K to reduce others' K.
+
+### Key Features
+
+- **Self-Minting Restriction**: Cannot mint K for yourself (`CannotMintForSelf` error)
+- **Strike Ratio**: 2:1 - burn 2 K from yourself to strike 1 K from target
+- **Daily Strike Limit**: Max 10% of target's K per day
+- **Sacrifice Function**: Burn your own K without striking
+
+### New Functions
+
+```solidity
+// Strike: burn 2 K to reduce target by 1 K
+function strikeKarma(address target, uint256 amount, bytes32 reason) external;
+
+// Sacrifice: burn your own K
+function sacrificeKarma(uint256 amount, bytes32 reason) external;
+```
+
+### Constants
+
+```solidity
+uint256 public constant STRIKE_RATIO = 2;        // 2:1 burn ratio
+uint256 public constant MAX_STRIKE_PERCENT = 1000; // Max 10% of target per day (basis points)
+```
+
+### Events
+
+```solidity
+event KarmaStruck(
+    address indexed striker,
+    address indexed target,
+    uint256 strikerBurned,
+    uint256 targetBurned,
+    bytes32 indexed reason
+);
+
+event KarmaSacrificed(
+    address indexed account,
+    uint256 amount,
+    bytes32 indexed reason
+);
 ```
 
 ---
@@ -613,6 +1115,10 @@ contracts/
 ├── governance/                # Governance layer
 │   ├── VotingLUX.sol          # vLUX = xLUX + DLUX
 │   ├── GaugeController.sol    # Gauge weight voting
+│   ├── Karma.sol              # Soul-bound reputation (K)
+│   ├── KarmaMinter.sol        # DAO-controlled K minting
+│   ├── DLUX.sol               # Rebasing governance token
+│   ├── DLUXMinter.sol         # DAO-controlled DLUX emissions
 │   └── voting/                # IVotingWeight adapters
 │
 └── treasury/                  # Fee distribution
@@ -2088,7 +2594,7 @@ Cleaned up duplicate and orphaned governance contracts:
 
 **Canonical Locations:**
 - **Bridge Tokens**: `contracts/bridge/LRC20B.sol` - All 67+ bridge tokens import from here
-- **Governance**: `contracts/governance/` - Governor, Timelock, VotesToken, vLUX, GaugeController
+- **Governance**: `contracts/governance/` - Governor, Timelock, VotesToken, vLUX, GaugeController, Karma, KarmaMinter, DLUX, DLUXMinter
 - **Identity/DID**: `contracts/identity/` - DIDRegistry, DIDResolver, PremiumDIDRegistry
 
 ### Full Stack Deployment Script (12 Phases)
@@ -2104,7 +2610,7 @@ The `script/DeployFullStack.s.sol` now deploys the complete Lux DeFi stack:
 | 5 | 5 LP pools | Core trading pairs |
 | 6 | FeeSplitter, ValidatorVault | Fee distribution |
 | 7 | DIDRegistry | Identity/DID |
-| 8 | VotesToken, Timelock, Governor, vLUX, GaugeController | Governance |
+| 8 | VotesToken, Timelock, Governor, vLUX, GaugeController, Karma, KarmaMinter, DLUX, DLUXMinter | Governance |
 | 9 | FeeSplitter | Treasury |
 | 10 | LinearCurve, ExponentialCurve, LSSVMFactory, LSSVMRouter | NFT AMM |
 | 11 | Markets | Morpho-style lending |

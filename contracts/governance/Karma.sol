@@ -30,7 +30,9 @@ import {IDIDRegistry} from "../identity/interfaces/IDID.sol";
  * │  - Governance penalty: -50 to -500 K                                        │
  * │  - Failed malicious proposal: -100 K                                        │
  * │  - Slashing event: -25% of K                                                │
- * │  - Inactivity (>1 year): -10% decay                                         │
+ * │  - Activity-driven decay:                                                   │
+ * │    • 1% per year if active (≥1 tx/month)                                    │
+ * │    • 10% per year if inactive (0 tx)                                        │
  * └─────────────────────────────────────────────────────────────────────────────┘
  */
 contract Karma is AccessControl {
@@ -45,11 +47,18 @@ contract Karma is AccessControl {
     /// @notice Soft cap per account
     uint256 public constant MAX_KARMA = 1000e18;
 
-    /// @notice Inactivity period before decay starts
-    uint256 public constant INACTIVITY_PERIOD = 365 days;
+    /// @notice Activity period for monthly tracking
+    uint256 public constant ACTIVITY_PERIOD = 30 days;
 
-    /// @notice Decay rate per year (10%)
-    uint256 public constant DECAY_RATE = 1000; // basis points
+    /// @notice Decay rate per year if ACTIVE (1% - at least 1 tx/month)
+    uint256 public constant ACTIVE_DECAY_RATE = 100; // basis points (1%)
+
+    /// @notice Decay rate per year if INACTIVE (10% - 0 tx/month)
+    uint256 public constant INACTIVE_DECAY_RATE = 1000; // basis points (10%)
+
+    /// @notice Minimum Karma floor for verified DID holders (prevents total decay)
+    /// @dev Ensures verified community members always retain voting power for 1000+ years
+    uint256 public constant MIN_VERIFIED_KARMA = 50e18;
 
     // ============ State ============
 
@@ -67,6 +76,15 @@ contract Karma is AccessControl {
 
     /// @notice Last activity timestamp per account
     mapping(address => uint256) public lastActivity;
+
+    /// @notice Transaction count in current month (account => month => count)
+    /// @dev Month = block.timestamp / 30 days. Only current and previous month are used for decay.
+    /// Historical entries are ignored but not cleaned up (gas optimization).
+    mapping(address => mapping(uint256 => uint256)) public monthlyTxCount;
+
+    /// @notice Whether account was active last month (had ≥1 tx)
+    /// @dev Updated on each recordActivity() call
+    mapping(address => bool) public wasActiveLastMonth;
 
     /// @notice Total K in circulation
     uint256 public totalSupply;
@@ -86,7 +104,8 @@ contract Karma is AccessControl {
 
     event KarmaMinted(address indexed to, uint256 amount, bytes32 reason);
     event KarmaSlashed(address indexed from, uint256 amount, bytes32 reason);
-    event KarmaDecayed(address indexed account, uint256 amount);
+    event KarmaDecayed(address indexed account, uint256 amount, bool wasActive);
+    event ActivityRecorded(address indexed account, uint256 month, uint256 txCount);
     event DIDLinked(address indexed account, bytes32 indexed did);
     event Verified(address indexed account, bool status);
 
@@ -121,9 +140,10 @@ contract Karma is AccessControl {
         return karmaOf(account);
     }
 
-    /// @notice Get K balance with decay calculation
+    /// @notice Get K balance with activity-driven decay calculation
     /// @param account Address to query
-    /// @return K balance after applying inactivity decay
+    /// @return K balance after applying decay (1% if active, 10% if inactive)
+    /// @dev Verified DID holders have a MIN_VERIFIED_KARMA floor to ensure 1000+ year sustainability
     function karmaOf(address account) public view returns (uint256) {
         uint256 balance = _balances[account];
         if (balance == 0) return 0;
@@ -131,19 +151,49 @@ contract Karma is AccessControl {
         uint256 lastActive = lastActivity[account];
         if (lastActive == 0) return balance;
 
-        uint256 inactiveTime = block.timestamp - lastActive;
-        if (inactiveTime < INACTIVITY_PERIOD) return balance;
+        // Calculate elapsed time since last activity
+        uint256 elapsedTime = block.timestamp - lastActive;
+        if (elapsedTime < ACTIVITY_PERIOD) return balance;
 
-        // Calculate decay: 10% per year of inactivity
-        uint256 decayPeriods = (inactiveTime - INACTIVITY_PERIOD) / 365 days;
-        if (decayPeriods == 0) return balance;
+        // Determine decay rate based on activity status
+        // Active = at least 1 tx in the last month = 1% decay
+        // Inactive = 0 tx in the last month = 10% decay
+        uint256 decayRate = wasActiveLastMonth[account] ? ACTIVE_DECAY_RATE : INACTIVE_DECAY_RATE;
 
-        // Apply compound decay
-        for (uint256 i = 0; i < decayPeriods && i < 10; i++) {
-            balance = (balance * (10000 - DECAY_RATE)) / 10000;
+        // Calculate number of years (or fractions) for decay
+        uint256 decayPeriods = elapsedTime / 365 days;
+        if (decayPeriods == 0) {
+            // Apply fractional decay for partial year
+            uint256 fraction = (elapsedTime * 10000) / 365 days;
+            uint256 decayAmount = (balance * decayRate * fraction) / (10000 * 10000);
+            balance = balance > decayAmount ? balance - decayAmount : 0;
+        } else {
+            // Apply compound decay for full years (capped at 10 iterations)
+            for (uint256 i = 0; i < decayPeriods && i < 10; i++) {
+                balance = (balance * (10000 - decayRate)) / 10000;
+            }
+        }
+
+        // Verified DID holders have a minimum floor to ensure long-term voting power
+        // This prevents total decay even after 1000+ years of inactivity
+        if (isVerified[account] && balance < MIN_VERIFIED_KARMA) {
+            return MIN_VERIFIED_KARMA;
         }
 
         return balance;
+    }
+
+    /// @notice Get current month number for activity tracking
+    /// @return Current month (timestamp / 30 days)
+    function currentMonth() public view returns (uint256) {
+        return block.timestamp / ACTIVITY_PERIOD;
+    }
+
+    /// @notice Check if account is currently active (has tx this month)
+    /// @param account Address to check
+    /// @return isActive Whether account has at least 1 tx this month
+    function isActive(address account) public view returns (bool) {
+        return monthlyTxCount[account][currentMonth()] > 0;
     }
 
     // ============ Attestor Functions ============
@@ -228,20 +278,70 @@ contract Karma is AccessControl {
         emit KarmaSlashed(account, amount, reason);
     }
 
+    /// @notice Burn K from account (called by KarmaMinter for community moderation)
+    /// @dev Can be called by ATTESTOR_ROLE (for strike mechanism) or SLASHER_ROLE
+    /// @param account Address to burn from
+    /// @param amount Amount of K to burn
+    /// @param reason Reason code for burning
+    function burn(address account, uint256 amount, bytes32 reason) external {
+        // Allow both attestors (KarmaMinter) and slashers to burn
+        if (!hasRole(ATTESTOR_ROLE, msg.sender) && !hasRole(SLASHER_ROLE, msg.sender)) {
+            revert NotSlasher();
+        }
+
+        uint256 balance = _balances[account];
+        if (amount > balance) {
+            amount = balance;
+        }
+
+        _balances[account] = balance - amount;
+        totalSupply -= amount;
+
+        emit KarmaSlashed(account, amount, reason);
+    }
+
     // ============ User Functions ============
 
-    /// @notice Record activity to reset decay timer
-    /// @dev Called internally by governance actions
+    /// @notice Record activity to track monthly tx count and reset decay timer
+    /// @dev Called by anyone for their own account, or by attestors for others
     function recordActivity(address account) external {
         // Can be called by anyone to update their own activity
         // Or by authorized contracts for governance participation
         if (msg.sender == account || hasRole(ATTESTOR_ROLE, msg.sender)) {
+            uint256 month = currentMonth();
+            uint256 prevMonth = month > 0 ? month - 1 : 0;
+
+            // Update activity status from previous month before recording new activity
+            wasActiveLastMonth[account] = monthlyTxCount[account][prevMonth] > 0;
+
+            // Increment tx count for current month
+            monthlyTxCount[account][month]++;
             lastActivity[account] = block.timestamp;
+
+            emit ActivityRecorded(account, month, monthlyTxCount[account][month]);
+        }
+    }
+
+    /// @notice Batch record activity for multiple accounts (keeper function)
+    /// @param accounts Addresses to record activity for
+    function batchRecordActivity(address[] calldata accounts) external {
+        if (!hasRole(ATTESTOR_ROLE, msg.sender)) revert NotAttestor();
+
+        uint256 month = currentMonth();
+        uint256 prevMonth = month > 0 ? month - 1 : 0;
+
+        for (uint256 i = 0; i < accounts.length; i++) {
+            address account = accounts[i];
+            wasActiveLastMonth[account] = monthlyTxCount[account][prevMonth] > 0;
+            monthlyTxCount[account][month]++;
+            lastActivity[account] = block.timestamp;
+            emit ActivityRecorded(account, month, monthlyTxCount[account][month]);
         }
     }
 
     /// @notice Apply decay to an account (called by keepers)
     /// @param account Address to apply decay
+    /// @dev Emits KarmaDecayed with wasActive status for transparency
     function applyDecay(address account) external {
         uint256 currentBalance = _balances[account];
         uint256 decayedBalance = karmaOf(account);
@@ -250,8 +350,53 @@ contract Karma is AccessControl {
             uint256 decayAmount = currentBalance - decayedBalance;
             _balances[account] = decayedBalance;
             totalSupply -= decayAmount;
-            emit KarmaDecayed(account, decayAmount);
+
+            // Update wasActiveLastMonth before emitting
+            uint256 prevMonth = currentMonth() > 0 ? currentMonth() - 1 : 0;
+            bool wasActive = monthlyTxCount[account][prevMonth] > 0;
+            wasActiveLastMonth[account] = wasActive;
+
+            emit KarmaDecayed(account, decayAmount, wasActive);
         }
+    }
+
+    /// @notice Get monthly transaction count for an account
+    /// @param account Address to query
+    /// @param month Month number to query
+    /// @return Transaction count for that month
+    function getTxCountForMonth(address account, uint256 month) external view returns (uint256) {
+        return monthlyTxCount[account][month];
+    }
+
+    /// @notice Get decay rate that would apply to an account
+    /// @param account Address to check
+    /// @return decayRate Decay rate in basis points (100 = 1%, 1000 = 10%)
+    function getDecayRate(address account) external view returns (uint256 decayRate) {
+        return wasActiveLastMonth[account] ? ACTIVE_DECAY_RATE : INACTIVE_DECAY_RATE;
+    }
+
+    /// @notice Get full activity status for an account (for UI/analytics)
+    /// @param account Address to check
+    /// @return karma Current Karma balance (with decay applied)
+    /// @return verified Whether account has verified DID
+    /// @return activeThisMonth Whether account has recorded activity this month
+    /// @return activeLastMonth Whether account was active last month
+    /// @return currentDecayRate Current decay rate in basis points
+    /// @return hasKarmaFloor Whether account qualifies for MIN_VERIFIED_KARMA floor
+    function getActivityStatus(address account) external view returns (
+        uint256 karma,
+        bool verified,
+        bool activeThisMonth,
+        bool activeLastMonth,
+        uint256 currentDecayRate,
+        bool hasKarmaFloor
+    ) {
+        karma = karmaOf(account);
+        verified = isVerified[account];
+        activeThisMonth = monthlyTxCount[account][currentMonth()] > 0;
+        activeLastMonth = wasActiveLastMonth[account];
+        currentDecayRate = activeLastMonth ? ACTIVE_DECAY_RATE : INACTIVE_DECAY_RATE;
+        hasKarmaFloor = verified && _balances[account] > 0;
     }
 
     // ============ DID Registry Integration ============

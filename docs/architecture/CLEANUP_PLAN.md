@@ -362,35 +362,27 @@ contracts/dao/
 // - Create markets (LUSD/LETH, LUSD/WLUX, etc.)
 ```
 
-### Phase 7: Synths Protocol (Alchemix-style)
+### Phase 7: Liquid Protocol
 
 ```solidity
-// 7.1 Deploy Synth Tokens (s* prefix)
-31. sUSD                         // Synthetic USD
-32. sETH                         // Synthetic ETH
-33. sBTC                         // Synthetic BTC
-34. sLUX                         // Synthetic LUX
-35. sAI                          // Synthetic AI
-36. sSOL, sTON, sADA, sAVAX, sBNB, sPOL, sZOO  // Other synths
+// 7.1 Core Liquid Infrastructure
+31. LiquidLUX                    // Master yield vault (xLUX shares)
+32. LiquidToken                  // Base liquid token with flash loans
 
-// 7.2 Core Protocol
-37. SynthVault (AlchemistV2)     // Main vault
-    // Initialize with synth tokens
+// 7.2 Bridge Tokens (L* prefix - already deployed in Phase 1)
+// LETH, LBTC, LUSD - yield-bearing bridge tokens
 
-38. TransmuterV2                 // 1:1 redemption
-39. TransmuterBuffer             // Buffer management
-40. SynthRedeemer                // Lux wrapper for transmuter
+// 7.3 Staked LUX
+33. sLUX                         // Staked LUX (validator rewards)
 
-// 7.3 Yield Adapters
-41. YearnTokenAdapter            // Yearn integration
-42. YieldBridgeAdapter           // Bridge yield
-43. sLUXAdapter                  // sLUX yield adapter
+// 7.4 Yield Adapters
+34. YearnTokenAdapter            // Yearn integration
+35. YieldBridgeAdapter           // Bridge yield
+36. LiquidLUXAdapter             // xLUX yield adapter
 
-// 7.4 Create Synth LP Pools
-44. WLUX/sLUX pool
-45. LUSD/sUSD pool
-46. LETH/sETH pool
-47. LBTC/sBTC pool
+// 7.5 Create Liquid LP Pools
+37. WLUX/xLUX pool               // LiquidLUX liquidity
+38. LUSD/xLUX pool               // Stablecoin pairing
 ```
 
 ### Phase 8: Perpetuals (GMX-style, renamed to LPX)
@@ -459,10 +451,8 @@ contracts/dao/
     // - Stakers: 30%
     // - Dev fund: 20%
 
-76. SynthFeeSplitter             // Synths-specific fees
-
 // 9.2 Validator Vault
-77. ValidatorVault               // Validator rewards
+76. ValidatorVault               // Validator rewards
 ```
 
 ### Phase 10: Safe Multisig Infrastructure
@@ -549,7 +539,7 @@ script/
 │   ├── 04_Governance.s.sol     // Token, timelock, governor
 │   ├── 05_AMM.s.sol            // Factory, router, pools
 │   ├── 06_Markets.s.sol        // Lending markets
-│   ├── 07_Synths.s.sol         // Synth tokens, vault, transmuter
+│   ├── 07_Liquid.s.sol         // LiquidLUX, sLUX, yield adapters
 │   ├── 08_Perps.s.sol          // LPX perpetuals
 │   ├── 09_Treasury.s.sol       // Fee splitters, validator vault
 │   ├── 10_Safe.s.sol           // Multisig infrastructure
@@ -661,7 +651,7 @@ mv contracts/tokens/LRC20/LRC20.sol contracts/tokens/LRC20/LRC20Full.sol
 | Bridge Token Base | `tokens/LRC20B.sol` | Admin mint/burn |
 | Bridge Tokens (Lux) | `bridge/lux/L*.sol` | LETH, LBTC, LUSD... |
 | Bridge Tokens (Zoo) | `bridge/zoo/Z*.sol` | ZETH, ZBTC, ZUSD... |
-| Synth Tokens | `synths/s*.sol` | sUSD, sETH, sBTC... |
+| Liquid Protocol | `liquid/` | LiquidLUX (xLUX), sLUX |
 | Perps Core | `perps/` | LPX ecosystem |
 
 ---
@@ -670,12 +660,12 @@ mv contracts/tokens/LRC20/LRC20.sol contracts/tokens/LRC20/LRC20Full.sol
 
 | Prefix | Chain | Example | Purpose |
 |--------|-------|---------|---------|
-| W* | Native | WLUX | Wrapped native token |
-| L* | Lux | LETH, LBTC | Bridge tokens on Lux |
-| Z* | Zoo | ZETH, ZLUX | Bridge tokens on Zoo |
-| s* | Synth | sUSD, sETH | Synthetic tokens |
-| x* | Escrowed | xLPX | Escrowed/vesting tokens |
-| v* | Vote-locked | vLUX | Vote-escrowed tokens |
+| W* | Native | WLUX, WZOO | Wrapped native token |
+| L* | Lux | LETH, LBTC, LUSD | Liquid tokens (1:1 for deposited collateral) |
+| Z* | Zoo | ZETH, ZBTC, ZLUX | Liquid tokens on Zoo |
+| x* | Liquid staking | xLUX, xZOO | Yield vault shares |
+| v* | Vote-escrowed | vLUX, vZOO | xLUX+DLUX or xZOO+KEEPER (time-locked voting) |
+| s* | Validator staking | sLUX | Validator staking rewards |
 
 ---
 
@@ -687,7 +677,7 @@ mv contracts/tokens/LRC20/LRC20.sol contracts/tokens/LRC20/LRC20Full.sol
 4. LuxToken, Timelock, Governor, vLUX, GaugeController
 5. AMMV2Factory, AMMV2Router, LP Pools
 6. ChainlinkOracle, AdaptiveCurveRateModel, Markets
-7. sUSD/sETH/sBTC/sLUX/..., SynthVault, Transmuter, SynthRedeemer
+7. LiquidLUX, LiquidToken, sLUX, Yield Adapters, LP Pools
 8. LPUSD, LLP, LPX, xLPX, Vault, Routers, Staking
 9. FeeSplitter, ValidatorVault
 10. Safe infrastructure

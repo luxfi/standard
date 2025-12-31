@@ -48,6 +48,8 @@ Comprehensive on-chain governance infrastructure for Lux Network. Token holders 
 | **Governor** | Core governance with Safe integration | `@luxfi/contracts/governance/Governor.sol` |
 | **GaugeController** | vLUX voting for gauge weights | `@luxfi/contracts/governance/GaugeController.sol` |
 | **VotingLUX** | Aggregates xLUX + DLUX voting power | `@luxfi/contracts/governance/VotingLUX.sol` |
+| **Karma** | Non-transferable reputation (DID-bound) | `@luxfi/contracts/governance/Karma.sol` |
+| **VotingPower** | VLUX calculation with K and time lock | `@luxfi/contracts/governance/VotingPower.sol` |
 | **Strategy** | Voting weight calculation | `@luxfi/contracts/governance/Strategy.sol` |
 | **Timelock** | TimelockController for execution delay | `@luxfi/contracts/governance/Timelock.sol` |
 | **vLUX** | Vote-escrowed LUX (locking) | `@luxfi/contracts/governance/vLUX.sol` |
@@ -56,15 +58,72 @@ Comprehensive on-chain governance infrastructure for Lux Network. Token holders 
 
 ## Voting Power (vLUX)
 
-Voting power is calculated as:
+### Simple Formula
 
 ```
 vLUX = xLUX + DLUX
 ```
 
+### Full Formula with Karma
+
+For enhanced voting power (quadratic resistance + reputation):
+
+```
+VLUX = DLUX × f(K) × time_multiplier
+
+where:
+  f(K) = sqrt(K / 100)     // Karma scaling (1.0x - 3.16x)
+  time_multiplier = 1 + (lock_months × 0.1)  // Max 4.0x at 30 months
+```
+
+| Component | Range | Description |
+|-----------|-------|-------------|
+| **Karma Factor** | 1.0x - 3.16x | `sqrt(K / 100)` - diminishing returns |
+| **Time Multiplier** | 1.0x - 4.0x | 0.1x per lock month (30 mo cap) |
+| **Max Combined** | 12.64x | Full K (1000) + max lock (30 mo) |
+
+### Token Components
+
 - **xLUX**: LiquidLUX vault shares (yield-bearing)
 - **DLUX**: Governance token (vote-only)
-- **vLUX**: Non-transferable voting power aggregation
+- **K (Karma)**: Non-transferable reputation (DID-bound)
+- **vLUX**: Non-transferable aggregated voting power
+
+## Karma (K) - Reputation
+
+Karma is a non-transferable reputation token bound to DIDs (Decentralized Identifiers).
+
+### Activity-Driven Decay
+
+K decays annually based on on-chain activity:
+
+| Activity Level | Decay Rate | After 10 Years |
+|----------------|------------|----------------|
+| **Active** (≥1 tx/month) | 1% per year | 90.4% retained |
+| **Inactive** (0 tx/month) | 10% per year | 34.9% retained |
+
+### MIN_VERIFIED_KARMA Floor
+
+Verified DID holders have a minimum Karma floor (50 K) to ensure governance can continue for 1000+ years, even with total inactivity.
+
+```solidity
+import "@luxfi/contracts/governance/Karma.sol";
+
+Karma karma = Karma(KARMA_ADDRESS);
+
+// Get Karma balance (applies MIN_VERIFIED_KARMA floor if verified)
+uint256 k = karma.karmaOf(account);
+
+// Get comprehensive activity status
+(
+    uint256 karmaBalance,
+    bool verified,
+    bool activeThisMonth,
+    bool activeLastMonth,
+    uint256 currentDecayRate,
+    bool hasKarmaFloor
+) = karma.getActivityStatus(account);
+```
 
 ```solidity
 import "@luxfi/contracts/governance/VotingLUX.sol";
@@ -268,6 +327,22 @@ uint256 votingPower = votingLux.balanceOf(msg.sender);
 4. **ERC20Votes**: Checkpointed voting power
 5. **Multi-sig Integration**: Governor executes through Gnosis Safe
 6. **Epoch-based Gauges**: Weight changes apply weekly
+7. **Activity-Driven Decay**: K decays 1% (active) or 10% (inactive) per year
+8. **MIN_VERIFIED_KARMA Floor**: 50 K floor ensures governance for 1000+ years
+9. **Quadratic Voting**: `sqrt(VLUX)` reduces whale dominance
+
+### 1000+ Year Sustainability
+
+The governance system is designed for multi-generational operation:
+
+| Concern | Mitigation |
+|---------|------------|
+| Total Karma decay | MIN_VERIFIED_KARMA (50 K) floor for verified DIDs |
+| Numeric overflow | uint256 for all balances (2^256 capacity) |
+| Zero participation | Adaptive quorum adjusts for engagement levels |
+| All holders inactive | Verified DIDs retain minimum voting power |
+
+See [Governance Math Analysis](/docs/architecture/governance-math-analysis) for detailed projections.
 
 ## Related Documentation
 

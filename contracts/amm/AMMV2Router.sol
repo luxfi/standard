@@ -3,6 +3,7 @@ pragma solidity ^0.8.31;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./AMMV2Factory.sol";
 import "./AMMV2Pair.sol";
 import "./interfaces/IWLUX.sol";
@@ -10,7 +11,7 @@ import "./interfaces/IWLUX.sol";
 /// @title AMMV2Router - Uniswap V2 Compatible Router
 /// @notice Routes trades and liquidity operations through LP pairs
 /// @dev Supports native LUX through WLUX wrapping
-contract AMMV2Router {
+contract AMMV2Router is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     address public immutable factory;
@@ -40,7 +41,7 @@ contract AMMV2Router {
         uint256 amountBMin,
         address to,
         uint256 deadline
-    ) external ensure(deadline) returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
+    ) external ensure(deadline) nonReentrant returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
         (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
         address pair = AMMV2Factory(factory).getPair(tokenA, tokenB);
         IERC20(tokenA).safeTransferFrom(msg.sender, pair, amountA);
@@ -55,7 +56,7 @@ contract AMMV2Router {
         uint256 amountLUXMin,
         address to,
         uint256 deadline
-    ) external payable ensure(deadline) returns (uint256 amountToken, uint256 amountLUX, uint256 liquidity) {
+    ) external payable ensure(deadline) nonReentrant returns (uint256 amountToken, uint256 amountLUX, uint256 liquidity) {
         (amountToken, amountLUX) = _addLiquidity(token, WLUX, amountTokenDesired, msg.value, amountTokenMin, amountLUXMin);
         address pair = AMMV2Factory(factory).getPair(token, WLUX);
         IERC20(token).safeTransferFrom(msg.sender, pair, amountToken);
@@ -70,15 +71,14 @@ contract AMMV2Router {
     }
 
     // **** REMOVE LIQUIDITY ****
-    function removeLiquidity(
+    function _removeLiquidity(
         address tokenA,
         address tokenB,
         uint256 liquidity,
         uint256 amountAMin,
         uint256 amountBMin,
-        address to,
-        uint256 deadline
-    ) public ensure(deadline) returns (uint256 amountA, uint256 amountB) {
+        address to
+    ) internal returns (uint256 amountA, uint256 amountB) {
         address pair = AMMV2Factory(factory).getPair(tokenA, tokenB);
         IERC20(pair).safeTransferFrom(msg.sender, pair, liquidity);
         (uint256 amount0, uint256 amount1) = AMMV2Pair(pair).burn(to);
@@ -88,6 +88,18 @@ contract AMMV2Router {
         require(amountB >= amountBMin, "AMMV2Router: INSUFFICIENT_B_AMOUNT");
     }
 
+    function removeLiquidity(
+        address tokenA,
+        address tokenB,
+        uint256 liquidity,
+        uint256 amountAMin,
+        uint256 amountBMin,
+        address to,
+        uint256 deadline
+    ) public ensure(deadline) nonReentrant returns (uint256 amountA, uint256 amountB) {
+        return _removeLiquidity(tokenA, tokenB, liquidity, amountAMin, amountBMin, to);
+    }
+
     function removeLiquidityLUX(
         address token,
         uint256 liquidity,
@@ -95,8 +107,8 @@ contract AMMV2Router {
         uint256 amountLUXMin,
         address to,
         uint256 deadline
-    ) public ensure(deadline) returns (uint256 amountToken, uint256 amountLUX) {
-        (amountToken, amountLUX) = removeLiquidity(token, WLUX, liquidity, amountTokenMin, amountLUXMin, address(this), deadline);
+    ) public ensure(deadline) nonReentrant returns (uint256 amountToken, uint256 amountLUX) {
+        (amountToken, amountLUX) = _removeLiquidity(token, WLUX, liquidity, amountTokenMin, amountLUXMin, address(this));
         IERC20(token).safeTransfer(to, amountToken);
         IWLUX(WLUX).withdraw(amountLUX);
         (bool success,) = to.call{value: amountLUX}("");
@@ -110,7 +122,7 @@ contract AMMV2Router {
         address[] calldata path,
         address to,
         uint256 deadline
-    ) external ensure(deadline) returns (uint256[] memory amounts) {
+    ) external ensure(deadline) nonReentrant returns (uint256[] memory amounts) {
         amounts = getAmountsOut(amountIn, path);
         require(amounts[amounts.length - 1] >= amountOutMin, "AMMV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
         IERC20(path[0]).safeTransferFrom(msg.sender, AMMV2Factory(factory).getPair(path[0], path[1]), amounts[0]);
@@ -123,7 +135,7 @@ contract AMMV2Router {
         address[] calldata path,
         address to,
         uint256 deadline
-    ) external ensure(deadline) returns (uint256[] memory amounts) {
+    ) external ensure(deadline) nonReentrant returns (uint256[] memory amounts) {
         amounts = getAmountsIn(amountOut, path);
         require(amounts[0] <= amountInMax, "AMMV2Router: EXCESSIVE_INPUT_AMOUNT");
         IERC20(path[0]).safeTransferFrom(msg.sender, AMMV2Factory(factory).getPair(path[0], path[1]), amounts[0]);
@@ -135,7 +147,7 @@ contract AMMV2Router {
         address[] calldata path,
         address to,
         uint256 deadline
-    ) external payable ensure(deadline) returns (uint256[] memory amounts) {
+    ) external payable ensure(deadline) nonReentrant returns (uint256[] memory amounts) {
         require(path[0] == WLUX, "AMMV2Router: INVALID_PATH");
         amounts = getAmountsOut(msg.value, path);
         require(amounts[amounts.length - 1] >= amountOutMin, "AMMV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
@@ -150,7 +162,7 @@ contract AMMV2Router {
         address[] calldata path,
         address to,
         uint256 deadline
-    ) external ensure(deadline) returns (uint256[] memory amounts) {
+    ) external ensure(deadline) nonReentrant returns (uint256[] memory amounts) {
         require(path[path.length - 1] == WLUX, "AMMV2Router: INVALID_PATH");
         amounts = getAmountsOut(amountIn, path);
         require(amounts[amounts.length - 1] >= amountOutMin, "AMMV2Router: INSUFFICIENT_OUTPUT_AMOUNT");

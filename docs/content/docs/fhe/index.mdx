@@ -54,8 +54,13 @@ Complete FHE infrastructure for private on-chain computation. Perform arithmetic
 |----------|-------------|--------|
 | **FHE** | Core library - encrypted operations | `@luxfi/contracts/fhe/FHE.sol` |
 | **TFHE** | Low-level TFHE operations | `@luxfi/contracts/fhe/TFHE.sol` |
+| **IFHE** | Interface definitions & precompile addresses | `@luxfi/contracts/fhe/IFHE.sol` |
 | **Gateway** | Decryption request handling | `@luxfi/contracts/fhe/gateway/Gateway.sol` |
+| **GatewayCaller** | Base contract for decryption callbacks | `@luxfi/contracts/fhe/gateway/GatewayCaller.sol` |
 | **Permissioned** | Access control mixin | `@luxfi/contracts/fhe/access/Permissioned.sol` |
+| **PermissionedV2** | Enhanced access control with EIP-712 | `@luxfi/contracts/fhe/access/PermissionedV2.sol` |
+| **FHEVMConfig** | FHEVM configuration | `@luxfi/contracts/fhe/config/FHEVMConfig.sol` |
+| **GatewayConfig** | Gateway configuration | `@luxfi/contracts/fhe/config/GatewayConfig.sol` |
 
 ## Encrypted Types
 
@@ -105,20 +110,24 @@ contract ConfidentialMath {
 // Less than
 ebool isLess = FHE.lt(a, b);
 
-// Less than or equal
-ebool isLessOrEqual = FHE.le(a, b);
+// Less than or equal (both lte and le work)
+ebool isLessOrEqual = FHE.lte(a, b);
 
 // Greater than
 ebool isGreater = FHE.gt(a, b);
 
-// Greater than or equal
-ebool isGreaterOrEqual = FHE.ge(a, b);
+// Greater than or equal (both gte and ge work)
+ebool isGreaterOrEqual = FHE.gte(a, b);
 
 // Equal
 ebool isEqual = FHE.eq(a, b);
 
 // Not equal
 ebool isNotEqual = FHE.ne(a, b);
+
+// Min/Max
+euint64 minimum = FHE.min(a, b);
+euint64 maximum = FHE.max(a, b);
 ```
 
 ### Bitwise Operations
@@ -141,6 +150,25 @@ euint64 shlResult = FHE.shl(a, b);
 
 // Shift right
 euint64 shrResult = FHE.shr(a, b);
+
+// Rotate left
+euint64 rolResult = FHE.rol(a, b);
+
+// Rotate right
+euint64 rorResult = FHE.ror(a, b);
+```
+
+### Other Operations
+
+```solidity
+// Square (more efficient than mul(a, a))
+euint64 squared = FHE.square(a);
+
+// Remainder
+euint64 remainder = FHE.rem(a, b);
+
+// Random number generation
+euint64 randomValue = FHE.random();
 ```
 
 ### Conditional (Select)
@@ -311,13 +339,29 @@ contract PrivateVesting is ConfidentialVestingWallet {
 
 ## Token Contracts
 
-| Contract | Description |
-|----------|-------------|
-| **ConfidentialERC20** | LRC20 with encrypted balances |
-| **ConfidentialERC20Wrapped** | Wrap/unwrap standard LRC20 to encrypted |
-| **ConfidentialWETH** | Wrapped LUX with encryption |
-| **ConfidentialERC20Mintable** | Mintable confidential token |
-| **ConfidentialERC20WithErrors** | Confidential token with error codes |
+| Contract | Path | Description |
+|----------|------|-------------|
+| **ConfidentialERC20** | `token/ERC20/ConfidentialERC20.sol` | LRC20 with encrypted balances |
+| **ConfidentialERC20Wrapped** | `token/ERC20/ConfidentialERC20Wrapped.sol` | Wrap/unwrap standard LRC20 to encrypted |
+| **ConfidentialWETH** | `token/ERC20/ConfidentialWETH.sol` | Wrapped LUX with encryption |
+| **ConfidentialERC20Mintable** | `token/ERC20/extensions/ConfidentialERC20Mintable.sol` | Mintable confidential token |
+| **ConfidentialERC20WithErrors** | `token/ERC20/extensions/ConfidentialERC20WithErrors.sol` | Confidential token with error codes |
+| **ConfidentialERC20WithErrorsMintable** | `token/ERC20/extensions/ConfidentialERC20WithErrorsMintable.sol` | Mintable token with error codes |
+
+## Finance Contracts
+
+| Contract | Path | Description |
+|----------|------|-------------|
+| **ConfidentialVestingWallet** | `finance/ConfidentialVestingWallet.sol` | Vesting with encrypted amounts |
+| **ConfidentialVestingWalletCliff** | `finance/ConfidentialVestingWalletCliff.sol` | Vesting with cliff period |
+
+## Utility Contracts
+
+| Contract | Path | Description |
+|----------|------|-------------|
+| **EncryptedErrors** | `utils/EncryptedErrors.sol` | Error handling for FHE operations |
+| **TFHEErrors** | `utils/TFHEErrors.sol` | TFHE-specific error definitions |
+| **EIP712** | `access/EIP712.sol` | EIP-712 typed data signing for FHE |
 
 ## EVM Version Requirement
 
@@ -343,9 +387,57 @@ evm_version = "cancun"
 | Trivial Encrypt | ~50,000 |
 | Add/Sub | ~100,000 |
 | Multiply | ~150,000 |
-| Comparison | ~100,000 |
+| Division/Remainder | ~200,000 |
+| Comparison (lt, gt, eq, etc.) | ~100,000 |
+| Bitwise (and, or, xor, not) | ~80,000 |
+| Shift/Rotate (shl, shr, rol, ror) | ~100,000 |
+| Min/Max | ~120,000 |
 | Select | ~120,000 |
+| Square | ~140,000 |
+| Random | ~150,000 |
 | Decrypt Request | ~200,000 |
+
+## Contract Directory Structure
+
+```
+contracts/fhe/
+├── FHE.sol                 # Core FHE library
+├── TFHE.sol                # Low-level TFHE operations
+├── IFHE.sol                # Interface definitions
+├── FheOS.sol               # FHE OS integration
+├── ICofhe.sol              # Coprocessor interface
+├── access/
+│   ├── EIP712.sol          # EIP-712 signing
+│   ├── Permissioned.sol    # Access control base
+│   └── PermissionedV2.sol  # Enhanced access control
+├── config/
+│   ├── FHEVMConfig.sol     # FHEVM configuration
+│   └── GatewayConfig.sol   # Gateway configuration
+├── gateway/
+│   ├── Gateway.sol         # Decryption gateway
+│   └── GatewayCaller.sol   # Callback base contract
+├── governance/
+│   ├── ConfidentialGovernorAlpha.sol  # Private voting governor
+│   ├── ConfidentialERC20Votes.sol     # Encrypted voting power
+│   └── CompoundTimelock.sol           # Timelock controller
+├── finance/
+│   ├── ConfidentialVestingWallet.sol      # Encrypted vesting
+│   └── ConfidentialVestingWalletCliff.sol # Vesting with cliff
+├── token/ERC20/
+│   ├── ConfidentialERC20.sol          # Base confidential token
+│   ├── ConfidentialERC20Wrapped.sol   # Wrap/unwrap support
+│   ├── ConfidentialWETH.sol           # Wrapped native token
+│   └── extensions/
+│       ├── ConfidentialERC20Mintable.sol
+│       ├── ConfidentialERC20WithErrors.sol
+│       └── ConfidentialERC20WithErrorsMintable.sol
+└── utils/
+    ├── EncryptedErrors.sol   # Error handling
+    ├── TFHEErrors.sol        # TFHE errors
+    └── debug/
+        ├── Console.sol       # Debug logging
+        └── MockFheOps.sol    # Testing mock
+```
 
 ## Related Documentation
 

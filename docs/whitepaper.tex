@@ -457,33 +457,45 @@ The sLUX exchange rate increases over time as rewards accrue:
 \end{itemize}
 
 %==============================================================================
-\section{Synthetic Assets}
+\section{Liquid Protocol}
 %==============================================================================
 
-\subsection{The Synth Protocol}
+\subsection{Overview}
 
-Lux features an Alchemix-style synthetic asset protocol:
+The Liquid Protocol provides 1:1 liquid tokens for bridged collateral and self-repaying loans:
 \begin{enumerate}
-    \item Deposit yield-bearing collateral (e.g., sLUX, yvWETH)
-    \item Mint synthetic assets (sUSD, sETH, sBTC, sLUX)
-    \item Debt self-repays as collateral accrues yield
+    \item Bridge assets (ETH, BTC, USDC) to Lux Network
+    \item Deposit as collateral via Teleport to mint liquid tokens (LETH, LBTC, LUSD)
+    \item Liquid tokens accrue yield from external strategies
+    \item Debt self-repays as collateral generates yield
 \end{enumerate}
 
-\subsection{Supported Synths}
+\subsection{Token Architecture}
 
+\textbf{Bridged Assets} arrive on Lux as their native symbol (ETH, BTC, USDC, USDT).
+
+\textbf{Liquid Tokens (L* prefix)} are minted 1:1 when bridged assets are deposited as collateral:
 \begin{itemize}
-    \item \textbf{sUSD}: Synthetic USD, pegged to \$1
-    \item \textbf{sETH}: Synthetic Ethereum
-    \item \textbf{sBTC}: Synthetic Bitcoin
-    \item \textbf{sLUX}: Synthetic LUX (leveraged exposure)
-    \item \textbf{sSOL}: Synthetic Solana
-    \item \textbf{sTON}: Synthetic Toncoin
-    \item \textbf{sADA}: Synthetic Cardano
-    \item \textbf{sAVAX}: Synthetic Avalanche
-    \item \textbf{sBNB}: Synthetic Binance Coin
-    \item \textbf{sPOL}: Synthetic Polygon
-    \item \textbf{sZOO}: Synthetic Zoo Token
-    \item \textbf{sAI}: Synthetic AI Token
+    \item \textbf{LETH}: Liquid ETH (1:1 for deposited ETH)
+    \item \textbf{LBTC}: Liquid BTC (1:1 for deposited BTC)
+    \item \textbf{LUSD}: Liquid USD (1:1 for deposited USDC/USDT)
+    \item \textbf{LSOL}: Liquid SOL (1:1 for deposited SOL)
+    \item \textbf{LTON}: Liquid TON (1:1 for deposited TON)
+\end{itemize}
+
+\textbf{Liquid Staking (xLUX)}:
+\begin{itemize}
+    \item \textbf{xLUX}: LiquidLUX---master yield vault for staked LUX
+    \item Receives all protocol fees (DEX, bridge, lending, perps)
+    \item Only native LUX has liquid staking (xLUX)
+\end{itemize}
+
+\subsection{Zoo Network (Z* prefix)}
+
+Same model on Zoo Network:
+\begin{itemize}
+    \item \textbf{ZETH, ZBTC, ZUSD}: Liquid tokens on Zoo
+    \item \textbf{xZOO}: LiquidZOO for native ZOO staking
 \end{itemize}
 
 %==============================================================================
@@ -503,8 +515,8 @@ Lux features an Alchemix-style synthetic asset protocol:
 \texttt{GaugeController} & Gauge weight voting \\
 \texttt{FeeSplitter} & Protocol fee distribution \\
 \texttt{ValidatorVault} & Validator/delegator economics \\
-\texttt{sLUX} & Liquid staking token \\
-\texttt{SynthFeeSplitter} & Synth protocol fees \\
+\texttt{sLUX} & Staked LUX token \\
+\texttt{LiquidLUX} & Master yield vault (xLUX) \\
 \bottomrule
 \end{tabular}
 \caption{Core Smart Contracts}

@@ -17,7 +17,7 @@ import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/Messa
  * Token Model:
  * - Teleporter mints COLLATERAL tokens (e.g., bridged ETH)
  * - Collateral must be deposited into LiquidETH vault to get L* tokens
- * - L* tokens (e.g., LETH) are the yield-bearing synthetics
+ * - L* tokens (e.g., LETH) are the yield-bearing liquid tokens
  *
  * Flow:
  * 1. User deposits ETH on Ethereum/Base → LiquidVault
@@ -87,8 +87,8 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
     /// @notice The collateral token (bridged ETH, USDC, etc.)
     IBridgedToken public immutable collateralToken;
 
-    /// @notice The synthetic token (LETH, LUSD, etc.) - minted for yield
-    IBridgedToken public immutable synthToken;
+    /// @notice The liquid token (LETH, LUSD, etc.) - minted for yield
+    IBridgedToken public immutable liquidToken;
 
     /// @notice LiquidVault address (for yield routing)
     address public liquidVault;
@@ -96,7 +96,7 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
     /// @notice Total collateral minted via deposits
     uint256 public totalDepositMinted;
 
-    /// @notice Total synth minted via yield
+    /// @notice Total liquid tokens minted via yield
     uint256 public totalYieldMinted;
 
     /// @notice Total collateral burned for withdrawals
@@ -132,7 +132,7 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
         uint256 amount
     );
 
-    /// @notice Emitted when synth minted for yield (to LiquidVault)
+    /// @notice Emitted when liquid token minted for yield (to LiquidVault)
     event YieldMinted(
         uint256 indexed srcChainId,
         uint256 indexed yieldNonce,
@@ -194,20 +194,20 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
     /**
      * @notice Initialize Teleporter
      * @param _collateralToken Bridged collateral token (e.g., ETH on Lux)
-     * @param _synthToken Synthetic token (e.g., LETH)
+     * @param _liquidToken Liquid token (e.g., LETH)
      * @param _mpcOracle Initial MPC oracle address
      */
     constructor(
         address _collateralToken,
-        address _synthToken,
+        address _liquidToken,
         address _mpcOracle
     ) Ownable(msg.sender) {
-        if (_collateralToken == address(0) || _synthToken == address(0) || _mpcOracle == address(0)) {
+        if (_collateralToken == address(0) || _liquidToken == address(0) || _mpcOracle == address(0)) {
             revert ZeroAddress();
         }
 
         collateralToken = IBridgedToken(_collateralToken);
-        synthToken = IBridgedToken(_synthToken);
+        liquidToken = IBridgedToken(_liquidToken);
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MPC_ROLE, _mpcOracle);
@@ -222,7 +222,7 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
 
     /**
      * @notice Mint collateral for a deposit proof from source chain
-     * @dev Mints the COLLATERAL token (e.g., bridged ETH), NOT the synthetic
+     * @dev Mints the COLLATERAL token (e.g., bridged ETH), NOT the liquid token
      *      User must deposit collateral into LiquidVault to get L* tokens
      * @param srcChainId Source chain ID (e.g., Base = 8453, Ethereum = 1)
      * @param depositNonce Deposit nonce from source chain LiquidVault
@@ -261,19 +261,19 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
         processedDeposits[srcChainId][depositNonce] = true;
         totalDepositMinted += amount;
 
-        // Mint COLLATERAL to recipient (not synth!)
+        // Mint COLLATERAL to recipient (not liquid token!)
         collateralToken.mint(recipient, amount);
 
         emit DepositMinted(srcChainId, depositNonce, recipient, amount);
     }
 
     /**
-     * @notice Mint synthetic for yield harvested on source chain
-     * @dev Mints the SYNTHETIC token (e.g., LETH) to LiquidVault for debt repayment
-     *      Yield is realized as synthetic tokens, not collateral
+     * @notice Mint liquid token for yield harvested on source chain
+     * @dev Mints the LIQUID token (e.g., LETH) to LiquidVault for debt repayment
+     *      Yield is realized as liquid tokens, not collateral
      * @param srcChainId Source chain ID
      * @param yieldNonce Yield nonce from source chain LiquidVault
-     * @param amount Amount of synth yield to mint
+     * @param amount Amount of liquid token yield to mint
      * @param signature MPC signature of yield proof
      */
     function mintYield(
@@ -302,8 +302,8 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
         processedYields[srcChainId][yieldNonce] = true;
         totalYieldMinted += amount;
 
-        // Mint SYNTHETIC to LiquidVault (for debt repayment)
-        synthToken.mint(liquidVault, amount);
+        // Mint LIQUID token to LiquidVault (for debt repayment)
+        liquidToken.mint(liquidVault, amount);
 
         // Notify LiquidVault of yield
         ILiquidVault(liquidVault).onYieldReceived(amount, srcChainId);
@@ -457,7 +457,7 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
      * @dev 10000 = 1:1, 9950 = 99.5%
      */
     function getCurrentPeg() public view returns (uint256) {
-        // In production, query DEX oracle for collateral/synth ratio
+        // In production, query DEX oracle for collateral/liquid token ratio
         return BASIS_POINTS;
     }
 
@@ -512,7 +512,7 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * @notice Interface for bridged/synthetic tokens
+ * @notice Interface for bridged/liquid tokens
  */
 interface IBridgedToken {
     function mint(address to, uint256 amount) external;

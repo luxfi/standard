@@ -5,7 +5,7 @@ description: Complete registry of deployed tokens on Lux and Zoo networks
 
 # Token Registry
 
-Complete registry of all deployed tokens on Lux Network and Zoo Network, including bridge tokens, synthetic tokens, and liquid staking tokens.
+Complete registry of all deployed tokens on Lux Network and Zoo Network, including bridge tokens, liquid tokens, and liquid staking tokens.
 
 ## Lux Network (Chain ID: 96369)
 
@@ -17,44 +17,30 @@ Complete registry of all deployed tokens on Lux Network and Zoo Network, includi
 | Wrapped LUX | WLUX | `0x4888E4a2Ee0F03051c72D2BD3ACf755eD3498B3E` | 18 |
 | Staked LUX | sLUX | `0x977afee2d1043ecdbc27ff530329837286457988` | 18 |
 
-### Bridge Tokens (L* Prefix)
+### Liquid Tokens (L* Prefix)
 
-Bridge tokens on Lux representing assets from other chains. MPC-controlled minting/burning.
-
-| Token | Name | Address | Decimals | Source Chain |
-|-------|------|---------|----------|--------------|
-| LUSD | Lux Dollar | `0x848Cff46eb323f323b6Bbe1Df274E40793d7f2c2` | 18 | Stablecoin |
-| LETH | Lux ETH | `0x60E0a8167FC13dE89348978860466C9ceC24B9ba` | 18 | Ethereum |
-| LBTC | Lux BTC | `0x1E48D32a4F5e9f08DB9aE4959163300FaF8A6C8e` | 18 | Bitcoin |
-| LSOL | Lux SOL | `0x26B40f650156C7EbF9e087Dd0dca181Fe87625B7` | 18 | Solana |
-| LTON | Lux TON | `0x3141b94b89691009b950c96e97Bff48e0C543E3C` | 18 | TON |
-| LBNB | Lux BNB | `0x6EdcF3645DeF09DB45050638c41157D8B9FEa1cf` | 18 | BNB Chain |
-| LPOL | Lux POL | `0x66cf428162E560D3FFa40eB87e81F9A3e52b6fA1` | 18 | Polygon |
-| LCELO | Lux CELO | `0xe0B7A4b4A6F3A35Ebf4c57c29CC8e60cF0f6B2b0` | 18 | Celo |
-| LFTM | Lux FTM | `0x25892D8b25C8B00c39106b04A6f7D4e0E29D95F3` | 18 | Fantom |
-| LXDAI | Lux xDAI | `0xE3c6AB09b5d3cF1a54C4F3e8ed2e62a7E8b99e0B` | 18 | Gnosis |
-| LBLAST | Lux BLAST | `0xEB9462c99a8Ac66CfcC7fF42a5A7f5d3C87D3dA8` | 18 | Blast |
-| LAVAX | Lux AVAX | `0x43c4CC2530205D32B0B7B0CdeEc0ae71C2A2BD29` | 18 | Avalanche |
-| LZOO | Liquid Zoo | `0x5E5290f350352768bD2bfC59c2DA15DD04A7cB88` | 18 | Zoo Network |
-
-### Synthetic Tokens (s* Prefix)
-
-Self-repaying synthetic assets collateralized by bridge tokens.
+Liquid tokens are minted 1:1 when bridged collateral is deposited via Teleport. Yield-bearing with external strategies.
 
 | Token | Name | Address | Decimals | Collateral |
 |-------|------|---------|----------|------------|
-| sLUX | Staked LUX | `0x977afee2d1043ecdbc27ff530329837286457988` | 18 | WLUX |
-| sUSD | Synthetic USD | `0x22F3Eb4Ca9Ea7b8Ab22A58D4C9B52AbD7E9c9E8C` | 18 | LUSD |
-| sETH | Synthetic ETH | `0x82c0aaD0A5B2F7f5Bdb2E5c8b5E5F4a0e1A2B3C4` | 18 | LETH |
-| sBTC | Synthetic BTC | `0x8E1bB4F0e8bA9E8c8D8F9A0A1B2C3D4E5F6A7B8C` | 18 | LBTC |
-| sAI | Synthetic AI | `0x4F9b8C7D6E5A4B3C2D1E0F9A8B7C6D5E4F3A2B1C` | 18 | AI |
-| sSOL | Synthetic SOL | `0x1A2B3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B` | 18 | LSOL |
-| sTON | Synthetic TON | `0x2B3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C` | 18 | LTON |
-| sADA | Synthetic ADA | `0x3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D` | 18 | LADA |
-| sAVAX | Synthetic AVAX | `0x4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E` | 18 | LAVAX |
-| sBNB | Synthetic BNB | `0x5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F` | 18 | LBNB |
-| sPOL | Synthetic POL | `0x6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A` | 18 | LPOL |
-| sZOO | Synthetic ZOO | `0x7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A6B` | 18 | LZOO |
+| LETH | Liquid ETH | `0x60E0a8167FC13dE89348978860466C9ceC24B9ba` | 18 | ETH |
+| LBTC | Liquid BTC | `0x1E48D32a4F5e9f08DB9aE4959163300FaF8A6C8e` | 18 | BTC |
+| LUSD | Liquid USD | `0x848Cff46eb323f323b6Bbe1Df274E40793d7f2c2` | 18 | USDC/USDT |
+| LSOL | Liquid SOL | `0x26B40f650156C7EbF9e087Dd0dca181Fe87625B7` | 18 | SOL |
+| LTON | Liquid TON | `0x3141b94b89691009b950c96e97Bff48e0C543E3C` | 18 | TON |
+| LBNB | Liquid BNB | `0x6EdcF3645DeF09DB45050638c41157D8B9FEa1cf` | 18 | BNB |
+| LAVAX | Liquid AVAX | `0x43c4CC2530205D32B0B7B0CdeEc0ae71C2A2BD29` | 18 | AVAX |
+| LZOO | Liquid ZOO | `0x5E5290f350352768bD2bfC59c2DA15DD04A7cB88` | 18 | ZOO |
+
+### Liquid Staking & Governance
+
+| Token | Name | Address | Decimals | Description |
+|-------|------|---------|----------|-------------|
+| sLUX | Staked LUX | `0x977afee2d1043ecdbc27ff530329837286457988` | 18 | Validator staking |
+| xLUX | LiquidLUX | `0x809d550fca64d94Bd9F66E60752A544199cfAC3D` | 18 | Master yield vault shares |
+| DLUX | Governance LUX | `0x...` | 18 | Governance token |
+| vLUX | Vote-escrowed LUX | `0x...` | 18 | xLUX + DLUX (time-locked voting) |
+| K | Karma | `0x...` | 18 | Soul-bound reputation (DID-linked) |
 
 ---
 
@@ -67,23 +53,26 @@ Self-repaying synthetic assets collateralized by bridge tokens.
 | Native ZOO | ZOO | Native | 18 |
 | Wrapped ZOO | WZOO | `0x4888E4a2Ee0F03051c72D2BD3ACf755eD3498B3E` | 18 |
 
-### Bridge Tokens (Z* Prefix)
+### Liquid Tokens (Z* Prefix)
 
-Bridge tokens on Zoo representing assets from other chains.
+Liquid tokens minted 1:1 when bridged collateral is deposited via Teleport.
 
-| Token | Name | Address | Decimals | Source Chain |
-|-------|------|---------|----------|--------------|
-| ZUSD | Zoo Dollar | `0x848Cff46eb323f323b6Bbe1Df274E40793d7f2c2` | 18 | Stablecoin |
-| ZETH | Zoo ETH | `0x60E0a8167FC13dE89348978860466C9ceC24B9ba` | 18 | Ethereum |
-| ZBTC | Zoo BTC | `0x1E48D32a4F5e9f08DB9aE4959163300FaF8A6C8e` | 18 | Bitcoin |
-| ZSOL | Zoo SOL | `0x26B40f650156C7EbF9e087Dd0dca181Fe87625B7` | 18 | Solana |
-| ZTON | Zoo TON | `0x3141b94b89691009b950c96e97Bff48e0C543E3C` | 18 | TON |
-| ZLUX | Liquid LUX | `0x5E5290f350352768bD2bfC59c2DA15DD04A7cB88` | 18 | Lux Network |
-| ZBNB | Zoo BNB | `0x6EdcF3645DeF09DB45050638c41157D8B9FEa1cf` | 18 | BNB Chain |
-| ZPOL | Zoo POL | `0x66cf428162E560D3FFa40eB87e81F9A3e52b6fA1` | 18 | Polygon |
-| ZCELO | Zoo CELO | `0xe0B7A4b4A6F3A35Ebf4c57c29CC8e60cF0f6B2b0` | 18 | Celo |
-| ZFTM | Zoo FTM | `0x25892D8b25C8B00c39106b04A6f7D4e0E29D95F3` | 18 | Fantom |
-| ZXDAI | Zoo xDAI | `0xE3c6AB09b5d3cF1a54C4F3e8ed2e62a7E8b99e0B` | 18 | Gnosis |
+| Token | Name | Address | Decimals | Collateral |
+|-------|------|---------|----------|------------|
+| ZETH | Liquid ETH | `0x60E0a8167FC13dE89348978860466C9ceC24B9ba` | 18 | ETH |
+| ZBTC | Liquid BTC | `0x1E48D32a4F5e9f08DB9aE4959163300FaF8A6C8e` | 18 | BTC |
+| ZUSD | Liquid USD | `0x848Cff46eb323f323b6Bbe1Df274E40793d7f2c2` | 18 | USDC/USDT |
+| ZSOL | Liquid SOL | `0x26B40f650156C7EbF9e087Dd0dca181Fe87625B7` | 18 | SOL |
+| ZLUX | Liquid LUX | `0x5E5290f350352768bD2bfC59c2DA15DD04A7cB88` | 18 | LUX |
+| ZBNB | Liquid BNB | `0x6EdcF3645DeF09DB45050638c41157D8B9FEa1cf` | 18 | BNB |
+
+### Liquid Staking & Governance
+
+| Token | Name | Address | Decimals | Description |
+|-------|------|---------|----------|-------------|
+| xZOO | LiquidZOO | `0x...` | 18 | Zoo liquid staking shares |
+| KEEPER | Governance ZOO | `0x...` | 18 | Zoo governance token |
+| vZOO | Vote-escrowed ZOO | `0x...` | 18 | xZOO + KEEPER (time-locked voting) |
 
 ---
 
@@ -91,10 +80,13 @@ Bridge tokens on Zoo representing assets from other chains.
 
 | Prefix | Meaning | Example |
 |--------|---------|---------|
-| `L*` | Bridge token on Lux | LETH (Ethereum on Lux) |
-| `Z*` | Bridge token on Zoo | ZETH (Ethereum on Zoo) |
-| `s*` | Synthetic token | sETH (Synthetic ETH) |
+| `L*` | Liquid token on Lux | LETH (1:1 for deposited ETH) |
+| `Z*` | Liquid token on Zoo | ZETH (1:1 for deposited ETH) |
+| `x*` | Liquid staking | xLUX, xZOO (yield vault shares) |
+| `v*` | Vote-escrowed | vLUX (xLUX+DLUX), vZOO (xZOO+KEEPER) |
+| `s*` | Validator staked | sLUX |
 | `W*` | Wrapped native | WLUX, WZOO |
+| `K` | Karma | Soul-bound reputation (DID-linked) |
 
 ## Token Icons
 
@@ -111,7 +103,7 @@ Examples:
 
 ## Contract Implementations
 
-All bridge tokens (L* and Z* prefixes) use the [ERC20B](/docs/tokens/erc20b) implementation:
+All liquid tokens (L* and Z* prefixes) use the [LRC20B](/docs/tokens/lrc20b) implementation with teleport minting:
 
 ```solidity
 import "@luxfi/standard/src/tokens/ERC20B.sol";
@@ -126,4 +118,4 @@ contract LuxETH is ERC20B {
 
 - [ERC20B](/docs/tokens/erc20b) - Base bridgeable ERC20
 - [Bridge](/docs/bridge) - Cross-chain bridge contracts
-- [Synths](/docs/defi/synths) - Synthetic asset protocol
+- [Liquid](/docs/defi/liquid) - Liquid Protocol
