@@ -85,6 +85,11 @@ remappings = [
     "forge-std/=lib/forge-std/src/",
 ]
 
+# Ignore problematic library files (natspec compatibility issues with solc 0.8.31)
+ignore = ["lib/safe-smart-account/**"]
+# Treat warnings as warnings, not errors
+deny_warnings = false
+
 [profile.default.fmt]
 line_length = 120
 tab_width = 4

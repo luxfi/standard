@@ -39,9 +39,15 @@ import {Timelock} from "../contracts/governance/Timelock.sol";
 import {Governor} from "../contracts/governance/Governor.sol";
 import {vLUX} from "../contracts/governance/vLUX.sol";
 import {GaugeController} from "../contracts/governance/GaugeController.sol";
+import {Karma} from "../contracts/governance/Karma.sol";
+import {KarmaMinter} from "../contracts/governance/KarmaMinter.sol";
+import {DLUX} from "../contracts/governance/DLUX.sol";
+import {DLUXMinter} from "../contracts/governance/DLUXMinter.sol";
 
 // Treasury
-import {FeeSplitter} from "../contracts/treasury/FeeSplitter.sol";
+import {FeeGov} from "../contracts/treasury/FeeGov.sol";
+import {Vault as TreasuryVault} from "../contracts/treasury/Vault.sol";
+import {Router as TreasuryRouter} from "../contracts/treasury/Router.sol";
 import {ValidatorVault} from "../contracts/treasury/ValidatorVault.sol";
 
 // Safe (Gnosis Safe for Treasury Management)
@@ -134,10 +140,16 @@ contract DeployFullStack is Script {
     // Governor skipped - requires Strategy with two-phase init
     vLUX public voteLux;
     GaugeController public gaugeController;
+    Karma public karma;
+    KarmaMinter public karmaMinter;
+    DLUX public dlux;
+    DLUXMinter public dluxMinter;
 
     // ========== Phase 9: Treasury ==========
-    FeeSplitter public feeSplitter;
-    ValidatorVault public validatorVault;
+    FeeGov public feeGov;            // C-Chain governs all chain fees
+    TreasuryVault public treasuryVault; // Receives fees via Warp
+    TreasuryRouter public treasuryRouter; // Distributes to recipients
+    ValidatorVault public validatorVault; // Validator rewards distribution
     Safe public safeImpl;
     SafeProxyFactory public safeFactory;
     address public daoTreasury;      // Safe for DAO funds
@@ -313,8 +325,10 @@ contract DeployFullStack is Script {
     function _deployPhase6TeleportVaults() internal {
         console.log("--- Phase 6: Teleport Vaults ---");
 
-        liquidVault = new LiquidVault();
+        // MPC Oracle is deployer for testing (multisig in production)
+        liquidVault = new LiquidVault(deployer);
         console.log("LiquidVault:", address(liquidVault));
+        console.log("  MPC Oracle (test):", deployer);
         console.log("");
     }
 
@@ -366,6 +380,44 @@ contract DeployFullStack is Script {
 
         gaugeController = new GaugeController(address(voteLux));
         console.log("GaugeController:", address(gaugeController));
+
+        // Deploy Karma (soul-bound reputation)
+        karma = new Karma(deployer);
+        console.log("Karma (K):", address(karma));
+
+        // Deploy KarmaMinter with DAO control
+        // Timelock gets GOVERNOR_ROLE for DAO-controlled mint params
+        karmaMinter = new KarmaMinter(address(karma), deployer, address(timelock));
+        console.log("KarmaMinter:", address(karmaMinter));
+
+        // Grant ATTESTOR_ROLE to KarmaMinter so it can mint K
+        karma.grantRole(karma.ATTESTOR_ROLE(), address(karmaMinter));
+        console.log("  KarmaMinter granted ATTESTOR_ROLE on Karma");
+
+        // Deploy DLUX (rebasing governance token)
+        // Treasury is deployer initially, updated after Phase 9 deploys DAO Treasury
+        dlux = new DLUX(address(wlux), deployer, deployer);
+        console.log("DLUX:", address(dlux));
+
+        // Grant GOVERNOR_ROLE to Timelock for DAO control
+        dlux.grantRole(dlux.GOVERNOR_ROLE(), address(timelock));
+        console.log("  Timelock granted GOVERNOR_ROLE on DLUX");
+
+        // Deploy DLUXMinter with deployer as initial dao for setup
+        // After setup in Phase 9, grant GOVERNOR_ROLE to timelock
+        dluxMinter = new DLUXMinter(
+            address(dlux),
+            address(wlux),
+            deployer,      // treasury (updated after Phase 9)
+            deployer,      // admin
+            deployer       // dao (deployer initially for setup, timelock added in Phase 9)
+        );
+        console.log("DLUXMinter:", address(dluxMinter));
+
+        // Grant MINTER_ROLE to DLUXMinter on DLUX
+        dlux.grantRole(dlux.MINTER_ROLE(), address(dluxMinter));
+        console.log("  DLUXMinter granted MINTER_ROLE on DLUX");
+
         console.log("");
     }
 
@@ -399,17 +451,72 @@ contract DeployFullStack is Script {
         validatorVault = new ValidatorVault(address(wlux));
         console.log("ValidatorVault:", address(validatorVault));
 
-        // Deploy FeeSplitter
-        feeSplitter = new FeeSplitter(address(wlux));
-        console.log("FeeSplitter:", address(feeSplitter));
+        // FeeGov - C-Chain governs all chain fees
+        // Initial params: 0.3% rate, 0.1% floor, 5% cap
+        feeGov = new FeeGov(30, 10, 500, deployer);
+        console.log("FeeGov:", address(feeGov));
+        console.log("  Rate: 0.3%%, Floor: 0.1%%, Cap: 5%%");
 
-        // Set GaugeController on FeeSplitter (for vLUX voting on fee distribution)
-        feeSplitter.setGaugeController(address(gaugeController));
+        // Treasury Vault - receives fees via Warp from all chains
+        treasuryVault = new TreasuryVault(address(wlux));
+        console.log("TreasuryVault:", address(treasuryVault));
 
-        // Add recipients to FeeSplitter
-        feeSplitter.addRecipient(address(validatorVault));  // Validators get share
-        feeSplitter.addRecipient(protocolVault);            // Protocol vault → sLUX
-        feeSplitter.addRecipient(daoTreasury);              // DAO gets share
+        // Treasury Router - distributes to recipients
+        treasuryRouter = new TreasuryRouter(address(wlux), address(treasuryVault), deployer);
+        console.log("TreasuryRouter:", address(treasuryRouter));
+
+        // Wire vault to router
+        treasuryVault.init(address(treasuryRouter));
+        console.log("  TreasuryVault wired to TreasuryRouter");
+
+        // Set up router weights: 70% stakers, 20% DAO, 10% validators
+        address[] memory recipients = new address[](3);
+        uint256[] memory weights = new uint256[](3);
+        recipients[0] = protocolVault;  // Protocol → sLUX stakers
+        recipients[1] = daoTreasury;     // DAO treasury
+        recipients[2] = address(validatorVault);  // Validators
+        weights[0] = 7000;  // 70%
+        weights[1] = 2000;  // 20%
+        weights[2] = 1000;  // 10%
+
+        treasuryRouter.setBatch(recipients, weights);
+        console.log("  Router weights: 70%% stakers, 20%% DAO, 10%% validators");
+
+        // Register all 11 chains in FeeGov
+        bytes32[] memory chainIds = new bytes32[](11);
+        chainIds[0] = keccak256("P");
+        chainIds[1] = keccak256("X");
+        chainIds[2] = keccak256("A");
+        chainIds[3] = keccak256("B");
+        chainIds[4] = keccak256("C");
+        chainIds[5] = keccak256("D");
+        chainIds[6] = keccak256("T");
+        chainIds[7] = keccak256("G");
+        chainIds[8] = keccak256("Q");
+        chainIds[9] = keccak256("K");
+        chainIds[10] = keccak256("Z");
+
+        for (uint256 i = 0; i < chainIds.length; i++) {
+            feeGov.add(chainIds[i]);
+        }
+        console.log("  Registered 11 chains: P, X, A, B, C, D, T, G, Q, K, Z");
+
+        // Update DLUX treasury to DAO Treasury
+        dlux.setTreasury(daoTreasury);
+        console.log("  DLUX treasury updated to DAO Treasury");
+
+        // Update DLUXMinter treasury to DAO Treasury
+        dluxMinter.setTreasury(daoTreasury);
+        console.log("  DLUXMinter treasury updated to DAO Treasury");
+
+        // Grant GOVERNOR_ROLE to Timelock for DAO control
+        dluxMinter.grantRole(dluxMinter.GOVERNOR_ROLE(), address(timelock));
+        console.log("  Timelock granted GOVERNOR_ROLE on DLUXMinter");
+
+        // Grant DLUXMinter EMITTER_ROLE to protocol contracts
+        dluxMinter.grantRole(dluxMinter.EMITTER_ROLE(), address(factory));
+        dluxMinter.grantRole(dluxMinter.EMITTER_ROLE(), address(stakedLux));
+        console.log("  EMITTER_ROLE granted to AMM, StakedLUX");
 
         console.log("");
     }
@@ -521,14 +628,25 @@ contract DeployFullStack is Script {
         console.log("  Governor:        SKIPPED (complex two-phase init)");
         console.log("  vLUX:           ", address(voteLux));
         console.log("  GaugeController:", address(gaugeController));
+        console.log("  Karma (K):      ", address(karma));
+        console.log("  KarmaMinter:    ", address(karmaMinter));
+        console.log("  DLUX:           ", address(dlux));
+        console.log("  DLUXMinter:     ", address(dluxMinter));
+        console.log("");
+        console.log("TREASURY:");
+        console.log("  FeeGov:         ", address(feeGov));
+        console.log("    Rate: 0.3%%, Floor: 0.1%%, Cap: 5%%");
+        console.log("    Chains: P, X, A, B, C, D, T, G, Q, K, Z");
+        console.log("  TreasuryVault:  ", address(treasuryVault));
+        console.log("  TreasuryRouter: ", address(treasuryRouter));
+        console.log("    Weights: 70%% stakers, 20%% DAO, 10%% validators");
+        console.log("  ValidatorVault: ", address(validatorVault));
         console.log("");
         console.log("TREASURY SAFES:");
         console.log("  DAO Treasury:   ", daoTreasury);
         console.log("  Protocol Vault: ", protocolVault);
         console.log("  AI Treasury:    ", aiTreasury);
         console.log("  ZOO Treasury:   ", zooTreasury);
-        console.log("  ValidatorVault: ", address(validatorVault));
-        console.log("  FeeSplitter:    ", address(feeSplitter));
         console.log("");
         console.log("OTHER:");
         console.log("  DIDRegistry:    ", address(didRegistry));

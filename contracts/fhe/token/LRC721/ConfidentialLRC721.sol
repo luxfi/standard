@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 pragma solidity ^0.8.31;
 
-import {FHE, Common, ebool, euint64, eaddress} from "../../FHE.sol";
+import {FHE, ebool, euint64, eaddress} from "../../FHE.sol";
 import {IConfidentialLRC721} from "./IConfidentialLRC721.sol";
 import {TFHEErrors} from "../../utils/TFHEErrors.sol";
 
@@ -220,7 +220,7 @@ abstract contract ConfidentialLRC721 is IConfidentialLRC721, TFHEErrors {
 
         // Note: In a full implementation, this would need T-Chain decryption
         // For now, we trust the FHE comparison result
-        if (!Common.isInitialized(isOwner)) {
+        if (!FHE.isInitialized(isOwner)) {
             revert NotAuthorized();
         }
     }
@@ -281,7 +281,7 @@ abstract contract ConfidentialLRC721 is IConfidentialLRC721, TFHEErrors {
         euint64 currentBalance = _balances[owner];
 
         // Initialize if not set
-        if (!Common.isInitialized(currentBalance)) {
+        if (!FHE.isInitialized(currentBalance)) {
             currentBalance = _ZERO;
         }
 

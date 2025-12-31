@@ -6,11 +6,11 @@ import { ConfidentialVestingWallet } from "./ConfidentialVestingWallet.sol";
 
 /**
  * @title  ConfidentialVestingWalletCliff.
- * @notice This contract offers a simple vesting wallet with a cliff for ConfidentialERC20 tokens.
+ * @notice This contract offers a simple vesting wallet with a cliff for ConfidentialLRC20 tokens.
  *         This is based on the VestingWalletCliff.sol contract written by OpenZeppelin.
  *         see: openzeppelin/openzeppelin-contracts/blob/master/contracts/finance/VestingWalletCliff.sol
  * @dev    This implementation is a linear vesting curve with a cliff.
- *         To use with the native asset, it is necessary to wrap the native asset to a ConfidentialERC20-like token.
+ *         To use with the native asset, it is necessary to wrap the native asset to a ConfidentialLRC20-like token.
  */
 abstract contract ConfidentialVestingWalletCliff is ConfidentialVestingWallet {
     /// @notice Returned if the cliff duration is greater than the vesting duration.

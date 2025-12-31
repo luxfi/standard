@@ -12,12 +12,12 @@ import {IBridgedToken} from "../../bridge/IBridgedToken.sol";
 /**
  * @title LiquidETH
  * @author Lux Industries
- * @notice Liquid Vault for ETH with self-repaying synthetic LETH
+ * @notice Liquid Vault for ETH with self-repaying LETH debt
  * @dev Part of the Liquid Protocol for self-repaying bridged asset loans
  *
  * Token Model:
  * - ETH: Bridged collateral token (minted by Teleporter)
- * - LETH: Synthetic token (minted by this vault)
+ * - LETH: Liquid token (minted by this vault)
  *
  * Flow:
  * 1. User bridges ETH via Teleporter → receives ETH (collateral)
@@ -32,7 +32,7 @@ import {IBridgedToken} from "../../bridge/IBridgedToken.sol";
  *
  * Invariants:
  * - Collateral: ETH (bridged)
- * - Debt: LETH (synthetic, minted by vault)
+ * - Debt: LETH (liquid token, minted by vault)
  * - Self-repaying: yield burns debt pro-rata
  * - Min backing: total ETH collateral >= total LETH debt
  */
@@ -52,7 +52,7 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
 
     struct Position {
         uint256 collateral;      // ETH deposited as collateral
-        uint256 debt;            // LETH debt (borrowed synthetic)
+        uint256 debt;            // LETH debt (borrowed liquid token)
         uint256 lastUpdate;      // Last position update timestamp
     }
 
@@ -81,8 +81,8 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
     /// @notice Collateral token (bridged ETH)
     IERC20 public immutable collateral;
 
-    /// @notice Synthetic token (LETH - minted by this vault)
-    IBridgedToken public immutable synthetic;
+    /// @notice Liquid token (LETH - minted by this vault)
+    IBridgedToken public immutable liquidToken;
 
     /// @notice LiquidYield contract for yield notifications
     address public liquidYield;
@@ -159,14 +159,14 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
     /**
      * @notice Initialize Liquid ETH vault
      * @param _collateral Bridged ETH token address
-     * @param _synthetic LETH synthetic token address (must be mintable by this vault)
+     * @param _liquidToken LETH liquid token address (must be mintable by this vault)
      */
-    constructor(address _collateral, address _synthetic) Ownable(msg.sender) {
+    constructor(address _collateral, address _liquidToken) Ownable(msg.sender) {
         if (_collateral == address(0)) revert ZeroAddress();
-        if (_synthetic == address(0)) revert ZeroAddress();
+        if (_liquidToken == address(0)) revert ZeroAddress();
 
         collateral = IERC20(_collateral);
-        synthetic = IBridgedToken(_synthetic);
+        liquidToken = IBridgedToken(_liquidToken);
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -227,12 +227,12 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // BORROW / REPAY (LETH Synthetic)
+    // BORROW / REPAY (LETH Liquid Token)
     // ═══════════════════════════════════════════════════════════════════════
 
     /**
      * @notice Borrow LETH against ETH collateral
-     * @param amount Amount of LETH to borrow (synthetic minted to user)
+     * @param amount Amount of LETH to borrow (liquid token minted to user)
      */
     function borrow(uint256 amount) external nonReentrant whenNotPaused updateYield(msg.sender) {
         if (amount == 0) revert ZeroAmount();
@@ -250,7 +250,7 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
         totalDebt += amount;
 
         // Mint LETH to user
-        synthetic.mint(msg.sender, amount);
+        liquidToken.mint(msg.sender, amount);
 
         emit Borrowed(msg.sender, amount, position.debt);
     }
@@ -269,8 +269,8 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
         if (repayAmount == 0) revert InsufficientDebt();
 
         // Transfer LETH from user and burn it
-        IERC20(address(synthetic)).safeTransferFrom(msg.sender, address(this), repayAmount);
-        synthetic.burn(address(this), repayAmount);
+        IERC20(address(liquidToken)).safeTransferFrom(msg.sender, address(this), repayAmount);
+        liquidToken.burn(address(this), repayAmount);
 
         // Update position
         position.debt -= repayAmount;
@@ -294,7 +294,7 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
         if (amount == 0) return;
         if (totalDebt == 0) {
             // No debt to reduce - burn the yield
-            synthetic.burn(address(this), amount);
+            liquidToken.burn(address(this), amount);
             return;
         }
 
@@ -309,7 +309,7 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
         accumulatedYield += amount;
 
         // Burn the yield tokens
-        synthetic.burn(address(this), amount);
+        liquidToken.burn(address(this), amount);
 
         emit YieldReceived(amount, yieldIndex);
     }
@@ -363,8 +363,8 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
         }
 
         // Transfer LETH payment from liquidator and burn
-        IERC20(address(synthetic)).safeTransferFrom(msg.sender, address(this), actualDebtCover);
-        synthetic.burn(address(this), actualDebtCover);
+        IERC20(address(liquidToken)).safeTransferFrom(msg.sender, address(this), actualDebtCover);
+        liquidToken.burn(address(this), actualDebtCover);
 
         // Update position
         position.debt -= actualDebtCover;
@@ -475,10 +475,10 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @notice Get synthetic token (LETH)
+     * @notice Get liquid token (LETH)
      */
-    function getSyntheticToken() external view returns (address) {
-        return address(synthetic);
+    function getLiquidToken() external view returns (address) {
+        return address(liquidToken);
     }
 
     // ═══════════════════════════════════════════════════════════════════════

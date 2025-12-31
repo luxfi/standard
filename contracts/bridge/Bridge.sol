@@ -15,10 +15,11 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./LRC20B.sol";
 import "./BridgeVault.sol";
 
-contract Bridge is Ownable, AccessControl {
+contract Bridge is Ownable, AccessControl, ReentrancyGuard {
     // Use the library functions from OpenZeppelin
     using Strings for uint256;
 
@@ -190,7 +191,7 @@ contract Bridge is Ownable, AccessControl {
      * @param amount_ token amount to transfer
      * @param tokenAddr_ token address to transfer
      */
-    function vaultDeposit(uint256 amount_, address tokenAddr_) public payable {
+    function vaultDeposit(uint256 amount_, address tokenAddr_) public payable nonReentrant {
         if (tokenAddr_ != address(0)) {
             IERC20(tokenAddr_).transferFrom(
                 msg.sender,
@@ -410,7 +411,7 @@ contract Bridge is Ownable, AccessControl {
         address receiverAddress_,
         bytes memory signedTXInfo_,
         string memory vault_
-    ) external returns (address) {
+    ) external nonReentrant returns (address) {
         TeleportStruct memory teleport;
         // Hash calculations
         teleport.tokenAddressHash = keccak256(
@@ -485,7 +486,7 @@ contract Bridge is Ownable, AccessControl {
         address receiverAddress_,
         bytes memory signedTXInfo_,
         string memory vault_
-    ) external returns (address) {
+    ) external nonReentrant returns (address) {
         require(withdrawalEnabled == true, "Withdrawl not enabled!");
 
         TeleportStruct memory teleport;
@@ -565,7 +566,7 @@ contract Bridge is Ownable, AccessControl {
         uint256 amount_,
         address tokenAddr_,
         address receiver_
-    ) external onlyOwner {
+    ) external onlyOwner nonReentrant {
         address shareAddress;
         if (tokenAddr_ == address(0)) {
             shareAddress = vault.ethVaultAddress();

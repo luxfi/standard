@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "../FHE.sol";
 import {TFHE} from "../threshold/TFHE.sol";
-import {TFHEConsumer} from "../threshold/TFHEConsumer.sol";
+import {TFHEApp} from "../threshold/TFHEApp.sol";
 import {IStrategy} from "../../governance/interfaces/IStrategy.sol";
 import {IVotingTypes} from "../../governance/interfaces/IVotingTypes.sol";
 import {IVotingWeight} from "../../governance/interfaces/IVotingWeight.sol";
@@ -31,7 +31,7 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
  */
 contract ConfidentialStrategy is
     IStrategy,
-    TFHEConsumer,
+    TFHEApp,
     Ownable2StepUpgradeable,
     UUPSUpgradeable
 {

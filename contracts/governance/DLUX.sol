@@ -49,6 +49,9 @@ contract DLUX is ERC20, ReentrancyGuard, AccessControl {
     /// @notice Role for parameter governance
     bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
 
+    /// @notice Role for emission minting (DLUXMinter)
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+
     /// @notice Epoch duration (8 hours)
     uint256 public constant EPOCH_DURATION = 8 hours;
 
@@ -141,6 +144,7 @@ contract DLUX is ERC20, ReentrancyGuard, AccessControl {
     event RebaseRateUpdated(uint256 oldRate, uint256 newRate);
     event TreasuryUpdated(address indexed oldTreasury, address indexed newTreasury);
     event Paused(bool status);
+    event Minted(address indexed to, uint256 amount, bytes32 indexed reason);
 
     // ============ Errors ============
 
@@ -413,6 +417,53 @@ contract DLUX is ERC20, ReentrancyGuard, AccessControl {
     function setPaused(bool _paused) external onlyRole(GOVERNOR_ROLE) {
         paused = _paused;
         emit Paused(_paused);
+    }
+
+    // ============ Minter Functions ============
+
+    /// @notice Mint DLUX for strategic emissions (called by DLUXMinter)
+    /// @param to Recipient address
+    /// @param amount Amount to mint
+    /// @param reason Emission reason for logging
+    function mint(address to, uint256 amount, bytes32 reason) external onlyRole(MINTER_ROLE) {
+        if (to == address(0)) revert ZeroAddress();
+        if (amount == 0) revert ZeroAmount();
+
+        _mint(to, amount);
+
+        // Initialize demurrage tracking for new holder
+        DemurrageInfo storage dem = _demurrage[to];
+        if (dem.lastUpdate == 0) {
+            dem.lastUpdate = block.timestamp;
+        }
+
+        emit Minted(to, amount, reason);
+    }
+
+    /// @notice Batch mint DLUX to multiple recipients
+    /// @param recipients Array of recipient addresses
+    /// @param amounts Array of amounts to mint
+    /// @param reason Shared reason for batch
+    function batchMint(
+        address[] calldata recipients,
+        uint256[] calldata amounts,
+        bytes32 reason
+    ) external onlyRole(MINTER_ROLE) {
+        require(recipients.length == amounts.length, "Length mismatch");
+
+        for (uint256 i = 0; i < recipients.length; i++) {
+            if (recipients[i] == address(0)) continue;
+            if (amounts[i] == 0) continue;
+
+            _mint(recipients[i], amounts[i]);
+
+            DemurrageInfo storage dem = _demurrage[recipients[i]];
+            if (dem.lastUpdate == 0) {
+                dem.lastUpdate = block.timestamp;
+            }
+
+            emit Minted(recipients[i], amounts[i], reason);
+        }
     }
 
     // ============ Internal Functions ============

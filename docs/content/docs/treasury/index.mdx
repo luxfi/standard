@@ -5,7 +5,7 @@ description: Protocol fee collection and distribution
 
 # Treasury
 
-Centralized fee collection and distribution to protocol participants.
+Cross-chain fee governance and distribution using Warp messaging.
 
 ## Architecture Overview
 
@@ -14,29 +14,44 @@ Centralized fee collection and distribution to protocol participants.
 │                            LUX TREASURY ARCHITECTURE                                    │
 ├─────────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                         │
-│  FEE SOURCES                                                                            │
-│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐                     │
-│  │  DEX   │ │ Bridge │ │Lending │ │ Perps  │ │  NFT   │ │Validator│                    │
-│  │  Fees  │ │  Fees  │ │  Fees  │ │  Fees  │ │  Fees  │ │ Rewards│                     │
-│  └────┬───┘ └────┬───┘ └────┬───┘ └────┬───┘ └────┬───┘ └────┬───┘                     │
-│       │          │          │          │          │          │                          │
-│       └──────────┴──────────┴─────┬────┴──────────┴──────────┘                          │
+│  C-CHAIN (FEE GOVERNANCE)                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │                              FeeGov                                              │   │
+│  │  • Sets fee rate (0.1% floor - 5% cap)                                          │   │
+│  │  • Registers chains (P, X, A, B, C, D, T, G, Q, K, Z)                           │   │
+│  │  • Broadcasts settings via Warp to all chains                                    │   │
+│  └─────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                         │
+│  OTHER CHAINS (FEE COLLECTION)                                                          │
+│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐                               │
+│  │P-Chain │ │D-Chain │ │T-Chain │ │G-Chain │ │...etc  │                               │
+│  │Collect │ │Collect │ │Collect │ │Collect │ │Collect │                               │
+│  └────┬───┘ └────┬───┘ └────┬───┘ └────┬───┘ └────┬───┘                               │
+│       │          │          │          │          │                                     │
+│       └──────────┴──────────┴─────┬────┴──────────┘                                     │
+│                                   │ Warp (bridge fees)                                  │
 │                                   ▼                                                      │
 │  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
-│  │                            FeeSplitter                                           │   │
-│  │                                                                                  │   │
-│  │  • Collects all protocol fees                                                   │   │
-│  │  • 10% performance fee to Treasury multisig                                     │   │
-│  │  • 90% distributed based on gauge weights                                       │   │
+│  │                              Vault (C-Chain)                                     │   │
+│  │  • Receives fees via Warp proofs                                                 │   │
+│  │  • Per-chain accounting                                                          │   │
+│  │  • Replay protection                                                             │   │
+│  └──────────────────────────────────┬──────────────────────────────────────────────┘   │
+│                                     │                                                   │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │                              Router (C-Chain)                                    │   │
+│  │  • Distributes to recipients                                                     │   │
+│  │  • Governance-controlled weights                                                 │   │
+│  │  • Pull pattern claims                                                           │   │
 │  └──────────────────────────────────┬──────────────────────────────────────────────┘   │
 │                                     │                                                   │
 │       ┌─────────────────────────────┼─────────────────────────────────────┐            │
 │       ▼                             ▼                                     ▼            │
 │  ┌─────────────┐            ┌─────────────────┐                 ┌─────────────────┐   │
-│  │ LiquidLUX   │            │ ValidatorVault  │                 │    Treasury     │   │
-│  │ (xLUX)      │            │                 │                 │    Multisig     │   │
-│  │             │            │ P-Chain rewards │                 │                 │   │
-│  │ 90% fees    │            │ to sLUX holders │                 │ 10% perf fee    │   │
+│  │ Protocol    │            │ DAO Treasury    │                 │ Validators      │   │
+│  │ (70%)       │            │ (20%)           │                 │ (10%)           │   │
+│  │             │            │                 │                 │                 │   │
+│  │ → sLUX      │            │ → Governance    │                 │ → P-Chain       │   │
 │  └─────────────┘            └─────────────────┘                 └─────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -45,51 +60,125 @@ Centralized fee collection and distribution to protocol participants.
 
 | Contract | Description | Import |
 |----------|-------------|--------|
-| **FeeSplitter** | Fee collection & distribution | `@luxfi/contracts/treasury/FeeSplitter.sol` |
-| **ValidatorVault** | Validator reward bridging | `@luxfi/contracts/treasury/ValidatorVault.sol` |
+| **FeeGov** | Fee rate governance | `@luxfi/contracts/treasury/FeeGov.sol` |
+| **Vault** | Fee collection vault | `@luxfi/contracts/treasury/Vault.sol` |
+| **Router** | Fee distribution | `@luxfi/contracts/treasury/Router.sol` |
+| **Collect** | Per-chain collector | `@luxfi/contracts/treasury/Collect.sol` |
+| **ValidatorVault** | Validator rewards | `@luxfi/contracts/treasury/ValidatorVault.sol` |
 
-## Fee Types
+## FeeGov
 
-```solidity
-bytes32 public constant FEE_DEX = keccak256("DEX");
-bytes32 public constant FEE_BRIDGE = keccak256("BRIDGE");
-bytes32 public constant FEE_LENDING = keccak256("LENDING");
-bytes32 public constant FEE_PERPS = keccak256("PERPS");
-bytes32 public constant FEE_LIQUID = keccak256("LIQUID");
-bytes32 public constant FEE_NFT = keccak256("NFT");
-bytes32 public constant FEE_VALIDATOR = keccak256("VALIDATOR");
-bytes32 public constant FEE_OTHER = keccak256("OTHER");
-```
-
-## FeeSplitter
-
-Collects fees from all protocol sources and distributes to LiquidLUX:
+C-Chain governance for all chain fee rates:
 
 ```solidity
-import "@luxfi/contracts/treasury/FeeSplitter.sol";
+import "@luxfi/contracts/treasury/FeeGov.sol";
 
-FeeSplitter splitter = FeeSplitter(FEE_SPLITTER_ADDRESS);
+FeeGov gov = FeeGov(FEE_GOV_ADDRESS);
 
-// Protocol contracts push fees
-splitter.receiveFee{value: feeAmount}(FEE_DEX);
+// Set fee rate (0.5% = 50 basis points)
+gov.set(50);
 
-// Push collected fees to LiquidLUX
-splitter.pushFeesToLiquidLUX(FEE_DEX);
+// Add chain for fee collection
+gov.add(keccak256("D"));
 
-// Check collected fees by type
-uint256 dexFees = splitter.collectedFees(FEE_DEX);
+// Broadcast settings to all chains via Warp
+gov.broadcast();
+
+// Check settings
+(uint16 rate, uint16 floor, uint16 cap, uint32 version) = gov.settings();
 ```
 
-### Fee Distribution
+### Fee Rate Limits
 
-| Destination | Percentage | Description |
-|-------------|------------|-------------|
-| LiquidLUX (xLUX) | 90% | Distributed to xLUX holders |
-| Treasury Multisig | 10% | Protocol development fund |
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| Default Rate | 0.3% (30 bp) | Initial fee rate |
+| Floor | 0.1% (10 bp) | Minimum allowed rate |
+| Cap | 5% (500 bp) | Maximum allowed rate |
+
+## Vault
+
+Receives fees from all chains via Warp:
+
+```solidity
+import "@luxfi/contracts/treasury/Vault.sol";
+
+Vault vault = Vault(VAULT_ADDRESS);
+
+// Relayer delivers Warp-proven fees
+vault.receive_(chainId, amount, warpMessageId);
+
+// Check per-chain accounting
+(uint256 total, uint256 pending) = vault.stats(chainId);
+
+// Global stats
+uint256 allTimeTotal = vault.sum();
+uint256 awaitingDistribution = vault.balance();
+```
+
+## Router
+
+Distributes collected fees to recipients:
+
+```solidity
+import "@luxfi/contracts/treasury/Router.sol";
+
+Router router = Router(ROUTER_ADDRESS);
+
+// Governance sets weights (basis points, sum to 10000)
+address[] memory recipients = [protocolVault, daoTreasury, validatorVault];
+uint256[] memory weights = [7000, 2000, 1000]; // 70%, 20%, 10%
+router.setBatch(recipients, weights);
+
+// Distribute fees from chains
+bytes32[] memory chains = [CHAIN_P, CHAIN_D, CHAIN_T];
+router.distribute(chains);
+
+// Recipients claim (pull pattern)
+router.claim(); // msg.sender claims their share
+router.claimFor(recipient); // Anyone can claim for a recipient
+```
+
+### Distribution Weights
+
+| Recipient | Weight | Description |
+|-----------|--------|-------------|
+| Protocol Vault | 70% | sLUX stakers |
+| DAO Treasury | 20% | Governance fund |
+| Validator Vault | 10% | P-Chain validators |
+
+## Collect
+
+Deployed on each chain to collect local fees:
+
+```solidity
+import "@luxfi/contracts/treasury/Collect.sol";
+
+Collect collect = Collect(COLLECT_ADDRESS);
+
+// Protocols push fees
+collect.push(feeAmount);
+
+// Anyone can bridge collected fees to C-Chain Vault
+bytes32 warpId = collect.bridge();
+
+// Check stats
+(uint256 total, uint256 pending, uint256 bridged, uint16 rate, uint32 version) = collect.stats();
+
+// Calculate fee for an amount
+uint256 fee = collect.fee(transactionAmount);
+```
+
+### Fee Calculation
+
+```solidity
+// Fee = amount × rate / 10000
+// At 0.3% rate: fee(1000 ether) = 3 ether
+```
 
 ## ValidatorVault
 
-Bridges validator rewards from P-Chain to C-Chain:
+Bridges P-Chain validator rewards to C-Chain:
 
 ```solidity
 import "@luxfi/contracts/treasury/ValidatorVault.sol";
@@ -101,119 +190,51 @@ vault.receiveRewards{value: rewardAmount}();
 
 // Forward to LiquidLUX (exempt from performance fee)
 vault.forwardRewardsToLiquidLUX();
-
-// Check pending rewards
-uint256 pending = vault.pendingRewards();
 ```
 
-### Validator Reward Flow
+## Cross-Chain Flow
 
 ```
-P-Chain
-    │
-    │ Staking Rewards
-    ▼
-┌─────────────────┐
-│ Warp Message    │
-│ (Cross-chain)   │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ ValidatorVault  │
-│ (C-Chain)       │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ LiquidLUX       │
-│ (0% perf fee)   │
-└────────┬────────┘
-         │
-         ▼
-    sLUX holders
-```
-
-## Integration
-
-### Protocol Fee Integration
-
-```solidity
-// Example: DEX collecting swap fees
-contract LuxDEX {
-    FeeSplitter public feeSplitter;
-
-    function swap(...) external {
-        // ... swap logic ...
-
-        // Collect fee
-        uint256 fee = calculateFee(amountIn);
-        feeSplitter.receiveFee{value: fee}(FEE_DEX);
-    }
-}
-```
-
-### LiquidLUX Integration
-
-```solidity
-import "@luxfi/contracts/liquid/LiquidLUX.sol";
-
-// FeeSplitter pushes fees
-feeSplitter.setLiquidLUX(address(liquidLux));
-
-// LiquidLUX receives fees
-liquidLux.receiveFees{value: amount}(amount, FEE_DEX);
-
-// xLUX holders earn proportionally
-```
-
-## Fee Accounting
-
-Track fees by source:
-
-```solidity
-// Total fees collected
-uint256 totalCollected = splitter.totalFeesCollected();
-
-// Fees by type
-uint256 dexFees = splitter.feesByType(FEE_DEX);
-uint256 bridgeFees = splitter.feesByType(FEE_BRIDGE);
-uint256 lendingFees = splitter.feesByType(FEE_LENDING);
-uint256 perpsFees = splitter.feesByType(FEE_PERPS);
-
-// Fees distributed to LiquidLUX
-uint256 distributed = splitter.totalDistributed();
-
-// Treasury allocation
-uint256 treasuryShare = splitter.treasuryCollected();
+1. FeeGov.broadcast()           → Warp settings to all chains
+2. Collect.sync(rate, version)  ← Chain receives settings
+3. Protocol.push(fee)           → Local Collect contract
+4. Collect.bridge()             → Warp fees to C-Chain
+5. Vault.receive_(chain, amt)   ← Relayer delivers proof
+6. Router.distribute(chains)    → Split to recipients
+7. Router.claim()               ← Recipients pull funds
 ```
 
 ## Events
 
 ```solidity
-event FeeReceived(bytes32 indexed feeType, uint256 amount);
-event FeeDistributed(address indexed recipient, uint256 amount);
-event TreasuryWithdrawal(address indexed to, uint256 amount);
-event LiquidLUXUpdated(address indexed newLiquidLUX);
-event ValidatorRewardsReceived(uint256 amount);
-event ValidatorRewardsForwarded(uint256 amount);
+// FeeGov
+event RateSet(uint16 rate, uint32 version);
+event ChainAdded(bytes32 indexed chain);
+event ChainRemoved(bytes32 indexed chain);
+event Broadcast(uint256 chainCount);
+
+// Vault
+event Receive(bytes32 indexed chain, uint256 amount, bytes32 warpId);
+event Flush(bytes32 indexed chain, uint256 amount);
+
+// Router
+event Weight(address indexed recipient, uint256 weight);
+event Distribute(uint256 amount);
+event Claim(address indexed recipient, uint256 amount);
+
+// Collect
+event Settings(uint16 rate, uint32 version);
+event Fee(address indexed from, uint256 amount);
+event Bridge(uint256 amount, bytes32 warpId);
 ```
-
-## Access Control
-
-| Role | Permissions |
-|------|-------------|
-| `DEFAULT_ADMIN_ROLE` | Configure fee splits, set LiquidLUX |
-| `FEE_DISTRIBUTOR_ROLE` | Push fees to LiquidLUX |
-| `VALIDATOR_SOURCE_ROLE` | Forward validator rewards |
-| `TREASURY_ROLE` | Withdraw treasury allocation |
 
 ## Security Considerations
 
-1. **Reentrancy Protection**: All external calls use ReentrancyGuard
-2. **Access Control**: Role-based permissions
-3. **Pausable**: Emergency pause functionality
-4. **No Infinite Approvals**: SafeERC20 patterns
+1. **Warp Verification**: All cross-chain messages verified via Warp proofs
+2. **Replay Protection**: Each Warp message ID can only be processed once
+3. **Pull Pattern**: Recipients claim funds (no unbounded loops)
+4. **Version Checks**: Stale settings rejected via version monotonicity
+5. **Owner Controls**: Rate changes require governance approval
 
 ## Related Documentation
 

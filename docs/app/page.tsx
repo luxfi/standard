@@ -9,7 +9,7 @@ const features = [
   },
   {
     title: 'DeFi',
-    description: 'Self-repaying synths, perpetuals, lending, yield farming',
+    description: 'Self-repaying loans, perpetuals, lending, yield farming',
     href: '/docs/defi',
     icon: '📈',
   },
@@ -158,7 +158,7 @@ forge install luxfi/standard
 
 # Import in your contract
 import "@lux/tokens/LUX.sol";
-import "@lux/defi/synths/AlchemistV2.sol";`}</code>
+import "@lux/defi/liquid/LiquidLUX.sol";`}</code>
               </pre>
             </div>
             <div className="mt-8 flex gap-4">

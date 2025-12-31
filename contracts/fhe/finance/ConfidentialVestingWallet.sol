@@ -2,20 +2,20 @@
 pragma solidity ^0.8.24;
 
 import "../FHE.sol";
-import { IConfidentialERC20 } from "../token/ERC20/IConfidentialERC20.sol";
+import { IConfidentialLRC20 } from "../token/LRC20/IConfidentialLRC20.sol";
 
 /**
  * @title  ConfidentialVestingWallet.
- * @notice This contract offers a simple vesting wallet for ConfidentialERC20 tokens.
+ * @notice This contract offers a simple vesting wallet for ConfidentialLRC20 tokens.
  *         This is based on the VestingWallet.sol contract written by OpenZeppelin.
  *         see: openzeppelin/openzeppelin-contracts/blob/master/contracts/finance/VestingWallet.sol
  * @dev    Default implementation is a linear vesting curve.
- *         To use with the native asset, it is necessary to wrap the native asset to a ConfidentialERC20-like token.
+ *         To use with the native asset, it is necessary to wrap the native asset to a ConfidentialLRC20-like token.
  */
 abstract contract ConfidentialVestingWallet {
     /// @notice      Emitted when tokens are released to the beneficiary address.
     /// @param token Address of the token being released.
-    event ConfidentialERC20Released(address indexed token);
+    event ConfidentialLRC20Released(address indexed token);
 
     /// @notice Beneficiary address.
     address public immutable BENEFICIARY;
@@ -66,9 +66,9 @@ abstract contract ConfidentialVestingWallet {
         FHE.allow(amountReleased, BENEFICIARY);
         FHE.allowThis(amountReleased);
         FHE.allowTransient(amount, token);
-        IConfidentialERC20(token).transfer(BENEFICIARY, amount);
+        IConfidentialLRC20(token).transfer(BENEFICIARY, amount);
 
-        emit ConfidentialERC20Released(token);
+        emit ConfidentialLRC20Released(token);
     }
 
     /**
@@ -95,7 +95,7 @@ abstract contract ConfidentialVestingWallet {
      */
     function _vestedAmount(address token, uint128 timestamp) internal virtual returns (euint64 vestedAmount) {
         return
-            _vestingSchedule(FHE.add(IConfidentialERC20(token).balanceOf(address(this)), released(token)), timestamp);
+            _vestingSchedule(FHE.add(IConfidentialLRC20(token).balanceOf(address(this)), released(token)), timestamp);
     }
 
     /**

@@ -38,6 +38,9 @@
   "lib/compound-v3": {
     "rev": "ed6ebcd84ac00906e8e725716891d482f4bef8b9"
   },
+  "lib/core": {
+    "rev": "9de369b7b98faf6f9ceee92d21e91486d0259e99"
+  },
   "lib/curve": {
     "rev": "e231a18ef860edbe36688452b7d15fde42d33c9b"
   },
@@ -72,7 +75,10 @@
     "rev": "48b2a62d9d911a27f886fb7909ad57e29f7dacc9"
   },
   "lib/openzeppelin-contracts": {
-    "rev": "69c8def5f222ff96f2b5beff05dfba996368aa79"
+    "tag": {
+      "name": "v5.1.0",
+      "rev": "69c8def5f222ff96f2b5beff05dfba996368aa79"
+    }
   },
   "lib/openzeppelin-contracts-upgradeable": {
     "rev": "fa525310e45f91eb20a6d3baa2644be8e0adba31"
