@@ -1,0 +1,62 @@
+{
+  "name": "@luxfi/contracts",
+  "version": "1.4.0",
+  "description": "Lux Standard Library - Official Solidity smart contracts for Lux Network",
+  "license": "BSD-3-Clause",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luxfi/standard.git"
+  },
+  "homepage": "https://standard.lux.network",
+  "keywords": [
+    "lux",
+    "ethereum",
+    "solidity",
+    "smart-contracts",
+    "defi",
+    "bridge",
+    "post-quantum",
+    "evm",
+    "fhe"
+  ],
+  "files": [
+    "fhe/**/*.sol",
+    "amm/**/*.sol",
+    "bridge/**/*.sol",
+    "governance/**/*.sol",
+    "identity/**/*.sol",
+    "liquid/**/*.sol",
+    "markets/**/*.sol",
+    "oracle/**/*.sol",
+    "perps/**/*.sol",
+    "staking/**/*.sol",
+    "tokens/**/*.sol",
+    "treasury/**/*.sol",
+    "account/**/*.sol",
+    "adapters/**/*.sol",
+    "core/**/*.sol",
+    "crypto/**/*.sol",
+    "liquidity/**/*.sol",
+    "lssvm/**/*.sol",
+    "mocks/**/*.sol",
+    "multicall/**/*.sol",
+    "nft/**/*.sol",
+    "omnichain/**/*.sol",
+    "registry/**/*.sol",
+    "safe/**/*.sol",
+    "utils/**/*.sol",
+    "yield/**/*.sol",
+    "ai/**/*.sol",
+    "Faucet.sol"
+  ],
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0",
+    "@openzeppelin/contracts-upgradeable": "^5.4.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

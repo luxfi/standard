@@ -1,7 +1,0 @@
-[
-  { "probability": 5500, "name": "Common", "yields": 100, "boost": 1000 },
-  { "probability": 3100, "name": "Uncommon", "yields": 200, "boost": 5000 },
-  { "probability": 1250, "name": "Rare", "yields": 500, "boost": 10000 },
-  { "probability": 100, "name": "Super Rare", "yields": 1000, "boost": 50000 },
-  { "probability": 50, "name": "Epic", "yields": 1500, "boost": 100000 }
-]

@@ -1,7 +1,8 @@
 {
-  "name": "@luxfi/contracts",
-  "version": "1.2.0",
-  "description": "Lux Standard Library - Official Solidity smart contracts for Lux Network",
+  "name": "lux-standard",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Lux Standard Library - Development dependencies (npm package is in contracts/)",
   "license": "BSD-3-Clause",
   "repository": {
     "type": "git",
@@ -45,18 +46,6 @@
     "@openzeppelin/contracts-upgradeable": "^5.4.0",
     "viem": "^2.23.4"
   },
-  "files": [
-    "contracts/**/*.sol",
-    "lib/openzeppelin-contracts/contracts/**/*.sol",
-    "lib/openzeppelin-contracts-upgradeable/contracts/**/*.sol",
-    "lib/account-abstraction/contracts/**/*.sol",
-    "lib/solmate/src/**/*.sol",
-    "foundry.toml",
-    "remappings.txt"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
   "scripts": {
     "build": "forge build",
     "build:hardhat": "hardhat compile",
@@ -76,7 +65,8 @@
     "node": "hardhat node",
     "anvil": "anvil",
     "docs": "forge doc",
-    "docs:serve": "forge doc --serve"
+    "docs:serve": "forge doc --serve",
+    "publish:contracts": "npm publish ./contracts --access public"
   },
   "engines": {
     "node": ">=18.0.0"

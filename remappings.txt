@@ -1,3 +1,4 @@
+@luxfhe/contracts/=node_modules/@luxfhe/contracts/
 @luxfi/contracts/=contracts/
 @luxfi/contracts/lib/=lib/openzeppelin-contracts/contracts/
 @luxfi/contracts/lib-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
