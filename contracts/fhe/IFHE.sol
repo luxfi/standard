@@ -172,7 +172,7 @@ enum FunctionId {
     _31             // 31
 }
 
-interface ITaskManager {
+interface IFHENetwork {
     function createTask(uint8 returnType, FunctionId funcId, uint256[] memory encryptedInputs, uint256[] memory extraInputs) external returns (uint256);
     function createRandomTask(uint8 returnType, uint256 seed, int32 securityZone) external returns (uint256);
 
@@ -183,8 +183,8 @@ interface ITaskManager {
     function isAllowed(uint256 ctHash, address account) external returns (bool);
     function allowGlobal(uint256 ctHash) external;
     function allowTransient(uint256 ctHash, address account) external;
-    function getDecryptResultSafe(uint256 ctHash) external view returns (uint256, bool);
-    function getDecryptResult(uint256 ctHash) external view returns (uint256);
+    function revealSafe(uint256 ctHash) external view returns (uint256, bool);
+    function reveal(uint256 ctHash) external view returns (uint256);
 }
 
 library Utils {

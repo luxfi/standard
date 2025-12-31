@@ -4,7 +4,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {T_CHAIN_FHE_ADDRESS} from "./FHETypes.sol";
 import {FHECommon} from "./FHECommon.sol";
-import {FunctionId, ITaskManager, EncryptedInput} from "./IFHE.sol";
+import {FunctionId, IFHENetwork, EncryptedInput} from "./IFHE.sol";
 
 /// @title FHENetwork
 /// @notice Library for FHE operations on the Lux T-Chain (Threshold Chain)
@@ -16,7 +16,7 @@ library FHENetwork {
     /// @param securityZone The security zone for the ciphertext
     /// @return The ciphertext hash
     function trivialEncrypt(uint256 value, uint8 toType, int32 securityZone) internal returns (uint256) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).createTask(
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).createTask(
             toType,
             FunctionId.trivialEncrypt,
             new uint256[](0),
@@ -29,7 +29,7 @@ library FHENetwork {
     /// @param toType The target encrypted type
     /// @return The new ciphertext hash
     function cast(uint256 key, uint8 toType) internal returns (uint256) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).createTask(
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).createTask(
             toType,
             FunctionId.cast,
             FHECommon.createUint256Inputs(key),
@@ -44,7 +44,7 @@ library FHENetwork {
     /// @param ifFalse Value to return if condition is false
     /// @return The selected ciphertext hash
     function select(uint8 returnType, uint256 control, uint256 ifTrue, uint256 ifFalse) internal returns (uint256) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).createTask(
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).createTask(
             returnType,
             FunctionId.select,
             FHECommon.createUint256Inputs(control, ifTrue, ifFalse),
@@ -59,7 +59,7 @@ library FHENetwork {
     /// @param functionId The operation to perform
     /// @return The result ciphertext hash
     function mathOp(uint8 returnType, uint256 lhs, uint256 rhs, FunctionId functionId) internal returns (uint256) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).createTask(
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).createTask(
             returnType,
             functionId,
             FHECommon.createUint256Inputs(lhs, rhs),
@@ -71,23 +71,23 @@ library FHENetwork {
     /// @param input The ciphertext hash to decrypt
     /// @return The input hash (for tracking)
     function decrypt(uint256 input) internal returns (uint256) {
-        ITaskManager(T_CHAIN_FHE_ADDRESS).createDecryptTask(input, msg.sender);
+        IFHENetwork(T_CHAIN_FHE_ADDRESS).createDecryptTask(input, msg.sender);
         return input;
     }
 
     /// @notice Get the decryption result (reverts if not ready)
     /// @param input The ciphertext hash
     /// @return The decrypted value
-    function getDecryptResult(uint256 input) internal view returns (uint256) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).getDecryptResult(input);
+    function reveal(uint256 input) internal view returns (uint256) {
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).reveal(input);
     }
 
     /// @notice Get the decryption result safely (returns success status)
     /// @param input The ciphertext hash
     /// @return result The decrypted value
-    /// @return decrypted Whether decryption is complete
-    function getDecryptResultSafe(uint256 input) internal view returns (uint256 result, bool decrypted) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).getDecryptResultSafe(input);
+    /// @return ready Whether decryption is complete
+    function revealSafe(uint256 input) internal view returns (uint256 result, bool ready) {
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).revealSafe(input);
     }
 
     /// @notice Perform bitwise NOT on an encrypted value
@@ -95,7 +95,7 @@ library FHENetwork {
     /// @param input The ciphertext hash
     /// @return The result ciphertext hash
     function not(uint8 returnType, uint256 input) internal returns (uint256) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).createTask(
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).createTask(
             returnType,
             FunctionId.not,
             FHECommon.createUint256Inputs(input),
@@ -108,7 +108,7 @@ library FHENetwork {
     /// @param input The ciphertext hash
     /// @return The result ciphertext hash
     function square(uint8 returnType, uint256 input) internal returns (uint256) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).createTask(
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).createTask(
             returnType,
             FunctionId.square,
             FHECommon.createUint256Inputs(input),
@@ -120,7 +120,7 @@ library FHENetwork {
     /// @param input The encrypted input struct
     /// @return The verified ciphertext hash
     function verifyInput(EncryptedInput memory input) internal returns (uint256) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).verifyInput(input, msg.sender);
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).verifyInput(input, msg.sender);
     }
 
     /// @notice Verify an encrypted input with proof
@@ -136,7 +136,7 @@ library FHENetwork {
             utype: utype,
             signature: proof
         });
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).verifyInput(input, msg.sender);
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).verifyInput(input, msg.sender);
     }
 
     /// @notice Generate a random encrypted value
@@ -145,7 +145,7 @@ library FHENetwork {
     /// @param securityZone The security zone
     /// @return The random ciphertext hash
     function random(uint8 uintType, uint256 seed, int32 securityZone) internal returns (uint256) {
-        return ITaskManager(T_CHAIN_FHE_ADDRESS).createRandomTask(uintType, seed, securityZone);
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS).createRandomTask(uintType, seed, securityZone);
     }
 
     /// @notice Generate a random encrypted value with default security zone
