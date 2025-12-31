@@ -1999,6 +1999,52 @@ library FHE {
         FHENetwork.decrypt(eaddress.unwrap(input1));
     }
 
+    // ===== Synchronous Decrypt Functions =====
+    // These combine decrypt + getDecryptResult for simple use cases
+    // They work when the T-Chain precompile supports synchronous decryption
+
+    /// @notice Synchronously decrypt an ebool to bool
+    function syncDecrypt(ebool input) internal returns (bool) {
+        decrypt(input);
+        return getDecryptResult(input);
+    }
+
+    /// @notice Synchronously decrypt a euint8 to uint8
+    function syncDecrypt(euint8 input) internal returns (uint8) {
+        decrypt(input);
+        return getDecryptResult(input);
+    }
+
+    /// @notice Synchronously decrypt a euint16 to uint16
+    function syncDecrypt(euint16 input) internal returns (uint16) {
+        decrypt(input);
+        return getDecryptResult(input);
+    }
+
+    /// @notice Synchronously decrypt a euint32 to uint32
+    function syncDecrypt(euint32 input) internal returns (uint32) {
+        decrypt(input);
+        return getDecryptResult(input);
+    }
+
+    /// @notice Synchronously decrypt a euint64 to uint64
+    function syncDecrypt(euint64 input) internal returns (uint64) {
+        decrypt(input);
+        return getDecryptResult(input);
+    }
+
+    /// @notice Synchronously decrypt a euint128 to uint128
+    function syncDecrypt(euint128 input) internal returns (uint128) {
+        decrypt(input);
+        return getDecryptResult(input);
+    }
+
+    /// @notice Synchronously decrypt an eaddress to address
+    function syncDecrypt(eaddress input) internal returns (address) {
+        decrypt(input);
+        return getDecryptResult(input);
+    }
+
     /// @notice Gets the decrypted value from a previously decrypted ebool ciphertext
     /// @dev This function will revert if the ciphertext is not yet decrypted. Use getDecryptResultSafe for a non-reverting version.
     /// @param input1 The ebool ciphertext to get the decrypted value from

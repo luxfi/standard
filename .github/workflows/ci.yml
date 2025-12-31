@@ -116,7 +116,31 @@ jobs:
       - name: Run tests
         run: forge test
 
-      - name: Publish to npm
-        run: npm publish --access public
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Publish @luxfi/contracts to npm
+        working-directory: ./contracts
+        run: |
+          # Update version from git tag
+          npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version --allow-same-version
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @luxfi/standard to npm (alias)
+        working-directory: ./contracts
+        run: |
+          # Create temporary package.json with @luxfi/standard name
+          cp package.json package.json.backup
+          node -e "
+            const pkg = require('./package.json');
+            pkg.name = '@luxfi/standard';
+            require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+          "
+          npm publish --access public || echo "Package may already exist"
+          # Restore original
+          mv package.json.backup package.json
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

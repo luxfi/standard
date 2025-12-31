@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSD-3-Clause-Clear
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
 import {ConfidentialLRC721Mintable} from "../../../token/LRC721/extensions/ConfidentialLRC721Mintable.sol";
