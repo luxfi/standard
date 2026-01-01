@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {ICapital, RiskTier, CapitalState} from "../../interfaces/ICapital.sol";
-import {IYield, YieldType, AccrualPattern} from "../../interfaces/IYield.sol";
-import {IObligation, Monotonicity, ObligationState, ObligationLib} from "../../interfaces/IObligation.sol";
-import {IRisk, HealthStatus, InterventionType} from "../../interfaces/IRisk.sol";
-import {ISettlement, SettlementType} from "../../interfaces/ISettlement.sol";
+import {ICapital, RiskTier, CapitalState} from "@luxfi/contracts/interfaces/core/ICapital.sol";
+import {IYield, YieldType, AccrualPattern} from "@luxfi/contracts/interfaces/core/IYield.sol";
+import {IObligation, Monotonicity, ObligationState, ObligationLib} from "@luxfi/contracts/interfaces/core/IObligation.sol";
+import {IRisk, HealthStatus, InterventionType} from "@luxfi/contracts/interfaces/core/IRisk.sol";
+import {ISettlement, SettlementType} from "@luxfi/contracts/interfaces/core/ISettlement.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";

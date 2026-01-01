@@ -4,7 +4,7 @@ pragma solidity ^0.8.31;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ILiquidityEngine} from "../interfaces/ILiquidityEngine.sol";
+import {ILiquidityEngine} from "@luxfi/contracts/interfaces/liquidity/ILiquidityEngine.sol";
 
 /// @title 1inch Aggregation Router V5 Interface
 interface IAggregationRouterV5 {
