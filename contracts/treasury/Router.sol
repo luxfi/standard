@@ -92,23 +92,23 @@ contract Router is Ownable {
 
     /// @notice Batch set weights
     /// @param recipients Array of addresses
-    /// @param weights Array of weights (must sum to 10000)
-    function setBatch(address[] calldata recipients, uint256[] calldata weights) external onlyOwner {
-        if (recipients.length != weights.length) revert Invalid();
+    /// @param weightValues Array of weights (must sum to 10000)
+    function setBatch(address[] calldata recipients, uint256[] calldata weightValues) external onlyOwner {
+        if (recipients.length != weightValues.length) revert Invalid();
 
         uint256 sum;
         for (uint256 i = 0; i < recipients.length;) {
             if (recipients[i] == address(0)) revert Zero();
-            if (weights[i] > BASE) revert Overflow();
+            if (weightValues[i] > BASE) revert Overflow();
 
-            if (!active[recipients[i]] && weights[i] > 0) {
+            if (!active[recipients[i]] && weightValues[i] > 0) {
                 active[recipients[i]] = true;
                 list.push(recipients[i]);
             }
 
-            weight[recipients[i]] = weights[i];
-            sum += weights[i];
-            emit Weight(recipients[i], weights[i]);
+            weight[recipients[i]] = weightValues[i];
+            sum += weightValues[i];
+            emit Weight(recipients[i], weightValues[i]);
             unchecked { i++; }
         }
 

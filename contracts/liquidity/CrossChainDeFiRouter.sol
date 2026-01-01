@@ -5,8 +5,8 @@ pragma solidity ^0.8.31;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IDEX, DEXLib} from "./precompiles/IDEX.sol";
-import {IOracle, OracleLib} from "./precompiles/IOracle.sol";
+import {IDEX, DEXLib} from "@luxfi/contracts/precompile/interfaces/dex/IDEX.sol";
+import {IOracle, OracleLib} from "@luxfi/contracts/precompile/interfaces/IOracle.sol";
 import {IBridgeAggregator, BridgeLib, IWarp} from "./bridges/IBridgeAggregator.sol";
 import {ILiquidityEngine} from "./interfaces/ILiquidityEngine.sol";
 

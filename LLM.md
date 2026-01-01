@@ -1,11 +1,11 @@
 # AI Assistant Knowledge Base
 
-**Last Updated**: 2025-12-30
+**Last Updated**: 2025-12-31
 **Project**: Lux Standard (Solidity Contracts & Precompiles)
 **Organization**: Lux Industries
 **Solidity Version**: 0.8.31
 **EVM Version**: Cancun (for FHE transient storage)
-**Test Coverage**: 725 tests passing (100%)
+**Test Coverage**: 727 tests passing (100%)
 **npm Package**: @luxfi/contracts v1.2.0
 **Build Status**: ✅ All contracts compile, full test suite passing
 
@@ -13,9 +13,9 @@
 
 This repository contains the standard Solidity contracts and EVM precompiles for the Lux blockchain, including post-quantum cryptography implementations and Quasar consensus integration.
 
-## Test Coverage Summary (2025-12-30)
+## Test Coverage Summary (2025-12-31)
 
-**Total**: 725 tests passing across 35 test suites
+**Total**: 727 tests passing across 35 test suites
 
 | Protocol | Tests | Status |
 |----------|-------|--------|
@@ -688,20 +688,241 @@ All AMM (Automated Market Maker) contracts verified with successful build and co
 
 ---
 
-## Oracle Architecture (2025-12-29)
+## Prediction Protocol - Optimistic Oracle Architecture (2025-12-31)
 
 ### Status: ✅ COMPLETE
 
-Unified Oracle system for all Lux DeFi protocols (Perps, Lending, AMM, Flash Loans).
+The Prediction Protocol implements an **optimistic oracle** scheme for prediction markets, based on UMA's Optimistic Oracle design. This is completely separate from the Price Oracle used for DeFi (Perps, Lending, AMM).
+
+### Two Oracle Systems (IMPORTANT)
+
+| System | Location | Purpose | Pattern |
+|--------|----------|---------|---------|
+| **Prediction Oracle** | `contracts/prediction/Oracle.sol` | Truth claims about the world | Optimistic: assert → dispute → settle |
+| **Price Oracle** | `contracts/oracle/Oracle.sol` | Real-time asset prices | Aggregation: multiple sources → median |
+
+**These are NOT the same contract.** The Prediction Oracle is for subjective truth claims ("Did X happen?"), while the Price Oracle is for objective price feeds ("What is ETH/USD?").
+
+### Optimistic Oracle Design
+
+The core insight is that most assertions are **undisputed**. Instead of proving every claim, we:
+1. **Assert a truth** - Put up a bond to make a claim
+2. **Challenge period** - Anyone can dispute by matching the bond
+3. **Settlement** - If no dispute after liveness period, assertion is accepted
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                      OPTIMISTIC ORACLE FLOW                                             │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐              │
+│  │   ASSERT    │───>│  LIVENESS   │───>│   SETTLE    │───>│  RESOLVED   │              │
+│  │  (bond up)  │    │  (2 hours)  │    │ (undisputed)│    │ (bond back) │              │
+│  └─────────────┘    └──────┬──────┘    └─────────────┘    └─────────────┘              │
+│                            │                                                            │
+│                     DISPUTE? ─────────┐                                                 │
+│                            │          │                                                 │
+│                            ▼          ▼                                                 │
+│                     ┌─────────────┐   ┌─────────────┐    ┌─────────────┐              │
+│                     │   DISPUTE   │──>│     DVM     │───>│  RESOLVED   │              │
+│                     │ (bond match)│   │ (arbitrate) │    │(winner wins)│              │
+│                     └─────────────┘   └─────────────┘    └─────────────┘              │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Core Contracts (Primitive Naming)
+
+| Contract | Location | Purpose |
+|----------|----------|---------|
+| **Oracle** | `contracts/prediction/Oracle.sol` | Core assertion/dispute engine |
+| **Claims** | `contracts/prediction/claims/Claims.sol` | ERC-1155 conditional tokens (CTF) |
+| **Resolver** | `contracts/prediction/Resolver.sol` | Binds Oracle results to Claims payouts |
+| **Hub** | `contracts/prediction/router/Hub.sol` | Cross-chain market registry |
+| **Relay** | `contracts/prediction/router/Relay.sol` | Cross-chain assertion relay |
+| **Bridge** | `contracts/prediction/router/Bridge.sol` | Cross-chain position bridging |
+
+### Registry Contracts
+
+| Contract | Location | Purpose |
+|----------|----------|---------|
+| **Finder** | `contracts/oracle/registry/Finder.sol` | Service locator for ecosystem contracts |
+| **Store** | `contracts/oracle/registry/Store.sol` | Fee management and final fees |
+| **IdentifierWhitelist** | `contracts/oracle/registry/IdentifierWhitelist.sol` | Supported query identifiers |
+
+### Key Interfaces
+
+```solidity
+// Prediction Oracle - for truth claims
+interface IOracle {
+    function assertTruth(bytes memory claim, address asserter, ...) returns (bytes32 assertionId);
+    function disputeAssertion(bytes32 assertionId, address disputer) external;
+    function settleAssertion(bytes32 assertionId) external;
+    function getAssertionResult(bytes32 assertionId) view returns (bool);
+}
+
+// Callback interface - implemented by Resolver, OracleSource, etc.
+interface IOracleCallbacks {
+    function assertionResolvedCallback(bytes32 assertionId, bool assertedTruthfully) external;
+    function assertionDisputedCallback(bytes32 assertionId) external;
+}
+```
+
+### How Resolver Binds Oracle to Claims
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                    PREDICTION MARKET LIFECYCLE                                          │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  1. INITIALIZE                                                                          │
+│     Resolver.initialize(questionData) → Creates Claims condition + Oracle assertion    │
+│     ┌─────────────┐         ┌─────────────┐         ┌─────────────┐                   │
+│     │   Resolver  │────────>│   Claims    │         │   Oracle    │                   │
+│     │ initialize()│         │ prepareCondition()    │ assertTruth() │                  │
+│     └─────────────┘         └─────────────┘         └─────────────┘                   │
+│                                                                                          │
+│  2. TRADING                                                                             │
+│     Users trade YES/NO tokens via AMM or CLOB                                          │
+│     ┌─────────────┐                                                                     │
+│     │   Claims    │  ERC-1155 positions: positionId = keccak256(condition, outcome)    │
+│     │   (ERC1155) │  Split: collateral → YES + NO tokens                               │
+│     └─────────────┘  Merge: YES + NO → collateral                                       │
+│                                                                                          │
+│  3. RESOLUTION                                                                          │
+│     Oracle settles → callback to Resolver → Claims reports payouts                     │
+│     ┌─────────────┐         ┌─────────────┐         ┌─────────────┐                   │
+│     │   Oracle    │────────>│   Resolver  │────────>│   Claims    │                   │
+│     │ settleAssertion()     │ assertionResolvedCallback()         │ reportPayouts()   │
+│     └─────────────┘         └─────────────┘         └─────────────┘                   │
+│                                                                                          │
+│  4. REDEMPTION                                                                          │
+│     Winners redeem their position tokens for collateral                                │
+│     ┌─────────────┐                                                                     │
+│     │   Claims    │  redeemPositions(): Burn winning tokens → receive collateral       │
+│     └─────────────┘                                                                     │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### OracleSource: Bridge to Price Oracle
+
+**OracleSource** (`contracts/oracle/adapters/OracleSource.sol`) implements `IOracleSource` to expose optimistically-asserted prices to the Price Oracle aggregation system.
+
+```solidity
+// OracleSource - adapter that bridges Prediction Oracle to Price Oracle
+contract OracleSource is IOracleSource, IOracleCallbacks {
+    IOracle public immutable oracle;  // Prediction Oracle
+
+    // Assert a price for an asset (with bond)
+    function assertPrice(address asset, uint256 price) returns (bytes32 assertionId);
+
+    // IOracleSource interface - consumed by Price Oracle
+    function getPrice(address asset) returns (uint256 price, uint256 timestamp);
+    function isSupported(address asset) returns (bool);
+    function source() returns (string memory) { return "lux"; }
+}
+```
+
+**When to use OracleSource:**
+- Bootstrapping prices for new assets before Chainlink/Pyth coverage
+- Long-tail assets with no external price feeds
+- Dispute resolution for contested prices
+
+### Cross-Chain Router (Hub, Relay, Bridge)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                       CROSS-CHAIN PREDICTION MARKETS                                    │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  SOURCE CHAIN (Zoo, Hanzo, etc.)                   C-CHAIN (Oracle Hub)                │
+│  ┌─────────────┐                                   ┌─────────────┐                     │
+│  │    Hub      │──── Warp Message ────────────────>│   Relay     │                     │
+│  │  (create    │                                   │  (receive   │                     │
+│  │   market)   │                                   │   assert)   │                     │
+│  └──────┬──────┘                                   └──────┬──────┘                     │
+│         │                                                 │                             │
+│         │                                                 ▼                             │
+│         │                                          ┌─────────────┐                     │
+│         │                                          │   Oracle    │                     │
+│         │                                          │  (resolve)  │                     │
+│         │                                          └──────┬──────┘                     │
+│         │                                                 │                             │
+│         │◄──────────── Warp Message ─────────────────────┘                             │
+│         ▼                                                                               │
+│  ┌─────────────┐                                                                        │
+│  │   Bridge    │  Positions can be bridged between chains                              │
+│  │  (lock/     │  Lock on source → Mint wrapped on dest → Burn → Unlock               │
+│  │   unlock)   │                                                                        │
+│  └─────────────┘                                                                        │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Economic Security
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| **Bond** | Configurable | Stake required to make assertion |
+| **Liveness** | 2 hours | Challenge period before settlement |
+| **Burned Bond %** | 50% | Sent to Store on disputes (incentivizes careful assertions) |
+| **Final Fee** | Per-currency | Minimum bond = finalFee / burnedBondPercentage |
+
+### Usage Examples
+
+```solidity
+// 1. Create a prediction market
+bytes memory question = "Will ETH reach $5000 by end of Q1 2025?";
+bytes32 questionID = resolver.initialize(
+    question,
+    address(USDC),  // reward token
+    100e6,          // reward (100 USDC)
+    1000e6,         // bond (1000 USDC)
+    7200            // 2 hour liveness
+);
+
+// 2. Trade positions
+claims.splitPosition(USDC, parentId, conditionId, partition, amount);
+
+// 3. Resolve after liveness (if no dispute)
+resolver.resolve(questionID);
+
+// 4. Redeem winning positions
+claims.redeemPositions(USDC, parentId, conditionId, indexSets);
+```
+
+### Does This Override the Price Oracle?
+
+**No.** The two systems serve different purposes:
+
+| Prediction Oracle | Price Oracle |
+|-------------------|--------------|
+| Subjective truth claims | Objective price data |
+| Asserted optimistically | Aggregated from sources |
+| 2+ hour liveness | Sub-second updates |
+| For prediction markets | For DeFi (Perps, Lending, AMM) |
+| `contracts/prediction/Oracle.sol` | `contracts/oracle/Oracle.sol` |
+
+**OracleSource is an optional adapter** that lets optimistically-asserted prices be consumed as one source among many (Chainlink, Pyth, TWAP, DEX) by the Price Oracle.
+
+---
+
+## Price Oracle Architecture (2025-12-29)
+
+### Status: ✅ COMPLETE
+
+Unified Price Oracle system for all Lux DeFi protocols (Perps, Lending, AMM, Flash Loans). This is the **real-time price aggregation** system, separate from the Prediction Oracle above.
 
 ### Core Contracts
 
 | Contract | Path | Purpose |
 |----------|------|---------|
-| **Oracle** | `contracts/oracle/Oracle.sol` | THE main oracle for all DeFi apps |
+| **Oracle** | `contracts/oracle/Oracle.sol` | THE main price oracle for all DeFi apps |
 | **OracleHub** | `contracts/oracle/OracleHub.sol` | On-chain price hub (written by DEX) |
 | **ChainlinkAdapter** | `contracts/oracle/adapters/ChainlinkAdapter.sol` | Chainlink price feeds |
 | **PythAdapter** | `contracts/oracle/adapters/PythAdapter.sol` | Pyth Network feeds |
+| **OracleSource** | `contracts/oracle/adapters/OracleSource.sol` | Optimistic price assertions (via Prediction Oracle) |
 | **TWAPSource** | `contracts/oracle/sources/TWAPSource.sol` | AMM TWAP prices |
 | **DEXSource** | `contracts/oracle/sources/DEXSource.sol` | DEX precompile (0x0400) |
 
@@ -717,23 +938,26 @@ Unified Oracle system for all Lux DeFi protocols (Perps, Lending, AMM, Flash Loa
 ### Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│   PRICE SOURCES (IOracleSource)                                          │
-│   ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐      │
-│   │Chainlink │ │   Pyth   │ │  TWAP    │ │   DEX    │ │OracleHub │      │
-│   │ Adapter  │ │ Adapter  │ │ Source   │ │Precompile│ │(written) │      │
-│   └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘      │
-│        └────────────┴────────────┴────────────┴────────────┘            │
-│                                  │                                       │
-│                       ┌──────────▼──────────┐                           │
-│                       │  Oracle.sol         │  ← THE interface           │
-│                       │  (aggregates all)   │                           │
-│                       └──────────┬──────────┘                           │
-│              ┌───────────────────┼───────────────────┐                  │
-│   ┌──────────▼─────────┐ ┌──────▼──────┐ ┌──────────▼─────────┐        │
-│   │      Perps         │ │   Markets   │ │    Flash Loans     │        │
-│   └────────────────────┘ └─────────────┘ └────────────────────┘        │
-└──────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────────────┐
+│   PRICE SOURCES (IOracleSource)                                                       │
+│   ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐      │
+│   │Chainlink │ │   Pyth   │ │  TWAP    │ │   DEX    │ │OracleHub │ │ Oracle   │      │
+│   │ Adapter  │ │ Adapter  │ │ Source   │ │Precompile│ │(written) │ │ Source*  │      │
+│   └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘      │
+│        └────────────┴────────────┴────────────┴────────────┴────────────┘            │
+│                                  │                                                    │
+│                       ┌──────────▼──────────┐                                        │
+│                       │  Oracle.sol         │  ← THE PRICE interface                 │
+│                       │  (aggregates all)   │    (contracts/oracle/Oracle.sol)       │
+│                       └──────────┬──────────┘                                        │
+│              ┌───────────────────┼───────────────────┐                               │
+│   ┌──────────▼─────────┐ ┌──────▼──────┐ ┌──────────▼─────────┐                     │
+│   │      Perps         │ │   Markets   │ │    Flash Loans     │                     │
+│   └────────────────────┘ └─────────────┘ └────────────────────┘                     │
+│                                                                                       │
+│   * OracleSource bridges optimistic assertions from Prediction Oracle               │
+│     (contracts/prediction/Oracle.sol) into this price aggregation system             │
+└───────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Key Features
@@ -2807,8 +3031,562 @@ strategy.setVotingWeight(address(votingWeight));
 
 ---
 
-*Last Updated: 2025-12-27*
-*Dev Workflow Verified: ✅ 745 tests passing*
+## DeFi Protocol Suite Expansion (2025-12-31)
+
+### Overview
+
+Implemented 6 new core DeFi primitives to complete the Lux Standard DeFi stack, filling critical gaps identified in the top 50 DeFi protocols analysis.
+
+### Contracts Summary
+
+| Protocol | Contract | Location | Lines | Purpose |
+|----------|----------|----------|-------|---------|
+| **StableSwap AMM** | StableSwap.sol | `contracts/amm/` | ~650 | Curve-style AMM for stablecoins |
+| **StableSwap Factory** | StableSwapFactory.sol | `contracts/amm/` | ~260 | Factory for StableSwap pools |
+| **Options** | Options.sol | `contracts/options/` | ~500 | European-style options protocol |
+| **Streaming** | Streams.sol | `contracts/streaming/` | ~500 | Sablier-style token streaming |
+| **Intent Router** | IntentRouter.sol | `contracts/router/` | ~450 | Limit orders, RFQ, solver network |
+| **Insurance** | Cover.sol | `contracts/insurance/` | ~550 | Protocol insurance with claims |
+
+---
+
+### StableSwap AMM (Curve-Style)
+
+**Location**: `contracts/amm/StableSwap.sol`, `contracts/amm/StableSwapFactory.sol`
+
+Implements Curve's StableSwap invariant for efficient stablecoin/pegged asset trading with minimal slippage.
+
+#### StableSwap Invariant
+
+```
+A * n^n * sum(x_i) + D = A * D * n^n + D^(n+1) / (n^n * prod(x_i))
+```
+
+Where:
+- `A` = Amplification coefficient (higher = more stable-like, lower = more constant-product)
+- `n` = Number of tokens in pool
+- `D` = Total pool value in "virtual" units
+- `x_i` = Balance of token i
+
+#### Key Features
+
+- **2-4 token pools**: Supports multiple stablecoins in single pool
+- **Dynamic A parameter**: Can ramp A over time (24h minimum ramp)
+- **Decimal normalization**: Handles different token decimals (6, 8, 18)
+- **Admin fees**: Configurable swap and admin fee percentages
+- **LP token**: ERC20 LP token with minting/burning
+
+#### Core Functions
+
+```solidity
+// Swap tokens
+function exchange(uint256 i, uint256 j, uint256 dx, uint256 minDy) external returns (uint256 dy);
+
+// Liquidity
+function addLiquidity(uint256[] calldata amounts, uint256 minMintAmount) external returns (uint256);
+function removeLiquidity(uint256 amount, uint256[] calldata minAmounts) external returns (uint256[] memory);
+function removeLiquidityOneCoin(uint256 amount, uint256 i, uint256 minAmount) external returns (uint256);
+function removeLiquidityImbalance(uint256[] calldata amounts, uint256 maxBurnAmount) external returns (uint256);
+
+// Admin
+function rampA(uint256 futureA, uint256 futureTime) external; // Ramp A coefficient
+function stopRampA() external; // Emergency stop ramp
+function commitNewFee(uint256 newFee, uint256 newAdminFee) external;
+function applyNewFee() external;
+```
+
+#### Factory Fee Tiers
+
+| Pool Type | Swap Fee | Admin Fee |
+|-----------|----------|-----------|
+| Stablecoin Pool | 0.04% | 50% of swap |
+| Metapool | 0.08% | 50% of swap |
+| Custom | Configurable | Configurable |
+
+#### Newton's Method for D
+
+```solidity
+function _getD(uint256[] memory xp, uint256 amp) internal pure returns (uint256) {
+    uint256 S = 0;
+    for (uint256 i = 0; i < xp.length; i++) S += xp[i];
+
+    uint256 D = S;
+    uint256 Ann = amp * xp.length;
+
+    for (uint256 i = 0; i < 255; i++) {
+        uint256 D_P = D;
+        for (uint256 j = 0; j < xp.length; j++) {
+            D_P = D_P * D / (xp[j] * xp.length);
+        }
+        uint256 Dprev = D;
+        D = (Ann * S + D_P * xp.length) * D / ((Ann - 1) * D + (xp.length + 1) * D_P);
+
+        if (D > Dprev) {
+            if (D - Dprev <= 1) return D;
+        } else {
+            if (Dprev - D <= 1) return D;
+        }
+    }
+    revert ConvergenceFailed();
+}
+```
+
+---
+
+### Options Protocol
+
+**Location**: `contracts/options/Options.sol`
+
+European-style options protocol with ERC-1155 fungible positions.
+
+#### Option Types
+
+| Type | Payoff | Description |
+|------|--------|-------------|
+| **CALL** | max(0, spot - strike) | Right to buy at strike |
+| **PUT** | max(0, strike - spot) | Right to sell at strike |
+
+#### Settlement Types
+
+| Type | Settlement |
+|------|------------|
+| **CASH** | Difference paid in quote token |
+| **PHYSICAL** | Actual asset delivery |
+
+#### Data Structures
+
+```solidity
+struct OptionSeries {
+    address underlying;        // Asset (e.g., WETH)
+    address quote;             // Quote token (e.g., LUSD)
+    uint256 strikePrice;       // Strike price (quote decimals)
+    uint256 expiry;            // Expiration timestamp
+    OptionType optionType;     // CALL or PUT
+    SettlementType settlement; // CASH or PHYSICAL
+    bool exists;
+}
+
+struct Position {
+    bytes32 seriesId;          // Option series
+    uint256 amount;            // Position size
+    bool isWriter;             // Writer or holder
+}
+```
+
+#### Core Functions
+
+```solidity
+// Series management
+function createSeries(
+    address underlying,
+    address quote,
+    uint256 strikePrice,
+    uint256 expiry,
+    OptionType optionType,
+    SettlementType settlement
+) external returns (bytes32 seriesId);
+
+// Position management
+function write(bytes32 seriesId, uint256 amount) external returns (uint256 positionId);
+function exercise(bytes32 seriesId, uint256 amount) external returns (uint256 payout);
+function settle(bytes32 seriesId) external returns (uint256 collateralReturned);
+
+// Collateral views
+function getCollateralRequired(bytes32 seriesId, uint256 amount) external view returns (uint256);
+function getExercisePayout(bytes32 seriesId, uint256 amount) external view returns (uint256);
+```
+
+#### ERC-1155 Position IDs
+
+```solidity
+// Position ID encoding
+uint256 positionId = uint256(keccak256(abi.encodePacked(seriesId, isWriter)));
+
+// Same strike/expiry options are fungible
+// Writers and holders have separate position IDs
+```
+
+---
+
+### Streaming Payments (Streams)
+
+**Location**: `contracts/streaming/Streams.sol`
+
+Sablier-style token streaming with NFT-based positions.
+
+#### Stream Types
+
+| Type | Vesting Curve |
+|------|---------------|
+| **LINEAR** | Constant rate over duration |
+| **LINEAR_CLIFF** | Cliff period then linear |
+| **EXPONENTIAL** | Accelerating release |
+| **UNLOCK_LINEAR** | Unlock percentage then linear |
+
+#### Data Structures
+
+```solidity
+struct Stream {
+    address sender;            // Stream creator
+    address recipient;         // Recipient
+    address token;             // Payment token
+    uint256 depositAmount;     // Total deposited
+    uint256 withdrawnAmount;   // Already withdrawn
+    uint256 startTime;         // Start timestamp
+    uint256 endTime;           // End timestamp
+    uint256 cliffTime;         // Cliff (LINEAR_CLIFF)
+    uint256 unlockPercent;     // Unlock % (UNLOCK_LINEAR)
+    StreamType streamType;     // Vesting curve
+    bool cancelable;           // Can be cancelled
+    bool transferable;         // NFT transferable
+}
+```
+
+#### Core Functions
+
+```solidity
+// Create streams
+function createStream(
+    address recipient,
+    address token,
+    uint256 amount,
+    uint256 startTime,
+    uint256 duration,
+    StreamType streamType,
+    bool cancelable,
+    bool transferable
+) external returns (uint256 streamId);
+
+function createStreamWithCliff(
+    address recipient,
+    address token,
+    uint256 amount,
+    uint256 startTime,
+    uint256 cliffDuration,
+    uint256 totalDuration,
+    bool cancelable,
+    bool transferable
+) external returns (uint256 streamId);
+
+// Withdraw/Cancel
+function withdraw(uint256 streamId, uint256 amount) external returns (uint256);
+function withdrawMax(uint256 streamId) external returns (uint256);
+function cancel(uint256 streamId) external returns (uint256 senderAmount, uint256 recipientAmount);
+
+// Batch operations
+function batchCreateStreams(StreamParams[] calldata params) external returns (uint256[] memory);
+function batchWithdraw(uint256[] calldata streamIds) external returns (uint256 totalWithdrawn);
+```
+
+#### Streaming Formulas
+
+```solidity
+// LINEAR: streamed = deposit * elapsed / duration
+// LINEAR_CLIFF: 0 before cliff, then linear
+// EXPONENTIAL: streamed = deposit * (elapsed / duration)^2
+// UNLOCK_LINEAR: unlock% immediately, rest linear
+```
+
+---
+
+### Intent Router (Limit Orders & RFQ)
+
+**Location**: `contracts/router/IntentRouter.sol`
+
+Intent-based trading with EIP-712 signed orders and solver network.
+
+#### Order Types
+
+| Type | Description |
+|------|-------------|
+| **LIMIT** | Standard limit order |
+| **RFQ** | Request for quote (maker-taker) |
+| **DUTCH_AUCTION** | Decreasing price over time |
+| **FILL_OR_KILL** | Must fill entirely or revert |
+
+#### Data Structures
+
+```solidity
+struct Order {
+    address maker;             // Order creator
+    address taker;             // Specific taker (0 = any)
+    address tokenIn;           // Token to sell
+    address tokenOut;          // Token to buy
+    uint256 amountIn;          // Amount selling
+    uint256 amountOutMin;      // Minimum output (limit price)
+    uint256 amountOutMax;      // Max output (for Dutch)
+    uint256 nonce;             // Unique nonce
+    uint256 deadline;          // Expiration
+    uint256 startTime;         // Start (Dutch auction)
+    OrderType orderType;       // Order type
+    bytes32 partnerCode;       // Affiliate/partner
+}
+```
+
+#### EIP-712 Signature
+
+```solidity
+bytes32 constant ORDER_TYPEHASH = keccak256(
+    "Order(address maker,address taker,address tokenIn,address tokenOut,"
+    "uint256 amountIn,uint256 amountOutMin,uint256 amountOutMax,"
+    "uint256 nonce,uint256 deadline,uint256 startTime,uint8 orderType,bytes32 partnerCode)"
+);
+
+function hashOrder(Order memory order) public view returns (bytes32) {
+    return _hashTypedDataV4(keccak256(abi.encode(
+        ORDER_TYPEHASH,
+        order.maker,
+        order.taker,
+        order.tokenIn,
+        order.tokenOut,
+        order.amountIn,
+        order.amountOutMin,
+        order.amountOutMax,
+        order.nonce,
+        order.deadline,
+        order.startTime,
+        uint8(order.orderType),
+        order.partnerCode
+    )));
+}
+```
+
+**Notes**:
+- EIP-1271 contract signature verification is supported via `isValidSignature(bytes32,bytes)`
+- Nonces are per-maker, not sequential—cancelled orders invalidate specific nonces without blocking future orders
+
+#### Core Functions
+
+```solidity
+// Order execution
+function executeOrder(Order calldata order, bytes calldata signature, uint256 amountOut) external returns (uint256);
+function executeOrderWithPath(Order calldata order, bytes calldata signature, address[] calldata path) external returns (uint256);
+
+// Solver network
+function solve(Order[] calldata orders, bytes[] calldata signatures, SolverParams calldata params) external returns (uint256[] memory);
+
+// Cancel orders
+function cancelOrder(Order calldata order) external;
+function cancelOrdersUpToNonce(uint256 nonce) external;
+
+// View
+function getOrderHash(Order calldata order) external view returns (bytes32);
+function getOrderStatus(bytes32 orderHash) external view returns (OrderStatus);
+function getDutchAuctionPrice(Order calldata order) external view returns (uint256);
+```
+
+#### Partner/Affiliate System
+
+```solidity
+// Partner registration
+function registerPartner(bytes32 partnerCode, address feeRecipient, uint256 feeBps) external;
+
+// Fee split: protocol fee * partnerBps / 10000 goes to partner
+// Example: 0.1% protocol fee, 5000 bps partner = 0.05% to partner
+```
+
+---
+
+### Insurance Module (Cover)
+
+**Location**: `contracts/insurance/Cover.sol`
+
+Protocol insurance with underwriter staking and governance-based claims.
+
+#### Cover Types
+
+| Type | Description |
+|------|-------------|
+| **PROTOCOL** | Smart contract bugs/exploits |
+| **CUSTODY** | Custodial asset loss |
+| **DEFI** | DeFi protocol failures |
+| **STABLECOIN** | Stablecoin de-peg events |
+
+#### Data Structures
+
+```solidity
+struct Pool {
+    bytes32 poolId;            // Pool identifier
+    address asset;             // Cover payment/payout asset
+    uint256 totalStaked;       // Underwriter stakes
+    uint256 totalCover;        // Active cover amount
+    uint256 premiumRate;       // Annual premium (bps)
+    uint256 minPeriod;         // Min cover period
+    uint256 maxPeriod;         // Max cover period
+    uint256 utilizationCap;    // Max utilization %
+    CoverType coverType;       // Insurance type
+    bool active;               // Pool active
+}
+
+struct Policy {
+    bytes32 poolId;            // Insurance pool
+    address holder;            // Policy owner
+    uint256 coverAmount;       // Coverage amount
+    uint256 premium;           // Premium paid
+    uint256 startTime;         // Coverage start
+    uint256 endTime;           // Coverage end
+    bool claimed;              // Claim filed
+    bool active;               // Policy active
+}
+
+struct Claim {
+    uint256 policyId;          // Policy ID
+    address claimant;          // Who filed
+    uint256 amount;            // Claim amount
+    uint256 filedAt;           // Filing time
+    uint256 votesFor;          // Approval votes
+    uint256 votesAgainst;      // Rejection votes
+    ClaimStatus status;        // Claim status
+    bytes32 evidence;          // IPFS hash
+}
+```
+
+#### Core Functions
+
+```solidity
+// Underwriting
+function createPool(PoolParams calldata params) external returns (bytes32 poolId);
+function stake(bytes32 poolId, uint256 amount) external returns (uint256 shares);
+function unstake(bytes32 poolId, uint256 shares) external returns (uint256 amount);
+
+// Cover purchase
+function buyCover(bytes32 poolId, uint256 coverAmount, uint256 period) external returns (uint256 policyId);
+function renewCover(uint256 policyId, uint256 additionalPeriod) external returns (uint256 newPremium);
+
+// Claims
+function fileClaim(uint256 policyId, uint256 amount, bytes32 evidence) external returns (uint256 claimId);
+function voteClaim(uint256 claimId, bool approve, uint256 votingPower) external;
+function resolveClaim(uint256 claimId) external returns (bool approved, uint256 payout);
+
+// Views
+function getCoverPrice(bytes32 poolId, uint256 amount, uint256 period) external view returns (uint256);
+function getPoolUtilization(bytes32 poolId) external view returns (uint256);
+```
+
+#### Dynamic Pricing
+
+```solidity
+// Premium = coverAmount * premiumRate * period / 365 days * utilizationMultiplier
+// Utilization multiplier increases as pool approaches cap:
+//   < 50% utilization: 1.0x
+//   50-75% utilization: 1.5x
+//   75-90% utilization: 2.0x
+//   > 90% utilization: 3.0x
+```
+
+#### Claim Resolution
+
+```solidity
+// Governance-based voting
+// Voting period: 7 days
+// Quorum: 10% of staked capital must vote
+// Approval threshold: 60% of votes
+
+// On approval:
+// - Payout from pool (capped at available capital)
+// - Pro-rata loss to underwriters if insufficient
+
+// On rejection:
+// - Policy remains valid (if not expired)
+// - Claimant can re-file with new evidence
+```
+
+---
+
+### Integration Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                           LUX DEFI STACK (Core Primitives)                              │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐         │
+│  │ AMM V2   │ │ AMM V3   │ │ Stable-  │ │  Intent  │ │  Perps   │ │ Markets  │         │
+│  │ (Uni V2) │ │ (Uni V3) │ │  Swap    │ │  Router  │ │(GMX-style│ │(Morpho)  │         │
+│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘         │
+│       │            │            │            │            │            │                 │
+│  ┌────┴────────────┴────────────┴────────────┴────────────┴────────────┴────┐          │
+│  │                              ORACLE (Unified)                             │          │
+│  │  Chainlink + Pyth + TWAP + DEX Precompile + Optimistic (OracleSource)   │          │
+│  └────┬─────────────────────────────────────────────────────────────────────┘          │
+│       │                                                                                  │
+│  ┌────┴────────────────────────────────────────────────────────────────────────────┐   │
+│  │                              SUPPORTING PROTOCOLS                                │   │
+│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐              │   │
+│  │  │ Options  │ │ Streams  │ │  Cover   │ │ Predict  │ │  LSSVM   │              │   │
+│  │  │ (EU-opt) │ │ (Sablier)│ │(Insurance│ │ (UMA-CTF)│ │ (NFT AMM)│              │   │
+│  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘              │   │
+│  └──────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                          │
+│  ┌──────────────────────────────────────────────────────────────────────────────────┐   │
+│  │                              GOVERNANCE + TREASURY                                │   │
+│  │  Karma + DLUX + vLUX + Governor + GaugeController + FeeSplitter + LiquidLUX     │   │
+│  └──────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### DeFi Protocol Coverage Summary
+
+| Category | Protocol | Status | Notes |
+|----------|----------|--------|-------|
+| **DEX** | AMM V2 | ✅ | Uniswap V2 style |
+| | AMM V3 | ✅ | Uniswap V3 concentrated liquidity |
+| | StableSwap | ✅ NEW | Curve-style stable pools |
+| | Intent Router | ✅ NEW | Limit orders, RFQ, solvers |
+| **Lending** | Markets | ✅ | Morpho-style isolated markets |
+| **Derivatives** | Perps | ✅ | GMX-style perpetuals |
+| | Options | ✅ NEW | European options + ERC-1155 |
+| **Payments** | Streams | ✅ NEW | Sablier-style streaming |
+| **Risk** | Cover | ✅ NEW | Protocol insurance |
+| **Prediction** | Oracle + Claims + Resolver | ✅ | UMA + Polymarket style |
+| **NFT** | LSSVM | ✅ | sudoswap-style NFT AMM |
+| **Staking** | LiquidLUX | ✅ | Liquid staking (xLUX) |
+| **Governance** | Full stack | ✅ | K, DLUX, vLUX, Governor |
+| **Bridge** | LRC20B tokens | ✅ | 67+ bridge tokens |
+| **Identity** | DID Registry | ✅ | W3C compliant |
+| **FHE** | Confidential | ✅ | Encrypted compute |
+
+**Note**: This table covers core on-chain primitives. External protocol integrations (Chainlink, Aave, Uniswap, etc.) are available in `contracts/integrations/` - see `DIRECTORY_CONTRACT.md` for the full adapter inventory.
+
+---
+
+## Directory Contract (2025-12-31)
+
+**See**: `DIRECTORY_CONTRACT.md` for the full specification.
+
+### Key Import Rules
+
+```solidity
+// Always use @luxfi/contracts/... for cross-module imports
+import {StableSwap} from "@luxfi/contracts/amm/StableSwap.sol";
+import {IFHE} from "@luxfi/contracts/precompile/interfaces/IFHE.sol";
+```
+
+### Canonical Folder Structure
+
+| Folder | Purpose |
+|--------|---------|
+| `precompile/` | Precompile bindings (vendored from lux/precompile) |
+| `interfaces/` | Public interfaces for wallets/indexers |
+| `integrations/` | External protocol adapters (Chainlink, Pyth, Uniswap...) |
+| `amm/`, `markets/`, `perps/`, etc. | Implementation modules |
+
+### Migration Status
+
+| Area | Status | Notes |
+|------|--------|-------|
+| Precompiles | ⚠️ Pending | `crypto/precompiles/` → `precompile/interfaces/` |
+| Interfaces | ⚠️ Pending | Scattered → `interfaces/` |
+| Adapters | ⚠️ Pending | Various → `integrations/` |
+| Core modules | ✅ Compliant | AMM, Markets, Perps, etc. |
+
+---
+
+*Last Updated: 2025-12-31*
+*Dev Workflow Verified: ✅ 727 tests passing*
 *luxd --dev Automining: ✅ Working*
 *Full Stack: ✅ 12 phases deploying*
 *LiquidLUX: ✅ Production-hardened with 7 security improvements*
+*DeFi Suite: ✅ 6 new protocols (StableSwap, Options, Streams, IntentRouter, Cover, Prediction)*
+*Directory Contract: ✅ Specification complete, migration pending*

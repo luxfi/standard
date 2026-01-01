@@ -26,7 +26,7 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
  * - Results revealed only after voting period
  *
  * Architecture:
- *   Voter → castVote(encrypted) → FHE operations → TFHE.requestDecrypt()
+ *   Voter → castVote(encrypted) → FHE operations → TFHE.decrypt()
  *   → T-Chain Validators → callbackDecryption() → isPassed()
  */
 contract ConfidentialStrategy is
@@ -407,7 +407,7 @@ contract ConfidentialStrategy is
         cts[1] = TFHE.toUint256(pv.noVotes);
         cts[2] = TFHE.toUint256(pv.abstainVotes);
 
-        uint256 requestId = TFHE.requestDecrypt(
+        uint256 requestId = TFHE.decrypt(
             cts,
             this.callbackVoteDecryption.selector,
             0,

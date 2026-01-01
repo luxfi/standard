@@ -9,12 +9,12 @@ pragma solidity >=0.8.19 <0.9.0;
  *
  * Usage:
  *   1. Inherit from TFHEApp
- *   2. Use TFHE.requestDecrypt() for decryption requests
+ *   2. Use TFHE.decrypt() for decryption requests
  *   3. Implement a callback function with onlyGateway modifier
  *   4. T-Chain validators call your callback after threshold consensus
  *
  * Architecture:
- *   Your Contract → TFHE.requestDecrypt() → T-Chain → callback()
+ *   Your Contract → TFHE.decrypt() → T-Chain → callback()
  */
 abstract contract TFHEApp {
     /// @dev T-Chain gateway address for decryption requests
@@ -59,7 +59,7 @@ abstract contract TFHEApp {
      * @notice Your contract must implement a callback to receive results.
      *         Use the onlyGateway modifier on your callback function.
      */
-    function _requestDecryption(bytes32[] memory handles) internal returns (uint256 requestId) {
+    function _decrypt(bytes32[] memory handles) internal returns (uint256 requestId) {
         requestId = _generateRequestId();
         emit DecryptionRequested(requestId, handles);
     }

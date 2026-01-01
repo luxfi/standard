@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {Enum} from "@safe-global/safe-smart-account/interfaces/Enum.sol";
-import {ISafe} from "@safe-global/safe-smart-account/interfaces/ISafe.sol";
+import {Enum} from "@luxfi/contracts/governance/base/Enum.sol";
+import {ISafe} from "@luxfi/contracts/interfaces/safe/ISafe.sol";
 
 /**
  * @title SafeModule
