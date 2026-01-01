@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IOracleSource} from "../interfaces/IOracleSource.sol";
+import {IOracleSource} from "@luxfi/contracts/interfaces/oracle/IOracleSource.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /// @notice Chainlink AggregatorV3 interface
