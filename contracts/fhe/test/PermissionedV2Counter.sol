@@ -18,13 +18,13 @@ contract PermissionedV2Counter is PermissionedV2 {
     }
 
     function getCounter(address user) public view returns (uint32) {
-        return FHE.getDecryptResult(userCounter[user]);
+        return FHE.reveal(userCounter[user]);
     }
 
     function getCounterPermit(
         PermissionV2 memory permission
     ) public view withPermission(permission) returns (uint32) {
-        return FHE.getDecryptResult(userCounter[permission.issuer]);
+        return FHE.reveal(userCounter[permission.issuer]);
     }
 
     function getCounterPermitSealed(
