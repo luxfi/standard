@@ -253,21 +253,51 @@ import "@lux/defi/liquid/LiquidLUX.sol";`}</code>
       {/* Footer */}
       <footer className="border-t border-fd-border">
         <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <h4 className="text-sm font-semibold text-fd-foreground mb-4">Documentation</h4>
+              <ul className="space-y-2">
+                <li><Link href="https://docs.lux.network" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">Lux Docs</Link></li>
+                <li><Link href="https://standard.lux.network" className="text-sm text-fd-primary hover:text-fd-primary/80">Standard Contracts</Link></li>
+                <li><Link href="https://precompile.lux.network" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">Precompiles</Link></li>
+                <li><Link href="https://lps.lux.network" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">LPs (Proposals)</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-fd-foreground mb-4">Network</h4>
+              <ul className="space-y-2">
+                <li><Link href="https://consensus.lux.network" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">Consensus</Link></li>
+                <li><Link href="https://explorer.lux.network" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">Explorer</Link></li>
+                <li><Link href="https://bridge.lux.network" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">Bridge</Link></li>
+                <li><Link href="https://dex.lux.network" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">DEX</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-fd-foreground mb-4">Developers</h4>
+              <ul className="space-y-2">
+                <li><Link href="https://github.com/luxfi" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">GitHub</Link></li>
+                <li><Link href="https://github.com/luxfi/precompile" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">Precompile Repo</Link></li>
+                <li><Link href="https://github.com/luxfi/standard" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">Standard Repo</Link></li>
+                <li><Link href="https://github.com/luxfi/node" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">Node Repo</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-fd-foreground mb-4">Community</h4>
+              <ul className="space-y-2">
+                <li><Link href="https://discord.gg/lux" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">Discord</Link></li>
+                <li><Link href="https://twitter.com/luxnetwork" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">Twitter</Link></li>
+                <li><Link href="https://t.me/luxnetwork" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">Telegram</Link></li>
+                <li><Link href="https://lux.network" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">Website</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-fd-border pt-8 flex flex-col items-center justify-between gap-4 sm:flex-row">
             <p className="text-sm text-fd-muted-foreground">
               © 2025 Lux Industries. MIT License.
             </p>
-            <div className="flex gap-6">
-              <Link href="https://github.com/luxfi/standard" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">
-                GitHub
-              </Link>
-              <Link href="https://discord.gg/lux" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">
-                Discord
-              </Link>
-              <Link href="https://twitter.com/luxnetwork" className="text-sm text-fd-muted-foreground hover:text-fd-foreground">
-                Twitter
-              </Link>
-            </div>
+            <p className="text-sm text-fd-muted-foreground">
+              Built with Fumadocs
+            </p>
           </div>
         </div>
       </footer>
