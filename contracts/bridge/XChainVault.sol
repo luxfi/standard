@@ -3,6 +3,7 @@
 pragma solidity ^0.8.31;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -14,6 +15,8 @@ import "./interfaces/IBridge.sol";
  * @dev Manages token vaults for X-Chain bridging with support for ERC20, ERC721, and ERC1155
  */
 contract XChainVault is Ownable {
+    using SafeERC20 for IERC20;
+
     // Warp precompile address (official)
     address constant WARP_PRECOMPILE = 0x0200000000000000000000000000000000000005;
     
@@ -94,8 +97,8 @@ contract XChainVault is Ownable {
         require(supportedChains[destinationChainId], "Chain not supported");
         require(amount > 0, "Amount must be greater than 0");
         
-        // Transfer tokens to vault
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        // Transfer tokens to vault (SafeERC20 handles non-standard return values)
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         
         // Generate vault ID
         vaultId = keccak256(abi.encodePacked(
@@ -240,7 +243,7 @@ contract XChainVault is Ownable {
         if (vault.tokenType == TokenType.ERC20) {
             require(vault.amount >= amount, "Insufficient vault balance");
             vault.amount -= amount;
-            IERC20(vault.originalToken).transfer(recipient, amount);
+            IERC20(vault.originalToken).safeTransfer(recipient, amount);
         } else if (vault.tokenType == TokenType.ERC721) {
             require(amount == 1, "Invalid amount for NFT");
             vault.isActive = false;
