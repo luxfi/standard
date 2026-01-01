@@ -53,8 +53,8 @@ Uniswap-compatible AMM infrastructure for token swaps and liquidity provision. I
 ## Quick Start
 
 ```solidity
-import "@luxfi/standard/src/uni/swapRouter/SwapRouter02.sol";
-import "@luxfi/standard/src/uni/WLUX.sol";
+import "@luxfi/contracts/amm/AMMV2Router.sol";
+import "@luxfi/contracts/tokens/WLUX.sol";
 
 // Wrap LUX to WLUX
 wlux.deposit{value: 1 ether}();

@@ -113,7 +113,7 @@ function payWithETH(uint256 minLuxOut, bytes32 sessionId) external payable
 ## Usage
 
 ```solidity
-import "@luxfi/standard/src/tokens/AI.sol";
+import "@luxfi/contracts/tokens/AI.sol";
 
 // On A-Chain - Start mining session
 bytes32 sessionId = keccak256(abi.encodePacked(msg.sender, block.timestamp));

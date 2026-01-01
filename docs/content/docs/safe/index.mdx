@@ -116,8 +116,8 @@ function execTransactionFromModule(
 ## Deployment
 
 ```solidity
-import "@luxfi/standard/src/safe/contracts/Safe.sol";
-import "@luxfi/standard/src/safe/contracts/proxies/SafeProxyFactory.sol";
+import "@luxfi/contracts/safe/Safe.sol";
+import "@luxfi/contracts/safe/SafeFactory.sol";
 
 // Deploy factory
 SafeProxyFactory factory = new SafeProxyFactory();
@@ -204,7 +204,7 @@ Safe supports threshold signature schemes as owners, enabling advanced custody s
 ### CGGMP21 Threshold ECDSA
 
 ```solidity
-import "@luxfi/standard/contracts/safe/SafeCGGMP21Signer.sol";
+import "@luxfi/contracts/safe/SafeCGGMP21Signer.sol";
 
 // Deploy with 2-of-3 threshold and aggregated public key
 SafeCGGMP21Signer signer = new SafeCGGMP21Signer(
@@ -220,7 +220,7 @@ safe.addOwnerWithThreshold(address(signer), threshold);
 ### FROST Schnorr Threshold
 
 ```solidity
-import "@luxfi/standard/contracts/safe/SafeFROSTSigner.sol";
+import "@luxfi/contracts/safe/SafeFROSTSigner.sol";
 
 // Deploy with public key coordinates
 SafeFROSTSigner signer = new SafeFROSTSigner(px, py);
@@ -232,7 +232,7 @@ bool valid = signer._isValidSignature(messageHash, signature);
 ### Post-Quantum (Ringtail)
 
 ```solidity
-import "@luxfi/standard/contracts/safe/SafeRingtailSigner.sol";
+import "@luxfi/contracts/safe/SafeRingtailSigner.sol";
 
 // Deploy with Ringtail public key
 SafeRingtailSigner signer = new SafeRingtailSigner(

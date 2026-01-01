@@ -107,7 +107,7 @@ Routes swaps through optimal paths across chains.
 ### Single-Chain Swap
 
 ```solidity
-import "@luxfi/standard/src/OmnichainLPRouter.sol";
+import "@luxfi/contracts/router/IntentRouter.sol";
 
 // Standard AMM swap on current chain
 router.swapExactTokensForTokens(
@@ -172,7 +172,7 @@ struct SwapIntent {
 ### Submitting Intents
 
 ```solidity
-import "@luxfi/standard/src/IntentRouter.sol";
+import "@luxfi/contracts/router/IntentRouter.sol";
 
 IntentRouter intentRouter = IntentRouter(INTENT_ROUTER);
 

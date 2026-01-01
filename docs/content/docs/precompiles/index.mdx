@@ -85,7 +85,7 @@ Lux EVM includes custom precompiles for post-quantum cryptography, threshold sig
 Module-Lattice Digital Signature Algorithm. Quantum-resistant signatures.
 
 ```solidity
-import "@luxfi/contracts/crypto/precompiles/IMLDSA.sol";
+import "@luxfi/contracts/precompile/interfaces/IMLDSA.sol";
 
 // Verify post-quantum signature
 IMLDSA mldsa = IMLDSA(0x0200000000000000000000000000000000000006);
@@ -105,7 +105,7 @@ MLDSALib.verifyOrRevert(publicKey, message, signature);
 Module-Lattice Key Encapsulation Mechanism. Quantum-resistant key exchange.
 
 ```solidity
-import "@luxfi/contracts/crypto/precompiles/IMLKEM.sol";
+import "@luxfi/contracts/precompile/interfaces/IMLKEM.sol";
 
 // Encapsulate shared secret
 IMLKEM mlkem = IMLKEM(0x0200000000000000000000000000000000000008);
@@ -120,7 +120,7 @@ bytes32 recoveredSecret = mlkem.decapsulate(privateKey, ciphertext);
 Stateless Hash-based Digital Signature Algorithm. Conservative PQ choice.
 
 ```solidity
-import "@luxfi/contracts/crypto/precompiles/ISLHDSA.sol";
+import "@luxfi/contracts/precompile/interfaces/ISLHDSA.sol";
 
 ISLHDSA slhdsa = ISLHDSA(0x0200000000000000000000000000000000000007);
 bool valid = slhdsa.verify(publicKey, message, signature);
@@ -133,7 +133,7 @@ bool valid = slhdsa.verify(publicKey, message, signature);
 Flexible Round-Optimized Schnorr Threshold signatures. Efficient t-of-n signing.
 
 ```solidity
-import "@luxfi/contracts/crypto/precompiles/IFROST.sol";
+import "@luxfi/contracts/precompile/interfaces/IFROST.sol";
 
 // Verify 2-of-3 threshold signature
 IFROST frost = IFROST(0x020000000000000000000000000000000000000C);
@@ -159,7 +159,7 @@ FROSTLib.verifyOrRevert(2, 3, publicKey, messageHash, signature);
 State-of-the-art threshold ECDSA with identifiable aborts.
 
 ```solidity
-import "@luxfi/contracts/crypto/precompiles/ICGGMP21.sol";
+import "@luxfi/contracts/precompile/interfaces/ICGGMP21.sol";
 
 // Verify 3-of-5 threshold ECDSA
 ICGGMP21 cggmp = ICGGMP21(0x020000000000000000000000000000000000000D);
@@ -182,7 +182,7 @@ bool valid = cggmp.verify(
 Lattice-based threshold signatures for quantum resistance.
 
 ```solidity
-import "@luxfi/contracts/crypto/precompiles/IRingtailThreshold.sol";
+import "@luxfi/contracts/precompile/interfaces/IRingtailThreshold.sol";
 
 // Verify quantum-resistant threshold signature
 IRingtailThreshold ringtail = IRingtailThreshold(0x020000000000000000000000000000000000000B);
@@ -210,7 +210,7 @@ bool valid = ringtail.verify(
 Cross-chain communication with BLS signature aggregation.
 
 ```solidity
-import "@luxfi/contracts/crypto/precompiles/IWarp.sol";
+import "@luxfi/contracts/precompile/interfaces/IWarp.sol";
 
 // Get current blockchain ID
 IWarp warp = IWarp(0x0200000000000000000000000000000000000005);
@@ -235,7 +235,7 @@ require(valid, "Message not verified");
 Quantum-finality consensus operations.
 
 ```solidity
-import "@luxfi/contracts/crypto/precompiles/IQuasar.sol";
+import "@luxfi/contracts/precompile/interfaces/IQuasar.sol";
 
 IQuasar quasar = IQuasar(0x020000000000000000000000000000000000000A);
 
@@ -253,8 +253,8 @@ bool valid = quasar.verifyQuantumFinality(blockHash, proof);
 Uniswap v4-style singleton pool manager with flash accounting.
 
 ```solidity
-import "@luxfi/contracts/crypto/precompiles/dex/IPoolManager.sol";
-import "@luxfi/contracts/crypto/precompiles/dex/Types.sol";
+import "@luxfi/contracts/precompile/interfaces/dex/IPoolManager.sol";
+import "@luxfi/contracts/precompile/interfaces/dex/Types.sol";
 
 IPoolManager poolManager = IPoolManager(0x0400);
 
@@ -278,7 +278,7 @@ poolManager.lock(abi.encode(swapData));
 Custom logic injection points for pool operations.
 
 ```solidity
-import "@luxfi/contracts/crypto/precompiles/dex/IHooks.sol";
+import "@luxfi/contracts/precompile/interfaces/dex/IHooks.sol";
 
 contract MyHook is BaseHook {
     constructor(address _poolManager) BaseHook(_poolManager) {}
@@ -370,19 +370,19 @@ contracts/crypto/precompiles/
 
 ```solidity
 // Post-quantum
-import "@luxfi/contracts/crypto/precompiles/IMLDSA.sol";
-import "@luxfi/contracts/crypto/precompiles/IMLKEM.sol";
+import "@luxfi/contracts/precompile/interfaces/IMLDSA.sol";
+import "@luxfi/contracts/precompile/interfaces/IMLKEM.sol";
 
 // Threshold
-import "@luxfi/contracts/crypto/precompiles/IFROST.sol";
-import "@luxfi/contracts/crypto/precompiles/ICGGMP21.sol";
+import "@luxfi/contracts/precompile/interfaces/IFROST.sol";
+import "@luxfi/contracts/precompile/interfaces/ICGGMP21.sol";
 
 // Cross-chain
-import "@luxfi/contracts/crypto/precompiles/IWarp.sol";
+import "@luxfi/contracts/precompile/interfaces/IWarp.sol";
 
 // DEX
-import "@luxfi/contracts/crypto/precompiles/dex/IPoolManager.sol";
-import "@luxfi/contracts/crypto/precompiles/dex/IHooks.sol";
+import "@luxfi/contracts/precompile/interfaces/dex/IPoolManager.sol";
+import "@luxfi/contracts/precompile/interfaces/dex/IHooks.sol";
 ```
 
 ## Security Considerations
