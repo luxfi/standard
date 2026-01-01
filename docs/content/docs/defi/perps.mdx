@@ -93,7 +93,7 @@ Advanced trading with full order book:
 ### Opening Positions
 
 ```solidity
-import "@luxfi/standard/src/perps/TurboRouter.sol";
+import "@luxfi/contracts/perps/core/Router.sol";
 
 TurboRouter router = TurboRouter(TURBO_ROUTER);
 
@@ -379,7 +379,7 @@ interface IMultiOracle {
 ### Minting LLP
 
 ```solidity
-import "@luxfi/standard/src/perps/LLPManager.sol";
+import "@luxfi/contracts/perps/core/LlpManager.sol";
 
 LLPManager llpManager = LLPManager(LLP_MANAGER);
 
@@ -534,7 +534,7 @@ For 1001x leverage on BTC/ETH, we provide a trustless adapter to [Aster DEX](htt
 ### Adapter Contract
 
 ```solidity
-import "@luxfi/standard/src/adapters/AsterAdapter.sol";
+import "@luxfi/contracts/perps/core/interfaces/IVault.sol";
 
 LuxAsterAdapter adapter = LuxAsterAdapter(ASTER_ADAPTER);
 

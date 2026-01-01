@@ -124,7 +124,7 @@ interface IOracle {
 ### 1. Chainlink (Push Oracle)
 
 ```solidity
-import "@luxfi/contracts/oracle/adapters/ChainlinkAdapter.sol";
+import "@luxfi/contracts/integrations/oracles/ChainlinkAdapter.sol";
 
 // Deploy
 ChainlinkAdapter chainlink = new ChainlinkAdapter(
@@ -142,7 +142,7 @@ chainlink.setFeed(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c); // BTC/USD
 ### 2. Pyth (Pull Oracle)
 
 ```solidity
-import "@luxfi/contracts/oracle/adapters/PythAdapter.sol";
+import "@luxfi/contracts/integrations/oracles/RedStoneAdapter.sol";
 
 // Pyth price IDs
 bytes32 constant ETH_USD = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;

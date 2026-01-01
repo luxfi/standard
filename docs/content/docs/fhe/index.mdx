@@ -55,8 +55,8 @@ Complete FHE infrastructure for private on-chain computation. Perform arithmetic
 | **FHE** | Core library - encrypted operations | `@luxfi/contracts/fhe/FHE.sol` |
 | **TFHE** | Low-level TFHE operations | `@luxfi/contracts/fhe/TFHE.sol` |
 | **IFHE** | Interface definitions & precompile addresses | `@luxfi/contracts/fhe/IFHE.sol` |
-| **Gateway** | Decryption request handling | `@luxfi/contracts/fhe/gateway/Gateway.sol` |
-| **GatewayCaller** | Base contract for decryption callbacks | `@luxfi/contracts/fhe/gateway/GatewayCaller.sol` |
+| **Gateway** | Decryption request handling | `@luxfi/contracts/fhe/FHE.sol` |
+| **GatewayCaller** | Base contract for decryption callbacks | `@luxfi/contracts/fhe/FHE.sol` |
 | **Permissioned** | Access control mixin | `@luxfi/contracts/fhe/access/Permissioned.sol` |
 | **PermissionedV2** | Enhanced access control with EIP-712 | `@luxfi/contracts/fhe/access/PermissionedV2.sol` |
 | **FHEVMConfig** | FHEVM configuration | `@luxfi/contracts/fhe/config/FHEVMConfig.sol` |
@@ -229,7 +229,7 @@ euint32 smaller = FHE.asEuint32(FHE.asEuint64(value));
 LRC20 (Lux token standard) with encrypted balances:
 
 ```solidity
-import "@luxfi/contracts/fhe/token/ERC20/ConfidentialERC20.sol";
+import "@luxfi/contracts/fhe/token/LRC20/ConfidentialLRC20.sol";
 
 contract PrivateToken is ConfidentialERC20 {
     constructor() ConfidentialERC20("Private Token", "PRIV") {
@@ -264,8 +264,8 @@ function balanceOf(address account) public view returns (euint64);
 Private voting with encrypted vote counts:
 
 ```solidity
-import "@luxfi/contracts/fhe/governance/ConfidentialGovernorAlpha.sol";
-import "@luxfi/contracts/fhe/governance/ConfidentialERC20Votes.sol";
+import "@luxfi/contracts/fhe/governance/ConfidentialGovernor.sol";
+import "@luxfi/contracts/fhe/token/LRC20/ConfidentialLRC20.sol";
 
 // Governance token with encrypted voting power
 contract GovernanceToken is ConfidentialERC20Votes {
@@ -297,7 +297,7 @@ Request decryption of encrypted values using `FHE.decrypt()`:
 
 ```solidity
 import "@luxfi/contracts/fhe/FHE.sol";
-import "@luxfi/contracts/fhe/gateway/GatewayCaller.sol";
+import "@luxfi/contracts/fhe/FHE.sol";
 
 contract DecryptionExample is GatewayCaller {
     function decrypt(euint64 encryptedValue) external {

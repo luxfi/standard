@@ -119,7 +119,7 @@ Complete decentralized finance infrastructure for Lux Network. One canonical imp
 
 ```solidity
 // ===== PERPETUALS =====
-import "@luxfi/standard/src/gmx2/Router.sol";
+import "@luxfi/contracts/perps/core/Router.sol";
 
 // Open 10x long ETH position
 router.increasePosition{value: 1 ether}(
@@ -127,7 +127,7 @@ router.increasePosition{value: 1 ether}(
 );
 
 // ===== LENDING =====
-import "@luxfi/standard/src/lending/LendingPool.sol";
+import "@luxfi/contracts/markets/Markets.sol";
 
 // Deposit collateral and borrow
 lendingPool.deposit(LETH, 10 ether, msg.sender);
@@ -137,7 +137,7 @@ lendingPool.borrow(LUXD, 5000e18, 2, msg.sender);
 lendingPool.flashLoan(receiver, LUXD, 1_000_000e18, data);
 
 // ===== OMNICHAIN SWAP =====
-import "@luxfi/standard/src/OmnichainLPRouter.sol";
+import "@luxfi/contracts/router/IntentRouter.sol";
 
 // Cross-chain swap: C-Chain ETH → Hanzo USDC
 router.crossChainSwap(
@@ -146,7 +146,7 @@ router.crossChainSwap(
 );
 
 // ===== INTENT-BASED SWAP =====
-import "@luxfi/standard/src/intents/IntentRouter.sol";
+import "@luxfi/contracts/router/IntentRouter.sol";
 
 // Submit intent - solvers compete for best execution
 intentRouter.submitIntent(SwapIntent({

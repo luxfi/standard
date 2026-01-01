@@ -340,8 +340,8 @@ event LiquidationCall(
 ## Usage Example
 
 ```solidity
-import "@luxfi/standard/src/lending/LendingPool.sol";
-import "@luxfi/standard/src/lending/interfaces/IERC3156FlashLender.sol";
+import "@luxfi/contracts/markets/Markets.sol";
+import "@luxfi/contracts/liquid/interfaces/IERC3156FlashLender.sol";
 
 // Deposit collateral
 IERC20(LETH).approve(address(lendingPool), 10e18);

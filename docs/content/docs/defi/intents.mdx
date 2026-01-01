@@ -74,7 +74,7 @@ struct SwapIntent {
 ### EIP-712 Signed Intent
 
 ```solidity
-import "@luxfi/standard/src/intents/IntentRouter.sol";
+import "@luxfi/contracts/router/IntentRouter.sol";
 
 // User signs off-chain, solver submits on-chain
 bytes32 constant INTENT_TYPEHASH = keccak256(
@@ -246,7 +246,7 @@ function fillCrossChainIntent(
 Gasless approvals for intents:
 
 ```solidity
-import "@luxfi/standard/src/intents/Permit2Intent.sol";
+import "@luxfi/contracts/router/IntentRouter.sol";
 
 // User signs permit + intent together
 struct PermitIntent {
