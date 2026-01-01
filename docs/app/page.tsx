@@ -51,6 +51,13 @@ const features = [
   },
 ];
 
+const precompileLink = {
+  title: 'Native Precompiles',
+  description: 'High-performance native implementations (10-100x faster)',
+  href: 'https://precompile.lux.network',
+  external: true,
+};
+
 const stats = [
   { label: 'Contracts', value: '469' },
   { label: 'Tests', value: '751' },
@@ -137,6 +144,34 @@ export default function Home() {
               </p>
             </Link>
           ))}
+        </div>
+      </section>
+
+      {/* Precompile Callout */}
+      <section className="border-t border-fd-border">
+        <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+          <a
+            href={precompileLink.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center justify-between rounded-xl border border-fd-border bg-gradient-to-r from-fd-muted/50 to-fd-card p-6 hover:border-fd-primary/50 transition-all"
+          >
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">⚡</span>
+                <h3 className="text-lg font-semibold text-fd-foreground group-hover:text-fd-primary transition-colors">
+                  {precompileLink.title}
+                </h3>
+                <span className="rounded-full bg-fd-primary/10 px-2.5 py-0.5 text-xs font-medium text-fd-primary">
+                  10-100x Faster
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-fd-muted-foreground max-w-xl">
+                Looking for native performance? Lux Precompiles provide ML-DSA, FROST, FHE, DEX, and more as native EVM operations.
+              </p>
+            </div>
+            <span className="text-fd-muted-foreground group-hover:text-fd-primary transition-colors">→</span>
+          </a>
         </div>
       </section>
 

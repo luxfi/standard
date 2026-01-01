@@ -9,6 +9,13 @@ export default function Layout({ children }: { children: ReactNode }) {
       nav={{
         title: 'Lux Standard',
       }}
+      links={[
+        {
+          text: 'Precompiles',
+          url: 'https://precompile.lux.network',
+          external: true,
+        },
+      ]}
     >
       {children}
     </DocsLayout>
