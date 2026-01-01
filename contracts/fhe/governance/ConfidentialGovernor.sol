@@ -440,7 +440,7 @@ abstract contract ConfidentialGovernor is Ownable2Step, TFHEApp {
         uint256[] memory cts = new uint256[](1);
         cts[0] = TFHE.toUint256(canPropose);
 
-        uint256 requestId = TFHE.requestDecrypt(
+        uint256 requestId = TFHE.decrypt(
             cts,
             this.callbackInitiateProposal.selector,
             0,
@@ -496,7 +496,7 @@ abstract contract ConfidentialGovernor is Ownable2Step, TFHEApp {
         cts[0] = TFHE.toUint256(_proposals[proposalId].forVotes);
         cts[1] = TFHE.toUint256(_proposals[proposalId].againstVotes);
 
-        uint256 requestId = TFHE.requestDecrypt(
+        uint256 requestId = TFHE.decrypt(
             cts,
             this.callbackVoteDecryption.selector,
             0,

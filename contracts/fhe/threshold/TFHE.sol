@@ -12,7 +12,7 @@ import {ebool, euint8, euint16, euint32, euint64, euint128, euint256, eaddress} 
  *         to decrypt. Results are delivered via callback after threshold consensus.
  *
  * Architecture:
- *   C-Chain Contract → TFHE.requestDecryption() → T-Chain Validators → callback with plaintext
+ *   C-Chain Contract → TFHE.decrypt() → T-Chain Validators → callback with plaintext
  *
  * The T-Chain uses threshold cryptography protocols (like FROST, CGGMP21, or Ringtail)
  * to ensure no single validator can decrypt alone - threshold consensus is required.
@@ -22,7 +22,7 @@ import {ebool, euint8, euint16, euint32, euint64, euint128, euint256, eaddress} 
  *
  *   uint256[] memory cts = new uint256[](1);
  *   cts[0] = TFHE.toUint256(encryptedValue);
- *   uint256 requestId = TFHE.requestDecryption(cts, this.callback.selector, 0, block.timestamp + 100, false);
+ *   uint256 requestId = TFHE.decrypt(cts, this.callback.selector, 0, block.timestamp + 100, false);
  */
 library TFHE {
     /// @dev Storage slot for T-Chain gateway address (follows EIP-1967)
@@ -145,7 +145,7 @@ library TFHE {
      * @notice Decryption is async - your contract must implement a callback function
      *         with the selector provided. T-Chain validators will call it with results.
      */
-    function requestDecrypt(
+    function decrypt(
         uint256[] memory cts,
         bytes4 callback,
         uint256 value,

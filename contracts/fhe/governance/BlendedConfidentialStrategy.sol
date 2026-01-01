@@ -571,7 +571,7 @@ contract BlendedConfidentialStrategy is
         cts[1] = TFHE.toUint256(pv.confidentialNoVotes);
         cts[2] = TFHE.toUint256(pv.confidentialAbstainVotes);
 
-        uint256 requestId = TFHE.requestDecrypt(
+        uint256 requestId = TFHE.decrypt(
             cts,
             this.callbackVoteDecryption.selector,
             0,

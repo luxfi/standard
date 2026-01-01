@@ -79,7 +79,7 @@ abstract contract ConfidentialLRC20Wrapped is
         uint256[] memory cts = new uint256[](1);
         cts[0] = TFHE.toUint256(canUnwrap);
 
-        uint256 requestId = TFHE.requestDecrypt(
+        uint256 requestId = TFHE.decrypt(
             cts,
             this.callbackUnwrap.selector,
             0,

@@ -291,21 +291,26 @@ contract PrivateGovernor is ConfidentialGovernorAlpha {
 | `Queued` | Passed, in timelock queue |
 | `Executed` | Proposal executed |
 
-## Gateway (Decryption)
+## Decryption
 
-Request decryption of encrypted values:
+Request decryption of encrypted values using `FHE.decrypt()`:
 
 ```solidity
+import "@luxfi/contracts/fhe/FHE.sol";
 import "@luxfi/contracts/fhe/gateway/GatewayCaller.sol";
-import "@luxfi/contracts/fhe/gateway/Gateway.sol";
 
 contract DecryptionExample is GatewayCaller {
-    function requestDecryption(euint64 encryptedValue) external {
-        // Request decryption via gateway
+    function decrypt(euint64 encryptedValue) external {
+        // Request decryption via FHE library
+        FHE.decrypt(encryptedValue);
+    }
+
+    // For callback-based decryption:
+    function decryptAndCall(euint64 encryptedValue) external {
         uint256[] memory cts = new uint256[](1);
         cts[0] = euint64.unwrap(encryptedValue);
 
-        Gateway.requestDecryption(
+        TFHE.decrypt(
             cts,
             this.decryptionCallback.selector,
             0,  // msgValue
