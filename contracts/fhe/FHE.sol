@@ -24,10 +24,10 @@ type euint256 is uint256;
 type eaddress is uint256;
 type einput is bytes32;
 
-// ===== T-Chain FHE Gateway Address =====
-// This is the gateway address for FHE operations on the Lux T-Chain (Threshold Chain)
-// The T-Chain is powered by ThresholdVM and provides FHE compute
-address constant T_CHAIN_FHE_ADDRESS = 0xeA30c4B8b44078Bbf8a6ef5b9f1eC1626C7848D9;
+// ===== Lux FHE Precompile Address =====
+// FHE precompile is in the Lux Privacy range: 0x0700...0080
+// This is an EVM precompile for FHE operations (NOT a deployed contract)
+address constant T_CHAIN_FHE_ADDRESS = 0x0700000000000000000000000000000000000080;
 
 /// @title FHE
 /// @notice Main library for FHE operations on the Lux T-Chain (Threshold Chain)
