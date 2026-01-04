@@ -3,8 +3,8 @@ pragma solidity ^0.8.24;
 
 /// @title IDead - Dead Precompile Interface (Configurable)
 /// @notice Routes burns to dead addresses (0x0, 0xdead) to DAO treasury
-/// @dev LP-aligned address: P=0 (Core), C=0 (Universal), II=00 (Zero/Dead)
-/// @dev Deployed at 0x0000000000000000000000000000000000010000
+/// @dev LP-aligned address: P=0 (Core), C=0 (Universal), II=dead
+/// @dev Deployed at 0x000000000000000000000000000000000000dEaD
 ///
 /// The Dead Precompile intercepts all transfers to "dead" addresses and routes them:
 /// - Configurable burn ratio (default 50%) actually burned (deflationary)
@@ -205,8 +205,8 @@ interface IDead {
 /// @notice Utilities for working with the Dead Precompile
 library Dead {
     /// @notice The Dead Precompile address
-    /// @dev LP-aligned: 0x10000 = P=0 (Core), C=0, II=00
-    address public constant PRECOMPILE = 0x0000000000000000000000000000000000010000;
+    /// @dev The precompile lives at 0xdead itself - thematically appropriate!
+    address public constant PRECOMPILE = 0x000000000000000000000000000000000000dEaD;
 
     /// @notice The zero address (primary dead address)
     address public constant ZERO = address(0);
