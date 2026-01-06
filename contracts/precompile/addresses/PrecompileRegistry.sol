@@ -27,13 +27,13 @@ library PrecompileRegistry {
     /// @notice BLS12-381 G1 ADD (EIP-2537)
     address internal constant BLS12381_G1ADD = 0x000000000000000000000000000000000000000b;
     /// @notice BLS12-381 G1 MUL (EIP-2537)
-    address internal constant BLS12381_G1MUL = 0x000000000000000000000000000000000000000c;
+    address internal constant BLS12381_G1MUL = 0x000000000000000000000000000000000000000C;
     /// @notice BLS12-381 G1 MSM (EIP-2537)
     address internal constant BLS12381_G1MSM = 0x000000000000000000000000000000000000000d;
     /// @notice BLS12-381 G2 ADD (EIP-2537)
-    address internal constant BLS12381_G2ADD = 0x000000000000000000000000000000000000000e;
+    address internal constant BLS12381_G2ADD = 0x000000000000000000000000000000000000000E;
     /// @notice BLS12-381 G2 MUL (EIP-2537)
-    address internal constant BLS12381_G2MUL = 0x000000000000000000000000000000000000000f;
+    address internal constant BLS12381_G2MUL = 0x000000000000000000000000000000000000000F;
     /// @notice BLS12-381 G2 MSM (EIP-2537)
     address internal constant BLS12381_G2MSM = 0x0000000000000000000000000000000000000010;
     /// @notice BLS12-381 Pairing (EIP-2537)
@@ -395,68 +395,54 @@ library PrecompileRegistry {
     address internal constant REWARD_A = 0x0000000000000000000000000000000000017422;
 
     /*//////////////////////////////////////////////////////////////
-                  PAGE 9: DEX/MARKETS (0x19CII) → LP-9xxx
+              PAGE 9: DEX/MARKETS (LP-9xxx) - QuantumSwap Native DEX
+
+              Uses trailing LP number format (LP-9015):
+              Address = 0x0000000000000000000000000000000000LPNUM
+              Same address on ALL Lux EVM chains (C-Chain, Zoo, Hanzo, SPC)
     //////////////////////////////////////////////////////////////*/
 
-    // Core AMM (II = 0x01-0x0F)
-    /// @notice Pool manager on C-Chain (Uniswap v4-style)
-    address internal constant POOL_MANAGER_C = 0x0000000000000000000000000000000000019201;
-    /// @notice Pool manager on Zoo
-    address internal constant POOL_MANAGER_ZOO = 0x0000000000000000000000000000000000019801;
-    /// @notice Swap router on C-Chain
-    address internal constant SWAP_ROUTER_C = 0x0000000000000000000000000000000000019202;
-    /// @notice Swap router on Zoo
-    address internal constant SWAP_ROUTER_ZOO = 0x0000000000000000000000000000000000019802;
-    /// @notice Hooks registry on C-Chain
-    address internal constant HOOKS_REG_C = 0x0000000000000000000000000000000000019203;
-    /// @notice Hooks registry on Zoo
-    address internal constant HOOKS_REG_ZOO = 0x0000000000000000000000000000000000019803;
-    /// @notice Flash loan on C-Chain
-    address internal constant FLASH_LOAN_C = 0x0000000000000000000000000000000000019204;
-    /// @notice Flash loan on Zoo
-    address internal constant FLASH_LOAN_ZOO = 0x0000000000000000000000000000000000019804;
+    // Core DEX (LP-9010 series)
+    /// @notice Singleton pool manager with flash accounting (LP-9010)
+    address internal constant POOL_MANAGER = 0x0000000000000000000000000000000000009010;
+    /// @notice Oracle hub - multi-source price aggregation (LP-9011)
+    address internal constant ORACLE_HUB = 0x0000000000000000000000000000000000009011;
+    /// @notice Optimized swap routing (LP-9012)
+    address internal constant SWAP_ROUTER = 0x0000000000000000000000000000000000009012;
+    /// @notice Hook contract registry (LP-9013)
+    address internal constant HOOKS_REGISTRY = 0x0000000000000000000000000000000000009013;
+    /// @notice Flash loan facility (LP-9014)
+    address internal constant FLASH_LOAN = 0x0000000000000000000000000000000000009014;
 
-    // Orderbook (II = 0x10-0x1F)
-    /// @notice CLOB on C-Chain
-    address internal constant CLOB_C = 0x0000000000000000000000000000000000019210;
-    /// @notice CLOB on Zoo
-    address internal constant CLOB_ZOO = 0x0000000000000000000000000000000000019810;
-    /// @notice Orderbook on C-Chain
-    address internal constant ORDERBOOK_C = 0x0000000000000000000000000000000000019211;
-    /// @notice Orderbook on Zoo
-    address internal constant ORDERBOOK_ZOO = 0x0000000000000000000000000000000000019811;
-    /// @notice Matching engine on C-Chain
-    address internal constant MATCHING_C = 0x0000000000000000000000000000000000019212;
-    /// @notice Matching engine on Zoo
-    address internal constant MATCHING_ZOO = 0x0000000000000000000000000000000000019812;
+    // DeFi Extensions (LP-902x-904x)
+    /// @notice Central limit order book (LP-9020)
+    address internal constant CLOB = 0x0000000000000000000000000000000000009020;
+    /// @notice DeFi vault operations (LP-9030)
+    address internal constant VAULT = 0x0000000000000000000000000000000000009030;
+    /// @notice Price feed aggregator (LP-9040)
+    address internal constant PRICE_FEED = 0x0000000000000000000000000000000000009040;
 
-    // Oracle (II = 0x20-0x2F)
-    /// @notice Oracle hub on C-Chain
-    address internal constant ORACLE_HUB_C = 0x0000000000000000000000000000000000019220;
-    /// @notice Oracle hub on Zoo
-    address internal constant ORACLE_HUB_ZOO = 0x0000000000000000000000000000000000019820;
-    /// @notice TWAP oracle on C-Chain
-    address internal constant TWAP_C = 0x0000000000000000000000000000000000019221;
-    /// @notice TWAP oracle on Zoo
-    address internal constant TWAP_ZOO = 0x0000000000000000000000000000000000019821;
-    /// @notice Fast price feed on C-Chain
-    address internal constant FAST_PRICE_C = 0x0000000000000000000000000000000000019222;
-    /// @notice Fast price feed on Zoo
-    address internal constant FAST_PRICE_ZOO = 0x0000000000000000000000000000000000019822;
+    // Bridge Precompiles (LP-6xxx)
+    /// @notice Cross-chain asset teleportation (LP-6010)
+    address internal constant TELEPORT = 0x0000000000000000000000000000000000006010;
 
-    // Perps (II = 0x30-0x3F)
-    /// @notice Perps vault on C-Chain
-    address internal constant VAULT_C = 0x0000000000000000000000000000000000019230;
-    /// @notice Perps vault on Zoo
-    address internal constant VAULT_ZOO = 0x0000000000000000000000000000000000019830;
-    /// @notice Position router on C-Chain
-    address internal constant POS_ROUTER_C = 0x0000000000000000000000000000000000019231;
-    /// @notice Position router on Zoo
-    address internal constant POS_ROUTER_ZOO = 0x0000000000000000000000000000000000019831;
-    /// @notice Price feed on C-Chain
-    address internal constant PRICE_FEED_C = 0x0000000000000000000000000000000000019232;
-    /// @notice Price feed on Zoo
-    address internal constant PRICE_FEED_ZOO = 0x0000000000000000000000000000000000019832;
+    // Legacy aliases for backward compatibility (deprecated - use canonical names above)
+    address internal constant POOL_MANAGER_C = POOL_MANAGER;
+    address internal constant POOL_MANAGER_ZOO = POOL_MANAGER;
+    address internal constant SWAP_ROUTER_C = SWAP_ROUTER;
+    address internal constant SWAP_ROUTER_ZOO = SWAP_ROUTER;
+    address internal constant HOOKS_REG_C = HOOKS_REGISTRY;
+    address internal constant HOOKS_REG_ZOO = HOOKS_REGISTRY;
+    address internal constant FLASH_LOAN_C = FLASH_LOAN;
+    address internal constant FLASH_LOAN_ZOO = FLASH_LOAN;
+    address internal constant CLOB_C = CLOB;
+    address internal constant CLOB_ZOO = CLOB;
+    address internal constant ORACLE_HUB_C = ORACLE_HUB;
+    address internal constant ORACLE_HUB_ZOO = ORACLE_HUB;
+    address internal constant VAULT_C = VAULT;
+    address internal constant VAULT_ZOO = VAULT;
+    address internal constant PRICE_FEED_C = PRICE_FEED;
+    address internal constant PRICE_FEED_ZOO = PRICE_FEED;
 
     /*//////////////////////////////////////////////////////////////
                          HELPER FUNCTIONS

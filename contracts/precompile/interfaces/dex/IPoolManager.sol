@@ -6,7 +6,7 @@ import {Currency, PoolKey, BalanceDelta, SwapParams, ModifyLiquidityParams} from
 /// @title IPoolManager
 /// @notice Interface for the Lux DEX singleton pool manager with flash accounting
 /// @dev All pools live in this single contract, enabling unified liquidity across all markets
-/// @dev Precompile address: 0x0400
+/// @dev Precompile address: 0x0000000000000000000000000000000000009010 (LP-9010)
 interface IPoolManager {
     // =========================================================================
     // Errors

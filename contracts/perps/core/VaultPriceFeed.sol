@@ -18,6 +18,7 @@ contract VaultPriceFeed is IVaultPriceFeed {
     uint256 public constant MAX_SPREAD_BASIS_POINTS = 50;
     uint256 public constant MAX_ADJUSTMENT_INTERVAL = 2 hours;
     uint256 public constant MAX_ADJUSTMENT_BASIS_POINTS = 20;
+    uint256 public constant DEFAULT_MAX_PRICE_AGE = 1 hours;
 
     // Identifier of the Sequencer offline flag on the Flags contract
     address constant private FLAG_ARBITRUM_SEQ_OFFLINE = address(bytes20(bytes32(uint256(keccak256("chainlink.flags.arbitrum-seq-offline")) - 1)));
@@ -54,6 +55,9 @@ contract VaultPriceFeed is IVaultPriceFeed {
     mapping (address => uint256) public override adjustmentBasisPoints;
     mapping (address => bool) public override isAdjustmentAdditive;
     mapping (address => uint256) public lastAdjustmentTimings;
+    
+    /// @notice Maximum acceptable age for price data per token (0 = use DEFAULT_MAX_PRICE_AGE)
+    mapping (address => uint256) public maxPriceAge;
 
     modifier onlyGov() {
         require(msg.sender == gov, "VaultPriceFeed: forbidden");
@@ -142,6 +146,21 @@ contract VaultPriceFeed is IVaultPriceFeed {
         strictStableTokens[_token] = _isStrictStable;
     }
 
+    /// @notice Set the maximum acceptable age for price data
+    /// @param _token The token address
+    /// @param _maxPriceAge Maximum age in seconds (0 = use DEFAULT_MAX_PRICE_AGE)
+    function setMaxPriceAge(address _token, uint256 _maxPriceAge) external onlyGov {
+        maxPriceAge[_token] = _maxPriceAge;
+    }
+
+    /// @notice Get the effective max price age for a token
+    /// @param _token The token address
+    /// @return The max price age in seconds
+    function getMaxPriceAge(address _token) public view returns (uint256) {
+        uint256 age = maxPriceAge[_token];
+        return age > 0 ? age : DEFAULT_MAX_PRICE_AGE;
+    }
+
     function getPrice(address _token, bool _maximise, bool _includeAmmPrice, bool /* _useSwapPricing */) public override view returns (uint256) {
         uint256 price = _getPriceInternal(_token, _maximise, _includeAmmPrice);
 
@@ -228,8 +247,20 @@ contract VaultPriceFeed is IVaultPriceFeed {
 
         IPriceFeed priceFeed = IPriceFeed(priceFeedAddress);
 
-        int256 price = priceFeed.latestAnswer();
+        (
+            uint80 roundId,
+            int256 price,
+            ,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        ) = priceFeed.latestRoundData();
+        
         require(price > 0, "VaultPriceFeed: invalid price");
+        require(updatedAt > 0, "VaultPriceFeed: round not complete");
+        require(answeredInRound >= roundId, "VaultPriceFeed: stale round");
+        
+        uint256 _maxPriceAge = getMaxPriceAge(_token);
+        require(block.timestamp - updatedAt <= _maxPriceAge, "VaultPriceFeed: price too old");
 
         return uint256(price);
     }
@@ -250,20 +281,27 @@ contract VaultPriceFeed is IVaultPriceFeed {
 
         uint256 price = 0;
         uint80 roundId = priceFeed.latestRound();
+        uint256 _maxPriceAge = getMaxPriceAge(_token);
 
         for (uint80 i = 0; i < priceSampleSpace; i++) {
             if (roundId <= i) { break; }
             uint256 p;
 
-            if (i == 0) {
-                int256 _p = priceFeed.latestAnswer();
-                require(_p > 0, "VaultPriceFeed: invalid price");
-                p = uint256(_p);
-            } else {
-                (, int256 _p, , ,) = priceFeed.getRoundData(roundId - i);
-                require(_p > 0, "VaultPriceFeed: invalid price");
-                p = uint256(_p);
+            (
+                ,
+                int256 _p,
+                ,
+                uint256 updatedAt,
+            ) = priceFeed.getRoundData(roundId - i);
+            
+            require(_p > 0, "VaultPriceFeed: invalid price");
+            
+            // Skip stale rounds but don't revert (allow finding fresh prices in sample space)
+            if (block.timestamp - updatedAt > _maxPriceAge) {
+                continue;
             }
+            
+            p = uint256(_p);
 
             if (price == 0) {
                 price = p;
