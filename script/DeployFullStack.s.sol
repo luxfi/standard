@@ -194,6 +194,8 @@ contract DeployFullStack is Script {
 
         vm.startBroadcast(deployerKey);
 
+        // Deploy WLUX first (nonce 0) for deterministic address 0x5FbDB2315678afecb367f032d93F642f64180aa3
+        _deployWLUXFirst();
         _deployPhase1BridgedCollateral();
         _deployPhase2LiquidLUX();
         _deployPhase3NativeAndStaking();
@@ -212,8 +214,26 @@ contract DeployFullStack is Script {
         _printSummary();
     }
 
+    /**
+     * @notice Deploy WLUX first to get deterministic address at nonce 0
+     * Expected address: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+     */
+    function _deployWLUXFirst() internal {
+        console.log("--- Phase 0: WLUX (Deployed First for Deterministic Address) ---");
+
+        wlux = new WLUX();
+        console.log("WLUX:", address(wlux));
+        console.log("Expected: 0x5FbDB2315678afecb367f032d93F642f64180aa3");
+        console.log("");
+    }
+
     function _deployPhase1BridgedCollateral() internal {
         console.log("--- Phase 1: Bridged Collateral (1:1 from source) ---");
+        // Deploy in order: LETH (nonce 1), LBTC (nonce 2), LUSD (nonce 3)
+        // Expected addresses:
+        //   LETH: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+        //   LBTC: 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
+        //   LUSD: 0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
 
         eth = new BridgedETH();
         console.log("ETH (bridged):", address(eth));
@@ -252,8 +272,8 @@ contract DeployFullStack is Script {
     function _deployPhase3NativeAndStaking() internal {
         console.log("--- Phase 3: Native Token & Staking ---");
 
-        wlux = new WLUX();
-        console.log("WLUX:", address(wlux));
+        // WLUX already deployed in _deployWLUXFirst() at nonce 0
+        console.log("WLUX (already deployed):", address(wlux));
 
         // Wrap LUX
         wlux.deposit{value: INITIAL_LUX}();

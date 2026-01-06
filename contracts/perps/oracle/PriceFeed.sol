@@ -46,6 +46,13 @@ contract PriceFeed is IPriceFeed {
     function getRoundData(uint80 _roundId) public override view
         returns (uint80, int256, uint256, uint256, uint80)
     {
-        return (_roundId, answers[_roundId], 0, 0, 0);
+        return (_roundId, answers[_roundId], 0, block.timestamp, _roundId);
+    }
+
+    /// @notice Get latest round data with staleness info (Chainlink AggregatorV3Interface compatible)
+    function latestRoundData() public override view
+        returns (uint80, int256, uint256, uint256, uint80)
+    {
+        return (roundId, answer, 0, block.timestamp, roundId);
     }
 }

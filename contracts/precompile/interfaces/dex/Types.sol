@@ -98,7 +98,7 @@ library PoolKeyLib {
 // =========================================================================
 
 /// @notice Bitmap of hook capabilities
-/// @dev Following Uniswap v4 pattern where permissions are encoded in hook address
+/// @dev Permissions are encoded in hook address for gas-efficient validation
 type HookPermissions is uint16;
 
 /// @notice Library for HookPermissions

@@ -1,21 +1,22 @@
 # AI Assistant Knowledge Base
 
-**Last Updated**: 2025-12-31
+**Last Updated**: 2026-01-02
 **Project**: Lux Standard (Solidity Contracts & Precompiles)
 **Organization**: Lux Industries
 **Solidity Version**: 0.8.31
 **EVM Version**: Cancun (for FHE transient storage)
-**Test Coverage**: 727 tests passing (100%)
+**Test Coverage**: 761 tests passing (100%)
 **npm Package**: @luxfi/contracts v1.2.0
 **Build Status**: ✅ All contracts compile, full test suite passing
+**Precompiles**: 39 total (Core, Crypto, DeFi, Attestation, Hashing, ZK)
 
 ## Project Overview
 
 This repository contains the standard Solidity contracts and EVM precompiles for the Lux blockchain, including post-quantum cryptography implementations and Quasar consensus integration.
 
-## Test Coverage Summary (2025-12-31)
+## Test Coverage Summary (2026-01-02)
 
-**Total**: 727 tests passing across 35 test suites
+**Total**: 761 tests passing across 37 test suites
 
 | Protocol | Tests | Status |
 |----------|-------|--------|
@@ -33,6 +34,7 @@ This repository contains the standard Solidity contracts and EVM precompiles for
 | YieldStrategies | 30 | ✅ |
 | NFT Marketplace | 26 | ✅ |
 | FHE/Confidential | 35 | ✅ |
+| Privacy/Z-Chain | 34 | ✅ |
 | Other | 111 | ✅ |
 
 **CI Status**: ✅ Passing - https://github.com/luxfi/standard/actions
@@ -1970,27 +1972,82 @@ Successfully implemented comprehensive threshold signature and MPC precompiles f
 
 ## Complete Precompile Address Map
 
-### Existing Precompiles (11)
+### Core Precompiles (0x0200...0001 - 0x0006)
 1. `0x0200...0001` - DeployerAllowList
 2. `0x0200...0002` - TxAllowList  
 3. `0x0200...0003` - FeeManager
 4. `0x0200...0004` - NativeMinter
-5. `0x0200...0005` - RewardManager
-6. `0x0200...0006` - ML-DSA (Post-quantum signatures)
-7. `0x0200...0007` - SLH-DSA (In progress)
-8. `0x0200...0008` - Warp (Cross-chain + BLS)
+5. `0x0200...0005` - Warp (Cross-chain + BLS)
+6. `0x0200...0006` - RewardManager
+
+### Cryptography Precompiles (0x0200...0007 - 0x000E)
+7. `0x0200...0007` - ML-DSA (Post-quantum signatures)
+8. `0x0200...0008` - SLH-DSA (Hash-based PQ)
 9. `0x0200...0009` - PQCrypto (Multi-PQ operations)
 10. `0x0200...000A` - Quasar (Consensus operations)
 11. `0x0200...000B` - Ringtail (Threshold lattice signatures)
-
-### New Precompiles (2)
 12. **`0x0200...000C` - FROST** ✅ (Schnorr threshold)
 13. **`0x0200...000D` - CGGMP21** ✅ (ECDSA threshold)
+14. `0x0200...000E` - Bridge (Reserved)
 
-### Reserved/Planned
-14. `0x0200...000E` - Bridge (Reserved for bridge verification)
+### DeFi Precompiles (0x0200...0010 - 0x0015)
+15. `0x0200...0010` - DEX (QuantumSwap/LX)
+16. `0x0200...0011` - Oracle (Multi-source aggregator)
+17. `0x0200...0012` - Lending
+18. `0x0200...0013` - Staking
+19. `0x0200...0014` - Yield
+20. `0x0200...0015` - Perps
 
-**Total Precompiles**: 13 active + 1 reserved = 14 addresses allocated
+### Attestation Precompiles (0x0200...0300)
+21. `0x0200...0300` - Attestation (GPU/TEE AI tokens)
+
+### Hashing Precompiles (0x0501 - 0x0504) ✅ NEW
+22. `0x0501` - **Poseidon2** (ZK-friendly hash, ~20K gas)
+23. `0x0502` - **Poseidon2Sponge** (Variable-length input)
+24. `0x0503` - **Pedersen** (BN254 curve commitment)
+25. `0x0504` - **Blake3** (High-performance hash)
+
+### ZK Proof Precompiles (0x0900 - 0x0932) ✅ NEW
+| Address | Precompile | Purpose |
+|---------|------------|---------|
+| `0x0900` | **ZKVerify** | Generic ZK verification |
+| `0x0901` | **Groth16** | Groth16 proof verification |
+| `0x0902` | **PLONK** | PLONK proof verification |
+| `0x0903` | **fflonk** | fflonk proof verification |
+| `0x0904` | **Halo2** | Halo2 proof verification |
+| `0x0910` | **KZG** | KZG polynomial commitments (EIP-4844) |
+| `0x0912` | **IPA** | Inner Product Arguments |
+| `0x0920` | **PrivacyPool** | Confidential pool operations |
+| `0x0921` | **Nullifier** | Nullifier verification |
+| `0x0922` | **Commitment** | Commitment verification |
+| `0x0923` | **RangeProof** | Range proofs (Bulletproofs) |
+| `0x0930` | **RollupVerify** | ZK rollup batch verification |
+| `0x0931` | **StateRoot** | State root verification |
+| `0x0932` | **BatchProof** | Batch proof aggregation |
+
+### Dead/Burn Precompiles (LP-0150) ✅ NEW
+| Address | Precompile | Purpose |
+|---------|------------|---------|
+| `0x0000...0000` | **DeadZero** | Zero address intercept |
+| `0x0000...dEaD` | **DeadShort** | Common dead address |
+| `0xdEaD...0000` | **DeadFull** | Full dead prefix |
+
+**Dead Precompile Features**:
+- 50% burn (deflationary) + 50% DAO treasury (POL)
+- Treasury: `0x9011E888251AB053B7bD1cdB598Db4f9DEd94714`
+- Gas: 10,000 base
+- Configurable via: `deadZeroConfig`, `deadConfig`, `deadFullConfig`
+
+**Total Precompiles**: 42 active (6 Core + 8 Crypto + 6 DeFi + 1 Attestation + 4 Hashing + 14 ZK + 3 Dead)
+
+### Solidity Interfaces
+
+| Interface | Location | Purpose |
+|-----------|----------|---------|
+| `IHash.sol` | `contracts/precompile/interfaces/IHash.sol` | Blake3, Poseidon2, Pedersen |
+| `IZK.sol` | `contracts/precompile/interfaces/IZK.sol` | All ZK operations |
+| `IDead.sol` | `contracts/precompile/interfaces/IDead.sol` | Dead/Burn precompile |
+| `PrecompileRegistry.sol` | `contracts/precompile/addresses/PrecompileRegistry.sol` | Address registry |
 
 ## Use Cases Enabled
 
@@ -2944,6 +3001,224 @@ evm_version = "cancun"
 
 ---
 
+## Z-Chain Privacy Layer (2026-01-02)
+
+### Overview
+
+Comprehensive privacy layer for the Lux blockchain implementing UTXO-style private transfers with X-Chain integration, post-quantum cryptography, and cross-chain private teleportation.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                           Z-CHAIN PRIVACY ARCHITECTURE                                  │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  X-CHAIN (UTXO)              Z-CHAIN (PRIVACY)                C-CHAIN (EVM)            │
+│  ┌─────────────┐            ┌─────────────────┐              ┌─────────────┐           │
+│  │ UTXO Spend  │───Warp───>│ ZNote Shield    │───Warp────>│ Unshield    │           │
+│  │             │            │ (commitment)    │              │ (withdraw)  │           │
+│  └─────────────┘            └───────┬─────────┘              └─────────────┘           │
+│                                     │                                                   │
+│                             ┌───────▼─────────┐                                        │
+│                             │ Z-Chain AMM     │ Dark pool swaps                        │
+│                             │ (private trade) │ MEV-protected                          │
+│                             └─────────────────┘                                        │
+│                                                                                          │
+│  CRYPTOGRAPHIC PRIMITIVES:                                                              │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐                  │
+│  │ Poseidon2    │ │ STARK Proofs │ │ Bulletproofs │ │ FHE (opt)    │                  │
+│  │ (PQ-safe)    │ │ (PQ-safe)    │ │ (range proof)│ │ (encrypted)  │                  │
+│  └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘                  │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Core Contracts
+
+| Contract | Location | Purpose |
+|----------|----------|---------|
+| **ZNote** | `contracts/privacy/ZNote.sol` | UTXO-style notes with X-Chain integration |
+| **ZNotePQ** | `contracts/privacy/ZNotePQ.sol` | Post-quantum version using Poseidon2/STARK |
+| **PrivateBridge** | `contracts/privacy/PrivateBridge.sol` | Cross-chain bridge with shielded transfers |
+| **PrivateTeleport** | `contracts/privacy/PrivateTeleport.sol` | Full cross-chain private teleportation |
+| **Poseidon2Commitments** | `contracts/privacy/Poseidon2Commitments.sol` | PQ-safe commitment library |
+
+### Interfaces & Precompiles
+
+| Interface | Address | Purpose |
+|-----------|---------|---------|
+| **IPoseidon2** | `0x0501` | Poseidon2 hash precompile |
+| **ISTARKVerifier** | `0x0510` | STARK proof verification |
+| **ISTARKRecursive** | `0x0511` | Recursive STARK verification |
+| **ISTARKBatch** | `0x0512` | Batch STARK verification |
+| **ISTARKReceipts** | `0x051F` | Cross-chain receipt verification |
+| **IRangeProofVerifier** | - | Bulletproof range proof verification |
+| **IShieldedPool** | - | Shielded pool interface |
+| **IZChainAMM** | - | Z-Chain dark pool AMM interface |
+
+### ZNote (Classical Version)
+
+UTXO-style notes using keccak256 for Merkle trees:
+
+```solidity
+struct Note {
+    bytes32 commitment;      // Pedersen commitment: H(amount, pubKey, salt)
+    bytes32 nullifier;       // Prevents double-spending
+    uint256 amount;          // Hidden via commitment
+    address token;           // Token address
+    uint64 createdAt;        // Timestamp
+}
+
+// Core operations
+function shield(bytes32 commitment, bytes calldata proof) external;
+function transfer(bytes32[] calldata nullifiers, bytes32[] calldata newCommitments, bytes calldata proof) external;
+function split(bytes32 nullifier, bytes32[] calldata newCommitments, bytes calldata proof) external;
+function unshield(bytes32 nullifier, address recipient, uint256 amount, bytes calldata proof) external;
+function darkPoolSwap(bytes32 nullifier, address tokenOut, bytes calldata proof) external returns (bytes32);
+```
+
+### ZNotePQ (Post-Quantum Version)
+
+Post-quantum secure version using Poseidon2 for all hashing and STARK proofs:
+
+```solidity
+// Same interface as ZNote but PQ-safe
+// Uses Poseidon2 precompile at 0x0501 for commitments
+// Uses STARK verifier at 0x0510 for proofs
+// Merkle tree uses Poseidon2 instead of keccak256
+```
+
+### PrivateTeleport Flow
+
+Full cross-chain private teleportation:
+
+```
+1. X-CHAIN: User spends UTXO, commitment shielded via Warp
+2. Z-CHAIN: ZNote receives commitment, enters shielded pool
+3. Z-CHAIN: Optional dark pool swap (MEV-protected)
+4. Z-CHAIN: Spend note, create Warp message for destination
+5. C-CHAIN: PrivateTeleport receives Warp proof, unshields to recipient
+```
+
+```solidity
+// PrivateTeleport.sol
+function initiateFromXChain(
+    bytes32 xchainTxId,
+    bytes32 commitment,
+    bytes calldata starkProof,
+    uint32 warpIndex
+) external returns (bytes32 noteId);
+
+function completeToEVM(
+    bytes32 noteId,
+    bytes32 nullifier,
+    address recipient,
+    uint256 amount,
+    bytes calldata proof,
+    uint32 warpIndex
+) external;
+```
+
+### MEV Protection
+
+```solidity
+uint256 public constant MIN_SHIELD_BLOCKS = 3;  // Minimum blocks before unshield
+uint256 public constant MAX_UNSHIELD_AMOUNT = 1000000e18;  // Rate limit
+```
+
+### Poseidon2 Commitments
+
+Library for creating PQ-safe commitments with fallback:
+
+```solidity
+library Poseidon2Commitments {
+    // Creates commitment: H(amount || pubKey || salt)
+    function createCommitment(uint256 amount, bytes32 pubKey, bytes32 salt) internal view returns (bytes32);
+    
+    // Creates nullifier: H(commitment || privKey)
+    function createNullifier(bytes32 commitment, bytes32 privKey) internal view returns (bytes32);
+    
+    // Merkle tree hash using Poseidon2
+    function hashPair(bytes32 left, bytes32 right) internal view returns (bytes32);
+}
+```
+
+### Dark Pool AMM (IZChainAMM)
+
+```solidity
+interface IZChainAMM {
+    // Get quote for private swap
+    function getSwapQuote(address tokenIn, address tokenOut, uint256 amountIn) external view returns (uint256);
+    
+    // Execute private swap with commitment
+    function executePrivateSwap(
+        bytes32 inputNullifier,
+        bytes32 outputCommitment,
+        address tokenIn,
+        address tokenOut,
+        bytes calldata proof
+    ) external returns (bytes32 swapId);
+}
+```
+
+### Security Features
+
+1. **Nullifier tracking** - Prevents double-spending of notes
+2. **Merkle membership proofs** - Proves commitment exists without revealing which
+3. **Range proofs (Bulletproofs)** - Proves amount is valid without revealing
+4. **STARK proofs (PQ version)** - Post-quantum secure proof verification
+5. **MEV protection** - Minimum block delay for unshielding
+6. **Rate limiting** - Maximum unshield amounts per block
+
+### Cryptographic Guarantees
+
+| Property | ZNote (Classical) | ZNotePQ (Post-Quantum) |
+|----------|------------------|------------------------|
+| **Commitment** | Pedersen (keccak256) | Poseidon2 (0x0501) |
+| **Merkle Tree** | keccak256 | Poseidon2 |
+| **Proofs** | zkSNARK (Groth16) | STARK (0x0510) |
+| **Range Proofs** | Bulletproofs | Bulletproofs |
+| **Quantum Safe** | ❌ | ✅ |
+
+### Usage Examples
+
+```solidity
+// Shield tokens (create private note)
+zNote.shield{value: 1 ether}(commitment, proof);
+
+// Private transfer (spend and create new notes)
+zNote.transfer(
+    [nullifier1, nullifier2],  // Inputs
+    [newCommitment1, newCommitment2],  // Outputs
+    proof
+);
+
+// Dark pool swap
+bytes32 swapNote = zNote.darkPoolSwap(
+    nullifier,
+    LETH,  // Token out
+    proof
+);
+
+// Unshield (withdraw to public)
+zNote.unshield(nullifier, recipient, amount, proof);
+```
+
+### Integration with FHE
+
+The privacy layer can optionally use FHE for encrypted amounts:
+
+```solidity
+// Encrypted balance in note (optional)
+euint64 encryptedAmount = FHE.asEuint64(amount);
+
+// Allows computation on encrypted values before unshielding
+euint64 newBalance = FHE.sub(encryptedBalance, withdrawAmount);
+```
+
+---
+
 ## LiquidLUX (xLUX) Unified Yield System (2025-12-27)
 
 ### Architecture Overview
@@ -3583,10 +3858,11 @@ import {IFHE} from "@luxfi/contracts/precompile/interfaces/IFHE.sol";
 
 ---
 
-*Last Updated: 2025-12-31*
-*Dev Workflow Verified: ✅ 727 tests passing*
+*Last Updated: 2026-01-02*
+*Dev Workflow Verified: ✅ 761 tests passing*
 *luxd --dev Automining: ✅ Working*
 *Full Stack: ✅ 12 phases deploying*
 *LiquidLUX: ✅ Production-hardened with 7 security improvements*
 *DeFi Suite: ✅ 6 new protocols (StableSwap, Options, Streams, IntentRouter, Cover, Prediction)*
+*Privacy Layer: ✅ Z-Chain UTXO with post-quantum Poseidon2/STARK*
 *Directory Contract: ✅ Specification complete, migration pending*
