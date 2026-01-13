@@ -3,6 +3,7 @@ pragma solidity ^0.8.31;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 interface IKarma {
     function mint(address to, uint256 amount, bytes32 reason) external;
@@ -41,7 +42,7 @@ interface IKarma {
  * │  - REFERRAL: Bring new users                                                │
  * └─────────────────────────────────────────────────────────────────────────────┘
  */
-contract KarmaMinter is AccessControl, Pausable {
+contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
     // ============ Roles ============
 
     /// @notice Role for DAO governance to configure mint params
@@ -290,7 +291,7 @@ contract KarmaMinter is AccessControl, Pausable {
         address target,
         uint256 amount,
         bytes32 reason
-    ) external whenNotPaused {
+    ) external nonReentrant whenNotPaused {
         if (target == address(0)) revert ZeroAddress();
         if (target == msg.sender) revert CannotMintForSelf(); // Can't strike yourself
         if (amount == 0) revert AmountExceedsMax();

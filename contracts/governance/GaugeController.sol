@@ -2,7 +2,7 @@
 pragma solidity ^0.8.31;
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 interface IvLUX {
     function balanceOf(address user) external view returns (uint256);
@@ -35,7 +35,7 @@ interface IvLUX {
  * - LiquidGauge: Synth protocol rewards
  * - [Custom gauges can be added by governance]
  */
-contract GaugeController is ReentrancyGuard, Ownable {
+contract GaugeController is ReentrancyGuard, Ownable2Step {
     // ============ Constants ============
     
     uint256 public constant BPS = 10000;

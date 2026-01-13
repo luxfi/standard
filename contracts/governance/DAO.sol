@@ -3,6 +3,7 @@ pragma solidity ^0.8.31;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
@@ -89,8 +90,8 @@ contract DAO is ReentrancyGuard {
     // STATE
     // ═══════════════════════════════════════════════════════════════════════
 
-    /// @notice Governance token
-    IERC20 public immutable token;
+    /// @notice Governance token (must implement IVotes for snapshot-based voting)
+    IVotes public immutable token;
 
     /// @notice Proposal count
     uint256 public proposalCount;
@@ -145,7 +146,7 @@ contract DAO is ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     constructor(address _token, address _guardian) {
-        token = IERC20(_token);
+        token = IVotes(_token);
         guardian = _guardian;
     }
 
@@ -171,8 +172,8 @@ contract DAO is ReentrancyGuard {
         }
         if (targets.length == 0) revert InvalidProposalLength();
 
-        // Check proposer has enough votes
-        uint256 votes = _getVotes(msg.sender);
+        // Check proposer has enough votes (use current checkpoint)
+        uint256 votes = _getCurrentVotes(msg.sender);
         if (votes < PROPOSAL_THRESHOLD) revert InsufficientVotes();
 
         // Check no active proposal
@@ -430,7 +431,8 @@ contract DAO is ReentrancyGuard {
 
         if (receipt.hasVoted) revert AlreadyVoted();
 
-        uint256 votes = _getVotes(voter);
+        // Use snapshot at proposal startBlock to prevent flash loan attacks
+        uint256 votes = _getVotes(voter, proposal.startBlock);
 
         receipt.hasVoted = true;
         receipt.support = support;
@@ -447,10 +449,21 @@ contract DAO is ReentrancyGuard {
         emit VoteCast(voter, proposalId, support, votes, reason);
     }
 
-    function _getVotes(address account) internal view returns (uint256) {
-        // Use current balance as voting power
-        // In production, use checkpointed balances
-        return token.balanceOf(account);
+    /// @notice Get voting power for an account at a specific block
+    /// @dev Uses snapshot-based voting to prevent flash loan attacks (HAL-03 compliant)
+    /// @param account Address to check voting power for
+    /// @param snapshotBlock Block number to snapshot votes at
+    function _getVotes(address account, uint256 snapshotBlock) internal view returns (uint256) {
+        // Use checkpointed balances to prevent flash loan attacks
+        // Votes are snapshotted at the proposal's startBlock
+        return token.getPastVotes(account, snapshotBlock);
+    }
+
+    /// @notice Get current voting power (for proposal threshold checks)
+    /// @dev Uses previous block to ensure checkpoint exists
+    function _getCurrentVotes(address account) internal view returns (uint256) {
+        // Use block.number - 1 to ensure the checkpoint exists
+        return token.getPastVotes(account, block.number - 1);
     }
 
     // ═══════════════════════════════════════════════════════════════════════

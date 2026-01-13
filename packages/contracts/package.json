@@ -1,0 +1,32 @@
+{
+  "name": "@luxfi/contracts",
+  "version": "1.5.1",
+  "description": "Lux Standard Library - Alias for @luxfi/standard",
+  "license": "BSD-3-Clause",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luxfi/standard.git"
+  },
+  "homepage": "https://standard.lux.network",
+  "keywords": [
+    "lux",
+    "ethereum",
+    "solidity",
+    "smart-contracts",
+    "defi",
+    "bridge",
+    "governance",
+    "safe",
+    "post-quantum",
+    "evm"
+  ],
+  "dependencies": {
+    "@luxfi/standard": "^1.5.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
