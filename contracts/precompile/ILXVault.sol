@@ -264,5 +264,5 @@ interface ILXVault {
     error MarketNotFound();
 }
 
-/// @notice LXVault precompile address constant
+/// @dev LXVault precompile address constant
 address constant LX_VAULT = 0x0000000000000000000000000000000000009030;
