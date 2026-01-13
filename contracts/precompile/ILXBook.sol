@@ -341,5 +341,5 @@ interface ILXBook {
     );
 }
 
-/// @notice LXBook precompile address constant
+/// @dev LXBook precompile address constant
 address constant LX_BOOK = 0x0000000000000000000000000000000000009020;
