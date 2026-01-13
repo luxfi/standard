@@ -1,0 +1,167 @@
+{
+  "networks": {
+    "lux-mainnet": {
+      "chainId": 96369,
+      "name": "Lux Mainnet",
+      "rpcUrl": "https://api.lux.network/rpc",
+      "explorer": "https://explore.lux.network",
+      "contracts": {
+        "core": {
+          "WLUX": "0x55750d6CA62a041c06a8E28626b10Be6c688f471",
+          "Multicall3": "0xd25F88CBdAe3c2CCA3Bb75FC4E723b44C0Ea362F"
+        },
+        "amm": {
+          "V2Factory": "0xd9a95609DbB228A13568Bd9f9A285105E7596970",
+          "V2Router": "0x1F6cbC7d3bc7D803ee76D80F0eEE25767431e674",
+          "V3Factory": "0xb732BD88F25EdD9C3456638671fB37685D4B4e3f",
+          "V3SwapRouter": "0xE8fb25086C8652c92f5AF90D730Bac7C63Fc9A58",
+          "V3SwapRouter02": "0x939bC0Bca6F9B9c52E6e3AD8A3C590b5d9B9D10E",
+          "V3Quoter": "0x12e2B76FaF4dDA5a173a4532916bb6Bfa3645275",
+          "V3QuoterV2": "0x15C729fdd833Ba675edd466Dfc63E1B737925A4c",
+          "V3TickLens": "0x57A22965AdA0e52D785A9Aa155beF423D573b879",
+          "V3NFTPositionManager": "0x7a4C48B9dae0b7c396569b34042fcA604150Ee28",
+          "V3NFTDescriptor": "0x53B1aAA5b6DDFD4eD00D0A7b5Ef333dc74B605b5"
+        },
+        "bridge": {
+          "LETH": "0xAA3AE95816a4A6FbC6b8Ed5a6C06f22A96A80C8C",
+          "LBTC": "0x526903E35E7106D62ED3B5d77E14e51d024Aa1D3",
+          "LUSD": "0x4B1BfA76eD63F1A0aD2E4f40b3F46C45E8F7A4E2"
+        },
+        "precompiles": {
+          "PoolManager": "0x0000000000000000000000000000000000009010",
+          "OracleHub": "0x0000000000000000000000000000000000009011",
+          "SwapRouter": "0x0000000000000000000000000000000000009012",
+          "HooksRegistry": "0x0000000000000000000000000000000000009013",
+          "FlashLoan": "0x0000000000000000000000000000000000009014",
+          "CLOB": "0x0000000000000000000000000000000000009020",
+          "Vault": "0x0000000000000000000000000000000000009030",
+          "Teleport": "0x0000000000000000000000000000000000006010"
+        }
+      }
+    },
+    "lux-testnet": {
+      "chainId": 96368,
+      "name": "Lux Testnet",
+      "rpcUrl": "https://api.lux-test.network/rpc",
+      "explorer": "https://explore.lux-test.network",
+      "contracts": {
+        "core": {
+          "WLUX": "0x732740c5c895C9FCF619930ed4293fc858eb44c7",
+          "WETH": "0xd9956542B51032d940ef076d70B69410667277A3",
+          "Multicall3": "0xd25F88CBdAe3c2CCA3Bb75FC4E723b44C0Ea362F"
+        },
+        "amm": {
+          "V2Factory": "0x81C3669B139D92909AA67DbF74a241b10540d919",
+          "V2Router": "0xDB6c703c80BFaE5F9a56482d3c8535f27E1136EB",
+          "V3Factory": "0x80bBc7C4C7a59C899D1B37BC14539A22D5830a84",
+          "V3SwapRouter": "0xE8fb25086C8652c92f5AF90D730Bac7C63Fc9A58",
+          "V3SwapRouter02": "0x939bC0Bca6F9B9c52E6e3AD8A3C590b5d9B9D10E",
+          "V3Quoter": "0x12e2B76FaF4dDA5a173a4532916bb6Bfa3645275",
+          "V3QuoterV2": "0x15C729fdd833Ba675edd466Dfc63E1B737925A4c",
+          "V3TickLens": "0x57A22965AdA0e52D785A9Aa155beF423D573b879",
+          "V3NFTPositionManager": "0x7a4C48B9dae0b7c396569b34042fcA604150Ee28",
+          "V3NFTDescriptor": "0x53B1aAA5b6DDFD4eD00D0A7b5Ef333dc74B605b5"
+        },
+        "bridge": {
+          "LETH": "0x60E0a8167FC13dE89348978860466C9ceC24B9ba",
+          "LBTC": "0x1E48D32a4F5e9f08DB9aE4959163300FaF8A6C8e",
+          "LUSD": "0xb84112ac9318a0b2319aa11d4d10e9762b25f7f4"
+        }
+      }
+    },
+    "zoo-mainnet": {
+      "chainId": 200200,
+      "name": "Zoo Network",
+      "rpcUrl": "https://api.zoo.network/rpc",
+      "explorer": "https://explore.zoo.network",
+      "contracts": {
+        "core": {
+          "WZOO": "0x4888E4a2Ee0F03051c72D2BD3ACf755eD3498B3E",
+          "Multicall3": "0xd25F88CBdAe3c2CCA3Bb75FC4E723b44C0Ea362F"
+        },
+        "amm": {
+          "V2Factory": "0xD173926A10A0C4eCd3A51B1422270b65Df0551c1",
+          "V2Router": "0xAe2cf1E403aAFE6C05A5b8Ef63EB19ba591d8511",
+          "V3Factory": "0x80bBc7C4C7a59C899D1B37BC14539A22D5830a84",
+          "V3SwapRouter02": "0x939bC0Bca6F9B9c52E6e3AD8A3C590b5d9B9D10E",
+          "V3Quoter": "0x12e2B76FaF4dDA5a173a4532916bb6Bfa3645275",
+          "V3TickLens": "0x57A22965AdA0e52D785A9Aa155beF423D573b879",
+          "V3NFTPositionManager": "0x7a4C48B9dae0b7c396569b34042fcA604150Ee28"
+        },
+        "tokens": {
+          "ZETH": "0x60E0a8167FC13dE89348978860466C9ceC24B9ba",
+          "ZBTC": "0x1E48D32a4F5e9f08DB9aE4959163300FaF8A6C8e",
+          "ZUSD": "0x848Cff46eb323f323b6Bbe1Df274E40793d7f2c2",
+          "ZLUX": "0x5E5290f350352768bD2bfC59c2DA15DD04A7cB88",
+          "ZSOL": "0x26B40f650156C7EbF9e087Dd0dca181Fe87625B7",
+          "ZBNB": "0x6EdcF3645DeF09DB45050638c41157D8B9FEa1cf",
+          "ZPOL": "0x28BfC5DD4B7E15659e41190983e5fE3df1132bB9",
+          "ZCELO": "0x3078847F879A33994cDa2Ec1540ca52b5E0eE2e5",
+          "ZFTM": "0x8B982132d639527E8a0eAAD385f97719af8f5e04",
+          "ZTON": "0x3141b94b89691009b950c96e97Bff48e0C543E3C"
+        },
+        "pools": {
+          "WZOO_ZUSD_0.30%": "0x37011bB281676f85962fb35C674f7E9EB7584452",
+          "WZOO_ZLUX_0.30%": "0x1c000d5dbE1246Fb84Ad431e933E5563F212A62b"
+        }
+      }
+    },
+    "zoo-testnet": {
+      "chainId": 200201,
+      "name": "Zoo Testnet",
+      "rpcUrl": "https://api.zoo-test.network/rpc",
+      "explorer": "https://explore.zoo-test.network",
+      "contracts": {
+        "core": {
+          "WZOO": "0x4888E4a2Ee0F03051c72D2BD3ACf755eD3498B3E",
+          "Multicall3": "0xd25F88CBdAe3c2CCA3Bb75FC4E723b44C0Ea362F"
+        },
+        "amm": {
+          "V2Factory": "0xD173926A10A0C4eCd3A51B1422270b65Df0551c1",
+          "V2Router": "0xAe2cf1E403aAFE6C05A5b8Ef63EB19ba591d8511",
+          "V3Factory": "0x80bBc7C4C7a59C899D1B37BC14539A22D5830a84",
+          "V3SwapRouter02": "0x939bC0Bca6F9B9c52E6e3AD8A3C590b5d9B9D10E",
+          "V3Quoter": "0x12e2B76FaF4dDA5a173a4532916bb6Bfa3645275",
+          "V3TickLens": "0x57A22965AdA0e52D785A9Aa155beF423D573b879",
+          "V3NFTPositionManager": "0x7a4C48B9dae0b7c396569b34042fcA604150Ee28"
+        }
+      }
+    },
+    "lux-dev": {
+      "chainId": 1337,
+      "name": "Lux Dev",
+      "rpcUrl": "http://localhost:8545/ext/bc/C/rpc",
+      "contracts": {
+        "core": {
+          "WLUX": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+          "Multicall3": "0xd25F88CBdAe3c2CCA3Bb75FC4E723b44C0Ea362F"
+        },
+        "amm": {
+          "V2Factory": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
+          "V2Router": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
+          "V3Factory": "0x80bBc7C4C7a59C899D1B37BC14539A22D5830a84",
+          "V3SwapRouter": "0xE8fb25086C8652c92f5AF90D730Bac7C63Fc9A58",
+          "V3SwapRouter02": "0x939bC0Bca6F9B9c52E6e3AD8A3C590b5d9B9D10E",
+          "V3Quoter": "0x12e2B76FaF4dDA5a173a4532916bb6Bfa3645275",
+          "V3QuoterV2": "0x15C729fdd833Ba675edd466Dfc63E1B737925A4c",
+          "V3TickLens": "0x57A22965AdA0e52D785A9Aa155beF423D573b879",
+          "V3NFTPositionManager": "0x7a4C48B9dae0b7c396569b34042fcA604150Ee28",
+          "V3NFTDescriptor": "0x53B1aAA5b6DDFD4eD00D0A7b5Ef333dc74B605b5"
+        },
+        "bridge": {
+          "LETH": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+          "LBTC": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+          "LUSD": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+        },
+        "staking": {
+          "StakedLUX": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0"
+        }
+      }
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "source": "~/work/lux/exchange/packages/exchange/src/contracts/addresses.ts",
+    "lastUpdated": "2026-01-12"
+  }
+}
