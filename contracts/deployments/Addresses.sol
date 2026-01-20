@@ -2,7 +2,8 @@
 pragma solidity ^0.8.24;
 
 // Lux Addresses - Canonical contract addresses across all Lux networks
-// Source of truth: ~/work/lux/exchange/packages/exchange/src/contracts/addresses.ts
+// Source of truth: RLP imports from ~/work/lux/state/rlp/
+// Reference: ~/work/lux/exchange/packages/exchange/src/contracts/addresses.ts
 //
 // Usage:
 //   import {LuxMainnet, LuxTestnet, ZooMainnet} from "@lux/standard/deployments/Addresses.sol";
@@ -17,23 +18,31 @@ uint256 constant LUX_DEV_CHAIN_ID = 1337;
 
 /**
  * @title Lux Mainnet Addresses (Chain ID: 96369)
+ * @notice Source of truth: RLP imports from ~/work/lux/state/rlp/
  */
 library LuxMainnet {
-    // Core
-    address constant WLUX = 0x55750d6CA62a041c06a8E28626b10Be6c688f471;
+    // Core (from RLP import - source of truth)
+    address constant WLUX = 0x4888E4a2Ee0F03051c72D2BD3ACf755eD3498B3E;
     address constant MULTICALL3 = 0xd25F88CBdAe3c2CCA3Bb75FC4E723b44C0Ea362F;
 
-    // Bridge Tokens
-    address constant LETH = 0xAA3AE95816A4a6FBC6B8eD5A6c06f22A96A80C8c;
-    address constant LBTC = 0x526903E35e7106D62Ed3B5d77E14e51D024aA1D3;
-    address constant LUSD = 0x4b1bFA76Ed63F1A0aD2e4F40b3F46c45e8f7A4e2;
+    // Bridge Tokens (L* prefix = bridged from source chains) - from RLP
+    address constant LETH = 0x60E0a8167FC13dE89348978860466C9ceC24B9ba;
+    address constant LBTC = 0x1E48D32a4F5e9f08DB9aE4959163300FaF8A6C8e;
+    address constant LUSD = 0x848Cff46eb323f323b6Bbe1Df274E40793d7f2c2;
+    address constant LZOO = 0x5E5290f350352768bD2bfC59c2DA15DD04A7cB88;
+    address constant LSOL = 0x1AF00A2590a834d14F4A8a26D1b03EBbA8cf7961;
+    address constant LTON = 0xF5a313885832D4Fc71d1Ef80115197c4479B58C8;
+    address constant LBNB = 0x6EdcF3645DeF09DB45050638c41157D8B9FEa1cf;
+    address constant LPOL = 0x28BfC5DD4B7E15659e41190983e5fE3df1132bB9;
+    address constant LCELO = 0x3078847F879A33994cDa2Ec1540ca52b5E0eE2e5;
+    address constant LFTM = 0x8B982132d639527E8a0eAAD385f97719af8f5e04;
 
-    // AMM V2 (QuantumSwap)
-    address constant V2_FACTORY = 0xd9a95609DbB228A13568Bd9f9A285105E7596970;
-    address constant V2_ROUTER = 0x1F6cbC7d3bc7D803ee76D80F0eEE25767431e674;
+    // AMM V2 (QuantumSwap) - from RLP
+    address constant V2_FACTORY = 0xD173926A10A0C4eCd3A51B1422270b65Df0551c1;
+    address constant V2_ROUTER = 0xAe2cf1E403aAFE6C05A5b8Ef63EB19ba591d8511;
 
-    // AMM V3 (Concentrated Liquidity)
-    address constant V3_FACTORY = 0xb732BD88F25EdD9C3456638671fB37685D4B4e3f;
+    // AMM V3 (Concentrated Liquidity) - from RLP
+    address constant V3_FACTORY = 0x80bBc7C4C7a59C899D1B37BC14539A22D5830a84;
     address constant V3_SWAP_ROUTER = 0xE8fb25086C8652c92f5AF90D730Bac7C63Fc9A58;
     address constant V3_SWAP_ROUTER_02 = 0x939bC0Bca6F9B9c52E6e3AD8A3C590b5d9B9D10E;
     address constant V3_QUOTER = 0x12e2B76FaF4dDA5a173a4532916bb6Bfa3645275;
@@ -45,23 +54,30 @@ library LuxMainnet {
 
 /**
  * @title Lux Testnet Addresses (Chain ID: 96368)
+ * @notice Bridge tokens use same CREATE2 addresses as mainnet
  */
 library LuxTestnet {
     // Core
-    address constant WLUX = 0x732740c5c895C9FCF619930ed4293fc858eb44c7;
-    address constant WETH = 0xd9956542B51032d940ef076d70B69410667277A3;
+    address constant WLUX = 0x4888E4a2Ee0F03051c72D2BD3ACf755eD3498B3E;
     address constant MULTICALL3 = 0xd25F88CBdAe3c2CCA3Bb75FC4E723b44C0Ea362F;
 
-    // Bridge Tokens
+    // Bridge Tokens (same CREATE2 addresses as mainnet)
     address constant LETH = 0x60E0a8167FC13dE89348978860466C9ceC24B9ba;
     address constant LBTC = 0x1E48D32a4F5e9f08DB9aE4959163300FaF8A6C8e;
-    address constant LUSD = 0xB84112AC9318a0B2319aa11d4D10E9762b25F7F4;
+    address constant LUSD = 0x848Cff46eb323f323b6Bbe1Df274E40793d7f2c2;
+    address constant LZOO = 0x5E5290f350352768bD2bfC59c2DA15DD04A7cB88;
+    address constant LSOL = 0x1AF00A2590a834d14F4A8a26D1b03EBbA8cf7961;
+    address constant LTON = 0xF5a313885832D4Fc71d1Ef80115197c4479B58C8;
+    address constant LBNB = 0x6EdcF3645DeF09DB45050638c41157D8B9FEa1cf;
+    address constant LPOL = 0x28BfC5DD4B7E15659e41190983e5fE3df1132bB9;
+    address constant LCELO = 0x3078847F879A33994cDa2Ec1540ca52b5E0eE2e5;
+    address constant LFTM = 0x8B982132d639527E8a0eAAD385f97719af8f5e04;
 
-    // AMM V2
-    address constant V2_FACTORY = 0x81C3669B139D92909AA67DbF74a241b10540d919;
-    address constant V2_ROUTER = 0xDB6c703c80BFaE5F9a56482d3c8535f27E1136EB;
+    // AMM V2 (same CREATE2 addresses as mainnet)
+    address constant V2_FACTORY = 0xD173926A10A0C4eCd3A51B1422270b65Df0551c1;
+    address constant V2_ROUTER = 0xAe2cf1E403aAFE6C05A5b8Ef63EB19ba591d8511;
 
-    // AMM V3
+    // AMM V3 (same CREATE2 addresses as mainnet)
     address constant V3_FACTORY = 0x80bBc7C4C7a59C899D1B37BC14539A22D5830a84;
     address constant V3_SWAP_ROUTER = 0xE8fb25086C8652c92f5AF90D730Bac7C63Fc9A58;
     address constant V3_SWAP_ROUTER_02 = 0x939bC0Bca6F9B9c52E6e3AD8A3C590b5d9B9D10E;
