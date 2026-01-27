@@ -17,6 +17,6 @@ abstract contract LuxTestnetFHEVMConfig is FHEVMConfig {}
 abstract contract LuxMainnetFHEVMConfig is FHEVMConfig {}
 
 // Legacy aliases for backward compatibility
-abstract contract SepoliaZamaFHEVMConfig is LuxFHEVMConfig {}
+abstract contract SepoliaLegacyFHEVMConfig is LuxFHEVMConfig {}
 abstract contract SepoliaFHEVMConfig is LuxTestnetFHEVMConfig {}
 abstract contract MainnetFHEVMConfig is LuxMainnetFHEVMConfig {}
