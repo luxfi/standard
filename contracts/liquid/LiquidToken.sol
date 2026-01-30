@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.31;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
-import {LRC20} from "../tokens/LRC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {AccessControl} from "@luxfi/standard/access/Access.sol";
+import {Context} from "@luxfi/standard/utils/Utils.sol";
+import {LRC20} from "@luxfi/standard/tokens/LRC20.sol";
+import {ReentrancyGuard} from "@luxfi/standard/utils/Utils.sol";
 
 import {IllegalArgument, IllegalState, Unauthorized} from "./base/Errors.sol";
 import {IERC3156FlashBorrower} from "./interfaces/IERC3156FlashBorrower.sol";

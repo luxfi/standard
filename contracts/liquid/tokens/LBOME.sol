@@ -13,7 +13,7 @@ pragma solidity ^0.8.31;
 import "../../bridge/LRC20B.sol";
 
 contract LuxBOME is LRC20B {
-    string public constant _name = "Lux BOME";
+    string public constant _name = "Liquid BOME";
     string public constant _symbol = "LBOME";
 
     constructor() LRC20B(_name, _symbol) {}
