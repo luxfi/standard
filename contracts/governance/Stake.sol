@@ -8,15 +8,15 @@ import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title Identity
+ * @title Stake
  * @author Lux Industries Inc
- * @notice ERC20 governance token with voting power and DID integration
+ * @notice ERC20 governance token representing staked voting power in a DAO
  * @dev Implements ERC20Votes for on-chain governance with optional soulbound mode
  *
- * Political Analog: Citizenship / Voter ID
- * - Represents voting rights within the DAO
+ * Represents staked voting power:
+ * - Voting weight in DAO governance
  * - Can be transferable or soulbound (non-transferable)
- * - Integrates with Decentralized Identity (DID) infrastructure
+ * - Links to DID for identity (did:lux:alice)
  *
  * Features:
  * - Checkpointing for historical vote lookups
@@ -24,9 +24,9 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  * - Delegation of voting power
  * - Optional minting cap
  * - Soulbound mode for citizenship-like tokens
- * - DID document linkage
+ * - DID linkage (references did/Registry)
  */
-contract Identity is ERC20, ERC20Permit, ERC20Votes, Ownable {
+contract Stake is ERC20, ERC20Permit, ERC20Votes, Ownable {
     /// @notice Maximum supply (0 = unlimited)
     uint256 public immutable maxSupply;
 
