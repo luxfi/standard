@@ -15,7 +15,8 @@ script = "contracts/script"
 # Remappings - comprehensive library support
 remappings = [
     # Lux Contracts paths
-    "@luxfi/contracts/=contracts/",
+    "@luxfi/standard/=contracts/",  # Primary package name
+    "@luxfi/contracts/=contracts/",  # Alternate name
     "@luxfi/lamport/=../lamport/contracts/",
     "@luxfi/contracts/lib/=lib/openzeppelin-contracts/contracts/",
     "@luxfi/contracts/lib-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
@@ -85,10 +86,8 @@ remappings = [
     "forge-std/=lib/forge-std/src/",
 ]
 
-# Ignore problematic library files (natspec compatibility issues with solc 0.8.31)
-ignore = ["lib/safe-smart-account/**"]
-# Treat warnings as warnings, not errors
-deny_warnings = false
+# Ignore warnings from problematic library files (natspec compatibility issues with solc 0.8.31)
+ignored_warnings_from = ["lib/safe-smart-account/**", "lib/**"]
 
 [profile.default.fmt]
 line_length = 120
@@ -105,6 +104,8 @@ fs_permissions = [
 [rpc_endpoints]
 lux = "https://api.lux.network/ext/bc/C/rpc"
 lux_testnet = "https://api.lux-test.network/ext/bc/C/rpc"
+lux_devnet = "${DEVNET_RPC}"
+lux_local = "http://127.0.0.1:9650/ext/bc/C/rpc"
 
 # Seaport compilation profile (uses 0.8.24)
 # Build with: FOUNDRY_PROFILE=seaport forge build
