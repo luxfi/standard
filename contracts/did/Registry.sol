@@ -162,10 +162,10 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
         domains[96368] = "test.lux.id";
 
         // Pars ecosystem
-        methods[787878] = "pars";
-        domains[787878] = "pars.id";
-        methods[787879] = "pars-test";
-        domains[787879] = "test.pars.id";
+        methods[494949] = "pars";
+        domains[494949] = "pars.id";
+        methods[494950] = "pars-test";
+        domains[494950] = "test.pars.id";
 
         // Zoo ecosystem
         methods[200200] = "zoo";
