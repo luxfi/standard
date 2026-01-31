@@ -184,6 +184,23 @@ On-chain governance with vote-escrowed tokens:
 | **vLUX** | Vote-escrowed LUX |
 | **GaugeController** | Gauge weight voting |
 
+**DAO Governance Stack** (see [LIP-7001](https://github.com/luxfi/lips/blob/main/LIPs/lip-7001-dao-governance-standard.md)):
+
+| Contract | Description |
+|----------|-------------|
+| **Governor** | On-chain proposal and execution module |
+| **FreezeGuard** | Hierarchical DAO freeze protection |
+| **LinearERC20Voting** | Token-weighted linear voting strategy |
+| **LinearERC721Voting** | NFT-based linear voting strategy |
+| **FractalModule** | Sub-DAO hierarchy management |
+
+**Town Hall Access Gate** (see [LIP-7002](https://github.com/luxfi/lips/blob/main/LIPs/lip-7002-town-hall-protocol.md)):
+
+Town Hall provides private audio/video rooms for DAO members. Access is gated on-chain:
+- Safe multisig signers
+- Governance token holders (ERC20Votes balance > 0)
+- Hats Protocol role holders
+
 ```solidity
 import "@luxfi/contracts/governance/DAO.sol";
 
@@ -419,14 +436,37 @@ Full documentation available at [standard.lux.network](https://standard.lux.netw
 
 ## Security
 
+[![Security](https://github.com/luxfi/standard/actions/workflows/security.yml/badge.svg)](https://github.com/luxfi/standard/actions/workflows/security.yml)
+
 - All contracts follow Solidity best practices
 - Built on OpenZeppelin libraries where applicable
 - Post-quantum cryptography for future-proofing
-- Comprehensive test coverage (709 tests)
+- Comprehensive test coverage (832 tests, 105 fuzz tests)
 
-### Audits
+### Continuous Audits
 
-Audit reports are available in the `audits/` directory.
+We run automated security analysis on every commit using Trail of Bits tools:
+
+| Tool | Purpose |
+|------|---------|
+| **Slither** | Static analysis |
+| **Echidna** | Property-based fuzzing |
+| **Medusa** | Fast parallel fuzzing |
+| **Semgrep** | SAST rules |
+| **CodeQL** | Semantic analysis |
+
+See [Continuous Audits](./docs/security/continuous-audits.md) for details.
+
+### Audit Reports
+
+| Date | Auditor | Report |
+|------|---------|--------|
+| 2026-01-31 | Internal (AI) | [AUDIT_SUMMARY.md](./AUDIT_SUMMARY.md) |
+| TBD | Trail of Bits | Pending |
+
+### Responsible Disclosure
+
+Report vulnerabilities to security@lux.network. See [SECURITY.md](./SECURITY.md) for our bug bounty program.
 
 ## Contributing
 

@@ -1,6 +1,6 @@
 # AI Assistant Knowledge Base
 
-**Last Updated**: 2026-01-02
+**Last Updated**: 2026-01-24
 **Project**: Lux Standard (Solidity Contracts & Precompiles)
 **Organization**: Lux Industries
 **Solidity Version**: 0.8.31
@@ -2791,6 +2791,42 @@ Private Key: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 | **LiquidLUX** | `0x00947bbdc619974b0eddaf103b981f3273a3e8da` | Master yield vault (xLUX) |
 
 **RPC**: `https://api.lux-test.network/ext/bc/C/rpc`
+
+### C-Chain Devnet (96370) - Full Stack Deployment (2026-01-24)
+
+**RPC**: `https://api.lux-dev.network/ext/bc/C/rpc`
+
+**Phases 1-12 (DeployFullStack.s.sol)**:
+
+| Contract | Address | Description |
+|----------|---------|-------------|
+| **WLUX** | `0xc65ea8882020Af7CDa7854d590C6Fcd34BF364ec` | Wrapped LUX |
+| **DLUX** | `0x316520ca05eaC5d2418F562a116091F1b22Bf6e0` | Rebasing governance token |
+| **Timelock** | `0x80f3bd0Bdf7861487dDDA61bc651243ecB8B5072` | Governance timelock |
+| **vLUX** | `0x91954cf6866d557C5CA1D2f384D204bcE9DFfd5a` | Voting power token |
+| **DAO Treasury** | `0xC764A58Ee3C5bAE3008C034E566352424be933F3` | Treasury safe |
+| **Markets** | `0x6fc44509a32E513bE1aa00d27bb298e63830C6A8` | Morpho-style lending |
+| **Perps** | `0xb2ee1CE7b84853b83AA08702aD0aD4D79711882D` | Perpetual futures |
+| **LSSVM Factory** | `0x0570b2c59976E87D37d3a9915750BFf131d295D6` | NFT AMM factory |
+| **GaugeController** | `0x26328AC03d07BD9A7Caaafbde39F9b56B5449240` | Gauge weights |
+| **Karma** | `0x97c265001EB088E1dE2F77A13a62B708014c9e68` | Soul-bound reputation |
+| **StakedLUX** | `0x191067f88d61f9506555E88CEab9CF71deeD61A9` | Staked LUX |
+| **FeeGov** | `0x92d057F8B4132Ca8Aa237fbd4C41F9c57079582E` | Fee governance |
+
+**Phases 13-14 (DeployGovernanceSuite.s.sol)**:
+
+| Contract | Address | Description |
+|----------|---------|-------------|
+| **VotingLUX** | `0x43222597839515180E7aD564C94a3b5c16EB987C` | Aggregated voting power |
+| **Strategy** | `0x4EC24Da7d598CAC1540F2E8078D05869e36a4ef1` | Strategy proxy factory |
+| **Governor** | `0x6fc44509a32E513bE1aa00d27bb298e63830C6A8` | Governor contract |
+| **StableSwapFactory** | `0xb2ee1CE7b84853b83AA08702aD0aD4D79711882D` | Curve-style AMM factory |
+| **Options** | `0xac604Fd2F423Ea738de9C0d6Eb03eBA6F90b63FB` | European options protocol |
+| **Streams** | `0xd9e69a0A38BF48898456170CB3B4451cBaF5F597` | Sablier-style streaming |
+| **IntentRouter** | `0x5ED08c64FbF027966C04E6fc87E6b58a91De4dB2` | Limit orders + RFQ |
+| **Cover** | `0x92d057F8B4132Ca8Aa237fbd4C41F9c57079582E` | Protocol insurance |
+
+**Note**: FHE Governance (ConfidentialGovernor, etc.) requires FHE precompiles - deploy on Q-Chain when enabled.
 
 ### Zoo EVM (200200/200201)
 

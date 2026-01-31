@@ -80,6 +80,12 @@ const config: HardhatUserConfig = {
       chainId: 96369,
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
     },
+    lux_devnet: {
+      url: process.env.DEVNET_RPC || "http://143.110.230.60:53904/ext/bc/C/rpc",
+      chainId: parseInt(process.env.DEVNET_CHAIN_ID || "0"), // Will be set dynamically
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+      timeout: 60000,
+    },
     // Zoo Networks
     zoo: {
       url: "https://api.zoo.network/rpc",

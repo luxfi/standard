@@ -1,0 +1,37 @@
+# Echidna Configuration for Lux Standard Contracts
+# Trail of Bits smart contract fuzzer
+# Docs: https://github.com/crytic/echidna
+
+# Test configuration
+testMode: assertion
+testLimit: 50000
+shrinkLimit: 5000
+
+# Corpus settings
+corpusDir: "crytic-export/echidna-corpus"
+
+# Compilation settings
+cryticArgs: ["--foundry-compile-all"]
+
+# Fuzzing parameters
+seqLen: 100
+deployer: "0x10000"
+sender: ["0x10000", "0x20000", "0x30000"]
+coverage: true
+
+# Contract filtering
+filterBlacklist: false
+filterFunctions: []
+
+# Output
+format: text
+quiet: false
+
+# Timeout per transaction (in seconds)
+timeout: 300
+
+# Maximum gas per transaction
+maxGas: 12500000
+
+# Workers for parallel fuzzing
+workers: 4
