@@ -51,7 +51,7 @@ contract TreasuryTest is Test {
         vault.init(address(router));
 
         // Deploy collector on another chain (simulated)
-        collect = new Collect(address(wlux), CHAIN_C, address(vault));
+        collect = new Collect(address(wlux), CHAIN_C, address(vault), owner);
 
         // Set up router weights: 70% stakers, 20% DAO, 10% dev
         address[] memory recipients = new address[](3);

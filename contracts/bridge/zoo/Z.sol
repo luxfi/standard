@@ -14,10 +14,7 @@ pragma solidity ^0.8.31;
 import "../LRC20B.sol";
 
 contract Z is LRC20B {
-    string public constant _name = "Z";
-    string public constant _symbol = "Z";
-
-    constructor() LRC20B(_name, _symbol) {}
+    constructor() LRC20B("Z", "Z") {}
 
     function decimals() public view virtual override returns (uint8) {
         return 6;

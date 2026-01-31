@@ -7,7 +7,7 @@ import "forge-std/Test.sol";
 // Note: Governor.sol is now Zodiac-style for Safe integration
 // Using DAO for simple governance tests
 import {DAO} from "../../contracts/governance/DAO.sol";
-import {VotesToken} from "../../contracts/governance/VotesToken.sol";
+import {Stake} from "../../contracts/governance/Stake.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 
 // vLUX and Gauge contracts
@@ -29,7 +29,7 @@ contract GovernanceTest is Test {
 
     // Simple DAO governance (Governor.sol is Zodiac-style for Safe)
     DAO public governor;
-    VotesToken public govToken;
+    Stake public govToken;
     TimelockController public timelock;
 
     // vLUX system
@@ -38,7 +38,7 @@ contract GovernanceTest is Test {
     GaugeController public gaugeController;
 
     // Simple DAO
-    VotesToken public daoToken;
+    Stake public daoToken;
     DAO public dao;
 
     // Mock target
@@ -83,12 +83,12 @@ contract GovernanceTest is Test {
         // ─────────────────────────────────────────────────────────────────
 
         // Deploy governance token
-        VotesToken.Allocation[] memory allocations = new VotesToken.Allocation[](3);
-        allocations[0] = VotesToken.Allocation(alice, ALICE_TOKENS);
-        allocations[1] = VotesToken.Allocation(bob, BOB_TOKENS);
-        allocations[2] = VotesToken.Allocation(charlie, CHARLIE_TOKENS);
+        Stake.Allocation[] memory allocations = new Stake.Allocation[](3);
+        allocations[0] = Stake.Allocation(alice, ALICE_TOKENS);
+        allocations[1] = Stake.Allocation(bob, BOB_TOKENS);
+        allocations[2] = Stake.Allocation(charlie, CHARLIE_TOKENS);
 
-        govToken = new VotesToken(
+        govToken = new Stake(
             "Lux Governance",
             "vLUX-GOV",
             allocations,
@@ -133,12 +133,12 @@ contract GovernanceTest is Test {
         // Setup Simple DAO
         // ─────────────────────────────────────────────────────────────────
 
-        VotesToken.Allocation[] memory daoAllocations = new VotesToken.Allocation[](3);
-        daoAllocations[0] = VotesToken.Allocation(alice, ALICE_TOKENS);
-        daoAllocations[1] = VotesToken.Allocation(bob, BOB_TOKENS);
-        daoAllocations[2] = VotesToken.Allocation(charlie, CHARLIE_TOKENS);
+        Stake.Allocation[] memory daoAllocations = new Stake.Allocation[](3);
+        daoAllocations[0] = Stake.Allocation(alice, ALICE_TOKENS);
+        daoAllocations[1] = Stake.Allocation(bob, BOB_TOKENS);
+        daoAllocations[2] = Stake.Allocation(charlie, CHARLIE_TOKENS);
 
-        daoToken = new VotesToken(
+        daoToken = new Stake(
             "DAO Token",
             "DAO",
             daoAllocations,
@@ -360,33 +360,33 @@ contract GovernanceTest is Test {
     // VOTESTOKEN TESTS
     // ═══════════════════════════════════════════════════════════════════════
 
-    function test_VotesTokenDeployment() public view {
+    function test_StakeDeployment() public view {
         assertEq(govToken.name(), "Lux Governance");
         assertEq(govToken.symbol(), "vLUX-GOV");
         assertEq(govToken.totalSupply(), ALICE_TOKENS + BOB_TOKENS + CHARLIE_TOKENS);
         assertEq(govToken.balanceOf(alice), ALICE_TOKENS);
     }
 
-    function test_VotesTokenMint() public {
+    function test_StakeMint() public {
         vm.prank(admin);
         govToken.mint(address(0xdead), 1000e18);
 
         assertEq(govToken.balanceOf(address(0xdead)), 1000e18);
     }
 
-    function test_VotesTokenBurn() public {
+    function test_StakeBurn() public {
         vm.prank(alice);
         govToken.burn(1000e18);
 
         assertEq(govToken.balanceOf(alice), ALICE_TOKENS - 1000e18);
     }
 
-    function test_VotesTokenMaxSupply() public {
+    function test_StakeMaxSupply() public {
         // Deploy with max supply
-        VotesToken.Allocation[] memory allocations = new VotesToken.Allocation[](1);
-        allocations[0] = VotesToken.Allocation(alice, 1000e18);
+        Stake.Allocation[] memory allocations = new Stake.Allocation[](1);
+        allocations[0] = Stake.Allocation(alice, 1000e18);
 
-        VotesToken capped = new VotesToken(
+        Stake capped = new Stake(
             "Capped",
             "CAP",
             allocations,
@@ -403,12 +403,12 @@ contract GovernanceTest is Test {
         vm.stopPrank();
     }
 
-    function test_VotesTokenLocked() public {
+    function test_StakeLocked() public {
         // Deploy locked token
-        VotesToken.Allocation[] memory allocations = new VotesToken.Allocation[](1);
-        allocations[0] = VotesToken.Allocation(alice, 1000e18);
+        Stake.Allocation[] memory allocations = new Stake.Allocation[](1);
+        allocations[0] = Stake.Allocation(alice, 1000e18);
 
-        VotesToken locked = new VotesToken(
+        Stake locked = new Stake(
             "Locked",
             "LOCK",
             allocations,
@@ -422,9 +422,9 @@ contract GovernanceTest is Test {
         vm.expectRevert();
         locked.transfer(bob, 100e18);
 
-        // Unlock
+        // Unlock (disable soulbound mode)
         vm.prank(admin);
-        locked.unlock();
+        locked.setSoulbound(false);
 
         // Now transfers work
         vm.prank(alice);
@@ -700,6 +700,9 @@ contract GovernanceTest is Test {
     // ═══════════════════════════════════════════════════════════════════════
 
     function test_DAOCreateProposal() public {
+        // Advance a block so alice's voting power is recorded
+        vm.roll(block.number + 1);
+
         vm.startPrank(alice);
 
         address[] memory targets = new address[](1);
@@ -929,6 +932,9 @@ contract GovernanceTest is Test {
     }
 
     function _createDAOProposal() internal returns (uint256) {
+        // Advance a block so alice's voting power is recorded
+        vm.roll(block.number + 1);
+
         vm.startPrank(alice);
 
         address[] memory targets = new address[](1);

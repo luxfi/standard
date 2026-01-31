@@ -5,10 +5,7 @@ pragma solidity ^0.8.31;
 import "../LRC20B.sol";
 
 contract ZooDOGS is LRC20B {
-    string public constant _name = "Zoo DOGS";
-    string public constant _symbol = "ZDOGS";
-
-    constructor() LRC20B(_name, _symbol) {}
+    constructor() LRC20B("Zoo DOGS", "ZDOGS") {}
 
     function mint(address account, uint256 amount) public onlyAdmin {
         _mint(account, amount);

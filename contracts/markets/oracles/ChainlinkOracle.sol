@@ -45,6 +45,7 @@ contract ChainlinkOracle is IOracle {
 
     error StalePrice();
     error InvalidPrice();
+    error StaleRound();
 
     /// @param _baseFeed Chainlink feed for collateral asset
     /// @param _quoteFeed Chainlink feed for loan asset (address(0) if USD)
@@ -89,10 +90,18 @@ contract ChainlinkOracle is IOracle {
     }
 
     function _getPrice(AggregatorV3Interface feed, uint8 feedDecimals) internal view returns (uint256) {
-        (, int256 answer,, uint256 updatedAt,) = feed.latestRoundData();
-        
+        (
+            uint80 roundId,
+            int256 answer,
+            ,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        ) = feed.latestRoundData();
+
         if (answer <= 0) revert InvalidPrice();
+        if (updatedAt == 0) revert StalePrice();
         if (block.timestamp - updatedAt > maxStaleness) revert StalePrice();
+        if (answeredInRound < roundId) revert StaleRound();
 
         // Normalize to 8 decimals for consistency
         if (feedDecimals > 8) {

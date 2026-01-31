@@ -13,10 +13,7 @@ pragma solidity ^0.8.31;
 import "../../bridge/LRC20B.sol";
 
 contract LuxMEW is LRC20B {
-    string public constant _name = "Liquid MEW";
-    string public constant _symbol = "LMEW";
-
-    constructor() LRC20B(_name, _symbol) {}
+    constructor() LRC20B("Liquid MEW", "LMEW") {}
 
     function mint(address account, uint256 amount) public onlyAdmin {
         _mint(account, amount);

@@ -14,10 +14,7 @@ pragma solidity ^0.8.31;
 import "../LRC20B.sol";
 
 contract CYRUS is LRC20B {
-    string public constant _name = "Cyrus AI";
-    string public constant _symbol = "CYRUS";
-
-    constructor() LRC20B(_name, _symbol) {}
+    constructor() LRC20B("Cyrus AI", "CYRUS") {}
 
     function decimals() public view virtual override returns (uint8) {
         return 6;

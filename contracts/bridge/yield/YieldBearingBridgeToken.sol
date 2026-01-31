@@ -116,6 +116,10 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
     event YieldReported(bytes32 indexed reportId, uint256 yieldAmount, uint256 newTotalAssets);
     event YieldDistributed(uint256 amount, uint256 protocolFeeAmount);
     event StrategyUpdated(bytes32 indexed strategyId, string name, uint256 allocation);
+    event BridgeUpdated(address indexed oldBridge, address indexed newBridge);
+    event SourceVaultUpdated(address indexed oldVault, address indexed newVault);
+    event ProtocolFeeUpdated(uint256 oldFee, uint256 newFee);
+    event FeeReceiverUpdated(address indexed oldReceiver, address indexed newReceiver);
 
     // ═══════════════════════════════════════════════════════════════════════
     // MODIFIERS
@@ -411,20 +415,28 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     function setBridge(address _bridge) external onlyOwner {
+        address oldBridge = bridge;
         bridge = _bridge;
+        emit BridgeUpdated(oldBridge, _bridge);
     }
 
     function setSourceVault(address _sourceVault) external onlyOwner {
+        address oldVault = sourceVault;
         sourceVault = _sourceVault;
+        emit SourceVaultUpdated(oldVault, _sourceVault);
     }
 
     function setProtocolFee(uint256 _fee) external onlyOwner {
         require(_fee <= 2000, "YieldBearingBridgeToken: fee too high"); // Max 20%
+        uint256 oldFee = protocolFee;
         protocolFee = _fee;
+        emit ProtocolFeeUpdated(oldFee, _fee);
     }
 
     function setFeeReceiver(address _feeReceiver) external onlyOwner {
+        address oldReceiver = feeReceiver;
         feeReceiver = _feeReceiver;
+        emit FeeReceiverUpdated(oldReceiver, _feeReceiver);
     }
 }
 

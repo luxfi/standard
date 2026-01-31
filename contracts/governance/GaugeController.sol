@@ -89,6 +89,7 @@ contract GaugeController is ReentrancyGuard, Ownable2Step {
     
     event GaugeAdded(uint256 indexed gaugeId, address recipient, string name);
     event GaugeUpdated(uint256 indexed gaugeId, bool active);
+    event GaugeRecipientUpdated(uint256 indexed gaugeId, address oldRecipient, address newRecipient);
     event VoteCast(address indexed user, uint256 indexed gaugeId, uint256 weight);
     event WeightsUpdated(uint256 timestamp);
 
@@ -150,7 +151,9 @@ contract GaugeController is ReentrancyGuard, Ownable2Step {
     /// @notice Update gauge recipient
     function setGaugeRecipient(uint256 gaugeId, address recipient) external onlyOwner {
         if (gaugeId >= gauges.length) revert GaugeNotFound();
+        address oldRecipient = gauges[gaugeId].recipient;
         gauges[gaugeId].recipient = recipient;
+        emit GaugeRecipientUpdated(gaugeId, oldRecipient, recipient);
     }
 
     // ============ Voting Functions ============

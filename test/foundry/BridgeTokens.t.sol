@@ -78,15 +78,15 @@ contract BridgeTokensTest is Test {
     //////////////////////////////////////////////////////////////*/
 
     function test_LuxTokenMetadata() public {
-        assertEq(leth.name(), "Lux ETH");
+        assertEq(leth.name(), "Liquid ETH");
         assertEq(leth.symbol(), "LETH");
         assertEq(leth.decimals(), 18);
 
-        assertEq(lbtc.name(), "Lux BTC");
+        assertEq(lbtc.name(), "Liquid BTC");
         assertEq(lbtc.symbol(), "LBTC");
         assertEq(lbtc.decimals(), 18);
 
-        assertEq(lusd.name(), "Lux Dollar");
+        assertEq(lusd.name(), "Liquid Dollar");
         assertEq(lusd.symbol(), "LUSD");
         assertEq(lusd.decimals(), 18);
     }

@@ -1145,23 +1145,24 @@ contract LRTStrategyAggregator is Ownable, ReentrancyGuard {
     function deposit() external payable nonReentrant returns (uint256[] memory shares) {
         if (msg.value < minDeposit) revert BelowMinimum();
 
+        uint256 totalValue = msg.value; // Cache msg.value before loop
         shares = new uint256[](strategies.length);
-        uint256 remaining = msg.value;
+        uint256 remaining = totalValue;
 
         for (uint256 i = 0; i < strategies.length; i++) {
             if (!strategies[i].active) continue;
 
-            uint256 amount = (msg.value * strategies[i].allocation) / 10000;
+            uint256 amount = (totalValue * strategies[i].allocation) / 10000;
             if (amount > remaining) amount = remaining;
 
             if (amount > 0) {
-                shares[i] = IYieldStrategy(strategies[i].strategy).deposit(amount);
+                shares[i] = IYieldStrategy(strategies[i].strategy).deposit{value: amount}(amount);
                 remaining -= amount;
             }
         }
 
-        totalDeposited += msg.value;
-        emit Deposited(msg.sender, msg.value);
+        totalDeposited += totalValue;
+        emit Deposited(msg.sender, totalValue);
     }
 
     function totalAssets() external view returns (uint256 total) {

@@ -94,6 +94,12 @@ contract Charter is ICharter, ERC165, Initializable {
      */
     uint256 public constant BASIS_DENOMINATOR = 1_000_000;
 
+    /**
+     * @notice Minimum voting delay in blocks before voting starts
+     * @dev Prevents flash loan governance attacks (C-02)
+     */
+    uint256 public constant MIN_VOTING_DELAY = 1;
+
     // ======================================================================
     // INTERNAL HELPERS
     // ======================================================================
@@ -372,7 +378,8 @@ contract Charter is ICharter, ERC165, Initializable {
 
         proposal.votingStartTimestamp = uint48(block.timestamp);
         proposal.votingEndTimestamp = uint48(block.timestamp + $.votingPeriod);
-        proposal.votingStartBlock = uint32(block.number);
+        // C-02 fix: Add minimum voting delay to prevent flash loan attacks
+        proposal.votingStartBlock = uint32(block.number + MIN_VOTING_DELAY);
         proposal.yesVotes = 0;
         proposal.noVotes = 0;
         proposal.abstainVotes = 0;

@@ -16,6 +16,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./LRC20B.sol";
 import "./BridgeVault.sol";
 
@@ -38,6 +39,10 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
     event AdminRevoked(address to);
     event SigMappingAdded(bytes _key);
     event NewMPCOracleSet(address MPCOracle);
+    event WithdrawalEnabledUpdated(bool oldState, bool newState);
+    event PayoutSettingsUpdated(address oldPayoutAddress, address newPayoutAddress, uint256 oldFeeRate, uint256 newFeeRate);
+    event VaultUpdated(address oldVault, address newVault);
+    event NewVaultAdded(address asset);
 
     constructor() Ownable(msg.sender) {
         payoutAddress = msg.sender; // by default, the payout address is set to deployer
@@ -66,7 +71,9 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
      * @param state_ admin address
      */
     function setWithdrawalEnabled(bool state_) external onlyOwner {
+        bool oldState = withdrawalEnabled;
         withdrawalEnabled = state_;
+        emit WithdrawalEnabledUpdated(oldState, state_);
     }
 
     /**
@@ -88,8 +95,11 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
         address payoutAddress_,
         uint256 feeRate_
     ) public onlyAdmin {
+        address oldPayoutAddress = payoutAddress;
+        uint256 oldFeeRate = feeRate;
         payoutAddress = payoutAddress_;
         feeRate = feeRate_;
+        emit PayoutSettingsUpdated(oldPayoutAddress, payoutAddress_, oldFeeRate, feeRate_);
     }
 
     /**
@@ -175,7 +185,9 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
      */
     function setVault(address payable vault_) public onlyAdmin {
         require(vault_ != address(0), "Invalid address");
+        address oldVault = address(vault);
         vault = BridgeVault(vault_);
+        emit VaultUpdated(oldVault, vault_);
     }
 
     /**
@@ -184,6 +196,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
      */
     function addNewVault(address asset_) public onlyAdmin {
         vault.addNewVault(asset_);
+        emit NewVaultAdded(asset_);
     }
 
     /**
@@ -262,6 +275,11 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
      * @param decimalStr_ decimal of source token
      * @param vault_ usage of valult
      */
+    /**
+     * @dev Concat data to sign using abi.encode to prevent hash collisions
+     * @notice Uses abi.encode instead of abi.encodePacked to prevent collision attacks
+     *         with multiple dynamic-length arguments
+     */
     function append(
         string memory amt_,
         string memory toTargetAddrStr_,
@@ -273,7 +291,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
     ) internal pure returns (string memory) {
         return
             string(
-                abi.encodePacked(
+                abi.encode(
                     amt_,
                     toTargetAddrStr_,
                     txid_,
@@ -324,7 +342,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
         bytes32 r;
         bytes32 s;
         (v, r, s) = splitSignature(sig_);
-        return ecrecover(message_, v, r, s);
+        return ECDSA.recover(message_, v, r, s);
     }
 
     /**

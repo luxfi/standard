@@ -21,7 +21,7 @@ import {AMMV2Router} from "../../contracts/amm/AMMV2Router.sol";
 import {AMMV2Pair} from "../../contracts/amm/AMMV2Pair.sol";
 
 // Governance (using DAO for simple governance - Governor is Zodiac-style for Safe)
-import {VotesToken} from "../../contracts/governance/VotesToken.sol";
+import {Stake} from "../../contracts/governance/Stake.sol";
 import {Timelock} from "../../contracts/governance/Timelock.sol";
 import {DAO} from "../../contracts/governance/DAO.sol";
 import {vLUX} from "../../contracts/governance/vLUX.sol";
@@ -102,7 +102,7 @@ contract LuxE2ETest is Test {
     AMMV2Router public router;
 
     // Governance
-    VotesToken public govToken;
+    Stake public govToken;
     Timelock public timelock;
     DAO public governor;  // Using DAO for simple governance (Governor is Zodiac-style for Safe)
     vLUX public voteLux;
@@ -188,13 +188,13 @@ contract LuxE2ETest is Test {
 
     function _deployGovernance() internal {
         // Governance token
-        VotesToken.Allocation[] memory allocations = new VotesToken.Allocation[](1);
-        allocations[0] = VotesToken.Allocation({
+        Stake.Allocation[] memory allocations = new Stake.Allocation[](1);
+        allocations[0] = Stake.Allocation({
             recipient: deployer,
             amount: GOV_TOKEN_SUPPLY
         });
 
-        govToken = new VotesToken(
+        govToken = new Stake(
             "Lux Governance",
             "gLUX",
             allocations,

@@ -42,11 +42,16 @@ contract BridgeVault is Ownable, ReentrancyGuard {
         ethVaultAddress = payable(0);
     }
 
+    /**
+     * @dev Concatenate two strings using abi.encode
+     * @notice Uses abi.encode instead of abi.encodePacked to prevent hash collision
+     *         attacks when used with dynamic-length arguments
+     */
     function concat(
         string memory a,
         string memory b
     ) internal pure returns (string memory) {
-        return string(abi.encodePacked(a, b));
+        return string(abi.encode(a, b));
     }
 
     /**

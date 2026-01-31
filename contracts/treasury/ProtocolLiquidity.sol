@@ -4,6 +4,7 @@ pragma solidity ^0.8.31;
 import {IERC20, SafeERC20} from "@luxfi/standard/tokens/ERC20.sol";
 import {Ownable} from "@luxfi/standard/access/Access.sol";
 import {ReentrancyGuard} from "@luxfi/standard/utils/Utils.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title ProtocolLiquidity
@@ -132,6 +133,8 @@ contract ProtocolLiquidity is Ownable, ReentrancyGuard {
     event Claimed(address indexed user, uint256 indexed positionId, uint256 amount);
     event PoolCapacityUpdated(uint256 indexed poolId, uint256 newCapacity);
     event DiscountUpdated(uint256 indexed poolId, uint256 newDiscount);
+    event PoolActiveStatusUpdated(uint256 indexed poolId, bool active);
+    event OracleUpdated(address indexed newOracle);
 
     // ═══════════════════════════════════════════════════════════════════════
     // ERRORS
@@ -142,6 +145,10 @@ contract ProtocolLiquidity is Ownable, ReentrancyGuard {
     error InvalidDiscount();
     error NothingToClaim();
     error InvalidPool();
+    error ZeroAddress();
+    error TooManyPositions();
+
+    uint256 public constant MAX_BATCH_SIZE = 50;
 
     // ═══════════════════════════════════════════════════════════════════════
     // CONSTRUCTOR
@@ -153,6 +160,10 @@ contract ProtocolLiquidity is Ownable, ReentrancyGuard {
         address oracle_,
         address owner_
     ) Ownable(owner_) {
+        if (protocolToken_ == address(0)) revert ZeroAddress();
+        if (treasury_ == address(0)) revert ZeroAddress();
+        if (oracle_ == address(0)) revert ZeroAddress();
+        if (owner_ == address(0)) revert ZeroAddress();
         protocolToken = protocolToken_;
         treasury = treasury_;
         oracle = IPriceOracle(oracle_);
@@ -175,6 +186,7 @@ contract ProtocolLiquidity is Ownable, ReentrancyGuard {
         uint256 vestingPeriod,
         uint256 maxCapacity
     ) external onlyOwner returns (uint256 poolId) {
+        if (lpToken == address(0)) revert ZeroAddress();
         if (discount > MAX_DISCOUNT) revert InvalidDiscount();
 
         ILiquidityPool pool = ILiquidityPool(lpToken);
@@ -204,6 +216,8 @@ contract ProtocolLiquidity is Ownable, ReentrancyGuard {
         uint256 maxCapacity,
         address pairedPool
     ) external onlyOwner returns (uint256 id) {
+        if (token == address(0)) revert ZeroAddress();
+        if (pairedPool == address(0)) revert ZeroAddress();
         if (discount > MAX_DISCOUNT) revert InvalidDiscount();
 
         id = nextSingleSidedId++;
@@ -242,13 +256,16 @@ contract ProtocolLiquidity is Ownable, ReentrancyGuard {
      */
     function setPoolActive(uint256 poolId, bool active) external onlyOwner {
         pools[poolId].active = active;
+        emit PoolActiveStatusUpdated(poolId, active);
     }
 
     /**
      * @notice Update oracle
      */
     function setOracle(address newOracle) external onlyOwner {
+        if (newOracle == address(0)) revert ZeroAddress();
         oracle = IPriceOracle(newOracle);
+        emit OracleUpdated(newOracle);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -355,24 +372,60 @@ contract ProtocolLiquidity is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Claim from multiple positions
+     * @notice Claim from multiple positions (max MAX_BATCH_SIZE)
+     * @dev Use claimBatch for users with > MAX_BATCH_SIZE positions
      */
     function claimAll() external nonReentrant {
-        uint256 total = 0;
         uint256 count = userPositionCount[msg.sender];
+        if (count > MAX_BATCH_SIZE) revert TooManyPositions();
 
+        uint256 total = 0;
         for (uint256 i = 0; i < count; i++) {
             VestingPosition storage pos = positions[msg.sender][i];
-            uint256 claimable = _claimable(pos);
-            if (claimable > 0) {
-                pos.claimed += claimable;
-                total += claimable;
-                emit Claimed(msg.sender, i, claimable);
+            uint256 claimableAmt = _claimable(pos);
+            if (claimableAmt > 0) {
+                pos.claimed += claimableAmt;
+                total += claimableAmt;
+                emit Claimed(msg.sender, i, claimableAmt);
             }
         }
 
         if (total == 0) revert NothingToClaim();
         IMintable(protocolToken).mint(msg.sender, total);
+    }
+
+    /**
+     * @notice Claim from a batch of positions
+     * @param startIndex Starting position index
+     * @param count Number of positions to claim (max MAX_BATCH_SIZE)
+     */
+    function claimBatch(uint256 startIndex, uint256 count) external nonReentrant {
+        if (count > MAX_BATCH_SIZE) revert TooManyPositions();
+
+        uint256 userCount = userPositionCount[msg.sender];
+        uint256 endIndex = startIndex + count;
+        if (endIndex > userCount) endIndex = userCount;
+
+        uint256 total = 0;
+        for (uint256 i = startIndex; i < endIndex; i++) {
+            VestingPosition storage pos = positions[msg.sender][i];
+            uint256 claimableAmt = _claimable(pos);
+            if (claimableAmt > 0) {
+                pos.claimed += claimableAmt;
+                total += claimableAmt;
+                emit Claimed(msg.sender, i, claimableAmt);
+            }
+        }
+
+        if (total == 0) revert NothingToClaim();
+        IMintable(protocolToken).mint(msg.sender, total);
+    }
+
+    /**
+     * @notice Get user's position count
+     */
+    function getPositionCount(address user) external view returns (uint256) {
+        return userPositionCount[user];
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -457,8 +510,10 @@ contract ProtocolLiquidity is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Calculate LP token value in sats
-     * @dev Uses constant product formula: LP value = 2 * sqrt(reserve0 * reserve1) * LP/totalSupply
+     * @notice Calculate LP token value in sats using fair pricing
+     * @dev Uses geometric mean for flash-loan resistant valuation
+     *      Fair value = 2 * sqrt(reserve0 * reserve1) normalized by prices
+     *      This prevents manipulation via single-sided reserve inflation
      */
     function _getLPValue(address lpToken, uint256 lpAmount) internal view returns (uint256) {
         ILiquidityPool pool = ILiquidityPool(lpToken);
@@ -470,12 +525,18 @@ contract ProtocolLiquidity is Ownable, ReentrancyGuard {
         uint256 price0 = oracle.getPrice(pool.token0());
         uint256 price1 = oracle.getPrice(pool.token1());
 
-        // Calculate total pool value
-        uint256 value0 = uint256(reserve0) * price0 / 1e18;
-        uint256 value1 = uint256(reserve1) * price1 / 1e18;
-        uint256 totalPoolValue = value0 + value1;
+        // Calculate fair reserves using geometric mean (flash-loan resistant)
+        // k = reserve0 * reserve1 (constant product)
+        // Fair value uses sqrt(k) * 2 * sqrt(price0 * price1) for price-normalized valuation
+        uint256 k = uint256(reserve0) * uint256(reserve1);
 
-        // User's share of pool value
-        return (totalPoolValue * lpAmount) / totalSupply;
+        // Normalize reserves by price to get value: sqrt(reserve0 * price0 * reserve1 * price1)
+        // Then multiply by 2 for total pool value
+        uint256 sqrtK = Math.sqrt(k);
+        uint256 sqrtPriceProduct = Math.sqrt((price0 * price1) / 1e18);
+        uint256 fairPoolValue = 2 * sqrtK * sqrtPriceProduct / 1e9; // Adjust decimals
+
+        // User's share of fair pool value
+        return (fairPoolValue * lpAmount) / totalSupply;
     }
 }

@@ -272,7 +272,7 @@ contract LuxFullStackIntegration is Test {
         assertEq(wlux.name(), "Wrapped LUX");
         assertEq(wlux.symbol(), "WLUX");
 
-        assertEq(lusd.name(), "Lux Dollar");
+        assertEq(lusd.name(), "Liquid Dollar");
         assertEq(lusd.symbol(), "LUSD");
 
         assertEq(alUSD.name(), "Alchemic USD");

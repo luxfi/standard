@@ -114,12 +114,14 @@ contract vLUX is ReentrancyGuard {
     error NoExistingLock();
     error WithdrawOldTokensFirst();
     error ZeroAmount();
+    error ZeroAddress();
     error CanOnlyIncreaseLockEnd();
     error VotingPowerTooHigh();
 
     // ============ Constructor ============
-    
+
     constructor(address _lux) {
+        if (_lux == address(0)) revert ZeroAddress();
         lux = IERC20(_lux);
         pointHistory[0] = Point({
             bias: 0,
@@ -264,12 +266,16 @@ contract vLUX is ReentrancyGuard {
         
         if (user != address(0)) {
             if (oldLocked.end > block.timestamp && oldLocked.amount > 0) {
+                // Multiply before divide to preserve precision
+                uint256 oldDuration = oldLocked.end - block.timestamp;
+                uOld.bias = int128(int256((oldLocked.amount * oldDuration) / MAX_LOCK_TIME));
                 uOld.slope = int128(int256(oldLocked.amount / MAX_LOCK_TIME));
-                uOld.bias = uOld.slope * int128(int256(oldLocked.end - block.timestamp));
             }
             if (newLocked.end > block.timestamp && newLocked.amount > 0) {
+                // Multiply before divide to preserve precision
+                uint256 newDuration = newLocked.end - block.timestamp;
+                uNew.bias = int128(int256((newLocked.amount * newDuration) / MAX_LOCK_TIME));
                 uNew.slope = int128(int256(newLocked.amount / MAX_LOCK_TIME));
-                uNew.bias = uNew.slope * int128(int256(newLocked.end - block.timestamp));
             }
             
             oldSlope = slopeChanges[oldLocked.end];
