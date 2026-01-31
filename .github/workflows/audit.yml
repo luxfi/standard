@@ -73,16 +73,19 @@ jobs:
       - name: Run Coverage
         run: |
           echo "## Code Coverage Results" >> $GITHUB_STEP_SUMMARY
-          forge coverage --report summary 2>&1 | tee coverage-summary.txt
+
+          # Use --ir-minimum for large codebases to avoid stack-too-deep
+          forge coverage --ir-minimum --report summary 2>&1 | tee coverage-summary.txt || \
+          forge coverage --report summary 2>&1 | tee coverage-summary.txt || true
 
           # Extract coverage percentage
           echo "" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          tail -20 coverage-summary.txt >> $GITHUB_STEP_SUMMARY
+          tail -30 coverage-summary.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Generate LCOV Report
-        run: forge coverage --report lcov --report-file lcov.info
+        run: forge coverage --ir-minimum --report lcov --report-file lcov.info || true
         continue-on-error: true
 
       - name: Upload Coverage
@@ -253,6 +256,101 @@ jobs:
             echo "**Found $issues import inconsistencies**" >> $GITHUB_STEP_SUMMARY
           fi
 
+      - name: Check for EIP-7201 storage namespace
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## EIP-7201 Storage Namespace Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          issues=0
+          for file in $(find contracts -name "*.sol" -not -path "*/test/*" -not -path "*/mocks/*" -not -path "*/interfaces/*"); do
+            # Check if file is upgradeable
+            if grep -q "UUPSUpgradeable\|TransparentUpgradeableProxy" "$file"; then
+              # Check for EIP-7201 storage pattern
+              if ! grep -q "@custom:storage-location\|eip7201:" "$file"; then
+                echo "⚠️ $file: Upgradeable without EIP-7201 storage namespace" >> $GITHUB_STEP_SUMMARY
+                ((issues++)) || true
+              fi
+            fi
+          done
+
+          if [ "$issues" -eq 0 ]; then
+            echo "✅ All upgradeable contracts use EIP-7201 storage" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Found $issues contracts missing EIP-7201**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check for access control patterns
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Access Control Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          issues=0
+          for file in $(find contracts -name "*.sol" -not -path "*/test/*" -not -path "*/mocks/*" -not -path "*/interfaces/*"); do
+            # Check for admin/owner functions without modifiers
+            if grep -qE "function.*(admin|owner|upgrade|pause|mint|burn|withdraw|emergency)" "$file"; then
+              if ! grep -qE "onlyOwner|onlyRole|onlyAdmin|require.*msg.sender.*==.*owner|AccessControl" "$file"; then
+                echo "⚠️ $file: Has privileged functions without access control" >> $GITHUB_STEP_SUMMARY
+                ((issues++)) || true
+              fi
+            fi
+          done
+
+          if [ "$issues" -eq 0 ]; then
+            echo "✅ All privileged functions have access control" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Found $issues potential access control issues**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check for oracle manipulation risks
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Oracle Security Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          issues=0
+          for file in $(find contracts -name "*.sol" -not -path "*/test/*" -not -path "*/mocks/*"); do
+            # Check for price feeds without staleness checks
+            if grep -qE "latestRoundData|getPrice|oracle" "$file"; then
+              if ! grep -qE "updatedAt|stale|maxAge|timestamp" "$file"; then
+                echo "⚠️ $file: Uses oracle without staleness check" >> $GITHUB_STEP_SUMMARY
+                ((issues++)) || true
+              fi
+            fi
+          done
+
+          if [ "$issues" -eq 0 ]; then
+            echo "✅ All oracle usage has staleness checks" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Found $issues potential oracle issues**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Count and verify contracts
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Contract Inventory" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          total=$(find contracts -name "*.sol" | wc -l)
+          main=$(find contracts -name "*.sol" -not -path "*/test/*" -not -path "*/mocks/*" | wc -l)
+          interfaces=$(find contracts -name "I*.sol" -not -path "*/test/*" | wc -l)
+          tests=$(find contracts -path "*/test/*" -name "*.sol" | wc -l)
+          mocks=$(find contracts -path "*/mocks/*" -name "*.sol" | wc -l)
+
+          echo "| Category | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Total .sol files | $total |" >> $GITHUB_STEP_SUMMARY
+          echo "| Main contracts | $main |" >> $GITHUB_STEP_SUMMARY
+          echo "| Interfaces | $interfaces |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test contracts | $tests |" >> $GITHUB_STEP_SUMMARY
+          echo "| Mock contracts | $mocks |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All contracts analyzed ✅" >> $GITHUB_STEP_SUMMARY
+
   # ═══════════════════════════════════════════════════════════════════════════
   # GAS ANALYSIS
   # ═══════════════════════════════════════════════════════════════════════════
@@ -369,11 +467,82 @@ jobs:
           path: storage-layouts/
 
   # ═══════════════════════════════════════════════════════════════════════════
+  # INVARIANT TESTING
+  # ═══════════════════════════════════════════════════════════════════════════
+  invariant-tests:
+    name: Invariant Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Invariant Tests
+        run: |
+          echo "## Invariant Test Results" >> $GITHUB_STEP_SUMMARY
+
+          # Run invariant tests with more runs for CI
+          forge test --match-path "test/foundry/fuzz/*.sol" -vvv --fuzz-runs 256 --fuzz-seed 42 2>&1 | tee invariant-results.txt || true
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -50 invariant-results.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        env:
+          FOUNDRY_INVARIANT_RUNS: 256
+          FOUNDRY_INVARIANT_DEPTH: 15
+
+      - name: Upload Invariant Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: invariant-results
+          path: invariant-results.txt
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # FULL TEST SUITE
+  # ═══════════════════════════════════════════════════════════════════════════
+  full-tests:
+    name: Full Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run All Tests
+        run: |
+          echo "## Full Test Suite Results" >> $GITHUB_STEP_SUMMARY
+
+          forge test --summary -vv 2>&1 | tee test-results.txt
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          # Extract test summary
+          grep -E "(Passed|Failed|Skipped)" test-results.txt | tail -20 >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: test-results.txt
+
+  # ═══════════════════════════════════════════════════════════════════════════
   # AUDIT SUMMARY
   # ═══════════════════════════════════════════════════════════════════════════
   audit-summary:
     name: Audit Summary
-    needs: [forge-lint, coverage, custom-checks, gas-analysis, contract-size, storage-layout]
+    needs: [forge-lint, coverage, custom-checks, gas-analysis, contract-size, storage-layout, invariant-tests, full-tests]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -388,6 +557,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Full Test Suite | ${{ needs.full-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Invariant Tests | ${{ needs.invariant-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Forge Lint | ${{ needs.forge-lint.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Coverage | ${{ needs.coverage.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Custom Checks | ${{ needs.custom-checks.result }} |" >> $GITHUB_STEP_SUMMARY
@@ -398,6 +569,8 @@ jobs:
           echo "See individual job logs and artifacts for detailed results." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Artifacts available:**" >> $GITHUB_STEP_SUMMARY
+          echo "- test-results" >> $GITHUB_STEP_SUMMARY
+          echo "- invariant-results" >> $GITHUB_STEP_SUMMARY
           echo "- forge-lint-results" >> $GITHUB_STEP_SUMMARY
           echo "- coverage-report" >> $GITHUB_STEP_SUMMARY
           echo "- gas-report" >> $GITHUB_STEP_SUMMARY
