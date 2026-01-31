@@ -1,0 +1,411 @@
+name: Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'contracts/**'
+      - '.github/workflows/audit.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'contracts/**'
+  workflow_dispatch:
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # FORGE LINT - Built-in Solidity Linter
+  # ═══════════════════════════════════════════════════════════════════════════
+  forge-lint:
+    name: Forge Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Forge lint
+        run: |
+          echo "## Forge Lint Results" >> $GITHUB_STEP_SUMMARY
+          forge lint contracts/ 2>&1 | tee lint-results.txt || true
+
+          # Count issues
+          warnings=$(grep -c "^warning" lint-results.txt 2>/dev/null || echo "0")
+          notes=$(grep -c "^note" lint-results.txt 2>/dev/null || echo "0")
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Type | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Warnings | $warnings |" >> $GITHUB_STEP_SUMMARY
+          echo "| Notes | $notes |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Lint Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forge-lint-results
+          path: lint-results.txt
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # COVERAGE - Code Coverage Analysis
+  # ═══════════════════════════════════════════════════════════════════════════
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Coverage
+        run: |
+          echo "## Code Coverage Results" >> $GITHUB_STEP_SUMMARY
+          forge coverage --report summary 2>&1 | tee coverage-summary.txt
+
+          # Extract coverage percentage
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -20 coverage-summary.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate LCOV Report
+        run: forge coverage --report lcov --report-file lcov.info
+        continue-on-error: true
+
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: |
+            coverage-summary.txt
+            lcov.info
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CUSTOM CHECKS - Project-Specific Patterns
+  # ═══════════════════════════════════════════════════════════════════════════
+  custom-checks:
+    name: Custom Security Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Check for unbounded loops without MAX_BATCH_SIZE
+        run: |
+          echo "## Unbounded Loop Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Find for loops with .length that don't have MAX_BATCH_SIZE nearby
+          echo "Checking for unbounded loops..." >> $GITHUB_STEP_SUMMARY
+
+          issues=0
+          for file in $(find contracts -name "*.sol" -not -path "*/test/*" -not -path "*/mocks/*"); do
+            # Check if file has a for loop with .length
+            if grep -q "for.*\.length" "$file"; then
+              # Check if file has MAX_BATCH_SIZE or reasonable limit
+              if ! grep -q "MAX_BATCH_SIZE\|maxBatchSize\|require.*<.*1000\|require.*<=.*100" "$file"; then
+                echo "⚠️ $file: Has .length loop but no explicit batch limit" >> $GITHUB_STEP_SUMMARY
+                ((issues++)) || true
+              fi
+            fi
+          done
+
+          if [ "$issues" -eq 0 ]; then
+            echo "✅ No unbounded loops found without batch limits" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Found $issues potential unbounded loops**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check for missing SafeERC20
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## SafeERC20 Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          issues=0
+          for file in $(find contracts -name "*.sol" -not -path "*/test/*" -not -path "*/mocks/*"); do
+            # Check if file uses .transfer or .transferFrom on IERC20
+            if grep -qE "\.transfer\(|\.transferFrom\(" "$file"; then
+              # Check if it imports SafeERC20
+              if ! grep -q "SafeERC20\|safeTransfer\|safeTransferFrom" "$file"; then
+                echo "⚠️ $file: Uses transfer/transferFrom without SafeERC20" >> $GITHUB_STEP_SUMMARY
+                ((issues++)) || true
+              fi
+            fi
+          done
+
+          if [ "$issues" -eq 0 ]; then
+            echo "✅ All ERC20 transfers use SafeERC20" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Found $issues files missing SafeERC20**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check for missing ReentrancyGuard
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ReentrancyGuard Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          issues=0
+          for file in $(find contracts -name "*.sol" -not -path "*/test/*" -not -path "*/mocks/*" -not -path "*/interfaces/*"); do
+            # Check if file has external calls (call, transfer, send)
+            if grep -qE "\.call\{|\.transfer\(|\.send\(" "$file"; then
+              # Check if it uses ReentrancyGuard
+              if ! grep -q "ReentrancyGuard\|nonReentrant" "$file"; then
+                echo "⚠️ $file: Has external calls without ReentrancyGuard" >> $GITHUB_STEP_SUMMARY
+                ((issues++)) || true
+              fi
+            fi
+          done
+
+          if [ "$issues" -eq 0 ]; then
+            echo "✅ All contracts with external calls use ReentrancyGuard" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Found $issues files potentially missing ReentrancyGuard**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check for raw ecrecover usage
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ecrecover Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          issues=0
+          for file in $(find contracts -name "*.sol" -not -path "*/test/*" -not -path "*/mocks/*"); do
+            # Check for raw ecrecover
+            if grep -q "ecrecover(" "$file"; then
+              # Check if it uses ECDSA from OpenZeppelin
+              if ! grep -q "import.*ECDSA\|using ECDSA" "$file"; then
+                echo "⚠️ $file: Uses raw ecrecover without OZ ECDSA" >> $GITHUB_STEP_SUMMARY
+                ((issues++)) || true
+              fi
+            fi
+          done
+
+          if [ "$issues" -eq 0 ]; then
+            echo "✅ No raw ecrecover usage found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Found $issues files with raw ecrecover**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check for duplicate files
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Duplicate File Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Find files with same name
+          duplicates=$(find contracts -name "*.sol" -not -path "*/test/*" | xargs -I{} basename {} | sort | uniq -d)
+
+          if [ -z "$duplicates" ]; then
+            echo "✅ No duplicate file names found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Found duplicate file names:" >> $GITHUB_STEP_SUMMARY
+            for dup in $duplicates; do
+              echo "- **$dup**:" >> $GITHUB_STEP_SUMMARY
+              find contracts -name "$dup" -not -path "*/test/*" | while read f; do
+                echo "  - $f" >> $GITHUB_STEP_SUMMARY
+              done
+            done
+          fi
+
+      - name: Check for OpenZeppelin upgradeable import consistency
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Upgradeable Import Consistency" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          issues=0
+          for file in $(find contracts -name "*.sol" -not -path "*/test/*" -not -path "*/mocks/*"); do
+            # Check if file is upgradeable (has Initializable or UUPS pattern)
+            if grep -q "Initializable\|UUPSUpgradeable" "$file"; then
+              # Check for non-upgradeable imports
+              if grep -q 'import.*@openzeppelin/contracts/[^u]' "$file"; then
+                echo "⚠️ $file: Upgradeable contract imports from @openzeppelin/contracts instead of @openzeppelin/contracts-upgradeable" >> $GITHUB_STEP_SUMMARY
+                ((issues++)) || true
+              fi
+            fi
+          done
+
+          if [ "$issues" -eq 0 ]; then
+            echo "✅ All upgradeable contracts use correct imports" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Found $issues import inconsistencies**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # GAS ANALYSIS
+  # ═══════════════════════════════════════════════════════════════════════════
+  gas-analysis:
+    name: Gas Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Gas Report
+        run: |
+          echo "## Gas Analysis Results" >> $GITHUB_STEP_SUMMARY
+          forge test --gas-report 2>&1 | tee gas-report.txt || true
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          # Extract gas report table
+          grep -A 100 "╭" gas-report.txt | head -50 >> $GITHUB_STEP_SUMMARY || echo "No gas report generated" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Gas Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gas-report
+          path: gas-report.txt
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CONTRACT SIZE CHECK
+  # ═══════════════════════════════════════════════════════════════════════════
+  contract-size:
+    name: Contract Size Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Check Contract Sizes
+        run: |
+          echo "## Contract Size Analysis" >> $GITHUB_STEP_SUMMARY
+          forge build --sizes 2>&1 | tee sizes.txt
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat sizes.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+          # Check for contracts over 24kb limit
+          if grep -E "\| [0-9]{2}\.[0-9]+ \|" sizes.txt | grep -E "2[4-9]\.[0-9]+|[3-9][0-9]\.[0-9]+" > oversized.txt 2>/dev/null; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Warning: Contracts exceeding 24kb limit:**" >> $GITHUB_STEP_SUMMARY
+            cat oversized.txt >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload Size Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contract-sizes
+          path: sizes.txt
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STORAGE LAYOUT CHECK
+  # ═══════════════════════════════════════════════════════════════════════════
+  storage-layout:
+    name: Storage Layout Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Check Storage Layouts
+        run: |
+          echo "## Storage Layout Analysis" >> $GITHUB_STEP_SUMMARY
+
+          # Generate storage layouts for key contracts
+          mkdir -p storage-layouts
+
+          for contract in Governor Strategy Treasury Karma SoulID IdentityHub; do
+            file=$(find contracts -name "${contract}.sol" -not -path "*/test/*" | head -1)
+            if [ -n "$file" ]; then
+              echo "Generating layout for $contract..." >> $GITHUB_STEP_SUMMARY
+              forge inspect "$contract" storage-layout --pretty > "storage-layouts/${contract}.txt" 2>/dev/null || true
+            fi
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Storage layouts generated for key contracts" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Storage Layouts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: storage-layouts
+          path: storage-layouts/
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # AUDIT SUMMARY
+  # ═══════════════════════════════════════════════════════════════════════════
+  audit-summary:
+    name: Audit Summary
+    needs: [forge-lint, coverage, custom-checks, gas-analysis, contract-size, storage-layout]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: audit-reports/
+
+      - name: Generate Summary
+        run: |
+          echo "# Audit Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Forge Lint | ${{ needs.forge-lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Coverage | ${{ needs.coverage.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Custom Checks | ${{ needs.custom-checks.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gas Analysis | ${{ needs.gas-analysis.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Contract Size | ${{ needs.contract-size.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Storage Layout | ${{ needs.storage-layout.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "See individual job logs and artifacts for detailed results." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Artifacts available:**" >> $GITHUB_STEP_SUMMARY
+          echo "- forge-lint-results" >> $GITHUB_STEP_SUMMARY
+          echo "- coverage-report" >> $GITHUB_STEP_SUMMARY
+          echo "- gas-report" >> $GITHUB_STEP_SUMMARY
+          echo "- contract-sizes" >> $GITHUB_STEP_SUMMARY
+          echo "- storage-layouts" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Combined Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-reports-combined
+          path: audit-reports/
