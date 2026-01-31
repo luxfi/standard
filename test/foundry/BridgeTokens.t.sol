@@ -7,26 +7,19 @@ import "../../contracts/bridge/LRC20B.sol";
 import "../../contracts/liquid/tokens/LETH.sol";
 import "../../contracts/liquid/tokens/LBTC.sol";
 import "../../contracts/liquid/tokens/LUSD.sol";
-import "../../contracts/bridge/zoo/ZETH.sol";
-import "../../contracts/bridge/zoo/ZBTC.sol";
-import "../../contracts/bridge/zoo/ZUSD.sol";
 import "@openzeppelin/contracts/access/IAccessControl.sol";
 
 /**
  * @title BridgeTokensTest
- * @notice Comprehensive tests for MPC-controlled bridge tokens (L* and Z* prefixes)
+ * @notice Comprehensive tests for MPC-controlled bridge tokens (L* prefix)
  * @dev Tests cover admin-only minting/burning, role management, transfers, and edge cases
+ * @dev Zoo tokens (Z* prefix) are tested in the @zooai/contracts package
  */
 contract BridgeTokensTest is Test {
     // Lux bridge tokens
     LuxETH public leth;
     LuxBTC public lbtc;
     LuxUSD public lusd;
-
-    // Zoo bridge tokens
-    ZooETH public zeth;
-    ZooBTC public zbtc;
-    ZooUSD public zusd;
 
     // Test accounts
     address public deployer;
@@ -59,25 +52,17 @@ contract BridgeTokensTest is Test {
         lbtc = new LuxBTC();
         lusd = new LuxUSD();
 
-        // Deploy Zoo bridge tokens
-        zeth = new ZooETH();
-        zbtc = new ZooBTC();
-        zusd = new ZooUSD();
-
         // Grant admin role to MPC bridge
         leth.grantAdmin(mpcBridge);
         lbtc.grantAdmin(mpcBridge);
         lusd.grantAdmin(mpcBridge);
-        zeth.grantAdmin(mpcBridge);
-        zbtc.grantAdmin(mpcBridge);
-        zusd.grantAdmin(mpcBridge);
     }
 
     /*//////////////////////////////////////////////////////////////
                             METADATA TESTS
     //////////////////////////////////////////////////////////////*/
 
-    function test_LuxTokenMetadata() public {
+    function test_LuxTokenMetadata() public view {
         assertEq(leth.name(), "Liquid ETH");
         assertEq(leth.symbol(), "LETH");
         assertEq(leth.decimals(), 18);
@@ -91,27 +76,12 @@ contract BridgeTokensTest is Test {
         assertEq(lusd.decimals(), 18);
     }
 
-    function test_ZooTokenMetadata() public {
-        assertEq(zeth.name(), "Zoo ETH");
-        assertEq(zeth.symbol(), "ZETH");
-        assertEq(zeth.decimals(), 18);
-
-        assertEq(zbtc.name(), "Zoo BTC");
-        assertEq(zbtc.symbol(), "ZBTC");
-        assertEq(zbtc.decimals(), 18);
-
-        assertEq(zusd.name(), "Zoo Dollar");
-        assertEq(zusd.symbol(), "ZUSD");
-        assertEq(zusd.decimals(), 18);
-    }
-
     /*//////////////////////////////////////////////////////////////
                         ADMIN ROLE MANAGEMENT
     //////////////////////////////////////////////////////////////*/
 
-    function test_DeployerHasAdminRole() public {
+    function test_DeployerHasAdminRole() public view {
         assertTrue(leth.hasRole(leth.DEFAULT_ADMIN_ROLE(), deployer));
-        assertTrue(zeth.hasRole(zeth.DEFAULT_ADMIN_ROLE(), deployer));
     }
 
     function test_GrantAdminRole() public {
@@ -368,70 +338,53 @@ contract BridgeTokensTest is Test {
                     CROSS-CHAIN COORDINATION TESTS
     //////////////////////////////////////////////////////////////*/
 
-    function test_CrossChainMintBurn_LuxToZoo() public {
-        // Simulate cross-chain transfer: Lux → Zoo
+    function test_CrossChainMintBurn_LuxBridge() public {
+        // Simulate cross-chain transfer from external chain to Lux
         uint256 amount = 10e18;
 
-        // Step 1: User deposits LETH on Lux chain (burn)
-        vm.prank(mpcBridge);
-        leth.mint(user1, amount);
-
-        vm.prank(mpcBridge);
-        leth.burn(user1, amount);
-        assertEq(leth.balanceOf(user1), 0);
-
-        // Step 2: MPC bridge mints ZETH on Zoo chain
-        vm.prank(mpcBridge);
-        zeth.mint(user1, amount);
-        assertEq(zeth.balanceOf(user1), amount);
-    }
-
-    function test_CrossChainMintBurn_ZooToLux() public {
-        // Simulate cross-chain transfer: Zoo → Lux
-        uint256 amount = 10e18;
-
-        // Step 1: User deposits ZETH on Zoo chain (burn)
-        vm.prank(mpcBridge);
-        zeth.mint(user1, amount);
-
-        vm.prank(mpcBridge);
-        zeth.burn(user1, amount);
-        assertEq(zeth.balanceOf(user1), 0);
-
-        // Step 2: MPC bridge mints LETH on Lux chain
+        // Step 1: External deposit verified by MPC, mint LETH on Lux
         vm.prank(mpcBridge);
         leth.mint(user1, amount);
         assertEq(leth.balanceOf(user1), amount);
+
+        // Step 2: User withdraws LETH (burns for external release)
+        vm.prank(mpcBridge);
+        leth.burn(user1, amount);
+        assertEq(leth.balanceOf(user1), 0);
     }
 
-    function test_MultiTokenCrossChain() public {
+    function test_MultiTokenBridge() public {
         uint256 ethAmount = 5e18;
         uint256 btcAmount = 1e18;
         uint256 usdAmount = 1000e18;
 
         vm.startPrank(mpcBridge);
 
-        // Mint on Lux
+        // Mint multiple token types
         leth.mint(user1, ethAmount);
         lbtc.mint(user1, btcAmount);
         lusd.mint(user1, usdAmount);
 
-        // Burn on Lux
+        vm.stopPrank();
+
+        // Verify balances
+        assertEq(leth.balanceOf(user1), ethAmount);
+        assertEq(lbtc.balanceOf(user1), btcAmount);
+        assertEq(lusd.balanceOf(user1), usdAmount);
+
+        vm.startPrank(mpcBridge);
+
+        // Burn for withdrawal
         leth.burn(user1, ethAmount);
         lbtc.burn(user1, btcAmount);
         lusd.burn(user1, usdAmount);
 
-        // Mint on Zoo
-        zeth.mint(user1, ethAmount);
-        zbtc.mint(user1, btcAmount);
-        zusd.mint(user1, usdAmount);
-
         vm.stopPrank();
 
-        // Verify Zoo balances
-        assertEq(zeth.balanceOf(user1), ethAmount);
-        assertEq(zbtc.balanceOf(user1), btcAmount);
-        assertEq(zusd.balanceOf(user1), usdAmount);
+        // Verify balances are zero
+        assertEq(leth.balanceOf(user1), 0);
+        assertEq(lbtc.balanceOf(user1), 0);
+        assertEq(lusd.balanceOf(user1), 0);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -576,10 +529,6 @@ contract BridgeTokensTest is Test {
         leth.burn(user1, amount);
         assertEq(leth.balanceOf(user1), 0);
 
-        // Zoo: mint
-        zeth.mint(user1, amount);
-        assertEq(zeth.balanceOf(user1), amount);
-
         vm.stopPrank();
     }
 
@@ -587,14 +536,12 @@ contract BridgeTokensTest is Test {
                     OWNER/DEPLOYER TESTS
     //////////////////////////////////////////////////////////////*/
 
-    function test_DeployerIsOwner() public {
+    function test_DeployerIsOwner() public view {
         assertEq(leth.owner(), deployer);
-        assertEq(zeth.owner(), deployer);
     }
 
-    function test_OwnerHasDefaultAdminRole() public {
+    function test_OwnerHasDefaultAdminRole() public view {
         assertTrue(leth.hasRole(leth.DEFAULT_ADMIN_ROLE(), deployer));
-        assertTrue(zeth.hasRole(zeth.DEFAULT_ADMIN_ROLE(), deployer));
     }
 
     function test_OwnerCanGrantAdmin() public {
@@ -619,21 +566,20 @@ contract BridgeTokensTest is Test {
 
         vm.startPrank(mpcBridge);
 
-        // 1. User deposits ETH on Lux, gets LETH
+        // 1. User deposits ETH on external chain, MPC mints LETH
         leth.mint(user1, depositAmount);
         assertEq(leth.balanceOf(user1), depositAmount);
 
-        // 2. User bridges LETH to Zoo
-        leth.burn(user1, depositAmount);
-        zeth.mint(user1, depositAmount);
-        assertEq(leth.balanceOf(user1), 0);
-        assertEq(zeth.balanceOf(user1), depositAmount);
+        // 2. User transfers some to user2
+        vm.stopPrank();
+        vm.prank(user1);
+        leth.transfer(user2, 3e18);
 
-        // 3. User withdraws some ZETH back to Lux
-        zeth.burn(user1, withdrawAmount);
-        leth.mint(user1, withdrawAmount);
-        assertEq(zeth.balanceOf(user1), depositAmount - withdrawAmount);
-        assertEq(leth.balanceOf(user1), withdrawAmount);
+        // 3. User1 withdraws remaining to external chain
+        vm.prank(mpcBridge);
+        leth.burn(user1, withdrawAmount);
+        assertEq(leth.balanceOf(user1), 0);
+        assertEq(leth.balanceOf(user2), 3e18);
 
         vm.stopPrank();
     }
@@ -649,21 +595,11 @@ contract BridgeTokensTest is Test {
         leth.mint(user2, 10e18);
         lusd.mint(user2, 1000e18);
 
-        // User1 bridges to Zoo
-        leth.burn(user1, 5e18);
-        zeth.mint(user1, 5e18);
-
-        // User2 bridges to Zoo
-        leth.burn(user2, 10e18);
-        zeth.mint(user2, 10e18);
-
         vm.stopPrank();
 
         // Verify final state
-        assertEq(leth.balanceOf(user1), 0);
-        assertEq(leth.balanceOf(user2), 0);
-        assertEq(zeth.balanceOf(user1), 5e18);
-        assertEq(zeth.balanceOf(user2), 10e18);
+        assertEq(leth.balanceOf(user1), 5e18);
+        assertEq(leth.balanceOf(user2), 10e18);
         assertEq(lbtc.balanceOf(user1), 1e18);
         assertEq(lusd.balanceOf(user2), 1000e18);
     }
