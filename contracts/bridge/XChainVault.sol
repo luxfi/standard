@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {IWarp} from "./interfaces/IWarpMessenger.sol";
 import "./interfaces/IBridge.sol";
 
@@ -65,13 +67,27 @@ contract XChainVault is Ownable {
         address recipient,
         uint256 amount
     );
+
+    event MpcOracleUpdated(address indexed oracle, bool authorized);
+    event MpcThresholdUpdated(uint256 newThreshold);
+    event BurnProofVerified(bytes32 indexed vaultId, uint256 amount, uint256 burnNonce);
     
     // State variables
     mapping(bytes32 => VaultEntry) public vaults;
     mapping(address => mapping(uint32 => address)) public wrappedTokens; // originalToken => chainId => wrappedToken
     mapping(address => bool) public supportedTokens;
     mapping(uint32 => bool) public supportedChains;
-    
+    mapping(bytes32 => bool) public trustedSourceChains; // sourceChainID => trusted
+
+    /// @notice Authorized MPC signers for burn proof verification
+    mapping(address => bool) public isMpcOracle;
+
+    /// @notice Minimum number of MPC signatures required
+    uint256 public mpcThreshold;
+
+    /// @notice Nonce to prevent replay attacks on burn proofs
+    mapping(bytes32 => bool) public usedBurnNonces;
+
     uint256 private nonce;
     address public bridge;
     
@@ -82,6 +98,7 @@ contract XChainVault is Ownable {
     
     constructor(address _bridge) Ownable(msg.sender) {
         bridge = _bridge;
+        mpcThreshold = 2; // Default: require at least 2 MPC signatures
     }
     
     /**
@@ -299,17 +316,80 @@ contract XChainVault is Ownable {
     }
     
     /**
-     * @dev Verify burn proof from Warp message
+     * @dev Verify burn proof using MPC threshold signatures
+     * @param vaultId The vault identifier
+     * @param amount The amount being released
+     * @param proof Encoded MPC signatures: (uint256 burnNonce, uint32 sourceChainId, bytes[] signatures)
+     * @return True if the proof has sufficient valid MPC signatures
      */
     function _verifyBurnProof(
         bytes32 vaultId,
         uint256 amount,
         bytes calldata proof
-    ) private view returns (bool) {
-        // Verify Warp message signature
-        // This would call the Warp precompile to verify the BLS signature
-        // For now, simplified verification
-        return proof.length > 0;
+    ) private returns (bool) {
+        if (proof.length == 0) return false;
+
+        // Decode MPC proof: nonce, source chain, and array of signatures
+        (uint256 burnNonce, uint32 sourceChainId, bytes[] memory signatures) = abi.decode(
+            proof,
+            (uint256, uint32, bytes[])
+        );
+
+        // Verify minimum threshold of signatures provided
+        if (signatures.length < mpcThreshold) return false;
+
+        // Create the burn message hash that MPC signers should have signed
+        // Message format: BURN | sourceChainId | vaultId | amount | burnNonce
+        bytes32 messageHash = keccak256(abi.encode(
+            bytes4(0x4255524e), // "BURN" magic bytes
+            sourceChainId,
+            vaultId,
+            amount,
+            burnNonce
+        ));
+
+        // Convert to Ethereum signed message hash (EIP-191)
+        bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
+
+        // Verify nonce hasn't been used (replay protection)
+        bytes32 nonceKey = keccak256(abi.encode(vaultId, burnNonce));
+        if (usedBurnNonces[nonceKey]) return false;
+
+        // Count valid MPC signatures (track signers to prevent duplicate signatures)
+        uint256 validSignatures = 0;
+        address[] memory usedSigners = new address[](signatures.length);
+
+        for (uint256 i = 0; i < signatures.length; i++) {
+            // Recover signer from signature
+            address signer = ECDSA.recover(ethSignedHash, signatures[i]);
+
+            // Verify signer is authorized MPC oracle
+            if (!isMpcOracle[signer]) continue;
+
+            // Check signer hasn't been counted already (prevent signature reuse)
+            bool isDuplicate = false;
+            for (uint256 j = 0; j < validSignatures; j++) {
+                if (usedSigners[j] == signer) {
+                    isDuplicate = true;
+                    break;
+                }
+            }
+            if (isDuplicate) continue;
+
+            usedSigners[validSignatures] = signer;
+            validSignatures++;
+
+            // Early exit if threshold reached
+            if (validSignatures >= mpcThreshold) break;
+        }
+
+        // Verify threshold met
+        if (validSignatures < mpcThreshold) return false;
+
+        // Mark nonce as used
+        usedBurnNonces[nonceKey] = true;
+
+        return true;
     }
     
     /**
@@ -332,7 +412,49 @@ contract XChainVault is Ownable {
     function setBridge(address _bridge) external onlyOwner {
         bridge = _bridge;
     }
-    
+
+    /**
+     * @dev Set trusted source chain for Warp message verification
+     * @param chainId The source chain ID (bytes32 from Warp)
+     * @param trusted Whether the chain is trusted
+     */
+    function setTrustedSourceChain(bytes32 chainId, bool trusted) external onlyOwner {
+        trustedSourceChains[chainId] = trusted;
+    }
+
+    /**
+     * @dev Add or remove an MPC oracle for burn proof verification
+     * @param oracle The oracle address
+     * @param authorized Whether to authorize or revoke
+     */
+    function setMpcOracle(address oracle, bool authorized) external onlyOwner {
+        require(oracle != address(0), "Invalid oracle address");
+        isMpcOracle[oracle] = authorized;
+        emit MpcOracleUpdated(oracle, authorized);
+    }
+
+    /**
+     * @dev Set the minimum number of MPC signatures required
+     * @param threshold The new threshold (must be > 0)
+     */
+    function setMpcThreshold(uint256 threshold) external onlyOwner {
+        require(threshold > 0, "Threshold must be > 0");
+        mpcThreshold = threshold;
+        emit MpcThresholdUpdated(threshold);
+    }
+
+    /**
+     * @dev Batch add MPC oracles
+     * @param oracles Array of oracle addresses to add
+     */
+    function addMpcOracles(address[] calldata oracles) external onlyOwner {
+        for (uint256 i = 0; i < oracles.length; i++) {
+            require(oracles[i] != address(0), "Invalid oracle address");
+            isMpcOracle[oracles[i]] = true;
+            emit MpcOracleUpdated(oracles[i], true);
+        }
+    }
+
     /**
      * @dev ERC1155 receiver
      */

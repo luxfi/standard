@@ -57,8 +57,8 @@ contract FHETest is TestHelpers {
     // =============================================================
 
     function test_FHEPrecompileAddress() public view {
-        // Verify address is in Lux precompile range
-        assertEq(FHE_PRECOMPILE, 0x0200000000000000000000000000000000000080);
+        // Verify address is in Lux precompile range (0x07 prefix for FHE operations)
+        assertEq(FHE_PRECOMPILE, 0x0700000000000000000000000000000000000080);
 
         // Log status for debugging
         if (fheAvailable) {

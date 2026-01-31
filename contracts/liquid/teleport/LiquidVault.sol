@@ -4,6 +4,7 @@ pragma solidity ^0.8.31;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {TeleportVault} from "./TeleportVault.sol";
 import {IYieldStrategy} from "../../yield/IYieldStrategy.sol";
 
@@ -26,7 +27,7 @@ import {IYieldStrategy} from "../../yield/IYieldStrategy.sol";
  * - Only MPC can release ETH or manage strategies
  * - Minimum buffer maintained for withdrawals
  */
-contract LiquidVault is TeleportVault {
+contract LiquidVault is TeleportVault, Pausable {
     using SafeERC20 for IERC20;
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -34,6 +35,7 @@ contract LiquidVault is TeleportVault {
     // ═══════════════════════════════════════════════════════════════════════
 
     bytes32 public constant STRATEGY_ROLE = keccak256("STRATEGY_ROLE");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     // ═══════════════════════════════════════════════════════════════════════
     // TYPES
@@ -53,6 +55,12 @@ contract LiquidVault is TeleportVault {
     uint256 public constant MIN_BUFFER_BPS = 1000;       // 10% minimum buffer
     uint256 public constant MAX_STRATEGIES = 10;
 
+    /// @notice Maximum withdrawal per address per period (H-03 fix)
+    uint256 public constant MAX_WITHDRAWAL_PER_PERIOD = 100 ether;
+
+    /// @notice Withdrawal rate limit period
+    uint256 public constant WITHDRAWAL_PERIOD = 1 hours;
+
     // ═══════════════════════════════════════════════════════════════════════
     // STATE
     // ═══════════════════════════════════════════════════════════════════════
@@ -65,6 +73,12 @@ contract LiquidVault is TeleportVault {
 
     /// @notice Yield strategies
     Strategy[] public strategies;
+
+    /// @notice Withdrawal amount per recipient in current period (H-03 rate limit)
+    mapping(address => uint256) public withdrawalAmount;
+
+    /// @notice Last withdrawal timestamp per recipient (H-03 rate limit)
+    mapping(address => uint256) public lastWithdrawalTime;
 
     // ═══════════════════════════════════════════════════════════════════════
     // EVENTS
@@ -111,6 +125,7 @@ contract LiquidVault is TeleportVault {
     error StrategyHasFunds();
     error BufferTooLow();
     error BufferTooHigh();
+    error ExceedsWithdrawalLimit();
 
     // ═══════════════════════════════════════════════════════════════════════
     // CONSTRUCTOR
@@ -149,15 +164,19 @@ contract LiquidVault is TeleportVault {
      * @param amount Amount to release
      * @param _withdrawNonce Unique withdraw nonce for replay protection
      * @param signature MPC signature authorizing release
+     * @dev H-03 fix: Added rate limiting and pause capability
      */
     function releaseETH(
         address recipient,
         uint256 amount,
         uint256 _withdrawNonce,
         bytes calldata signature
-    ) external nonReentrant {
+    ) external nonReentrant whenNotPaused {
         if (recipient == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAmount();
+
+        // H-03 fix: Validate withdrawal rate limit
+        _validateWithdrawal(recipient, amount);
 
         // Verify MPC signature
         bytes32 messageHash = _buildReleaseHash(recipient, amount, _withdrawNonce);
@@ -324,6 +343,25 @@ contract LiquidVault is TeleportVault {
         emit BufferUpdated(oldBuffer, _bufferBps);
     }
 
+    /**
+     * @notice Pause all withdrawals (emergency) (H-03 fix)
+     * @dev Can be called by PAUSER_ROLE or DEFAULT_ADMIN_ROLE
+     */
+    function pause() external {
+        if (!hasRole(PAUSER_ROLE, msg.sender) && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+            revert AccessControlUnauthorizedAccount(msg.sender, PAUSER_ROLE);
+        }
+        _pause();
+    }
+
+    /**
+     * @notice Unpause withdrawals (H-03 fix)
+     * @dev Only DEFAULT_ADMIN_ROLE can unpause
+     */
+    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _unpause();
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // VIEW FUNCTIONS
     // ═══════════════════════════════════════════════════════════════════════
@@ -384,6 +422,27 @@ contract LiquidVault is TeleportVault {
     // ═══════════════════════════════════════════════════════════════════════
     // INTERNAL FUNCTIONS
     // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * @notice Validate withdrawal against rate limits (H-03 fix)
+     * @param recipient Address receiving the withdrawal
+     * @param amount Amount being withdrawn
+     * @dev Resets rate limit period if enough time has passed
+     */
+    function _validateWithdrawal(address recipient, uint256 amount) internal {
+        // Reset period if enough time has passed
+        if (block.timestamp > lastWithdrawalTime[recipient] + WITHDRAWAL_PERIOD) {
+            withdrawalAmount[recipient] = 0;
+            lastWithdrawalTime[recipient] = block.timestamp;
+        }
+
+        // Check rate limit
+        if (withdrawalAmount[recipient] + amount > MAX_WITHDRAWAL_PER_PERIOD) {
+            revert ExceedsWithdrawalLimit();
+        }
+
+        withdrawalAmount[recipient] += amount;
+    }
 
     /**
      * @notice Ensure sufficient buffer for withdrawal, deallocating if needed

@@ -102,6 +102,7 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     event RewardsDistributed(uint256 amount, uint256 toReserve);
     event RewardsToLiquidLux(uint256 amount);
     event LiquidLuxUpdated(address indexed newLiquidLux);
+    event SlashingReserveBpsUpdated(uint256 oldBps, uint256 newBps);
 
     // ============ Errors ============
     
@@ -112,6 +113,8 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     error NothingToClaim();
     error LiquidLuxNotSet();
     error NothingToForward();
+    error ZeroAddress();
+    error ETHTransferFailed();
 
     // ============ Constructor ============
     
@@ -357,7 +360,9 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     
     function setSlashingReserveBps(uint256 bps) external onlyOwner {
         require(bps <= 2000, "Max 20%");
+        uint256 oldBps = slashingReserveBps;
         slashingReserveBps = bps;
+        emit SlashingReserveBpsUpdated(oldBps, bps);
     }
     
     /// @notice Set LiquidLUX vault address
@@ -379,6 +384,17 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
         require(amount <= slashingReserve, "Insufficient reserve");
         slashingReserve -= amount;
         // Slashing logic - redistribute to affected delegators
+    }
+
+    /**
+     * @notice Withdraw locked ETH (emergency recovery)
+     * @param to Recipient address
+     * @param amount Amount to withdraw
+     */
+    function withdrawETH(address payable to, uint256 amount) external onlyOwner {
+        if (to == address(0)) revert ZeroAddress();
+        (bool success,) = to.call{value: amount}("");
+        if (!success) revert ETHTransferFailed();
     }
 
     // ============ View ============

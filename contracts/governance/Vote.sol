@@ -3,11 +3,13 @@
 pragma solidity ^0.8.31;
 import "./interfaces/IVoting.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import "./Owned.sol";
 
 
 contract LUXVoting is IVoting, Ownable {
+    using SafeERC20 for IERC20;
 
     IERC20 public LUX;
 
@@ -110,7 +112,8 @@ contract LUXVoting is IVoting, Ownable {
         proposals[newProposal].votes = Votes({approvals: 0, disapprovals: 0});
 
         allProposals.push(newProposal);
-        IERC20(LUX).transferFrom(msg.sender, address(this), (proposalFee * 10 ** uint256(decimals)));
+        // C-03 fix: Use safeTransferFrom to handle non-standard ERC20 returns
+        IERC20(LUX).safeTransferFrom(msg.sender, address(this), (proposalFee * 10 ** uint256(decimals)));
         emit addedProposal(newProposal, startTime);
 
     }
@@ -146,7 +149,8 @@ contract LUXVoting is IVoting, Ownable {
         voters[proposal].timestamp = uint40(block.timestamp);
 
         allVoters.push(voters[proposal]);
-        IERC20(LUX).transferFrom(msg.sender, address(this), (amount * 10 ** uint256(decimals)));
+        // C-03 fix: Use safeTransferFrom to handle non-standard ERC20 returns
+        IERC20(LUX).safeTransferFrom(msg.sender, address(this), (amount * 10 ** uint256(decimals)));
         emit votedProposal(proposal, choice);
     }
 
@@ -156,7 +160,8 @@ contract LUXVoting is IVoting, Ownable {
         (bool os, ) = payable(withdrawAddress).call{
             value: address(this).balance
         }("");
-        IERC20(LUX).transfer(withdrawAddress, IERC20(LUX).balanceOf(address(this)));
+        // C-03 fix: Use safeTransfer to handle non-standard ERC20 returns
+        IERC20(LUX).safeTransfer(withdrawAddress, IERC20(LUX).balanceOf(address(this)));
         require(os);
    }
 

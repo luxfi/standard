@@ -2,6 +2,7 @@
 pragma solidity ^0.8.31;
 
 import {IERC20, SafeERC20} from "@luxfi/standard/tokens/ERC20.sol";
+import {Ownable} from "@luxfi/standard/access/Access.sol";
 
 /**
  * @title Collect
@@ -15,7 +16,7 @@ import {IERC20, SafeERC20} from "@luxfi/standard/tokens/ERC20.sol";
  * - No governance needed (inherits from FeeGov via Warp)
  * - Single-word naming: rate, total, pending
  */
-contract Collect {
+contract Collect is Ownable {
     using SafeERC20 for IERC20;
 
     // ============ Constants ============
@@ -52,10 +53,12 @@ contract Collect {
 
     error Zero();
     error Stale();
+    error ZeroAddress();
+    error ETHTransferFailed();
 
     // ============ Constructor ============
 
-    constructor(address _token, bytes32 _cchain, address _vault) {
+    constructor(address _token, bytes32 _cchain, address _vault, address _owner) Ownable(_owner) {
         token = IERC20(_token);
         cchain = _cchain;
         vault = _vault;
@@ -132,5 +135,29 @@ contract Collect {
 
     function stats() external view returns (uint256, uint256, uint256, uint16, uint32) {
         return (total, pending, bridged, rate, version);
+    }
+
+    // ============ Emergency Withdrawal ============
+
+    /**
+     * @notice Withdraw locked ETH (emergency recovery)
+     * @param to Recipient address
+     * @param amount Amount to withdraw
+     */
+    function withdrawETH(address payable to, uint256 amount) external onlyOwner {
+        if (to == address(0)) revert ZeroAddress();
+        (bool success,) = to.call{value: amount}("");
+        if (!success) revert ETHTransferFailed();
+    }
+
+    /**
+     * @notice Withdraw locked ERC20 tokens (emergency recovery)
+     * @param tokenAddress Token to withdraw
+     * @param to Recipient address
+     * @param amount Amount to withdraw
+     */
+    function withdrawToken(address tokenAddress, address to, uint256 amount) external onlyOwner {
+        if (to == address(0)) revert ZeroAddress();
+        IERC20(tokenAddress).safeTransfer(to, amount);
     }
 }

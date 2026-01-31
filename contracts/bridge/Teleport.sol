@@ -171,6 +171,8 @@ contract Bridge is Ownable, AccessControl {
 
     /**
      * @notice Concatenate data for signing
+     * @dev Uses abi.encode instead of abi.encodePacked to prevent hash collision attacks
+     *      with multiple dynamic-length string arguments
      */
     function append(
         string memory amt,
@@ -180,7 +182,7 @@ contract Bridge is Ownable, AccessControl {
         string memory chainIdStr,
         string memory vault
     ) internal pure returns (string memory) {
-        return string(abi.encodePacked(amt, toTargetAddrStr, txid, tokenAddrStrHash, chainIdStr, vault));
+        return string(abi.encode(amt, toTargetAddrStr, txid, tokenAddrStrHash, chainIdStr, vault));
     }
 
     /**
@@ -270,7 +272,7 @@ contract Bridge is Ownable, AccessControl {
      */
     function recoverSigner(bytes32 message, bytes memory sig) internal pure returns (address) {
         (uint8 v, bytes32 r, bytes32 s) = splitSignature(sig);
-        return ecrecover(message, v, r, s);
+        return ECDSA.recover(message, v, r, s);
     }
 
     /**

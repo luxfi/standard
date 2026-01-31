@@ -108,6 +108,9 @@ contract LiquidBond is Ownable, ReentrancyGuard {
     /// @notice Price precision (8 decimals like BTC)
     uint256 public constant PRICE_PRECISION = 1e8;
 
+    /// @notice Maximum allowed staleness for oracle prices
+    uint256 public constant MAX_PRICE_STALENESS = 1 hours;
+
     // ═══════════════════════════════════════════════════════════════════════════
     // STATE
     // ═══════════════════════════════════════════════════════════════════════════
@@ -185,6 +188,8 @@ contract LiquidBond is Ownable, ReentrancyGuard {
     event VestingPeriodUpdated(uint256 newPeriod);
     event EpochAdvanced(uint256 newEpoch);
     event CollateralRegistryUpdated(address indexed registry);
+    event BondLimitsUpdated(uint256 minSats, uint256 maxPerAddress);
+    event BtcPriceFeedUpdated(address indexed feed);
 
     // ═══════════════════════════════════════════════════════════════════════════
     // ERRORS
@@ -196,6 +201,11 @@ contract LiquidBond is Ownable, ReentrancyGuard {
     error NothingToClaim();
     error InvalidPrice();
     error SwapFailed();
+    error StalePrice();
+    error StaleRound();
+    error TooManyPositions();
+
+    uint256 public constant MAX_BATCH_SIZE = 50;
 
     // ═══════════════════════════════════════════════════════════════════════════
     // CONSTRUCTOR
@@ -328,18 +338,48 @@ contract LiquidBond is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Claim all vested ASHA
+     * @notice Claim all vested ASHA (max MAX_BATCH_SIZE purchases)
+     * @dev Use claimBatch for users with > MAX_BATCH_SIZE purchases
      */
     function claimAll() external nonReentrant {
         Purchase[] storage purchases = userPurchases[msg.sender];
-        uint256 totalClaimable = 0;
+        if (purchases.length > MAX_BATCH_SIZE) revert TooManyPositions();
 
+        uint256 totalClaimable = 0;
         for (uint256 i = 0; i < purchases.length; i++) {
-            uint256 claimable = _claimable(purchases[i]);
-            if (claimable > 0) {
-                purchases[i].ashaClaimed += claimable;
-                totalClaimable += claimable;
-                emit Claimed(msg.sender, i, claimable);
+            uint256 claimableAmt = _claimable(purchases[i]);
+            if (claimableAmt > 0) {
+                purchases[i].ashaClaimed += claimableAmt;
+                totalClaimable += claimableAmt;
+                emit Claimed(msg.sender, i, claimableAmt);
+            }
+        }
+
+        if (totalClaimable == 0) revert NothingToClaim();
+
+        totalAshaClaimed += totalClaimable;
+        IMintable(address(asha)).mint(msg.sender, totalClaimable);
+    }
+
+    /**
+     * @notice Claim from a batch of purchases
+     * @param startIndex Starting purchase index
+     * @param count Number of purchases to claim (max MAX_BATCH_SIZE)
+     */
+    function claimBatch(uint256 startIndex, uint256 count) external nonReentrant {
+        if (count > MAX_BATCH_SIZE) revert TooManyPositions();
+
+        Purchase[] storage purchases = userPurchases[msg.sender];
+        uint256 endIndex = startIndex + count;
+        if (endIndex > purchases.length) endIndex = purchases.length;
+
+        uint256 totalClaimable = 0;
+        for (uint256 i = startIndex; i < endIndex; i++) {
+            uint256 claimableAmt = _claimable(purchases[i]);
+            if (claimableAmt > 0) {
+                purchases[i].ashaClaimed += claimableAmt;
+                totalClaimable += claimableAmt;
+                emit Claimed(msg.sender, i, claimableAmt);
             }
         }
 
@@ -369,15 +409,37 @@ contract LiquidBond is Ownable, ReentrancyGuard {
             return amount;
         }
 
-        // Get token price in USD from Chainlink
-        (, int256 tokenPrice,,,) = IPriceFeed(config.priceFeed).latestRoundData();
+        // Get token price in USD from Chainlink with full validation
+        (
+            uint80 tokenRoundId,
+            int256 tokenPrice,
+            ,
+            uint256 tokenUpdatedAt,
+            uint80 tokenAnsweredInRound
+        ) = IPriceFeed(config.priceFeed).latestRoundData();
         uint8 tokenDecimals = IPriceFeed(config.priceFeed).decimals();
 
-        // Get BTC price in USD
-        (, int256 btcPrice,,,) = IPriceFeed(btcPriceFeed).latestRoundData();
+        // Validate token price feed
+        if (tokenPrice <= 0) revert InvalidPrice();
+        if (tokenUpdatedAt == 0) revert StalePrice();
+        if (block.timestamp - tokenUpdatedAt > MAX_PRICE_STALENESS) revert StalePrice();
+        if (tokenAnsweredInRound < tokenRoundId) revert StaleRound();
+
+        // Get BTC price in USD with full validation
+        (
+            uint80 btcRoundId,
+            int256 btcPrice,
+            ,
+            uint256 btcUpdatedAt,
+            uint80 btcAnsweredInRound
+        ) = IPriceFeed(btcPriceFeed).latestRoundData();
         uint8 btcDecimals = IPriceFeed(btcPriceFeed).decimals();
 
-        if (tokenPrice <= 0 || btcPrice <= 0) revert InvalidPrice();
+        // Validate BTC price feed
+        if (btcPrice <= 0) revert InvalidPrice();
+        if (btcUpdatedAt == 0) revert StalePrice();
+        if (block.timestamp - btcUpdatedAt > MAX_PRICE_STALENESS) revert StalePrice();
+        if (btcAnsweredInRound < btcRoundId) revert StaleRound();
 
         // Convert to sats: (amount * tokenPriceUSD * SATS_PER_BTC) / btcPriceUSD
         // Normalize decimals
@@ -478,6 +540,7 @@ contract LiquidBond is Ownable, ReentrancyGuard {
     function setBondLimits(uint256 minSats, uint256 maxPerAddress) external onlyOwner {
         minBondSats = minSats;
         maxBondPerAddress = maxPerAddress;
+        emit BondLimitsUpdated(minSats, maxPerAddress);
     }
 
     /**
@@ -485,6 +548,7 @@ contract LiquidBond is Ownable, ReentrancyGuard {
      */
     function setBtcPriceFeed(address feed) external onlyOwner {
         btcPriceFeed = feed;
+        emit BtcPriceFeedUpdated(feed);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

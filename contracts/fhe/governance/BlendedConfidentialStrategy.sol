@@ -4,7 +4,8 @@ pragma solidity ^0.8.24;
 import "../FHE.sol";
 import {TFHE} from "../threshold/TFHE.sol";
 import {TFHEApp} from "../threshold/TFHEApp.sol";
-import {IStrategy} from "../../governance/interfaces/IStrategy.sol";
+import {ICharter} from "../../governance/interfaces/ICharter.sol";
+import {IStrategy} from "../../interfaces/governance/IStrategy.sol";
 import {IVotingTypes} from "../../governance/interfaces/IVotingTypes.sol";
 import {IVotingWeight} from "../../governance/interfaces/IVotingWeight.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
@@ -30,11 +31,26 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
  *   Final result = blend(confidential_result, public_result)
  */
 contract BlendedConfidentialStrategy is
-    IStrategy,
+    ICharter,
     TFHEApp,
     Ownable2StepUpgradeable,
     UUPSUpgradeable
 {
+    // ============================================================
+    // ERRORS
+    // ============================================================
+
+    error InvalidStrategyAdmin();
+
+    // ============================================================
+    // EVENTS
+    // ============================================================
+
+    event FreezeVoterAuthorizationChanged(
+        address indexed freezeVoterContract,
+        bool isAuthorized
+    );
+
     // ============================================================
     // TYPES
     // ============================================================
@@ -93,6 +109,8 @@ contract BlendedConfidentialStrategy is
         mapping(address => bool) isProposerAdapter;
         mapping(address => bool) isAuthorizedFreezeVoter;
         address[] authorizedFreezeVoters;
+        mapping(address => bool) isAuthorizedVetoVoter;
+        address[] authorizedVetoVoters;
         mapping(uint256 requestId => uint32 proposalId) decryptionRequests;
         euint256 ZERO; // Cached encrypted zero
     }
@@ -139,7 +157,7 @@ contract BlendedConfidentialStrategy is
     // INITIALIZERS
     // ============================================================
 
-    /// @inheritdoc IStrategy
+    /// @notice See IStrategy for documentation
     function initialize(
         uint32 votingPeriod_,
         uint256 quorumThreshold_,
@@ -169,7 +187,7 @@ contract BlendedConfidentialStrategy is
         FHE.allowThis($.ZERO);
     }
 
-    /// @inheritdoc IStrategy
+    /// @notice See IStrategy for documentation
     function initialize2(
         address strategyAdmin_,
         IVotingTypes.VotingConfig[] calldata votingConfigs_
@@ -221,12 +239,12 @@ contract BlendedConfidentialStrategy is
     // VIEW FUNCTIONS
     // ============================================================
 
-    /// @inheritdoc IStrategy
+    /// @notice See IStrategy for documentation
     function isProposer(
         address address_,
         address proposerAdapter_,
         bytes calldata proposerAdapterData_
-    ) external view override returns (bool) {
+    ) external view returns (bool) {
         StrategyStorage storage $ = _getStorage();
         if (!$.isProposerAdapter[proposerAdapter_]) return false;
         (bool success, bytes memory result) = proposerAdapter_.staticcall(
@@ -235,15 +253,15 @@ contract BlendedConfidentialStrategy is
         return success && abi.decode(result, (bool));
     }
 
-    /// @inheritdoc IStrategy
-    function isPassed(uint32 proposalId_) external view override returns (bool) {
+    /// @notice See IStrategy for documentation
+    function isPassed(uint32 proposalId_) external view returns (bool) {
         StrategyStorage storage $ = _getStorage();
         BlendedProposalVoting storage pv = $.proposalVoting[proposalId_];
         if (!pv.decryptionComplete) return false;
         return pv.passed;
     }
 
-    /// @inheritdoc IStrategy
+    /// @notice See IStrategy for documentation
     function getVotingTimestamps(
         uint32 proposalId_
     ) external view override returns (uint48 startTime, uint48 endTime) {
@@ -252,12 +270,12 @@ contract BlendedConfidentialStrategy is
         return (pv.votingStartTimestamp, pv.votingEndTimestamp);
     }
 
-    /// @inheritdoc IStrategy
+    /// @notice See IStrategy for documentation
     function getVotingStartBlock(uint32 proposalId_) external view override returns (uint32) {
         return _getStorage().proposalVoting[proposalId_].votingStartBlock;
     }
 
-    /// @inheritdoc IStrategy
+    /// @notice See IStrategy for documentation
     function votingConfigs() external view override returns (IVotingTypes.VotingConfig[] memory) {
         StrategyStorage storage $ = _getStorage();
         IVotingTypes.VotingConfig[] memory configs = new IVotingTypes.VotingConfig[]($.votingConfigs.length);
@@ -318,32 +336,32 @@ contract BlendedConfidentialStrategy is
         );
     }
 
-    /// @inheritdoc IStrategy
-    function isProposerAdapter(address proposerAdapter_) external view override returns (bool) {
+    /// @notice See IStrategy for documentation
+    function isProposerAdapter(address proposerAdapter_) external view returns (bool) {
         return _getStorage().isProposerAdapter[proposerAdapter_];
     }
 
-    /// @inheritdoc IStrategy
-    function strategyAdmin() external view override returns (address) {
+    /// @notice See IStrategy for documentation
+    function strategyAdmin() external view returns (address) {
         return _getStorage().strategyAdmin;
     }
 
-    /// @inheritdoc IStrategy
+    /// @notice See IStrategy for documentation
     function votingPeriod() external view override returns (uint32) {
         return _getStorage().votingPeriod;
     }
 
-    /// @inheritdoc IStrategy
+    /// @notice See IStrategy for documentation
     function quorumThreshold() external view override returns (uint256) {
         return _getStorage().quorumThreshold;
     }
 
-    /// @inheritdoc IStrategy
+    /// @notice See IStrategy for documentation
     function basisNumerator() external view override returns (uint256) {
         return _getStorage().basisNumerator;
     }
 
-    /// @inheritdoc IStrategy
+    /// @notice See IStrategy for documentation
     function proposalVotingDetails(
         uint32 proposalId_
     ) external view override returns (ProposalVotingDetails memory) {
@@ -364,7 +382,7 @@ contract BlendedConfidentialStrategy is
         });
     }
 
-    /// @inheritdoc IStrategy
+    /// @notice See IStrategy for documentation
     function votingConfig(uint256 configIndex_) external view override returns (IVotingTypes.VotingConfig memory) {
         BlendedVotingConfig storage config = _getStorage().votingConfigs[configIndex_];
         return IVotingTypes.VotingConfig({
@@ -373,13 +391,13 @@ contract BlendedConfidentialStrategy is
         });
     }
 
-    /// @inheritdoc IStrategy
-    function proposerAdapters() external view override returns (address[] memory) {
+    /// @notice See IStrategy for documentation
+    function proposerAdapters() external view returns (address[] memory) {
         return _getStorage().proposerAdapters;
     }
 
-    /// @inheritdoc IStrategy
-    function isQuorumMet(uint32 proposalId_) external view override returns (bool) {
+    /// @notice See IStrategy for documentation
+    function isQuorumMet(uint32 proposalId_) external view returns (bool) {
         StrategyStorage storage $ = _getStorage();
         BlendedProposalVoting storage pv = $.proposalVoting[proposalId_];
         if (!pv.decryptionComplete) return false;
@@ -389,8 +407,8 @@ contract BlendedConfidentialStrategy is
         return (totalYes + totalAbstain) >= $.quorumThreshold;
     }
 
-    /// @inheritdoc IStrategy
-    function isBasisMet(uint32 proposalId_) external view override returns (bool) {
+    /// @notice See IStrategy for documentation
+    function isBasisMet(uint32 proposalId_) external view returns (bool) {
         StrategyStorage storage $ = _getStorage();
         BlendedProposalVoting storage pv = $.proposalVoting[proposalId_];
         if (!pv.decryptionComplete) return false;
@@ -403,28 +421,61 @@ contract BlendedConfidentialStrategy is
         return (totalYes * BASIS_DENOMINATOR) > (totalVotes * $.basisNumerator);
     }
 
-    /// @inheritdoc IStrategy
-    function isAuthorizedFreezeVoter(address freezeVoterContract_) external view override returns (bool) {
+    /// @notice See IStrategy for documentation
+    function isAuthorizedFreezeVoter(address freezeVoterContract_) external view returns (bool) {
         return _getStorage().isAuthorizedFreezeVoter[freezeVoterContract_];
     }
 
-    /// @inheritdoc IStrategy
-    function authorizedFreezeVoters() external view override returns (address[] memory) {
+    /// @notice See IStrategy for documentation
+    function authorizedFreezeVoters() external view returns (address[] memory) {
         return _getStorage().authorizedFreezeVoters;
     }
 
-    /// @inheritdoc IStrategy
+    /// @notice See ICharter for documentation
+    function charterAdmin() external view returns (address) {
+        return _getStorage().strategyAdmin;
+    }
+
+    /// @notice See ICharter for documentation
+    function isAuthorizedVetoVoter(address vetoVoterContract_) external view returns (bool) {
+        return _getStorage().isAuthorizedVetoVoter[vetoVoterContract_];
+    }
+
+    /// @notice See ICharter for documentation
+    function authorizedVetoVoters() external view returns (address[] memory) {
+        return _getStorage().authorizedVetoVoters;
+    }
+
+    /// @notice See IStrategy for documentation
     function voteCastedAfterVotingPeriodEnded(uint32) external pure override returns (bool) {
         return false;
     }
 
-    /// @inheritdoc IStrategy
+    /// @notice See IStrategy for documentation
     function validStrategyVote(
         address voter_,
         uint32 proposalId_,
         uint8 voteType_,
-        IVotingTypes.VotingConfigVoteData[] calldata
-    ) external view override returns (bool) {
+        IVotingTypes.VotingConfigVoteData[] calldata votingConfigsData_
+    ) external view returns (bool) {
+        return _validVote(voter_, proposalId_, voteType_);
+    }
+
+    /// @notice See ICharter for documentation
+    function validCharterVote(
+        address voter_,
+        uint32 proposalId_,
+        uint8 voteType_,
+        IVotingTypes.VotingConfigVoteData[] calldata votingConfigsData_
+    ) external view returns (bool) {
+        return _validVote(voter_, proposalId_, voteType_);
+    }
+
+    function _validVote(
+        address voter_,
+        uint32 proposalId_,
+        uint8 voteType_
+    ) internal view returns (bool) {
         StrategyStorage storage $ = _getStorage();
         BlendedProposalVoting storage pv = $.proposalVoting[proposalId_];
 
@@ -440,7 +491,7 @@ contract BlendedConfidentialStrategy is
     // STATE-CHANGING FUNCTIONS
     // ============================================================
 
-    /// @inheritdoc IStrategy
+    /// @notice See IStrategy for documentation
     function initializeProposal(uint32 proposalId_) external override {
         StrategyStorage storage $ = _getStorage();
         if (msg.sender != $.strategyAdmin) revert InvalidStrategyAdmin();
@@ -470,7 +521,7 @@ contract BlendedConfidentialStrategy is
         );
     }
 
-    /// @inheritdoc IStrategy
+    /// @notice See IStrategy for documentation
     function castVote(
         uint32 proposalId_,
         uint8 voteType_,
@@ -622,8 +673,8 @@ contract BlendedConfidentialStrategy is
         delete $.decryptionRequests[requestId];
     }
 
-    /// @inheritdoc IStrategy
-    function addAuthorizedFreezeVoter(address freezeVoterContract_) external override onlyOwner {
+    /// @notice See IStrategy for documentation
+    function addAuthorizedFreezeVoter(address freezeVoterContract_) external onlyOwner {
         StrategyStorage storage $ = _getStorage();
         if (freezeVoterContract_ == address(0)) revert InvalidAddress();
         $.isAuthorizedFreezeVoter[freezeVoterContract_] = true;
@@ -631,8 +682,8 @@ contract BlendedConfidentialStrategy is
         emit FreezeVoterAuthorizationChanged(freezeVoterContract_, true);
     }
 
-    /// @inheritdoc IStrategy
-    function removeAuthorizedFreezeVoter(address freezeVoterContract_) external override onlyOwner {
+    /// @notice See IStrategy for documentation
+    function removeAuthorizedFreezeVoter(address freezeVoterContract_) external onlyOwner {
         StrategyStorage storage $ = _getStorage();
         $.isAuthorizedFreezeVoter[freezeVoterContract_] = false;
 
@@ -645,5 +696,35 @@ contract BlendedConfidentialStrategy is
             }
         }
         emit FreezeVoterAuthorizationChanged(freezeVoterContract_, false);
+    }
+
+    // ============================================================
+    // VETO VOTER MANAGEMENT
+    // ============================================================
+
+    /// @notice See IStrategy for documentation
+    function addAuthorizedVetoVoter(address vetoVoterContract_) external onlyOwner {
+        StrategyStorage storage $ = _getStorage();
+        if ($.isAuthorizedVetoVoter[vetoVoterContract_]) return;
+
+        $.isAuthorizedVetoVoter[vetoVoterContract_] = true;
+        $.authorizedVetoVoters.push(vetoVoterContract_);
+    }
+
+    /// @notice See IStrategy for documentation
+    function removeAuthorizedVetoVoter(address vetoVoterContract_) external onlyOwner {
+        StrategyStorage storage $ = _getStorage();
+        if (!$.isAuthorizedVetoVoter[vetoVoterContract_]) return;
+
+        $.isAuthorizedVetoVoter[vetoVoterContract_] = false;
+
+        address[] storage voters = $.authorizedVetoVoters;
+        for (uint256 i; i < voters.length; ++i) {
+            if (voters[i] == vetoVoterContract_) {
+                voters[i] = voters[voters.length - 1];
+                voters.pop();
+                break;
+            }
+        }
     }
 }

@@ -48,3 +48,16 @@ import {Multicall} from "@openzeppelin/contracts/utils/Multicall.sol";
 
 // Strings
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+
+// Nonces (for EIP-2612/Permit)
+import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
+
+// Storage
+import {StorageSlot} from "@openzeppelin/contracts/utils/StorageSlot.sol";
+import {ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
+
+// EIP712
+import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+
+// Checkpoints (for ERC20Votes)
+import {Checkpoints} from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";

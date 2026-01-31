@@ -1,6 +1,6 @@
 {
-  "name": "@luxfi/contracts",
-  "version": "1.5.0",
+  "name": "@luxfi/standard",
+  "version": "1.6.0",
   "description": "Lux Standard Library - Official Solidity smart contracts for Lux Network",
   "license": "BSD-3-Clause",
   "repository": {
@@ -15,43 +15,73 @@
     "smart-contracts",
     "defi",
     "bridge",
+    "governance",
+    "safe",
     "post-quantum",
     "evm",
     "fhe"
   ],
+  "main": "abi/index.js",
+  "types": "abi/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./abi/index.d.ts",
+      "import": "./abi/index.js",
+      "require": "./abi/index.js"
+    },
+    "./abi": {
+      "types": "./abi/index.d.ts",
+      "import": "./abi/index.js",
+      "require": "./abi/index.js"
+    },
+    "./abi/*": "./abi/*",
+    "./governance/*": "./governance/*.sol",
+    "./safe/*": "./safe/*.sol",
+    "./*": "./*.sol"
+  },
   "files": [
-    "fhe/**/*.sol",
+    "abi/**/*.ts",
+    "abi/**/*.js",
+    "abi/**/*.mjs",
+    "abi/**/*.d.ts",
+    "access/**/*.sol",
+    "account/**/*.sol",
+    "adapters/**/*.sol",
+    "ai/**/*.sol",
     "amm/**/*.sol",
     "bridge/**/*.sol",
+    "core/**/*.sol",
+    "crypto/**/*.sol",
+    "fhe/**/*.sol",
     "governance/**/*.sol",
     "identity/**/*.sol",
     "liquid/**/*.sol",
-    "markets/**/*.sol",
-    "oracle/**/*.sol",
-    "perps/**/*.sol",
-    "staking/**/*.sol",
-    "tokens/**/*.sol",
-    "treasury/**/*.sol",
-    "account/**/*.sol",
-    "adapters/**/*.sol",
-    "core/**/*.sol",
-    "crypto/**/*.sol",
     "liquidity/**/*.sol",
     "lssvm/**/*.sol",
+    "markets/**/*.sol",
     "mocks/**/*.sol",
     "multicall/**/*.sol",
     "nft/**/*.sol",
     "omnichain/**/*.sol",
+    "oracle/**/*.sol",
+    "perps/**/*.sol",
+    "proxy/**/*.sol",
     "registry/**/*.sol",
     "safe/**/*.sol",
+    "staking/**/*.sol",
+    "tokens/**/*.sol",
+    "treasury/**/*.sol",
     "utils/**/*.sol",
     "yield/**/*.sol",
-    "ai/**/*.sol",
     "Faucet.sol"
   ],
+  "scripts": {
+    "build:abi": "npx ts-node ../scripts/generate-abis.ts && npx tsc -p tsconfig.abi.json"
+  },
   "dependencies": {
     "@openzeppelin/contracts": "^5.4.0",
-    "@openzeppelin/contracts-upgradeable": "^5.4.0"
+    "@openzeppelin/contracts-upgradeable": "^5.4.0",
+    "@safe-global/safe-contracts": "^1.4.1"
   },
   "publishConfig": {
     "access": "public"

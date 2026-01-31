@@ -62,12 +62,17 @@ contract Recall is Ownable {
     /// @notice Next recall ID
     uint256 public nextRecallId;
 
+    /// @notice Approved controllers that can execute transfers on behalf of an address
+    /// @dev Maps controller => source => approved
+    mapping(address => mapping(address => bool)) public isApprovedController;
+
     /// @notice Events
     event FundingReceived(address indexed token, uint256 amount, FundSource source);
     event RecallInitiated(uint256 indexed recallId, address token, uint256 amount);
     event RecallExecuted(uint256 indexed recallId, address token, uint256 amount);
     event RecallCancelled(uint256 indexed recallId);
     event GracePeriodUpdated(uint256 newPeriod);
+    event ControllerApprovalSet(address indexed controller, bool approved);
 
     /// @notice Errors
     error OnlyParent();
@@ -76,6 +81,7 @@ contract Recall is Ownable {
     error RecallAlreadyExecuted();
     error RecallAlreadyCancelled();
     error InvalidAmount();
+    error UnauthorizedSource();
 
     modifier onlyParent() {
         if (msg.sender != parentSafe) revert OnlyParent();
@@ -165,6 +171,12 @@ contract Recall is Ownable {
             revert GracePeriodNotElapsed();
         }
 
+        // Verify caller has authority over the source address
+        // Either the childSafe itself is calling, or the caller is an approved controller
+        if (childSafe != msg.sender && !isApprovedController[msg.sender][childSafe]) {
+            revert UnauthorizedSource();
+        }
+
         // Update balances
         allocatedBalance[request.token] -= request.amount;
         request.executed = true;
@@ -200,6 +212,19 @@ contract Recall is Ownable {
     function setGracePeriod(uint256 newPeriod) external onlyOwner {
         recallGracePeriod = newPeriod;
         emit GracePeriodUpdated(newPeriod);
+    }
+
+    /**
+     * @notice Set approved controller status for the childSafe
+     * @dev Only the childSafe itself can approve controllers for its funds
+     * @param controller Address to approve/revoke as controller
+     * @param approved Whether the controller is approved
+     */
+    function setApprovedController(address controller, bool approved) external {
+        // Only the childSafe can approve controllers for itself
+        require(msg.sender == childSafe, "Recall: only childSafe can approve");
+        isApprovedController[controller][childSafe] = approved;
+        emit ControllerApprovalSet(controller, approved);
     }
 
     // ═══════════════════════════════════════════════════════════════════════

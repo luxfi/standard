@@ -70,6 +70,9 @@ contract CollateralRegistry is Ownable {
     /// @notice Primary collateral (e.g., LUSD) - target for swaps
     address public primaryCollateral;
 
+    /// @notice Authorized contracts that can call recordBond
+    mapping(address => bool) public authorizedBonders;
+
     // ═══════════════════════════════════════════════════════════════════════════
     // EVENTS
     // ═══════════════════════════════════════════════════════════════════════════
@@ -82,6 +85,7 @@ contract CollateralRegistry is Ownable {
     event PrimaryCollateralUpdated(address indexed token);
     event CapacityUpdated(address indexed token, uint256 capacity);
     event BondedAmountUpdated(address indexed token, uint256 newTotal);
+    event AuthorizedBonderUpdated(address indexed bonder, bool authorized);
 
     // ═══════════════════════════════════════════════════════════════════════════
     // ERRORS
@@ -92,6 +96,7 @@ contract CollateralRegistry is Ownable {
     error CapacityExceeded(address token, uint256 requested, uint256 available);
     error InvalidTier();
     error InvalidAddress();
+    error UnauthorizedBonder();
 
     // ═══════════════════════════════════════════════════════════════════════════
     // CONSTRUCTOR
@@ -254,17 +259,28 @@ contract CollateralRegistry is Ownable {
         emit PrimaryCollateralUpdated(token);
     }
 
+    /**
+     * @notice Set authorized bonder status
+     * @param bonder Address to authorize/deauthorize
+     * @param authorized Whether the address is authorized
+     */
+    function setAuthorizedBonder(address bonder, bool authorized) external onlyOwner {
+        if (bonder == address(0)) revert InvalidAddress();
+        authorizedBonders[bonder] = authorized;
+        emit AuthorizedBonderUpdated(bonder, authorized);
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // BOND INTEGRATION
     // ═══════════════════════════════════════════════════════════════════════════
 
     /**
-     * @notice Record bonded amount (called by LiquidBond)
+     * @notice Record bonded amount (called by authorized bond contracts only)
      * @param token Collateral token
      * @param amount Amount bonded
      */
     function recordBond(address token, uint256 amount) external {
-        // Note: Should add access control for only authorized bond contracts
+        if (!authorizedBonders[msg.sender]) revert UnauthorizedBonder();
         CollateralConfig storage config = collaterals[token];
         if (!config.whitelisted) revert NotWhitelisted(token);
 

@@ -37,6 +37,7 @@ contract ChainlinkAdapter is IOracleSource, AccessControl {
     error FeedNotConfigured(address asset);
     error InvalidPrice();
     error StalePrice();
+    error StaleRound();
 
     event FeedConfigured(address indexed asset, address indexed feed);
     event MaxStalenessUpdated(uint256 newMaxStaleness);
@@ -86,10 +87,18 @@ contract ChainlinkAdapter is IOracleSource, AccessControl {
         address feed = feeds[asset];
         if (feed == address(0)) revert FeedNotConfigured(asset);
 
-        (, int256 answer,, uint256 updatedAt,) = AggregatorV3Interface(feed).latestRoundData();
+        (
+            uint80 roundId,
+            int256 answer,
+            ,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        ) = AggregatorV3Interface(feed).latestRoundData();
 
         if (answer <= 0) revert InvalidPrice();
+        if (updatedAt == 0) revert StalePrice();
         if (block.timestamp - updatedAt > maxStaleness) revert StalePrice();
+        if (answeredInRound < roundId) revert StaleRound();
 
         // Normalize to 18 decimals
         uint8 decimals = feedDecimals[asset];
@@ -131,10 +140,18 @@ contract ChainlinkAdapter is IOracleSource, AccessControl {
         address feed = feeds[asset];
         if (feed == address(0)) revert FeedNotConfigured(asset);
 
-        (, int256 answer,, uint256 updatedAt,) = AggregatorV3Interface(feed).latestRoundData();
+        (
+            uint80 roundId,
+            int256 answer,
+            ,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        ) = AggregatorV3Interface(feed).latestRoundData();
 
         if (answer <= 0) revert InvalidPrice();
+        if (updatedAt == 0) revert StalePrice();
         if (block.timestamp - updatedAt > maxAge) revert StalePrice();
+        if (answeredInRound < roundId) revert StaleRound();
 
         uint8 decimals = feedDecimals[asset];
         if (decimals < 18) {

@@ -320,7 +320,7 @@ contract DAO is ReentrancyGuard {
         );
 
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
-        address signer = ecrecover(digest, v, r, s);
+        address signer = ECDSA.recover(digest, v, r, s);
 
         require(signer != address(0), "Invalid signature");
 

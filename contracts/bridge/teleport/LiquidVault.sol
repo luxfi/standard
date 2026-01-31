@@ -4,6 +4,7 @@ pragma solidity ^0.8.31;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {TeleportVault} from "./TeleportVault.sol";
 import {IYieldStrategy} from "../../yield/IYieldStrategy.sol";
 
@@ -24,7 +25,7 @@ import {IYieldStrategy} from "../../yield/IYieldStrategy.sol";
  * - Only MPC can release ETH or manage strategies
  * - Minimum buffer maintained for withdrawals
  */
-contract LiquidVault is TeleportVault {
+contract LiquidVault is TeleportVault, Pausable {
     using SafeERC20 for IERC20;
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -32,6 +33,7 @@ contract LiquidVault is TeleportVault {
     // ═══════════════════════════════════════════════════════════════════════
 
     bytes32 public constant STRATEGY_ROLE = keccak256("STRATEGY_ROLE");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     // ═══════════════════════════════════════════════════════════════════════
     // TYPES
@@ -51,6 +53,12 @@ contract LiquidVault is TeleportVault {
     uint256 public constant MIN_BUFFER_BPS = 1000;       // 10% minimum buffer
     uint256 public constant MAX_STRATEGIES = 10;
 
+    /// @notice Maximum withdrawal per address per period (H-03 fix)
+    uint256 public constant MAX_WITHDRAWAL_PER_PERIOD = 100 ether;
+
+    /// @notice Withdrawal rate limit period
+    uint256 public constant WITHDRAWAL_PERIOD = 1 hours;
+
     // ═══════════════════════════════════════════════════════════════════════
     // STATE
     // ═══════════════════════════════════════════════════════════════════════
@@ -63,6 +71,12 @@ contract LiquidVault is TeleportVault {
 
     /// @notice Yield strategies
     Strategy[] public strategies;
+
+    /// @notice Withdrawal amount per recipient in current period (H-03 rate limit)
+    mapping(address => uint256) public withdrawalAmount;
+
+    /// @notice Last withdrawal timestamp per recipient (H-03 rate limit)
+    mapping(address => uint256) public lastWithdrawalTime;
 
     // ═══════════════════════════════════════════════════════════════════════
     // EVENTS
@@ -109,6 +123,7 @@ contract LiquidVault is TeleportVault {
     error StrategyHasFunds();
     error BufferTooLow();
     error BufferTooHigh();
+    error ExceedsWithdrawalLimit();
 
     // ═══════════════════════════════════════════════════════════════════════
     // CONSTRUCTOR
@@ -147,15 +162,19 @@ contract LiquidVault is TeleportVault {
      * @param amount Amount to release
      * @param _withdrawNonce Unique withdraw nonce for replay protection
      * @param signature MPC signature authorizing release
+     * @dev H-03 fix: Added rate limiting and pause capability
      */
     function releaseETH(
         address recipient,
         uint256 amount,
         uint256 _withdrawNonce,
         bytes calldata signature
-    ) external nonReentrant {
+    ) external nonReentrant whenNotPaused {
         if (recipient == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAmount();
+
+        // H-03 fix: Validate withdrawal rate limit
+        _validateWithdrawal(recipient, amount);
 
         // Verify MPC signature
         bytes32 messageHash = _buildReleaseHash(recipient, amount, _withdrawNonce);
@@ -183,6 +202,7 @@ contract LiquidVault is TeleportVault {
      * @param strategyIndex Strategy index
      * @param amount Amount to allocate
      * @param signature MPC signature
+     * @dev Follows Checks-Effects-Interactions pattern to prevent reentrancy
      */
     function allocateToStrategy(
         uint256 strategyIndex,
@@ -193,8 +213,8 @@ contract LiquidVault is TeleportVault {
         if (!strategy.active) revert StrategyNotActive();
         if (amount == 0) revert ZeroAmount();
 
-        // Verify MPC signature
-        bytes32 messageHash = keccak256(abi.encodePacked(
+        // Verify MPC signature (uses abi.encode to prevent hash collision)
+        bytes32 messageHash = keccak256(abi.encode(
             "ALLOCATE",
             strategyIndex,
             amount,
@@ -206,9 +226,11 @@ contract LiquidVault is TeleportVault {
         uint256 bufferRequired = totalDeposited * bufferBps / BASIS_POINTS;
         if (address(this).balance - amount < bufferRequired) revert InsufficientBuffer();
 
-        // Deposit to strategy
-        IYieldStrategy(strategy.adapter).deposit{value: amount}(amount);
+        // EFFECTS: Update state BEFORE external call (Checks-Effects-Interactions)
         strategy.allocated += amount;
+
+        // INTERACTIONS: External call after state update
+        IYieldStrategy(strategy.adapter).deposit{value: amount}(amount);
 
         emit StrategyAllocated(strategyIndex, amount);
     }
@@ -218,6 +240,7 @@ contract LiquidVault is TeleportVault {
      * @param strategyIndex Strategy index
      * @param amount Amount to deallocate
      * @param signature MPC signature
+     * @dev Follows Checks-Effects-Interactions pattern to prevent reentrancy
      */
     function deallocateFromStrategy(
         uint256 strategyIndex,
@@ -228,8 +251,8 @@ contract LiquidVault is TeleportVault {
         if (!strategy.active) revert StrategyNotActive();
         if (amount == 0) revert ZeroAmount();
 
-        // Verify MPC signature
-        bytes32 messageHash = keccak256(abi.encodePacked(
+        // Verify MPC signature (uses abi.encode to prevent hash collision)
+        bytes32 messageHash = keccak256(abi.encode(
             "DEALLOCATE",
             strategyIndex,
             amount,
@@ -237,9 +260,19 @@ contract LiquidVault is TeleportVault {
         ));
         _verifyMPCSignature(messageHash, signature);
 
-        // Withdraw from strategy
+        // EFFECTS: Update state BEFORE external call (Checks-Effects-Interactions)
+        // Note: We use `amount` for state update since we requested this amount
+        // The actual withdrawn amount may differ due to strategy mechanics
+        strategy.allocated -= amount;
+
+        // INTERACTIONS: External call after state update
         uint256 withdrawn = IYieldStrategy(strategy.adapter).withdraw(amount);
-        strategy.allocated -= withdrawn;
+
+        // Adjust if withdrawn differs from requested (strategy may have slippage)
+        if (withdrawn != amount) {
+            // Re-adjust: add back what we subtracted, then subtract actual
+            strategy.allocated = strategy.allocated + amount - withdrawn;
+        }
 
         emit StrategyDeallocated(strategyIndex, withdrawn);
     }
@@ -248,17 +281,22 @@ contract LiquidVault is TeleportVault {
      * @notice Harvest yield from all strategies (MPC only)
      * @param signature MPC signature
      * @return totalYield Total yield harvested
+     * @dev Uses abi.encode for hash collision prevention
      */
     function harvestYield(bytes calldata signature) external nonReentrant onlyRole(MPC_ROLE) returns (uint256 totalYield) {
-        // Verify MPC signature
-        bytes32 messageHash = keccak256(abi.encodePacked(
+        // Verify MPC signature (uses abi.encode to prevent hash collision)
+        bytes32 messageHash = keccak256(abi.encode(
             "HARVEST",
             block.timestamp
         ));
         _verifyMPCSignature(messageHash, signature);
 
+        // EFFECTS: Increment yield nonce BEFORE external calls
+        uint256 currentYieldNonce = ++yieldNonce;
+
         uint256 balanceBefore = address(this).balance;
 
+        // INTERACTIONS: External calls after state updates
         for (uint256 i = 0; i < strategies.length; i++) {
             if (strategies[i].active) {
                 IYieldStrategy(strategies[i].adapter).harvest();
@@ -267,8 +305,6 @@ contract LiquidVault is TeleportVault {
         }
 
         totalYield = address(this).balance - balanceBefore;
-
-        uint256 currentYieldNonce = ++yieldNonce;
 
         emit YieldHarvested(currentYieldNonce, totalYield, block.timestamp);
     }
@@ -320,6 +356,25 @@ contract LiquidVault is TeleportVault {
         bufferBps = _bufferBps;
 
         emit BufferUpdated(oldBuffer, _bufferBps);
+    }
+
+    /**
+     * @notice Pause all withdrawals (emergency) (H-03 fix)
+     * @dev Can be called by PAUSER_ROLE or DEFAULT_ADMIN_ROLE
+     */
+    function pause() external {
+        if (!hasRole(PAUSER_ROLE, msg.sender) && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+            revert AccessControlUnauthorizedAccount(msg.sender, PAUSER_ROLE);
+        }
+        _pause();
+    }
+
+    /**
+     * @notice Unpause withdrawals (H-03 fix)
+     * @dev Only DEFAULT_ADMIN_ROLE can unpause
+     */
+    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _unpause();
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -382,6 +437,27 @@ contract LiquidVault is TeleportVault {
     // ═══════════════════════════════════════════════════════════════════════
     // INTERNAL FUNCTIONS
     // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * @notice Validate withdrawal against rate limits (H-03 fix)
+     * @param recipient Address receiving the withdrawal
+     * @param amount Amount being withdrawn
+     * @dev Resets rate limit period if enough time has passed
+     */
+    function _validateWithdrawal(address recipient, uint256 amount) internal {
+        // Reset period if enough time has passed
+        if (block.timestamp > lastWithdrawalTime[recipient] + WITHDRAWAL_PERIOD) {
+            withdrawalAmount[recipient] = 0;
+            lastWithdrawalTime[recipient] = block.timestamp;
+        }
+
+        // Check rate limit
+        if (withdrawalAmount[recipient] + amount > MAX_WITHDRAWAL_PER_PERIOD) {
+            revert ExceedsWithdrawalLimit();
+        }
+
+        withdrawalAmount[recipient] += amount;
+    }
 
     /**
      * @notice Ensure sufficient buffer for withdrawal, deallocating if needed

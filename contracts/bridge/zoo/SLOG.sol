@@ -14,10 +14,7 @@ pragma solidity ^0.8.31;
 import "../LRC20B.sol";
 
 contract SLOG is LRC20B {
-    string public constant _name = "Slog";
-    string public constant _symbol = "SLOG";
-
-    constructor() LRC20B(_name, _symbol) {
+    constructor() LRC20B("Slog", "SLOG") {
          _mint(msg.sender, 1000000000 * 10 ** decimals());
     }
 

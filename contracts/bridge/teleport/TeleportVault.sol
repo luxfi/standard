@@ -156,13 +156,14 @@ abstract contract TeleportVault is Ownable, AccessControl, ReentrancyGuard {
      * @param amount Amount to release
      * @param _withdrawNonce Withdraw nonce
      * @return messageHash Message hash for signature
+     * @dev Uses abi.encode instead of abi.encodePacked to prevent hash collision attacks
      */
     function _buildReleaseHash(
         address recipient,
         uint256 amount,
         uint256 _withdrawNonce
     ) internal view returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             "RELEASE",
             recipient,
             amount,
