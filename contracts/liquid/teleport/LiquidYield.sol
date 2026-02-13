@@ -112,6 +112,7 @@ contract LiquidYield is Ownable, AccessControl, ReentrancyGuard {
     error InsufficientYield();
     error AlreadyProcessed();
     error LiquidETHNotSet();
+    error InsufficientBalance();
 
     // ═══════════════════════════════════════════════════════════════════════
     // MODIFIERS
@@ -182,20 +183,24 @@ contract LiquidYield is Ownable, AccessControl, ReentrancyGuard {
     /**
      * @notice Process specific yield event
      * @param eventId Event ID to process
+     * @dev H-06 fix: Added balance check before burn
      */
     function processYieldEvent(uint256 eventId) external nonReentrant whenNotPaused {
         if (eventId >= yieldEvents.length) revert InsufficientYield();
-        
+
         YieldEvent storage yieldEvent = yieldEvents[eventId];
         if (yieldEvent.processed) revert AlreadyProcessed();
         if (address(liquidETH) == address(0)) revert LiquidETHNotSet();
 
         uint256 amount = yieldEvent.amount;
-        
+
+        // H-06 fix: Check balance before burn
+        if (leth.balanceOf(address(this)) < amount) revert InsufficientBalance();
+
         // Mark as processed
         yieldEvent.processed = true;
         pendingYield -= amount;
-        
+
         // Burn LETH
         leth.burn(amount);
         totalYieldBurned += amount;
@@ -325,12 +330,17 @@ contract LiquidYield is Ownable, AccessControl, ReentrancyGuard {
 
     /**
      * @notice Process all pending yield
+     * @dev H-06 fix: Added balance check before burn
      */
     function _processPendingYield() internal {
         if (pendingYield == 0) return;
         if (address(liquidETH) == address(0)) revert LiquidETHNotSet();
 
         uint256 amountToProcess = pendingYield;
+
+        // H-06 fix: Check balance before burn
+        if (leth.balanceOf(address(this)) < amountToProcess) revert InsufficientBalance();
+
         uint256 eventsProcessed = 0;
 
         // Mark all unprocessed events as processed

@@ -226,8 +226,9 @@ abstract contract TeleportVault is Ownable, AccessControl, ReentrancyGuard {
     /**
      * @notice Mark deposit as bridged (MPC only)
      * @param nonce Deposit nonce
+     * @dev H-05 fix: Added nonReentrant modifier
      */
-    function markBridged(uint256 nonce) external onlyRole(MPC_ROLE) {
+    function markBridged(uint256 nonce) external nonReentrant onlyRole(MPC_ROLE) {
         DepositProof storage proof = deposits[nonce];
         if (proof.nonce == 0) revert DepositNotFound();
         if (proof.bridged) revert AlreadyBridged();

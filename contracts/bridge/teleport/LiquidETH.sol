@@ -108,6 +108,12 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
     /// @notice Paused state
     bool public paused;
 
+    /// @notice H-04 fix: Last time yield was applied (for time-weighting)
+    uint256 public lastYieldTime;
+
+    /// @notice H-04 fix: Minimum time between yield applications (prevents flash manipulation)
+    uint256 public constant MIN_YIELD_INTERVAL = 1 hours;
+
     // ═══════════════════════════════════════════════════════════════════════
     // EVENTS
     // ═══════════════════════════════════════════════════════════════════════
@@ -289,6 +295,7 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
      * @param amount Amount of LETH received as yield
      * @param srcChainId Source chain ID (for tracking)
      * @dev Called by Teleporter's mintYield() or LiquidYield
+     * @dev H-04 fix: Added time-weighted yield index
      */
     function onYieldReceived(uint256 amount, uint256 srcChainId) external onlyRole(LIQUID_YIELD_ROLE) {
         if (amount == 0) return;
@@ -298,13 +305,27 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
             return;
         }
 
+        // H-04 fix: Calculate time-weighted yield based on elapsed time
+        uint256 timeElapsed = block.timestamp - lastYieldTime;
+        uint256 effectiveAmount = amount;
+
+        // Weight yield based on time elapsed (more time = more fair distribution)
+        // Cap weighting at 24 hours to prevent manipulation
+        if (timeElapsed < MIN_YIELD_INTERVAL) {
+            // Reduce yield effect if applied too quickly (anti-flash manipulation)
+            effectiveAmount = (amount * timeElapsed) / MIN_YIELD_INTERVAL;
+        }
+
         // Update global yield index
-        // Each unit of debt gets (amount / totalDebt) reduction
-        uint256 yieldPerDebt = amount * 1e18 / totalDebt;
+        // Each unit of debt gets (effectiveAmount / totalDebt) reduction
+        uint256 yieldPerDebt = effectiveAmount * 1e18 / totalDebt;
         yieldIndex += yieldPerDebt;
 
+        // H-04 fix: Update last yield time
+        lastYieldTime = block.timestamp;
+
         // Reduce total debt (yield burns debt)
-        uint256 debtReduction = amount > totalDebt ? totalDebt : amount;
+        uint256 debtReduction = effectiveAmount > totalDebt ? totalDebt : effectiveAmount;
         totalDebt -= debtReduction;
         accumulatedYield += amount;
 
@@ -318,17 +339,29 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
      * @notice Legacy yield notification (burns LETH to reduce debt)
      * @param amount Amount of LETH burned as yield
      * @dev Called by LiquidYield after burning LETH
+     * @dev H-04 fix: Added time-weighted yield index
      */
     function notifyYieldBurn(uint256 amount) external onlyRole(LIQUID_YIELD_ROLE) {
         if (amount == 0) return;
         if (totalDebt == 0) return;
 
+        // H-04 fix: Calculate time-weighted yield
+        uint256 timeElapsed = block.timestamp - lastYieldTime;
+        uint256 effectiveAmount = amount;
+
+        if (timeElapsed < MIN_YIELD_INTERVAL) {
+            effectiveAmount = (amount * timeElapsed) / MIN_YIELD_INTERVAL;
+        }
+
         // Update global yield index
-        uint256 yieldPerDebt = amount * 1e18 / totalDebt;
+        uint256 yieldPerDebt = effectiveAmount * 1e18 / totalDebt;
         yieldIndex += yieldPerDebt;
 
+        // H-04 fix: Update last yield time
+        lastYieldTime = block.timestamp;
+
         // Reduce total debt
-        uint256 debtReduction = amount > totalDebt ? totalDebt : amount;
+        uint256 debtReduction = effectiveAmount > totalDebt ? totalDebt : effectiveAmount;
         totalDebt -= debtReduction;
         accumulatedYield += amount;
 

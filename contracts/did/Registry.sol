@@ -4,7 +4,9 @@ pragma solidity ^0.8.31;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @title Registry
@@ -36,7 +38,8 @@ interface IIdentityNFT {
     function ownerOf(uint256 tokenId) external view returns (address);
 }
 
-contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
+contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
+    using SafeERC20 for IERC20;
 
     // ═══════════════════════════════════════════════════════════════════════
     // STRUCTS
@@ -83,6 +86,8 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     mapping(uint256 => string) public domains;
 
     /// @notice DID => owner address
+    /// @dev DEPRECATED: C-02 fix - ownership is now derived from NFT ownership
+    ///      Kept for storage layout compatibility during upgrades
     mapping(string => address) private _owners;
 
     /// @notice NFT token ID => DID
@@ -108,6 +113,16 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     uint256 public price5PlusChar;
     uint256 public referrerDiscountBps;
 
+    /// @notice Commit-reveal scheme for front-running protection (H-03)
+    /// @dev Maps commitment hash => timestamp of commit
+    mapping(bytes32 => uint256) public commitments;
+
+    /// @notice Minimum wait time after commit before reveal (1 minute)
+    uint256 public constant COMMIT_MIN_AGE = 1 minutes;
+
+    /// @notice Maximum time a commit is valid (24 hours)
+    uint256 public constant COMMIT_MAX_AGE = 24 hours;
+
     // ═══════════════════════════════════════════════════════════════════════
     // EVENTS
     // ═══════════════════════════════════════════════════════════════════════
@@ -120,6 +135,7 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     event DelegationsUpdated(string indexed did, Delegation[] delegations);
     event RecordsUpdated(string indexed did, string[] keys, string[] values);
     event PricingUpdated(uint256 p1, uint256 p2, uint256 p3, uint256 p4, uint256 p5, uint256 discount);
+    event Committed(address indexed committer, bytes32 indexed commitment);
 
     // ═══════════════════════════════════════════════════════════════════════
     // ERRORS
@@ -132,6 +148,9 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     error InsufficientStake();
     error Unauthorized();
     error InputMismatch();
+    error NoCommitment();
+    error CommitmentTooEarly();
+    error CommitmentExpired();
 
     // ═══════════════════════════════════════════════════════════════════════
     // INITIALIZER
@@ -150,6 +169,7 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
         __Ownable_init(owner_);
         __Ownable2Step_init();
         __UUPSUpgradeable_init();
+        __ReentrancyGuard_init();
 
         stakingToken = IERC20(stakingToken_);
         identityNft = IIdentityNFT(identityNft_);
@@ -199,11 +219,48 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     // ═══════════════════════════════════════════════════════════════════════
 
     /**
-     * @notice Claim a new DID
-     * @param params Claim parameters
+     * @notice Commit to claiming a DID (step 1 of commit-reveal)
+     * @dev Prevents front-running by requiring a commitment before revealing the actual name
+     * @param commitment Hash of (name, chainId, owner, secret)
      */
-    function claim(ClaimParams calldata params) external returns (string memory did) {
-        // Validate name
+    function commit(bytes32 commitment) external {
+        commitments[commitment] = block.timestamp;
+        emit Committed(msg.sender, commitment);
+    }
+
+    /**
+     * @notice Compute commitment hash for a claim
+     * @param name The name to claim
+     * @param chainId Target chain namespace
+     * @param owner Identity owner
+     * @param secret Secret value for commitment
+     */
+    function computeCommitment(
+        string calldata name,
+        uint256 chainId,
+        address owner,
+        bytes32 secret
+    ) external pure returns (bytes32) {
+        return keccak256(abi.encodePacked(name, chainId, owner, secret));
+    }
+
+    /**
+     * @notice Claim a new DID (step 2 of commit-reveal)
+     * @param params Claim parameters
+     * @param secret Secret used in the commitment
+     */
+    function claim(ClaimParams calldata params, bytes32 secret) external nonReentrant returns (string memory did) {
+        // H-03: Verify commit-reveal to prevent front-running
+        bytes32 commitment = keccak256(abi.encodePacked(params.name, params.chainId, params.owner, secret));
+        uint256 commitTime = commitments[commitment];
+        if (commitTime == 0) revert NoCommitment();
+        if (block.timestamp < commitTime + COMMIT_MIN_AGE) revert CommitmentTooEarly();
+        if (block.timestamp > commitTime + COMMIT_MAX_AGE) revert CommitmentExpired();
+
+        // Delete commitment to prevent replay
+        delete commitments[commitment];
+
+        // Validate name (H-04: lowercase only to prevent homograph attacks)
         if (!_validName(params.name)) revert InvalidName(params.name);
 
         // Validate chain
@@ -212,22 +269,21 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
         // Construct canonical DID: did:lux:alice
         did = string(abi.encodePacked("did:", methods[params.chainId], ":", params.name));
 
-        // Check availability
-        if (_owners[did] != address(0)) revert IdentityNotAvailable(did);
+        // Check availability (C-02: use _requireNotClaimed for clarity)
+        if (_isClaimed(did)) revert IdentityNotAvailable(did);
 
         // Calculate stake requirement
-        bool validReferrer = bytes(params.referrer).length > 0 && _owners[params.referrer] != address(0);
+        bool validReferrer = bytes(params.referrer).length > 0 && _isClaimed(params.referrer);
         uint256 required = stakeRequirement(params.name, validReferrer);
         if (params.stakeAmount < required) revert InsufficientStake();
 
-        // Transfer stake
-        stakingToken.transferFrom(msg.sender, address(this), params.stakeAmount);
+        // H-01: Use SafeERC20 for transfer
+        stakingToken.safeTransferFrom(msg.sender, address(this), params.stakeAmount);
 
         // Mint NFT
         uint256 nftId = identityNft.mint(params.owner);
 
         // Store data
-        _owners[did] = params.owner;
         tokenToDID[nftId] = did;
         _data[did] = IdentityData({
             boundNft: nftId,
@@ -246,29 +302,40 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
 
     /**
      * @notice Unclaim (release) a DID
+     * @dev C-01: Applies CEI pattern - all state changes before external calls
+     *      C-02: Ownership derived from NFT, not stored mapping
+     *      H-01: Uses SafeERC20 for token transfer
+     *      H-02: Clears all delegation mappings before deleting array
      * @param did DID to unclaim
      */
-    function unclaim(string calldata did) external {
+    function unclaim(string calldata did) external nonReentrant {
+        // C-02: Derive ownership from NFT, not stored mapping
         _requireOwner(did);
 
         IdentityData storage data = _data[did];
         uint256 nftId = data.boundNft;
+        uint256 stakeToReturn = data.stakedTokens;
+        address recipient = msg.sender;
 
-        // Return staked tokens
-        if (data.stakedTokens > 0) {
-            stakingToken.transfer(msg.sender, data.stakedTokens);
+        // H-02: Clear delegation mappings before deleting the array
+        string[] memory dels = _delegatees[did];
+        for (uint256 i = 0; i < dels.length; i++) {
+            delete delegations[did][dels[i]];
         }
 
-        // Burn NFT
-        identityNft.burn(nftId);
-
-        // Clear data
-        delete _owners[did];
+        // C-01: EFFECTS - Clear all state BEFORE external calls
         delete tokenToDID[nftId];
         delete _data[did];
         delete _delegatees[did];
 
         emit IdentityUnclaimed(did, nftId);
+
+        // C-01: INTERACTIONS - External calls AFTER state changes
+        identityNft.burn(nftId);
+        if (stakeToReturn > 0) {
+            // H-01: Use SafeERC20 for transfer
+            stakingToken.safeTransfer(recipient, stakeToReturn);
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -313,11 +380,13 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
 
     /**
      * @notice Increase stake
+     * @dev H-01: Uses SafeERC20 for token transfer
      */
     function increaseStake(string calldata did, uint256 amount) external {
         _requireOwner(did);
 
-        stakingToken.transferFrom(msg.sender, address(this), amount);
+        // H-01: Use SafeERC20 for transfer
+        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
 
         IdentityData storage data = _data[did];
         data.stakedTokens += amount;
@@ -350,9 +419,17 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
 
     /**
      * @notice Get owner of a DID
+     * @dev C-02: Derives ownership from NFT, not stored mapping
+     *      Returns address(0) if DID is not claimed or NFT was burned
      */
     function ownerOf(string calldata did) external view returns (address) {
-        return _owners[did];
+        IdentityData storage data = _data[did];
+        if (data.boundNft == 0) return address(0);
+        try identityNft.ownerOf(data.boundNft) returns (address owner) {
+            return owner;
+        } catch {
+            return address(0);
+        }
     }
 
     /**
@@ -425,12 +502,40 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     // INTERNAL
     // ═══════════════════════════════════════════════════════════════════════
 
+    /**
+     * @notice Require caller is the owner of the DID
+     * @dev C-02: Derives ownership from NFT, not stored mapping
+     *      This ensures ownership stays in sync even after NFT transfers
+     */
     function _requireOwner(string memory did) internal view {
-        if (_owners[did] != msg.sender) revert Unauthorized();
+        IdentityData storage data = _data[did];
+        if (data.boundNft == 0) revert Unauthorized();
+        // C-02: Check NFT ownership as source of truth
+        address nftOwner = identityNft.ownerOf(data.boundNft);
+        if (nftOwner != msg.sender) revert Unauthorized();
     }
 
     /**
-     * @notice Validate name (alphanumeric + underscore, 1-63 chars)
+     * @notice Check if a DID is claimed
+     * @dev C-02: Uses NFT existence check, not stored mapping
+     */
+    function _isClaimed(string memory did) internal view returns (bool) {
+        IdentityData storage data = _data[did];
+        if (data.boundNft == 0) return false;
+        // Try to get owner - if NFT exists, DID is claimed
+        try identityNft.ownerOf(data.boundNft) returns (address) {
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * @notice Validate name
+     * @dev H-04: Only lowercase letters (a-z) and digits (0-9) allowed
+     *      Prevents homograph attacks by disallowing uppercase and confusable characters
+     *      - No uppercase (A-Z) to prevent ALICE vs alice confusion
+     *      - No underscore (_) to prevent confusion with hyphen or space
      */
     function _validName(string calldata name) internal pure returns (bool) {
         bytes memory b = bytes(name);
@@ -438,10 +543,9 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
 
         for (uint256 i = 0; i < b.length; i++) {
             bytes1 c = b[i];
+            // H-04: Only lowercase and digits allowed
             bool valid = (c >= 0x30 && c <= 0x39) ||  // 0-9
-                        (c >= 0x41 && c <= 0x5A) ||   // A-Z
-                        (c >= 0x61 && c <= 0x7A) ||   // a-z
-                        (c == 0x5F);                   // _
+                        (c >= 0x61 && c <= 0x7A);      // a-z only (no A-Z, no _)
             if (!valid) return false;
         }
         return true;

@@ -22,6 +22,9 @@ contract Vault {
     /// @notice Fee token (WLUX)
     IERC20 public immutable token;
 
+    /// @notice Deployer address (for init access control)
+    address public immutable deployer;
+
     /// @notice Router that distributes fees
     address public router;
 
@@ -48,11 +51,13 @@ contract Vault {
     error Replay();
     error Invalid();
     error OnlyRouter();
+    error OnlyDeployer();
 
     // ============ Constructor ============
 
     constructor(address _token) {
         token = IERC20(_token);
+        deployer = msg.sender;
     }
 
     // ============ Receive ============
@@ -83,8 +88,10 @@ contract Vault {
 
     // ============ Router ============
 
-    /// @notice Set router address (one-time setup)
+    /// @notice Set router address (one-time setup, deployer only)
+    /// @dev C-02 fix: Restrict to deployer to prevent front-run attacks
     function init(address _router) external {
+        if (msg.sender != deployer) revert OnlyDeployer();
         if (router != address(0)) revert Invalid();
         if (_router == address(0)) revert Zero();
         router = _router;

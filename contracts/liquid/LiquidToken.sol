@@ -32,6 +32,9 @@ contract LiquidToken is AccessControl, ReentrancyGuard, LRC20, IERC3156FlashLend
     /// @notice Basis points denominator (100% = 10000)
     uint256 public constant BPS = 10000;
 
+    /// @notice Minimum flash fee (1 basis point) - C-01 fix
+    uint256 public constant MIN_FLASH_FEE = 1;
+
     // ═══════════════════════════════════════════════════════════════════════════
     // STATE
     // ═══════════════════════════════════════════════════════════════════════════
@@ -101,7 +104,9 @@ contract LiquidToken is AccessControl, ReentrancyGuard, LRC20, IERC3156FlashLend
     // ═══════════════════════════════════════════════════════════════════════════
 
     /// @notice Set flash mint fee
+    /// @dev C-01 fix: Enforce minimum flash fee to prevent zero-fee flash loans
     function setFlashFee(uint256 newFee) external onlyAdmin {
+        if (newFee < MIN_FLASH_FEE) revert IllegalArgument();
         if (newFee > BPS) revert IllegalArgument();
         flashMintFee = newFee;
         emit SetFlashMintFee(flashMintFee);
@@ -129,6 +134,13 @@ contract LiquidToken is AccessControl, ReentrancyGuard, LRC20, IERC3156FlashLend
     function setPaused(address minter, bool state) external onlySentinel {
         paused[minter] = state;
         emit Paused(minter, state);
+    }
+
+    /// @notice Remove an address from the whitelist immediately
+    /// @dev H-01 fix: Allows immediate removal from whitelist (not just pause)
+    function removeWhitelist(address minter) external onlySentinel {
+        whitelisted[minter] = false;
+        emit Whitelisted(minter, false);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
