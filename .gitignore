@@ -9,6 +9,7 @@ cache_forge/
 out/
 typechain/
 types/
+!contracts/**/types/
 
 # Foundry
 forge-cache/
