@@ -166,6 +166,7 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
     error BridgePaused();
     error PegDegraded();
     error BackingInsufficient();
+    error StaleAttestation();
 
     // ═══════════════════════════════════════════════════════════════════════
     // MODIFIERS
@@ -480,19 +481,18 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
 
     /**
      * @notice Check that backing ratio is sufficient for new minting
+     * @dev C-02 fix: Revert on stale attestation instead of silently allowing
      */
     function _checkBackingRatio(uint256 srcChainId, uint256 additionalMint) internal view {
         BackingAttestation memory attestation = backingAttestations[srcChainId];
-        
-        // Require attestation within last 24 hours
+
+        // C-02 fix: Require attestation within last 24 hours, revert if stale
         if (block.timestamp - attestation.timestamp > 24 hours) {
-            // Stale attestation, allow minting but log warning
-            // In production, might want stricter enforcement
-            return;
+            revert StaleAttestation();
         }
 
         uint256 newTotalMinted = totalMinted() + additionalMint;
-        
+
         if (newTotalMinted > attestation.totalBacking) {
             revert BackingInsufficient();
         }

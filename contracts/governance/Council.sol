@@ -52,6 +52,10 @@ contract Council is
         uint32 executionPeriod;
         mapping(uint32 proposalId => Proposal proposal) proposals;
         ICharter charter;
+        /// @notice H-02 fix: Maximum active proposals to prevent DoS via proposal spam
+        uint32 maxActiveProposals;
+        /// @notice H-02 fix: Counter for active proposals (not executed/expired)
+        uint32 activeProposalCount;
     }
 
     /**
@@ -90,6 +94,16 @@ contract Council is
     }
 
     /**
+     * @notice H-02 fix: Default maximum active proposals
+     */
+    uint32 public constant DEFAULT_MAX_ACTIVE_PROPOSALS = 100;
+
+    /**
+     * @notice H-02 fix: Error when max active proposals reached
+     */
+    error MaxActiveProposalsReached();
+
+    /**
      * @inheritdoc ICouncil
      */
     function initialize(
@@ -112,6 +126,10 @@ contract Council is
         _updateCharter(charter_);
         _updateTimelockPeriod(timelockPeriod_);
         _updateExecutionPeriod(executionPeriod_);
+
+        // H-02 fix: Set default max active proposals
+        CouncilStorage storage $ = _getCouncilStorage();
+        $.maxActiveProposals = DEFAULT_MAX_ACTIVE_PROPOSALS;
     }
 
     /**
@@ -290,6 +308,29 @@ contract Council is
         _updateCharter(charter_);
     }
 
+    /**
+     * @notice H-02 fix: Update maximum active proposals limit
+     * @param maxActiveProposals_ New maximum active proposals
+     */
+    function updateMaxActiveProposals(uint32 maxActiveProposals_) public virtual onlyOwner {
+        CouncilStorage storage $ = _getCouncilStorage();
+        $.maxActiveProposals = maxActiveProposals_;
+    }
+
+    /**
+     * @notice H-02 fix: Get maximum active proposals
+     */
+    function maxActiveProposals() public view virtual returns (uint32) {
+        return _getCouncilStorage().maxActiveProposals;
+    }
+
+    /**
+     * @notice H-02 fix: Get current active proposal count
+     */
+    function activeProposalCount() public view virtual returns (uint32) {
+        return _getCouncilStorage().activeProposalCount;
+    }
+
     function submitProposal(
         Transaction[] calldata transactions_,
         string calldata metadata_,
@@ -297,6 +338,11 @@ contract Council is
         bytes calldata proposerAdapterData_
     ) public virtual override {
         CouncilStorage storage $ = _getCouncilStorage();
+
+        // H-02 fix: Check max active proposals limit
+        if ($.activeProposalCount >= $.maxActiveProposals) {
+            revert MaxActiveProposalsReached();
+        }
 
         // Validate proposer through charter's adapter system
         if (
@@ -336,6 +382,8 @@ contract Council is
         );
 
         $.totalProposalCount++;
+        // H-02 fix: Increment active proposal counter
+        $.activeProposalCount++;
     }
 
     function executeProposal(
@@ -345,12 +393,15 @@ contract Council is
         if (transactions_.length == 0) revert InvalidTxs();
 
         CouncilStorage storage $ = _getCouncilStorage();
-        Proposal memory proposal = $.proposals[proposalId_];
+        Proposal storage proposal = $.proposals[proposalId_];
 
         if (
             proposal.executionCounter + transactions_.length >
             proposal.txHashes.length
         ) revert InvalidTxs();
+
+        // H-02 fix: Track if this is the final execution batch
+        bool willComplete = proposal.executionCounter + transactions_.length == proposal.txHashes.length;
 
         uint256 transactionsLength = transactions_.length;
         bytes32[] memory txHashes = new bytes32[](transactionsLength);
@@ -359,6 +410,11 @@ contract Council is
             unchecked {
                 ++i;
             }
+        }
+
+        // H-02 fix: Decrement active proposal counter when fully executed
+        if (willComplete && $.activeProposalCount > 0) {
+            $.activeProposalCount--;
         }
 
         emit ProposalExecuted(proposalId_, txHashes);

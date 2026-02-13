@@ -361,9 +361,16 @@ contract StakeFuzzTest is Test {
         vm.prank(alice);
         togglable.transfer(bob, amount);
 
-        // Toggle off soulbound
+        // H-04 security fix: Schedule soulbound change (48h timelock)
         vm.prank(owner);
-        togglable.setSoulbound(false);
+        togglable.scheduleSoulboundChange(false);
+
+        // Wait for timelock to pass
+        vm.warp(block.timestamp + 48 hours + 1);
+
+        // Execute the soulbound change
+        vm.prank(owner);
+        togglable.executeSoulboundChange();
 
         // Now transfer should work
         vm.prank(alice);

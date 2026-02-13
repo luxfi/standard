@@ -43,12 +43,20 @@ abstract contract Secretariat {
     /// @notice Optional guard contract for pre/post transaction checks
     address public guard;
 
+    /// @notice H-06 fix: Whether guard is immutable (cannot be changed)
+    bool public guardImmutable;
+
+    /// @notice H-06 fix: Parent DAO address that must approve guard changes
+    address public parentDAO;
+
     // ======================================================================
     // ERRORS
     // ======================================================================
 
     error GuardRejected();
     error SecretariatTransactionFailed();
+    error GuardIsImmutable();
+    error ParentApprovalRequired();
 
     // ======================================================================
     // MODIFIERS
@@ -88,11 +96,47 @@ abstract contract Secretariat {
     /**
      * @notice Sets an optional guard contract
      * @param guard_ The guard address (or address(0) to disable)
-     * @dev Can only be called by the vault
+     * @dev H-06 fix: Can only be called by vault, respects immutability and parent approval
      */
     function setGuard(address guard_) external onlyVault {
+        // H-06 fix: Check if guard is immutable
+        if (guardImmutable) revert GuardIsImmutable();
+
+        // H-06 fix: If parent DAO is set and trying to remove guard, require parent approval
+        if (parentDAO != address(0) && guard_ == address(0) && guard != address(0)) {
+            revert ParentApprovalRequired();
+        }
+
         guard = guard_;
         emit GuardSet(guard_);
+    }
+
+    /**
+     * @notice H-06 fix: Set the guard as immutable (cannot be changed after)
+     * @dev Can only be called by the vault, one-way operation
+     */
+    function setGuardImmutable() external onlyVault {
+        guardImmutable = true;
+    }
+
+    /**
+     * @notice H-06 fix: Set the parent DAO that must approve guard removal
+     * @param parentDAO_ The parent DAO address
+     * @dev Can only be called by the vault
+     */
+    function setParentDAO(address parentDAO_) external onlyVault {
+        parentDAO = parentDAO_;
+    }
+
+    /**
+     * @notice H-06 fix: Remove guard with parent approval
+     * @dev Can only be called by the parent DAO
+     */
+    function removeGuardWithParentApproval() external {
+        if (msg.sender != parentDAO) revert ParentApprovalRequired();
+        if (guardImmutable) revert GuardIsImmutable();
+        guard = address(0);
+        emit GuardSet(address(0));
     }
 
     /**

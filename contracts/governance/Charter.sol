@@ -96,9 +96,15 @@ contract Charter is ICharter, ERC165, Initializable {
 
     /**
      * @notice Minimum voting delay in blocks before voting starts
-     * @dev Prevents flash loan governance attacks (C-02)
+     * @dev Prevents flash loan governance attacks (C-01, C-02)
      */
-    uint256 public constant MIN_VOTING_DELAY = 1;
+    uint256 public constant MIN_VOTING_DELAY_BLOCKS = 1;
+
+    /**
+     * @notice Minimum voting delay in seconds before voting starts
+     * @dev Prevents flash loan governance attacks - ensures snapshot is in past block
+     */
+    uint256 public constant MIN_VOTING_DELAY_SECONDS = 12;
 
     // ======================================================================
     // INTERNAL HELPERS
@@ -371,15 +377,17 @@ contract Charter is ICharter, ERC165, Initializable {
 
     /**
      * @notice Initialize voting for a proposal
+     * @dev C-01/C-02 fix: Voting starts after MIN_VOTING_DELAY to prevent flash loan attacks
      */
     function initializeProposal(uint32 proposalId) public virtual onlyAdmin {
         CharterStorage storage $ = _getStorage();
         ProposalVoting storage proposal = $.proposalVoting[proposalId];
 
-        proposal.votingStartTimestamp = uint48(block.timestamp);
-        proposal.votingEndTimestamp = uint48(block.timestamp + $.votingPeriod);
-        // C-02 fix: Add minimum voting delay to prevent flash loan attacks
-        proposal.votingStartBlock = uint32(block.number + MIN_VOTING_DELAY);
+        // C-01/C-02 fix: Add minimum voting delay to prevent flash loan attacks
+        // Voting starts in the future, ensuring snapshot block is in the past
+        proposal.votingStartTimestamp = uint48(block.timestamp + MIN_VOTING_DELAY_SECONDS);
+        proposal.votingEndTimestamp = uint48(block.timestamp + MIN_VOTING_DELAY_SECONDS + $.votingPeriod);
+        proposal.votingStartBlock = uint32(block.number + MIN_VOTING_DELAY_BLOCKS);
         proposal.yesVotes = 0;
         proposal.noVotes = 0;
         proposal.abstainVotes = 0;
@@ -414,6 +422,9 @@ contract Charter is ICharter, ERC165, Initializable {
         ProposalVoting storage proposal = $.proposalVoting[proposalId];
 
         if (proposal.votingEndTimestamp == 0) revert ProposalNotInitialized();
+
+        // C-01/C-02 fix: Check if voting has started (prevents same-block voting)
+        if (block.timestamp < proposal.votingStartTimestamp) revert ProposalNotActive();
 
         // Check if voting period ended
         if (block.timestamp > proposal.votingEndTimestamp) {
@@ -511,6 +522,8 @@ contract Charter is ICharter, ERC165, Initializable {
 
     /**
      * @notice Resolve voter address (support for Light Accounts)
+     * @dev H-01 fix: Properly verify light account ownership
+     * The sender is expected to be the light account, and we resolve to the actual owner
      */
     function _resolveVoter(address sender, uint256 lightAccountIndex) internal view returns (address) {
         if (lightAccountIndex == 0) return sender;
@@ -518,18 +531,29 @@ contract Charter is ICharter, ERC165, Initializable {
         CharterStorage storage $ = _getStorage();
         if ($.lightAccountFactory == address(0)) return sender;
 
-        // Get light account owner at index
-        // LightAccountFactory.getAddress(owner, index) pattern
-        (bool success, bytes memory data) = $.lightAccountFactory.staticcall(
-            abi.encodeWithSignature("getAddress(address,uint256)", sender, lightAccountIndex)
+        // H-01 fix: The sender should be a light account calling on behalf of an owner
+        // We need to verify the sender IS the light account at the given index for some owner
+        // Then return that owner as the actual voter
+
+        // Try to get the owner of the light account (sender)
+        (bool ownerSuccess, bytes memory ownerData) = sender.staticcall(
+            abi.encodeWithSignature("owner()")
         );
 
-        if (success && data.length == 32) {
-            address lightAccount = abi.decode(data, (address));
-            // Verify the sender owns this light account
-            if (lightAccount == sender) {
-                // The actual owner is derived from the factory
-                return sender;
+        if (ownerSuccess && ownerData.length == 32) {
+            address owner = abi.decode(ownerData, (address));
+
+            // Verify: factory.getAddress(owner, index) == sender
+            (bool factorySuccess, bytes memory factoryData) = $.lightAccountFactory.staticcall(
+                abi.encodeWithSignature("getAddress(address,uint256)", owner, lightAccountIndex)
+            );
+
+            if (factorySuccess && factoryData.length == 32) {
+                address expectedLightAccount = abi.decode(factoryData, (address));
+                // Verify sender is indeed the light account for this owner at this index
+                if (expectedLightAccount == sender) {
+                    return owner;
+                }
             }
         }
 

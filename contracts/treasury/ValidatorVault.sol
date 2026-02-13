@@ -81,11 +81,17 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     uint256 public slashingReserve;
     uint256 public slashingReserveBps = 500; // 5% to reserve
 
+    /// @notice Undistributed rewards due to precision loss (C-06 fix)
+    uint256 public undistributedRewards;
+
     /// @notice LiquidLUX vault for reward forwarding (no perf fee path)
     ILiquidLUXValidator public liquidLux;
     
     /// @notice Accumulated rewards pending forward to LiquidLUX
     uint256 public pendingLiquidLuxRewards;
+
+    /// @notice Minimum amount required to forward to LiquidLUX (H-06 fix)
+    uint256 public minForwardAmount = 1e18;
 
     /// @notice Stats
     uint256 public totalReceived;
@@ -113,6 +119,7 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     error NothingToClaim();
     error LiquidLuxNotSet();
     error NothingToForward();
+    error BelowMinimumForward();
     error ZeroAddress();
     error ETHTransferFailed();
 
@@ -136,19 +143,24 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     
     function _distributeRewards(uint256 amount) internal {
         if (amount == 0 || totalDelegated == 0) return;
-        
+
         totalReceived += amount;
-        
+
         // Take slashing reserve cut
         uint256 toReserve = (amount * slashingReserveBps) / BPS;
         slashingReserve += toReserve;
-        
+
         uint256 toDistribute = amount - toReserve;
-        
+
+        // C-06 fix: Track precision loss to prevent dust accumulation
+        uint256 distributedPerShare = (toDistribute * 1e18) / totalDelegated;
+        uint256 actualDistributed = (distributedPerShare * totalDelegated) / 1e18;
+        undistributedRewards += toDistribute - actualDistributed;
+
         // Update accumulated rewards per share
-        accRewardPerShare += (toDistribute * 1e18) / totalDelegated;
-        
-        emit RewardsDistributed(toDistribute, toReserve);
+        accRewardPerShare += distributedPerShare;
+
+        emit RewardsDistributed(actualDistributed, toReserve);
     }
 
     // ============ LiquidLUX Integration ============
@@ -156,17 +168,21 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     /**
      * @notice Forward accumulated rewards to LiquidLUX (no performance fee)
      * @dev Validators are exempt from the 10% performance fee
+     *      H-06 fix: Requires minimum threshold to prevent MEV manipulation
      */
     function forwardRewardsToLiquidLUX() external nonReentrant {
         if (address(liquidLux) == address(0)) revert LiquidLuxNotSet();
-        
+
         // Calculate forwardable amount (balance minus delegated and slashing reserve)
         uint256 balance = lux.balanceOf(address(this));
         uint256 reserved = totalDelegated + slashingReserve;
-        
+
         if (balance <= reserved) revert NothingToForward();
-        
+
         uint256 forwardable = balance - reserved;
+
+        // H-06 fix: Require minimum threshold to prevent timing manipulation
+        if (forwardable < minForwardAmount) revert BelowMinimumForward();
         
         // Approve exact amount (no infinite approvals)
         lux.forceApprove(address(liquidLux), forwardable);
@@ -363,6 +379,11 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
         uint256 oldBps = slashingReserveBps;
         slashingReserveBps = bps;
         emit SlashingReserveBpsUpdated(oldBps, bps);
+    }
+
+    /// @notice Set minimum forward amount (H-06 protection)
+    function setMinForwardAmount(uint256 amount) external onlyOwner {
+        minForwardAmount = amount;
     }
     
     /// @notice Set LiquidLUX vault address

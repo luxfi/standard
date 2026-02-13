@@ -55,6 +55,8 @@ contract Veto is IVeto, ERC165, Initializable {
         address votingToken;
         /// @notice Tracks who has voted in current proposal
         mapping(address voter => bool hasVoted) hasVoted;
+        /// @notice C-04 fix: Cooldown period between veto proposals to prevent reset attacks
+        uint32 vetoProposalCooldown;
     }
 
     /**
@@ -101,6 +103,8 @@ contract Veto is IVeto, ERC165, Initializable {
         $.vetoVotesThreshold = vetoVotesThreshold_;
         $.vetoProposalPeriod = vetoProposalPeriod_;
         $.vetoPeriod = vetoPeriod_;
+        // C-04 fix: Set default cooldown to 1 hour to prevent reset attacks
+        $.vetoProposalCooldown = 3600;
     }
 
     // ======================================================================
@@ -152,6 +156,10 @@ contract Veto is IVeto, ERC165, Initializable {
         return _getStorage().hasVoted[voter];
     }
 
+    function vetoProposalCooldown() public view virtual returns (uint32) {
+        return _getStorage().vetoProposalCooldown;
+    }
+
     // ======================================================================
     // STATE-CHANGING FUNCTIONS
     // ======================================================================
@@ -159,6 +167,7 @@ contract Veto is IVeto, ERC165, Initializable {
     /**
      * @notice Cast a veto vote
      * @dev Creates new proposal if none active, adds weight to current proposal
+     * C-04 fix: Enforces cooldown between proposals to prevent reset attacks
      */
     function castVetoVote() public virtual override {
         VetoStorage storage $ = _getStorage();
@@ -169,6 +178,14 @@ contract Veto is IVeto, ERC165, Initializable {
 
         // Start new proposal if needed
         if (proposalExpired) {
+            // C-04 fix: Enforce cooldown period before new proposal can be created
+            // This prevents attackers from resetting votes by creating new proposals
+            if ($.vetoProposalCreated != 0) {
+                uint256 cooldownEnd = $.vetoProposalCreated + $.vetoProposalPeriod + $.vetoProposalCooldown;
+                if (block.timestamp < cooldownEnd) {
+                    revert VetoProposalExpired();
+                }
+            }
             _initializeVetoProposal();
         }
 

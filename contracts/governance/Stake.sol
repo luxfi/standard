@@ -36,6 +36,15 @@ contract Stake is ERC20, ERC20Permit, ERC20Votes, Ownable {
     /// @notice DID document URI for each holder
     mapping(address => string) public did;
 
+    /// @notice H-04 fix: Pending soulbound mode change (0 = no pending change)
+    uint256 public soulboundChangeTime;
+
+    /// @notice H-04 fix: Timelock duration for soulbound changes (48 hours)
+    uint256 public constant SOULBOUND_TIMELOCK = 48 hours;
+
+    /// @notice H-04 fix: Pending soulbound value
+    bool public pendingSoulbound;
+
     /// @notice Error when max supply would be exceeded
     error MaxSupplyExceeded(uint256 requested, uint256 available);
 
@@ -56,6 +65,18 @@ contract Stake is ERC20, ERC20Permit, ERC20Votes, Ownable {
 
     /// @notice Emitted when soulbound mode is changed
     event SoulboundModeChanged(bool enabled);
+
+    /// @notice H-04 fix: Emitted when soulbound change is scheduled
+    event SoulboundChangeScheduled(bool newValue, uint256 effectiveTime);
+
+    /// @notice H-04 fix: Emitted when soulbound change is cancelled
+    event SoulboundChangeCancelled();
+
+    /// @notice H-04 fix: Error when timelock not elapsed
+    error SoulboundTimelockNotElapsed();
+
+    /// @notice H-04 fix: Error when no pending change
+    error NoPendingSoulboundChange();
 
     /**
      * @notice Constructor
@@ -112,13 +133,49 @@ contract Stake is ERC20, ERC20Permit, ERC20Votes, Ownable {
     // ═══════════════════════════════════════════════════════════════════════
 
     /**
-     * @notice Toggle soulbound mode
-     * @dev Only owner can change, affects all future transfers
+     * @notice H-04 fix: Schedule soulbound mode change with timelock
+     * @dev Only owner can schedule, requires 48 hour delay before execution
+     * @param enabled Whether transfers should be disabled
+     */
+    function scheduleSoulboundChange(bool enabled) external onlyOwner {
+        soulboundChangeTime = block.timestamp + SOULBOUND_TIMELOCK;
+        pendingSoulbound = enabled;
+        emit SoulboundChangeScheduled(enabled, soulboundChangeTime);
+    }
+
+    /**
+     * @notice H-04 fix: Execute scheduled soulbound mode change
+     * @dev Can only be called after timelock has elapsed
+     */
+    function executeSoulboundChange() external onlyOwner {
+        if (soulboundChangeTime == 0) revert NoPendingSoulboundChange();
+        if (block.timestamp < soulboundChangeTime) revert SoulboundTimelockNotElapsed();
+
+        soulbound = pendingSoulbound;
+        soulboundChangeTime = 0;
+        emit SoulboundModeChanged(pendingSoulbound);
+    }
+
+    /**
+     * @notice H-04 fix: Cancel pending soulbound mode change
+     * @dev Only owner can cancel
+     */
+    function cancelSoulboundChange() external onlyOwner {
+        if (soulboundChangeTime == 0) revert NoPendingSoulboundChange();
+        soulboundChangeTime = 0;
+        emit SoulboundChangeCancelled();
+    }
+
+    /**
+     * @notice Toggle soulbound mode (DEPRECATED - use scheduleSoulboundChange)
+     * @dev Kept for backwards compatibility, but now schedules instead of immediate change
      * @param enabled Whether transfers should be disabled
      */
     function setSoulbound(bool enabled) external onlyOwner {
-        soulbound = enabled;
-        emit SoulboundModeChanged(enabled);
+        // H-04 fix: Redirect to timelock mechanism for safety
+        soulboundChangeTime = block.timestamp + SOULBOUND_TIMELOCK;
+        pendingSoulbound = enabled;
+        emit SoulboundChangeScheduled(enabled, soulboundChangeTime);
     }
 
     /**

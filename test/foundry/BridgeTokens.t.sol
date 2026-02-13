@@ -56,6 +56,11 @@ contract BridgeTokensTest is Test {
         leth.grantAdmin(mpcBridge);
         lbtc.grantAdmin(mpcBridge);
         lusd.grantAdmin(mpcBridge);
+
+        // Grant minter role to MPC bridge (C-03 security fix requires separate MINTER_ROLE)
+        leth.grantMinter(mpcBridge);
+        lbtc.grantMinter(mpcBridge);
+        lusd.grantMinter(mpcBridge);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -191,7 +196,7 @@ contract BridgeTokensTest is Test {
 
     function testRevert_BridgeMintByNonAdmin() public {
         vm.prank(attacker);
-        vm.expectRevert("LRC20B: caller is not admin");
+        vm.expectRevert("LRC20B: caller is not minter");
         leth.bridgeMint(user1, 100e18);
     }
 
@@ -222,6 +227,10 @@ contract BridgeTokensTest is Test {
         // Setup: mint tokens first
         vm.prank(mpcBridge);
         leth.mint(user1, 100e18);
+
+        // H-02 fix: bridgeBurn now requires allowance when burning from another address
+        vm.prank(user1);
+        leth.approve(mpcBridge, 60e18);
 
         vm.expectEmit(true, false, false, true);
         emit BridgeBurn(user1, 60e18);

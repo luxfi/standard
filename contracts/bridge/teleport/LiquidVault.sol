@@ -66,6 +66,9 @@ contract LiquidVault is TeleportVault, Pausable {
     /// @notice Yield nonce for yield proof separation
     uint256 public yieldNonce;
 
+    /// @notice Operation nonce for MPC signature replay protection (H-03 fix)
+    uint256 public operationNonce;
+
     /// @notice Buffer percentage (in basis points)
     uint256 public bufferBps = 2000; // 20% default
 
@@ -162,7 +165,7 @@ contract LiquidVault is TeleportVault, Pausable {
      * @param amount Amount to release
      * @param _withdrawNonce Unique withdraw nonce for replay protection
      * @param signature MPC signature authorizing release
-     * @dev H-03 fix: Added rate limiting and pause capability
+     * @dev H-03 fix: Added rate limiting, pause capability, and operation nonce
      */
     function releaseETH(
         address recipient,
@@ -176,9 +179,19 @@ contract LiquidVault is TeleportVault, Pausable {
         // H-03 fix: Validate withdrawal rate limit
         _validateWithdrawal(recipient, amount);
 
-        // Verify MPC signature
-        bytes32 messageHash = _buildReleaseHash(recipient, amount, _withdrawNonce);
+        // H-03 fix: Include operationNonce in signature hash for replay protection
+        bytes32 messageHash = keccak256(abi.encode(
+            "RELEASE",
+            recipient,
+            amount,
+            _withdrawNonce,
+            operationNonce,
+            block.chainid
+        ));
         _verifyMPCSignature(messageHash, signature);
+
+        // H-03 fix: Increment operation nonce after verification
+        operationNonce++;
 
         // Check buffer constraints and deallocate if needed
         _ensureBuffer(amount);

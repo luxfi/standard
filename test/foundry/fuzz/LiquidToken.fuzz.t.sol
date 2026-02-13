@@ -188,7 +188,8 @@ contract LiquidTokenFuzzTest is Test {
     /// @notice Fuzz test flash loan fee calculation
     function testFuzz_FlashFee_Calculation(uint256 amount, uint256 feeRate) public {
         amount = bound(amount, 1, type(uint128).max);
-        feeRate = bound(feeRate, 0, BPS);  // 0% to 100%
+        // C-01 security fix: MIN_FLASH_FEE is now 1 (0.01%)
+        feeRate = bound(feeRate, 1, BPS);  // 0.01% to 100% (MIN_FLASH_FEE = 1)
 
         // Set fee rate
         vm.prank(admin);
@@ -317,14 +318,21 @@ contract LiquidTokenFuzzTest is Test {
     // FLASH LOAN FEE EDGE CASES
     // =========================================================================
 
-    /// @notice Fuzz test flash loan with zero fee
-    function testFuzz_FlashLoan_ZeroFee(uint256 amount) public {
+    /// @notice Fuzz test flash loan with minimum fee (C-01 security fix: MIN_FLASH_FEE = 1)
+    function testFuzz_FlashLoan_MinFee(uint256 amount) public {
         amount = bound(amount, 1e18, 1_000_000e18);
 
+        // C-01 security fix: MIN_FLASH_FEE is now 1 (0.01%), zero not allowed
         vm.prank(admin);
-        token.setFlashFee(0);
+        token.setFlashFee(1);  // MIN_FLASH_FEE
 
+        uint256 fee = (amount * 1) / BPS;  // Minimum fee (0.01%)
         uint256 feeRecipientBefore = token.balanceOf(admin);
+
+        // Borrower needs fee tokens to repay
+        vm.prank(admin);
+        token.setWhitelist(address(this), true);
+        token.mint(address(borrower), fee);
 
         vm.prank(alice);
         token.flashLoan(
@@ -334,9 +342,9 @@ contract LiquidTokenFuzzTest is Test {
             ""
         );
 
-        // No fee minted
-        assertEq(token.balanceOf(admin), feeRecipientBefore);
-        assertEq(borrower.lastFee(), 0);
+        // Minimum fee minted to admin
+        assertEq(token.balanceOf(admin), feeRecipientBefore + fee);
+        assertEq(borrower.lastFee(), fee);
     }
 
     /// @notice Fuzz test flash loan with maximum fee (100%)

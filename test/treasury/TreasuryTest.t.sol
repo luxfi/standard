@@ -269,7 +269,8 @@ contract TreasuryTest is Test {
     }
 
     function test_Collect_Sync() public {
-        // Simulate Warp settings update
+        // Simulate Warp settings update (H-05 fix: sync is now onlyOwner)
+        vm.prank(owner);
         collect.sync(50, 2); // 0.5%, version 2
 
         assertEq(collect.rate(), 50);
@@ -277,8 +278,10 @@ contract TreasuryTest is Test {
     }
 
     function test_Collect_SyncRevertStale() public {
+        vm.prank(owner);
         collect.sync(50, 2);
 
+        vm.prank(owner);
         vm.expectRevert(Collect.Stale.selector);
         collect.sync(40, 1); // Older version
     }
@@ -315,7 +318,8 @@ contract TreasuryTest is Test {
         gov.broadcast();
         vm.stopPrank();
 
-        // 2. Collector syncs settings (simulates Warp receive)
+        // 2. Collector syncs settings (simulates Warp receive) - H-05 fix: sync is onlyOwner
+        vm.prank(owner);
         collect.sync(50, 2);
         assertEq(collect.rate(), 50);
 

@@ -38,11 +38,13 @@ contract LiquidTeleportTest is Test {
     // ═══════════════════════════════════════════════════════════════════════════
 
     function _signRelease(address recipient, uint256 amount, uint256 withdrawNonce) internal view returns (bytes memory) {
+        // H-03 fix: Include operationNonce in signature for replay protection
         bytes32 messageHash = keccak256(abi.encodePacked(
             "RELEASE",
             recipient,
             amount,
             withdrawNonce,
+            vault.operationNonce(), // H-03: Include operation nonce
             block.chainid
         ));
         bytes32 ethSignedHash = keccak256(abi.encodePacked(
@@ -138,8 +140,9 @@ contract LiquidTeleportTest is Test {
         // First release succeeds
         vault.releaseETH(user, 1 ether, 1, signature);
 
-        // Replay with same nonce should fail
-        vm.expectRevert(TeleportVault.NonceAlreadyProcessed.selector);
+        // H-03 fix: Replay fails with InvalidSignature because operationNonce was incremented
+        // The signature includes operationNonce=0, but contract's operationNonce is now 1
+        vm.expectRevert(TeleportVault.InvalidSignature.selector);
         vault.releaseETH(user, 1 ether, 1, signature);
     }
 

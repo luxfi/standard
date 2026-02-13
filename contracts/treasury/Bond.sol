@@ -4,6 +4,7 @@ pragma solidity ^0.8.31;
 import {IERC20, SafeERC20} from "@luxfi/standard/tokens/ERC20.sol";
 import {Ownable} from "@luxfi/standard/access/Access.sol";
 import {ReentrancyGuard} from "@luxfi/standard/utils/Utils.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title Bond
@@ -27,6 +28,7 @@ interface IMintable {
 
 contract Bond is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
+    using Math for uint256;
 
     /// @notice Identity token being sold
     IERC20 public immutable identityToken;
@@ -125,6 +127,8 @@ contract Bond is Ownable, ReentrancyGuard {
      * @notice Purchase bonds
      * @param bondId Bond to purchase
      * @param amount Payment token amount
+     * @dev H-01 fix: Uses mulDiv to prevent overflow with large parameters
+     *      H-07 fix: Allows multiple purchases up to maxPurchase total
      */
     function purchase(uint256 bondId, uint256 amount) external nonReentrant {
         BondConfig storage bond = bonds[bondId];
@@ -133,26 +137,37 @@ contract Bond is Ownable, ReentrancyGuard {
         if (block.timestamp < bond.startTime) revert BondNotStarted();
         if (block.timestamp > bond.endTime) revert BondExpired();
         if (amount < bond.minPurchase) revert AmountTooLow();
-        if (amount > bond.maxPurchase) revert AmountTooHigh();
         if (totalRaised[bondId] + amount > bond.targetRaise) revert ExceedsTarget();
-        if (purchases[bondId][msg.sender].paymentAmount > 0) revert AlreadyPurchased();
 
-        // Calculate tokens with discount
-        // If discount is 2000 (20%), user gets 125 tokens for price of 100
-        uint256 tokensOwed = (amount * bond.tokensToMint * (10000 + bond.discount)) / (bond.targetRaise * 10000);
+        // H-07 fix: Allow multiple purchases up to maxPurchase total per address
+        uint256 existingPurchase = purchases[bondId][msg.sender].paymentAmount;
+        uint256 totalUserPurchase = existingPurchase + amount;
+        if (totalUserPurchase > bond.maxPurchase) revert AmountTooHigh();
+
+        // H-01 fix: Use mulDiv to prevent overflow with large parameters
+        // Calculate tokens with discount: (amount * tokensToMint * (10000 + discount)) / (targetRaise * 10000)
+        uint256 discountMultiplier = 10000 + bond.discount;
+        uint256 tokensOwed = (amount * discountMultiplier).mulDiv(bond.tokensToMint, bond.targetRaise * 10000);
 
         // Transfer payment to treasury (marked as BONDED - non-recallable)
         IERC20(bond.paymentToken).safeTransferFrom(msg.sender, treasury, amount);
 
-        // Record purchase
-        purchases[bondId][msg.sender] = Purchase({
-            bondId: bondId,
-            paymentAmount: amount,
-            tokensOwed: tokensOwed,
-            tokensClaimed: 0,
-            vestingStart: block.timestamp,
-            vestingEnd: block.timestamp + bond.vestingPeriod
-        });
+        // Update or create purchase record
+        Purchase storage userPurchase = purchases[bondId][msg.sender];
+        if (existingPurchase > 0) {
+            // H-07: Append to existing purchase
+            userPurchase.paymentAmount = totalUserPurchase;
+            userPurchase.tokensOwed += tokensOwed;
+            // Keep original vesting schedule
+        } else {
+            // First purchase - create new record
+            userPurchase.bondId = bondId;
+            userPurchase.paymentAmount = amount;
+            userPurchase.tokensOwed = tokensOwed;
+            userPurchase.tokensClaimed = 0;
+            userPurchase.vestingStart = block.timestamp;
+            userPurchase.vestingEnd = block.timestamp + bond.vestingPeriod;
+        }
 
         totalRaised[bondId] += amount;
 

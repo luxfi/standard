@@ -69,8 +69,10 @@ contract Collect is Ownable {
     // ============ Settings ============
 
     /// @notice Receive settings from FeeGov via Warp
-    /// @dev Permissionless - anyone can relay valid Warp proofs
-    function sync(uint16 _rate, uint32 _version) external {
+    /// @dev H-05 fix: Restricted to owner until Warp verification is implemented
+    ///      TODO: Replace onlyOwner with Warp proof verification before mainnet
+    function sync(uint16 _rate, uint32 _version) external onlyOwner {
+        // H-05 fix: Temporary access control until Warp verification is implemented
         // TODO: Verify Warp proof from C-Chain FeeGov
         // WarpLib.verifyFrom(cchain, abi.encode(_rate, _version));
 

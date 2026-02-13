@@ -233,10 +233,12 @@ contract BondFuzzTest is Test {
     }
 
     /// @notice Fuzz test duplicate purchase fails
-    function testFuzz_Purchase_DuplicateFails(uint256 firstAmount, uint256 secondAmount) public {
+    /// @notice Fuzz test multiple purchases allowed up to maxPurchase (H-07 fix)
+    function testFuzz_Purchase_MultiplePurchasesAllowed(uint256 firstAmount, uint256 secondAmount) public {
         uint256 targetRaise = 100_000e6;
-        firstAmount = bound(firstAmount, 1000e6, 40_000e6);
-        secondAmount = bound(secondAmount, 1000e6, 40_000e6);
+        uint256 maxPurchase = 50_000e6;
+        firstAmount = bound(firstAmount, 1000e6, 20_000e6);  // Under half of max
+        secondAmount = bound(secondAmount, 1000e6, 20_000e6);  // Under half of max
 
         uint256 bondId = _createBond(
             targetRaise,
@@ -244,7 +246,7 @@ contract BondFuzzTest is Test {
             1000,
             30 days,
             1000e6,
-            50_000e6
+            maxPurchase
         );
 
         // First purchase
@@ -255,12 +257,59 @@ contract BondFuzzTest is Test {
         vm.prank(alice);
         bond.purchase(bondId, firstAmount);
 
-        // Second purchase should fail
+        // H-07 fix: Second purchase should succeed (up to maxPurchase total)
         paymentToken.mint(alice, secondAmount);
         vm.prank(alice);
         paymentToken.approve(address(bond), secondAmount);
 
-        vm.expectRevert(Bond.AlreadyPurchased.selector);
+        vm.prank(alice);
+        bond.purchase(bondId, secondAmount);
+
+        // Verify total purchase amount accumulated
+        (
+            ,
+            uint256 totalPayment,
+            uint256 totalTokens,
+            ,
+            ,
+        ) = bond.purchases(bondId, alice);
+
+        assertEq(totalPayment, firstAmount + secondAmount);
+        assertGt(totalTokens, 0);
+    }
+
+    /// @notice Fuzz test multiple purchases fail when exceeding maxPurchase
+    function testFuzz_Purchase_MultiplePurchasesExceedMax(uint256 firstAmount, uint256 secondAmount) public {
+        uint256 targetRaise = 100_000e6;
+        uint256 maxPurchase = 50_000e6;
+        // First purchase uses most of the max
+        firstAmount = bound(firstAmount, 30_000e6, 45_000e6);
+        // Second purchase would exceed max
+        secondAmount = bound(secondAmount, maxPurchase - firstAmount + 1, 50_000e6);
+
+        uint256 bondId = _createBond(
+            targetRaise,
+            100_000e18,
+            1000,
+            30 days,
+            1000e6,
+            maxPurchase
+        );
+
+        // First purchase
+        paymentToken.mint(alice, firstAmount);
+        vm.prank(alice);
+        paymentToken.approve(address(bond), firstAmount);
+
+        vm.prank(alice);
+        bond.purchase(bondId, firstAmount);
+
+        // Second purchase should fail (exceeds maxPurchase)
+        paymentToken.mint(alice, secondAmount);
+        vm.prank(alice);
+        paymentToken.approve(address(bond), secondAmount);
+
+        vm.expectRevert(Bond.AmountTooHigh.selector);
         vm.prank(alice);
         bond.purchase(bondId, secondAmount);
     }

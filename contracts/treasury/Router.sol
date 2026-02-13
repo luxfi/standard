@@ -89,11 +89,19 @@ contract Router is Ownable {
         emit Weight(recipient, _weight);
     }
 
-    /// @notice Batch set weights
+    /// @notice Batch set weights (replaces all existing weights)
     /// @param recipients Array of addresses
     /// @param weightValues Array of weights (must sum to 10000)
+    /// @dev H-04 fix: Zeros all existing weights before setting new ones
     function setBatch(address[] calldata recipients, uint256[] calldata weightValues) external onlyOwner {
         if (recipients.length != weightValues.length) revert Invalid();
+
+        // H-04 fix: Zero all existing weights first
+        for (uint256 i = 0; i < list.length;) {
+            weight[list[i]] = 0;
+            emit Weight(list[i], 0);
+            unchecked { i++; }
+        }
 
         uint256 sum;
         for (uint256 i = 0; i < recipients.length;) {

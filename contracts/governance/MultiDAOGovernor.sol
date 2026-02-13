@@ -133,6 +133,9 @@ contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
     /// @notice Votes cast (proposalId => voter => DAO => voted)
     mapping(bytes32 => mapping(address => mapping(bytes32 => bool))) public hasVoted;
 
+    /// @notice C-03 fix: Track total weight used per voter per proposal across all DAOs
+    mapping(bytes32 => mapping(address => uint256)) public totalWeightUsed;
+
     /// @notice Proposal threshold (tokens required to propose)
     uint256 public proposalThreshold;
 
@@ -186,6 +189,9 @@ contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
     error ThresholdNotReached();
     error ConstitutionalRequirementsNotMet();
     error CannotDeactivateCriticalDAO();
+    error VoteWeightExhausted();
+    error InvalidAttestation();
+    error TallyAlreadyReceived();
 
     // ═══════════════════════════════════════════════════════════════════════
     // CONSTRUCTOR
@@ -423,6 +429,8 @@ contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
 
     /**
      * @notice Cast vote on a proposal for a specific DAO
+     * @dev C-03 fix: Votes are weight-split across DAOs to prevent vote amplification
+     * A voter's total token balance is their maximum cumulative vote weight across all DAOs
      */
     function castVote(
         bytes32 proposalId,
@@ -443,10 +451,35 @@ contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
             revert Unauthorized();
         }
 
-        uint256 weight = governanceToken.getPastVotes(msg.sender, proposal.snapshotBlock);
-        if (weight == 0) revert InsufficientVotingPower();
+        uint256 totalVotingPower = governanceToken.getPastVotes(msg.sender, proposal.snapshotBlock);
+        if (totalVotingPower == 0) revert InsufficientVotingPower();
+
+        // C-03 fix: Calculate remaining weight for this voter
+        // Total weight used cannot exceed their total voting power
+        uint256 usedWeight = totalWeightUsed[proposalId][msg.sender];
+        if (usedWeight >= totalVotingPower) revert VoteWeightExhausted();
+        uint256 remainingWeight = totalVotingPower - usedWeight;
+
+        // C-03 fix: Determine weight for this DAO vote
+        // If voter has configured DAO weights, use proportional allocation
+        // Otherwise, split remaining weight equally among target DAOs not yet voted
+        uint256 weight;
+        uint256 configuredWeight = _delegations[msg.sender].daoWeight[daoId];
+        if (configuredWeight > 0) {
+            // Use configured weight percentage
+            weight = (totalVotingPower * configuredWeight) / BASIS_POINTS;
+            // Clamp to remaining weight
+            if (weight > remainingWeight) weight = remainingWeight;
+        } else {
+            // Default: use remaining weight (first-come-first-served)
+            // This encourages voters to configure weights for fair distribution
+            weight = remainingWeight;
+        }
+
+        if (weight == 0) revert VoteWeightExhausted();
 
         hasVoted[proposalId][msg.sender][daoId] = true;
+        totalWeightUsed[proposalId][msg.sender] += weight;
 
         DAOVote storage vote = proposal.daoVotes[daoId];
         if (support == 0) {
@@ -462,6 +495,13 @@ contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
 
     /**
      * @notice Receive tally from bridge
+     * @dev H-05 fix: Requires valid attestation to prevent tally manipulation
+     * @param proposalId The proposal ID
+     * @param daoId The DAO ID
+     * @param forVotes Votes in favor
+     * @param againstVotes Votes against
+     * @param abstainVotes Abstain votes
+     * @param attestation Signed attestation from cross-chain validators
      */
     function receiveTally(
         bytes32 proposalId,
@@ -469,12 +509,38 @@ contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
         uint256 forVotes,
         uint256 againstVotes,
         uint256 abstainVotes,
-        bytes calldata /* attestation */
+        bytes calldata attestation
     ) external onlyRole(BRIDGE_ROLE) {
         Proposal storage proposal = _proposals[proposalId];
         if (proposal.id == bytes32(0)) revert ProposalNotFound();
 
         DAOVote storage vote = proposal.daoVotes[daoId];
+
+        // H-05 fix: Prevent double-counting tallies
+        if (vote.tallied) revert TallyAlreadyReceived();
+
+        // H-05 fix: Verify attestation
+        // Attestation must be a signed hash of (proposalId, daoId, forVotes, againstVotes, abstainVotes, block.chainid)
+        if (attestation.length < 65) revert InvalidAttestation();
+
+        bytes32 tallyHash = keccak256(abi.encodePacked(
+            proposalId,
+            daoId,
+            forVotes,
+            againstVotes,
+            abstainVotes,
+            block.chainid
+        ));
+
+        // H-05 fix: Verify the bridge signer signed this tally
+        // The attestation contains the signature from the bridge operator
+        bytes32 ethSignedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", tallyHash));
+        (bytes32 r, bytes32 s, uint8 v) = _splitSignature(attestation);
+        address signer = ecrecover(ethSignedHash, v, r, s);
+
+        // Signer must have BRIDGE_ROLE
+        if (!hasRole(BRIDGE_ROLE, signer)) revert InvalidAttestation();
+
         vote.forVotes = forVotes;
         vote.againstVotes = againstVotes;
         vote.abstainVotes = abstainVotes;
@@ -490,6 +556,20 @@ contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
         vote.passed = quorumReached && thresholdReached;
 
         emit TallyReceived(proposalId, daoId, vote.passed);
+    }
+
+    /**
+     * @notice H-05 fix: Split signature into r, s, v components
+     */
+    function _splitSignature(bytes calldata sig) internal pure returns (bytes32 r, bytes32 s, uint8 v) {
+        require(sig.length >= 65, "Invalid signature length");
+        assembly {
+            r := calldataload(sig.offset)
+            s := calldataload(add(sig.offset, 32))
+            v := byte(0, calldataload(add(sig.offset, 64)))
+        }
+        // Adjust v if needed (some signers return 0/1 instead of 27/28)
+        if (v < 27) v += 27;
     }
 
     // ═══════════════════════════════════════════════════════════════════════

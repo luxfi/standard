@@ -161,6 +161,16 @@ contract Recall is Ownable {
     /**
      * @notice Execute a recall after grace period
      * @param recallId Recall request ID
+     * @dev C-05 fix: This function requires the childSafe to have pre-approved
+     *      this Recall contract for the token being recalled.
+     *
+     *      IMPORTANT: For this to work, the childSafe MUST either:
+     *      1. Pre-approve this Recall contract for sufficient allowance, OR
+     *      2. This contract must be installed as a Safe module with execution rights
+     *
+     *      Recommended setup: childSafe.approve(recallContract, type(uint256).max)
+     *      for each token that may be recalled. This approval should be part of
+     *      the initial setup when creating the parent-child DAO relationship.
      */
     function executeRecall(uint256 recallId) external onlyParent {
         RecallRequest storage request = recallRequests[recallId];
@@ -181,9 +191,8 @@ contract Recall is Ownable {
         allocatedBalance[request.token] -= request.amount;
         request.executed = true;
 
-        // Transfer funds from child Safe to parent Safe
-        // Note: This requires the Recall contract to be a module on the child Safe
-        // The actual transfer is executed via Safe's execTransactionFromModule
+        // C-05: Transfer requires prior approval from childSafe to this contract
+        // The childSafe must have called: token.approve(address(this), amount)
         IERC20(request.token).safeTransferFrom(childSafe, parentSafe, request.amount);
 
         emit RecallExecuted(recallId, request.token, request.amount);

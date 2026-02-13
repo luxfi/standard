@@ -422,9 +422,16 @@ contract GovernanceTest is Test {
         vm.expectRevert();
         locked.transfer(bob, 100e18);
 
-        // Unlock (disable soulbound mode)
+        // Schedule unlock (H-04 security fix: 48h timelock for soulbound changes)
         vm.prank(admin);
-        locked.setSoulbound(false);
+        locked.scheduleSoulboundChange(false);
+
+        // Wait for timelock (48 hours)
+        vm.warp(block.timestamp + 48 hours + 1);
+
+        // Execute unlock
+        vm.prank(admin);
+        locked.executeSoulboundChange();
 
         // Now transfers work
         vm.prank(alice);

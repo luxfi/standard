@@ -137,6 +137,9 @@ contract LiquidBond is Ownable, ReentrancyGuard {
     uint256 public minBondSats = 100000; // 0.001 BTC worth
 
     /// @notice Maximum bond per address per epoch
+    /// @dev H-08 limitation: Per-address limits can be bypassed via sybil attack
+    ///      (deploying multiple contracts or using multiple addresses).
+    ///      Consider adding whitelist-only mode or KYC integration for high-security deployments.
     uint256 public maxBondPerAddress = type(uint256).max;
 
     /// @notice Current epoch (resets limits)
@@ -451,6 +454,8 @@ contract LiquidBond is Ownable, ReentrancyGuard {
 
     /**
      * @notice Swap collateral to target (for non-whitelisted assets)
+     * @dev H-02 fix: Uses forceApprove to handle tokens like USDT that require
+     *      approval to be set to 0 before changing
      */
     function _swapCollateral(
         address tokenIn,
@@ -461,7 +466,9 @@ contract LiquidBond is Ownable, ReentrancyGuard {
         if (router == address(0)) revert SwapFailed();
 
         IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
-        IERC20(tokenIn).approve(router, amountIn);
+
+        // H-02 fix: Use forceApprove to handle tokens like USDT
+        IERC20(tokenIn).forceApprove(router, amountIn);
 
         address[] memory path = new address[](2);
         path[0] = tokenIn;
@@ -474,6 +481,9 @@ contract LiquidBond is Ownable, ReentrancyGuard {
             address(this),
             block.timestamp
         );
+
+        // H-02 fix: Clear approval after swap
+        IERC20(tokenIn).forceApprove(router, 0);
 
         return (tokenOut, amounts[1]);
     }
