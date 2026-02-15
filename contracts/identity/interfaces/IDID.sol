@@ -27,7 +27,7 @@ enum VerificationMethodType {
 enum ServiceType {
     MessagingService,
     LLMProvider,
-    HanzoNode,
+    AINode,
     LinkedDomains,
     DIDCommMessaging,
     CredentialRegistry,
@@ -138,7 +138,7 @@ interface IDIDRegistry {
     
     /**
      * @notice Create a new DID
-     * @param method DID method (e.g., "lux", "hanzo")
+     * @param method DID method (e.g., "lux", "ai")
      * @param identifier Method-specific identifier
      * @return did The full DID string
      * @dev May be payable in premium implementations
@@ -274,7 +274,7 @@ interface IDIDResolver {
     
     /**
      * @notice Register a DID method resolver
-     * @param method The DID method (e.g., "lux", "hanzo")
+     * @param method The DID method (e.g., "lux", "ai")
      * @param registry The registry contract for this method
      */
     function registerMethod(string calldata method, address registry) external;
@@ -378,7 +378,7 @@ interface IPremiumDIDRegistry is IDIDRegistry {
     // ============ Network Info ============
 
     /**
-     * @notice Get network name (lux, hanzo, zoo)
+     * @notice Get network name (lux, ai, zoo)
      */
     function network() external view returns (string memory);
 
@@ -412,7 +412,7 @@ interface IPremiumDIDRegistry is IDIDRegistry {
  * │    "type": "X402PaymentEndpoint",                              │
  * │    "serviceEndpoint": "https://pay.alice.lux/x402",            │
  * │    "acceptedTokens": ["LUX", "USDC", "ETH"],                   │
- * │    "facilitator": "did:lux:hanzo-facilitator"                  │
+ * │    "facilitator": "did:lux:ai-facilitator"                  │
  * │  }                                                              │
  * └─────────────────────────────────────────────────────────────────┘
  */

@@ -44,7 +44,7 @@ contract MockBridge is Bridge {
     constructor() {
         // Support common chain IDs for testing
         supportedChains[96369] = true; // C-Chain
-        supportedChains[36963] = true; // Hanzo
+        supportedChains[36963] = true; // AI
         supportedChains[200200] = true; // Zoo
         supportedChains[1] = true; // Test chain 1
         supportedChains[2] = true; // Test chain 2

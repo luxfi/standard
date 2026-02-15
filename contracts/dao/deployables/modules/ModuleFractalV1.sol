@@ -68,7 +68,6 @@ contract ModuleFractalV1 is
         address target_
     ) public virtual override initializer {
         __InitializerEventEmitter_init(abi.encode(owner_, avatar_, target_));
-        __UUPSUpgradeable_init();
         __Ownable_init(owner_);
         __DeploymentBlockInitializable_init();
 

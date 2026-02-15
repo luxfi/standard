@@ -6,7 +6,7 @@ pragma solidity ^0.8.31;
 /// @notice Central registry of all Lux precompile addresses aligned with LP numbering (LP-0099)
 /// @dev Address scheme: BASE (0x10000) + 16-bit selector (0xPCII)
 /// @dev   P = Family page (aligned with LP-Pxxx range)
-/// @dev   C = Chain slot (0=P, 1=X, 2=C, 3=Q, 4=A, 5=B, 6=Z, 7=M, 8=Zoo, 9=Hanzo, A=SPC)
+/// @dev   C = Chain slot (0=P, 1=X, 2=C, 3=Q, 4=A, 5=B, 6=Z, 7=M, 8=Zoo, 9=AI, A=SPC)
 /// @dev   II = Item/function index (256 items per family×chain)
 /// @dev
 /// @dev Family Pages (P nibble) → LP Range:
@@ -343,7 +343,7 @@ library PrecompileRegistry {
     address internal constant GPU_ATTEST_C = 0x0000000000000000000000000000000000017201;
     /// @notice GPU attestation on A-Chain
     address internal constant GPU_ATTEST_A = 0x0000000000000000000000000000000000017401;
-    /// @notice GPU attestation on Hanzo
+    /// @notice GPU attestation on AI
     address internal constant GPU_ATTEST_HANZO = 0x0000000000000000000000000000000000017901;
     /// @notice TEE verification on C-Chain
     address internal constant TEE_VERIFY_C = 0x0000000000000000000000000000000000017202;
@@ -367,7 +367,7 @@ library PrecompileRegistry {
     address internal constant INFERENCE_C = 0x0000000000000000000000000000000000017210;
     /// @notice AI inference on A-Chain
     address internal constant INFERENCE_A = 0x0000000000000000000000000000000000017410;
-    /// @notice AI inference on Hanzo
+    /// @notice AI inference on AI
     address internal constant INFERENCE_HANZO = 0x0000000000000000000000000000000000017910;
     /// @notice Model provenance on C-Chain
     address internal constant PROVENANCE_C = 0x0000000000000000000000000000000000017211;
@@ -383,7 +383,7 @@ library PrecompileRegistry {
     address internal constant SESSION_C = 0x0000000000000000000000000000000000017220;
     /// @notice AI mining session on A-Chain
     address internal constant SESSION_A = 0x0000000000000000000000000000000000017420;
-    /// @notice AI mining session on Hanzo
+    /// @notice AI mining session on AI
     address internal constant SESSION_HANZO = 0x0000000000000000000000000000000000017920;
     /// @notice AI heartbeat on C-Chain
     address internal constant HEARTBEAT_C = 0x0000000000000000000000000000000000017221;
@@ -399,7 +399,7 @@ library PrecompileRegistry {
 
               Uses trailing LP number format (LP-9015):
               Address = 0x0000000000000000000000000000000000LPNUM
-              Same address on ALL Lux EVM chains (C-Chain, Zoo, Hanzo, SPC)
+              Same address on ALL Lux EVM chains (C-Chain, Zoo, AI, SPC)
     //////////////////////////////////////////////////////////////*/
 
     // Core DEX (LP-9010 series)
@@ -450,7 +450,7 @@ library PrecompileRegistry {
 
     /// @notice Calculate precompile address from (P, C, II) components
     /// @param p Family page (aligned with LP-Pxxx)
-    /// @param c Chain slot (0=P, 1=X, 2=C, 3=Q, 4=A, 5=B, 6=Z, 7=M, 8=Zoo, 9=Hanzo)
+    /// @param c Chain slot (0=P, 1=X, 2=C, 3=Q, 4=A, 5=B, 6=Z, 7=M, 8=Zoo, 9=AI)
     /// @param ii Item index
     function precompileAddress(uint8 p, uint8 c, uint8 ii) internal pure returns (address) {
         require(p <= 15 && c <= 15, "Invalid P or C nibble");

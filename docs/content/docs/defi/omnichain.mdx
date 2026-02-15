@@ -21,7 +21,7 @@ The omnichain stack enables:
 │                        OMNICHAIN LIQUIDITY LAYER                      │
 ├──────────────────────────────────────────────────────────────────────┤
 │                                                                       │
-│   C-Chain        Hanzo          Zoo           Solana      Bitcoin    │
+│   C-Chain        AI          Zoo           Solana      Bitcoin    │
 │   ┌─────┐       ┌─────┐       ┌─────┐       ┌─────┐      ┌─────┐    │
 │   │ LP  │◄─────►│ LP  │◄─────►│ LP  │◄─────►│ LP  │◄────►│ LP  │    │
 │   └─────┘       └─────┘       └─────┘       └─────┘      └─────┘    │
@@ -122,11 +122,11 @@ router.swapExactTokensForTokens(
 ### Cross-Chain Swap
 
 ```solidity
-// Swap from C-Chain WLUX to Hanzo USDC
+// Swap from C-Chain WLUX to AI USDC
 router.crossChainSwap(
     Route({
         path: [WLUX, USDC],
-        chainIds: [96369, 36963],  // C-Chain → Hanzo
+        chainIds: [96369, 36963],  // C-Chain → AI
         bridges: [warpBridge]
     }),
     amountIn,
@@ -139,7 +139,7 @@ router.crossChainSwap(
 ### Multi-Hop Cross-Chain
 
 ```solidity
-// Complex route: C-Chain ETH → Hanzo USDC → Zoo LUX
+// Complex route: C-Chain ETH → AI USDC → Zoo LUX
 Route memory route = Route({
     path: [WETH, USDC, WLUX],
     chainIds: [96369, 36963, 200200],
@@ -184,7 +184,7 @@ bytes32 intentId = intentRouter.submitIntent(
         amountIn: 1 ether,
         minAmountOut: 3000 * 1e6,  // Min 3000 USDC
         sourceChainId: 96369,       // C-Chain
-        destChainId: 36963,         // Hanzo
+        destChainId: 36963,         // AI
         recipient: msg.sender,
         deadline: block.timestamp + 1 hours,
         intentId: bytes32(0)        // Auto-generated
@@ -262,7 +262,7 @@ omnichainLP.bridgeLiquidity(liquidity, HANZO_CHAIN_ID, msg.sender);
 | Chain | Chain ID | Native Token | Status |
 |-------|----------|--------------|--------|
 | C-Chain | 96369 | LUX | ✅ Live |
-| Hanzo | 36963 | LUX | ✅ Live |
+| AI | 36963 | LUX | ✅ Live |
 | Zoo | 200200 | LUX | ✅ Live |
 | A-Chain | - | LUX | ✅ Live |
 | Solana | - | SOL | 🔄 Coming |

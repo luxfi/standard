@@ -111,7 +111,6 @@ contract FreezeGuardGovernorV1 is
     ) public virtual override initializer {
         __InitializerEventEmitter_init(abi.encode(owner_, freezeVoting_));
         __Ownable_init(owner_);
-        __UUPSUpgradeable_init();
         __DeploymentBlockInitializable_init();
 
         FreezeGuardGovernorStorage storage $ = _getFreezeGuardGovernorStorage();

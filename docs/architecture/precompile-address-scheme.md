@@ -34,7 +34,7 @@ Each address is `BASE + selector` where the **16-bit selector** encodes:
 | 6 | Z | Privacy | - | Zero-knowledge, dark pools |
 | 7 | M | Reserved | - | Future expansion |
 | 8 | Zoo | Subnet | 200200 | DeFi/NFT apps |
-| 9 | Hanzo | Subnet | 36963 | AI compute |
+| 9 | AI | Subnet | 36963 | AI compute |
 | A | SPC | Subnet | 36911 | Gaming/metaverse |
 | B-F | - | Reserved | - | Future chains |
 
@@ -235,7 +235,7 @@ Aligned 1:1 with LP numbering scheme (LP-0099):
 
 ### Attestation (II = 0x01-0x0F)
 
-| II | Name | C=2 (C-Chain) | C=4 (A-Chain) | C=9 (Hanzo) |
+| II | Name | C=2 (C-Chain) | C=4 (A-Chain) | C=9 (AI) |
 |----|------|---------------|---------------|-------------|
 | 01 | GPUAttest | `0x17201` | `0x17401` | `0x17901` |
 | 02 | TEEVerify | `0x17202` | `0x17402` | `0x17902` |
@@ -245,7 +245,7 @@ Aligned 1:1 with LP numbering scheme (LP-0099):
 
 ### Inference (II = 0x10-0x1F)
 
-| II | Name | C=2 (C-Chain) | C=4 (A-Chain) | C=9 (Hanzo) |
+| II | Name | C=2 (C-Chain) | C=4 (A-Chain) | C=9 (AI) |
 |----|------|---------------|---------------|-------------|
 | 10 | Inference | `0x17210` | `0x17410` | `0x17910` |
 | 11 | Provenance | `0x17211` | `0x17411` | `0x17911` |
@@ -253,7 +253,7 @@ Aligned 1:1 with LP numbering scheme (LP-0099):
 
 ### Mining (II = 0x20-0x2F)
 
-| II | Name | C=2 (C-Chain) | C=4 (A-Chain) | C=9 (Hanzo) |
+| II | Name | C=2 (C-Chain) | C=4 (A-Chain) | C=9 (AI) |
 |----|------|---------------|---------------|-------------|
 | 20 | Session | `0x17220` | `0x17420` | `0x17920` |
 | 21 | Heartbeat | `0x17221` | `0x17421` | `0x17921` |

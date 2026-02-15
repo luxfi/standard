@@ -16,15 +16,15 @@ import {
 /**
  * @title DIDRegistry - On-Chain W3C DID Registry for Lux Network
  * @notice Implements W3C DID Core specification for on-chain identity management
- * @dev Ported from hanzo-did Rust implementation to Solidity
+ * @dev Ported from ai-did Rust implementation to Solidity
  *
  * SUPPORTED DID METHODS:
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  did:lux:<identifier>                                                       │
  * │  did:lux:mainnet:<address>                                                  │
  * │  did:lux:testnet:<address>                                                  │
- * │  did:hanzo:<username>                                                       │
- * │  did:hanzo:eth:<address>                                                    │
+ * │  did:ai:<username>                                                       │
+ * │  did:ai:eth:<address>                                                    │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ARCHITECTURE:

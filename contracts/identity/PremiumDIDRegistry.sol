@@ -16,17 +16,17 @@ import {
 /**
  * @title PremiumDIDRegistry - Paid DID Registration with Tiered Pricing
  * @notice On-chain DID registry with premium pricing for short names
- * @dev Deployable on Lux, Hanzo, and Zoo networks with network-specific configuration
+ * @dev Deployable on Lux, AI, and Zoo networks with network-specific configuration
  *
  * PRICING TIERS:
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  Length  │  Price (Native Token)  │  Examples                              │
  * ├─────────────────────────────────────────────────────────────────────────────┤
- * │  1 char  │  1000 tokens           │  did:lux:a, did:hanzo:x                │
+ * │  1 char  │  1000 tokens           │  did:lux:a, did:ai:x                │
  * │  2 chars │  100 tokens            │  did:lux:ab, did:zoo:ox                │
- * │  3 chars │  10 tokens             │  did:lux:bob, did:hanzo:ace            │
+ * │  3 chars │  10 tokens             │  did:lux:bob, did:ai:ace            │
  * │  4 chars │  1 token               │  did:lux:john, did:zoo:luna            │
- * │  5+ chars│  0.1 tokens            │  did:lux:alice, did:hanzo:saturn       │
+ * │  5+ chars│  0.1 tokens            │  did:lux:alice, did:ai:saturn       │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * NETWORK DEPLOYMENTS:
@@ -34,7 +34,7 @@ import {
  * │  Network   │  Method  │  Native Token  │  Chain IDs                        │
  * ├─────────────────────────────────────────────────────────────────────────────┤
  * │  Lux       │  lux     │  LUX           │  96369 (mainnet), 96368 (testnet)  │
- * │  Hanzo     │  hanzo   │  HANZO         │  TBD                               │
+ * │  AI     │  ai   │  HANZO         │  TBD                               │
  * │  Zoo       │  zoo     │  ZOO           │  200200 (mainnet), 200201 (test)   │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
@@ -80,7 +80,7 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
 
     // ============ Network Configuration ============
 
-    /// @notice Network identifier (lux, hanzo, zoo)
+    /// @notice Network identifier (lux, ai, zoo)
     string public network;
 
     /// @notice DID method for this registry
@@ -184,8 +184,8 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
     /**
      * @notice Initialize the Premium DID Registry
      * @param admin Admin address
-     * @param _network Network name (lux, hanzo, zoo)
-     * @param _method DID method (lux, hanzo, zoo)
+     * @param _network Network name (lux, ai, zoo)
+     * @param _method DID method (lux, ai, zoo)
      * @param _treasury Treasury address for fees
      */
     constructor(

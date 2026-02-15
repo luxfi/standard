@@ -155,7 +155,6 @@ contract VotesERC20StakedV1 is
             )
         );
         __ERC20Votes_init();
-        __UUPSUpgradeable_init();
         __Ownable_init(owner_);
         __DeploymentBlockInitializable_init();
 

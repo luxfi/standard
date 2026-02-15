@@ -12,7 +12,7 @@ import {
 /**
  * @title DIDResolver - Universal DID Resolution for Lux Network
  * @notice Resolves DIDs across multiple registries and methods
- * @dev Supports omnichain identity resolution across Lux, Hanzo, Ethereum, etc.
+ * @dev Supports omnichain identity resolution across Lux, AI, Ethereum, etc.
  *
  * SUPPORTED METHODS:
  * ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -21,8 +21,8 @@ import {
  * │  lux        │ did:lux:<identifier>            │ did:lux:alice               │
  * │  lux        │ did:lux:mainnet:<address>       │ did:lux:mainnet:0x1234...   │
  * │  lux        │ did:lux:testnet:<address>       │ did:lux:testnet:0x1234...   │
- * │  hanzo      │ did:hanzo:<username>            │ did:hanzo:user123           │
- * │  hanzo      │ did:hanzo:eth:<address>         │ did:hanzo:eth:0x1234...     │
+ * │  ai      │ did:ai:<username>            │ did:ai:user123           │
+ * │  ai      │ did:ai:eth:<address>         │ did:ai:eth:0x1234...     │
  * │  ethr       │ did:ethr:<address>              │ did:ethr:0x1234...          │
  * │  key        │ did:key:<public-key>            │ did:key:z6Mk...             │
  * │  web        │ did:web:<domain>                │ did:web:lux.network         │
@@ -181,7 +181,7 @@ contract DIDResolver is IDIDResolver, AccessControl {
 
     /**
      * @notice Register a DID method resolver
-     * @param method The DID method (e.g., "lux", "hanzo")
+     * @param method The DID method (e.g., "lux", "ai")
      * @param registry The registry contract for this method
      */
     function registerMethod(
@@ -438,7 +438,7 @@ contract OmnichainDIDResolver is DIDResolver {
         string calldata did
     ) external view returns (string[] memory variants) {
         // This would be extended to generate cross-chain DID variants
-        // e.g., did:lux:alice -> [did:hanzo:alice, did:ethr:0x...]
+        // e.g., did:lux:alice -> [did:ai:alice, did:ethr:0x...]
         variants = new string[](1);
         variants[0] = did;
     }

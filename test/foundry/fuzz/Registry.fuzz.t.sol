@@ -484,8 +484,8 @@ contract RegistryFuzzTest is Test {
         vm.assume(invalidChainId != 494950);  // pars-test
         vm.assume(invalidChainId != 200200);  // zoo
         vm.assume(invalidChainId != 200201);  // zoo-test
-        vm.assume(invalidChainId != 36963);   // hanzo
-        vm.assume(invalidChainId != 36962);   // hanzo-test
+        vm.assume(invalidChainId != 36963);   // ai
+        vm.assume(invalidChainId != 36962);   // ai-test
         vm.assume(invalidChainId != 31337);   // local
 
         bytes32 secret = keccak256("secret");

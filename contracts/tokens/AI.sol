@@ -20,12 +20,12 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
     │  Q-Chain (Quantum Finality) - Shared quantum safety via Quasar (BLS/Ringtail)          │
     │  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
     │  │ Stores quantum-final block tips from: P-Chain | C-Chain | X-Chain | A-Chain    │   │
-    │  │ | Hanzo | Zoo | All Subnets                                                     │   │
+    │  │ | AI | Zoo | All Subnets                                                     │   │
     │  └─────────────────────────────────────────────────────────────────────────────────┘   │
     └─────────────────────────────────────────────────────────────────────────────────────────┘
                                               │
     ┌─────────────────────────────────────────┼───────────────────────────────────────────────┐
-    │  Source Chains: C-Chain, Hanzo EVM, Zoo EVM                                             │
+    │  Source Chains: C-Chain, AI EVM, Zoo EVM                                             │
     │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐             │
     │  │ Pay with    │ -> │ Swap to LUX │ -> │ Bridge to   │ -> │ Attestation │             │
     │  │ AI/ETH/BTC  │    │ (DEX pools) │    │ A-Chain     │    │ Stored      │             │
@@ -47,7 +47,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
     └─────────────────────────────────────────────────────────────────┼──────────────────────┘
                                                                        │ Teleport (Warp)
     ┌─────────────────────────────────────────────────────────────────┼──────────────────────┐
-    │  Destination: C-Chain, Hanzo, Zoo (claim minted AI)             ▼                      │
+    │  Destination: C-Chain, AI, Zoo (claim minted AI)             ▼                      │
     │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐                                 │
     │  │ Warp Proof  │ -> │  Verify &   │ -> │  AI Mint    │                                 │
     │  │ (from A)    │    │  Claim      │    │  (Remote)   │                                 │
@@ -56,7 +56,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
     References:
     - LP-2000: AI Mining Standard
-    - HIP-006: Hanzo AI Mining Protocol
+    - HIP-006: AI AI Mining Protocol
     - ZIP-005: Zoo AI Mining Integration
     - LP-1001: Q-Chain Quantum Finality
     - LP-1002: Quasar Consensus (BLS/Ringtail Hybrid)
@@ -154,7 +154,7 @@ struct Attestation {
 
 // ============================================================================
 // AIPaymentRouter - Multi-token payment for attestation (Source Chains)
-// Deployed on: C-Chain, Hanzo EVM, Zoo EVM
+// Deployed on: C-Chain, AI EVM, Zoo EVM
 // ============================================================================
 
 /**
@@ -652,7 +652,7 @@ contract AINative is LRC20B {
 
     /**
      * @notice Teleport AI tokens to another chain
-     * @param destChainId Destination chain ID (C-Chain, Hanzo, Zoo)
+     * @param destChainId Destination chain ID (C-Chain, AI, Zoo)
      * @param recipient Recipient address on destination chain
      * @param amount Amount of AI to teleport
      * @return teleportId The teleport transfer ID
@@ -700,7 +700,7 @@ contract AINative is LRC20B {
 }
 
 // ============================================================================
-// AIRemote - Deployed on destination chains (C-Chain, Hanzo, Zoo)
+// AIRemote - Deployed on destination chains (C-Chain, AI, Zoo)
 // ============================================================================
 
 /**

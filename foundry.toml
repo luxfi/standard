@@ -7,7 +7,7 @@ optimizer_runs = 200
 via_ir = true
 solc_version = "0.8.31"
 auto_detect_solc = true
-evm_version = "shanghai"
+evm_version = "cancun"
 # Point test and script to empty dirs during migration
 test = "test"
 script = "contracts/script"
@@ -111,7 +111,7 @@ optimizer_runs = 200
 via_ir = true
 solc_version = "0.8.31"
 auto_detect_solc = true
-evm_version = "shanghai"
+evm_version = "cancun"
 test = "test"
 script = "contracts/script"
 verbosity = 2

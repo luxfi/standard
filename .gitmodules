@@ -91,3 +91,6 @@
 [submodule "lib/core"]
 	path = lib/core
 	url = https://github.com/reservoirprotocol/core
+[submodule "lib/alchemix-v3"]
+	path = lib/alchemix-v3
+	url = https://github.com/alchemix-finance/v3-poc

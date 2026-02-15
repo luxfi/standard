@@ -37,7 +37,7 @@ library AIDeployConfig {
     /// @notice Lux C-Chain - Primary EVM
     uint256 constant LUX_C_CHAIN = 96369;
 
-    /// @notice Hanzo EVM - AI-focused applications
+    /// @notice AI EVM - AI-focused applications
     uint256 constant HANZO_EVM = 36963;
 
     /// @notice Zoo EVM - Research/DeSci focus
@@ -114,7 +114,7 @@ library AIDeployConfig {
             return ChainConfig(chainId, "Lux C-Chain", "AI", true, true, 200);
         }
         if (chainId == HANZO_EVM) {
-            return ChainConfig(chainId, "Hanzo EVM", "AI", true, true, 200);
+            return ChainConfig(chainId, "AI EVM", "AI", true, true, 200);
         }
         if (chainId == ZOO_EVM) {
             return ChainConfig(chainId, "Zoo EVM", "AI", true, true, 250); // Higher treasury for research

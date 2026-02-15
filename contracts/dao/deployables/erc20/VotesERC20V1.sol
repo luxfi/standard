@@ -192,7 +192,6 @@ contract VotesERC20V1 is
         __ERC20_init(metadata_.name, metadata_.symbol);
         __ERC20Permit_init(metadata_.name);
         __ERC20Votes_init();
-        __UUPSUpgradeable_init();
         __DeploymentBlockInitializable_init();
         __AccessControl_init();
 

@@ -35,7 +35,7 @@ contract IdentityTest is Test {
     // ============ Test Contracts ============
 
     DIDRegistry public luxRegistry;
-    DIDRegistry public hanzoRegistry;
+    DIDRegistry public aiRegistry;
     DIDResolver public resolver;
     OmnichainDIDResolver public omnichainResolver;
 
@@ -52,11 +52,11 @@ contract IdentityTest is Test {
     // ============ Test Data ============
 
     string constant LUX_METHOD = "lux";
-    string constant HANZO_METHOD = "hanzo";
+    string constant AI_METHOD = "ai";
 
     string aliceDID = "did:lux:alice";
     string bobDID = "did:lux:bob";
-    string charlieDID = "did:hanzo:charlie";
+    string charlieDID = "did:ai:charlie";
 
     bytes32 constant METHOD_KEY_1 = keccak256("key-1");
     bytes32 constant METHOD_KEY_2 = keccak256("key-2");
@@ -80,7 +80,7 @@ contract IdentityTest is Test {
         // Deploy registries
         vm.startPrank(admin);
         luxRegistry = new DIDRegistry(admin, LUX_METHOD, true); // Public registration
-        hanzoRegistry = new DIDRegistry(admin, HANZO_METHOD, false); // Private registration
+        aiRegistry = new DIDRegistry(admin, AI_METHOD, false); // Private registration
 
         // Deploy resolvers
         resolver = new DIDResolver(admin, address(luxRegistry));
@@ -88,14 +88,14 @@ contract IdentityTest is Test {
 
         // Register methods in resolver
         resolver.registerMethod(LUX_METHOD, address(luxRegistry));
-        resolver.registerMethod(HANZO_METHOD, address(hanzoRegistry));
+        resolver.registerMethod(AI_METHOD, address(aiRegistry));
         omnichainResolver.registerMethod(LUX_METHOD, address(luxRegistry));
-        omnichainResolver.registerMethod(HANZO_METHOD, address(hanzoRegistry));
+        omnichainResolver.registerMethod(AI_METHOD, address(aiRegistry));
 
         // Grant roles
         luxRegistry.grantRole(luxRegistry.OPERATOR_ROLE(), operator);
         luxRegistry.grantRole(luxRegistry.REGISTRAR_ROLE(), registrar);
-        hanzoRegistry.grantRole(hanzoRegistry.REGISTRAR_ROLE(), registrar);
+        aiRegistry.grantRole(aiRegistry.REGISTRAR_ROLE(), registrar);
 
         vm.stopPrank();
     }
@@ -187,7 +187,7 @@ contract IdentityTest is Test {
         vm.startPrank(alice);
 
         vm.expectRevert(DIDRegistry.RegistrationClosed.selector);
-        hanzoRegistry.createDID(HANZO_METHOD, "alice");
+        aiRegistry.createDID(AI_METHOD, "alice");
 
         vm.stopPrank();
     }
@@ -249,17 +249,17 @@ contract IdentityTest is Test {
         luxRegistry.createDID(LUX_METHOD, "alice");
 
         vm.prank(registrar);
-        hanzoRegistry.createDIDFor("charlie", charlie);
+        aiRegistry.createDIDFor("charlie", charlie);
 
         // Resolve from lux registry
         (DIDDocument memory luxDoc, address luxReg) = resolver.resolve(aliceDID);
         assertEq(luxReg, address(luxRegistry), "Should resolve from lux registry");
         assertEq(luxDoc.controller, alice, "Controller mismatch");
 
-        // Resolve from hanzo registry
-        (DIDDocument memory hanzoDoc, address hanzoReg) = resolver.resolve(charlieDID);
-        assertEq(hanzoReg, address(hanzoRegistry), "Should resolve from hanzo registry");
-        assertEq(hanzoDoc.controller, charlie, "Controller mismatch");
+        // Resolve from ai registry
+        (DIDDocument memory aiDoc, address aiReg) = resolver.resolve(charlieDID);
+        assertEq(aiReg, address(aiRegistry), "Should resolve from ai registry");
+        assertEq(aiDoc.controller, charlie, "Controller mismatch");
     }
 
     function test_CanResolve_ExistingDID() public {
@@ -325,7 +325,7 @@ contract IdentityTest is Test {
         luxRegistry.addService(did, service);
 
         // Add alias
-        luxRegistry.addAlsoKnownAs(did, "did:hanzo:alice");
+        luxRegistry.addAlsoKnownAs(did, "did:ai:alice");
 
         vm.stopPrank();
 
@@ -743,15 +743,15 @@ contract IdentityTest is Test {
         string memory did = luxRegistry.createDID(LUX_METHOD, "alice");
 
         vm.expectEmit(true, false, false, true);
-        emit AlsoKnownAsAdded(did, "did:hanzo:alice");
+        emit AlsoKnownAsAdded(did, "did:ai:alice");
 
-        luxRegistry.addAlsoKnownAs(did, "did:hanzo:alice");
+        luxRegistry.addAlsoKnownAs(did, "did:ai:alice");
 
         vm.stopPrank();
 
         string[] memory aliases = luxRegistry.getAlsoKnownAs(did);
         assertEq(aliases.length, 1, "Should have 1 alias");
-        assertEq(aliases[0], "did:hanzo:alice", "Alias mismatch");
+        assertEq(aliases[0], "did:ai:alice", "Alias mismatch");
     }
 
     function test_AddMultipleAliases() public {
@@ -759,7 +759,7 @@ contract IdentityTest is Test {
 
         string memory did = luxRegistry.createDID(LUX_METHOD, "alice");
 
-        luxRegistry.addAlsoKnownAs(did, "did:hanzo:alice");
+        luxRegistry.addAlsoKnownAs(did, "did:ai:alice");
         luxRegistry.addAlsoKnownAs(did, "did:ethr:0x1234567890123456789012345678901234567890");
         luxRegistry.addAlsoKnownAs(did, "https://alice.lux.network");
 
@@ -850,11 +850,11 @@ contract IdentityTest is Test {
     }
 
     function test_PublicRegistration_Disabled() public {
-        assertFalse(hanzoRegistry.publicRegistration(), "Public registration should be disabled");
+        assertFalse(aiRegistry.publicRegistration(), "Public registration should be disabled");
 
         vm.prank(alice);
         vm.expectRevert(DIDRegistry.RegistrationClosed.selector);
-        hanzoRegistry.createDID(HANZO_METHOD, "alice");
+        aiRegistry.createDID(AI_METHOD, "alice");
     }
 
     function test_SetPublicRegistration_AsAdmin() public {
@@ -872,10 +872,10 @@ contract IdentityTest is Test {
 
     function test_RegistrarRole_CreateDIDFor() public {
         vm.prank(registrar);
-        string memory did = hanzoRegistry.createDIDFor("charlie", charlie);
+        string memory did = aiRegistry.createDIDFor("charlie", charlie);
 
         assertEq(did, charlieDID, "DID should be created");
-        assertEq(hanzoRegistry.controllerOf(did), charlie, "Controller should be charlie");
+        assertEq(aiRegistry.controllerOf(did), charlie, "Controller should be charlie");
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

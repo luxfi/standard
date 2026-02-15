@@ -166,7 +166,6 @@ contract BlendedConfidentialStrategy is
         address lightAccountFactory_
     ) external override initializer {
         __Ownable_init(msg.sender);
-        __UUPSUpgradeable_init();
 
         if (basisNumerator_ > BASIS_DENOMINATOR) revert InvalidBasisNumerator();
         if (proposerAdapters_.length == 0) revert NoProposerAdapters();

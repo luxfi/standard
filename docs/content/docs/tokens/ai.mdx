@@ -15,7 +15,7 @@ AI Token is the reward token for hardware-attested GPU compute on the Lux Networ
 └─────────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────┼───────────────────────────────────┐
-│  Source Chains: C-Chain, Hanzo EVM, Zoo EVM                     │
+│  Source Chains: C-Chain, AI EVM, Zoo EVM                     │
 │  ┌───────────┐    ┌───────────┐    ┌───────────┐               │
 │  │ Pay with  │ -> │ Swap to   │ -> │ Bridge to │               │
 │  │ AI/ETH/   │    │ LUX (DEX) │    │ A-Chain   │               │
@@ -83,7 +83,7 @@ function teleport(bytes32 destChainId, address recipient, uint256 amount) extern
 
 Teleport AI tokens to destination chain via Warp.
 
-### AIRemote (C-Chain, Hanzo, Zoo)
+### AIRemote (C-Chain, AI, Zoo)
 
 Remote AI token for claiming teleported tokens.
 
@@ -135,7 +135,7 @@ ai.teleport(C_CHAIN_ID, recipient, amount);
 |-------|-----|----------|
 | A-Chain | Attestation | AINative |
 | C-Chain | 96369 | AIRemote |
-| Hanzo | 36963 | AIRemote |
+| AI | 36963 | AIRemote |
 | Zoo | 200200 | AIRemote |
 
 ## Events

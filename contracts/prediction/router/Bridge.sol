@@ -49,7 +49,7 @@ contract WrappedPosition is ERC1155 {
  * @title Bridge
  * @author Lux Industries
  * @notice Bridge Claims positions across Lux Network chains via Warp messaging
- * @dev Enables prediction market positions on Zoo/Hanzo chains to be bridged
+ * @dev Enables prediction market positions on Zoo/AI chains to be bridged
  *
  * Architecture:
  * - Lock Claims positions on source chain

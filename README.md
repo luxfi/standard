@@ -424,7 +424,7 @@ ETHERSCAN_API_KEY=your_etherscan_key
 LUXSCAN_API_KEY=your_luxscan_key
 ```
 
-Available networks: `lux`, `lux_testnet`, `zoo`, `zoo_testnet`, `hanzo`, `mainnet`, `sepolia`
+Available networks: `lux`, `lux_testnet`, `zoo`, `zoo_testnet`, `ai`, `mainnet`, `sepolia`
 
 ## Documentation
 

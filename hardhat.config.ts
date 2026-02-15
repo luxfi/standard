@@ -97,14 +97,14 @@ const config: HardhatUserConfig = {
       chainId: 200201,
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
     },
-    // Hanzo Networks
-    hanzo: {
-      url: "https://api.hanzo.network/rpc",
+    // AI Networks
+    ai: {
+      url: "https://api.ai.network/rpc",
       chainId: 36963,
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
     },
-    hanzo_testnet: {
-      url: "https://api.hanzo-test.network/rpc",
+    ai_testnet: {
+      url: "https://api.ai-test.network/rpc",
       chainId: 36964,
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
     },

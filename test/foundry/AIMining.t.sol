@@ -53,7 +53,7 @@ contract AIMiningTest is Test {
 
     function test_ChainConfig_ValidChainIds() public view {
         assertTrue(chainConfig.isValidChainId(96369));   // C-Chain
-        assertTrue(chainConfig.isValidChainId(36963));   // Hanzo
+        assertTrue(chainConfig.isValidChainId(36963));   // AI
         assertTrue(chainConfig.isValidChainId(200200));  // Zoo
         assertFalse(chainConfig.isValidChainId(1));      // Ethereum
         assertFalse(chainConfig.isValidChainId(0));

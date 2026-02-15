@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This document outlines the architecture for **Lux Indexer**, a high-performance, Go-based EVM blockchain indexer designed to replace Blockscout while maintaining full API compatibility. The indexer is optimized for the Lux ecosystem (C-Chain 96369, Zoo 200200, Hanzo 36963) with support for horizontal scaling to millions of blocks.
+This document outlines the architecture for **Lux Indexer**, a high-performance, Go-based EVM blockchain indexer designed to replace Blockscout while maintaining full API compatibility. The indexer is optimized for the Lux ecosystem (C-Chain 96369, Zoo 200200, AI 36963) with support for horizontal scaling to millions of blocks.
 
 ### Key Design Goals
 
@@ -99,7 +99,7 @@ This document outlines the architecture for **Lux Indexer**, a high-performance,
 │                                              EVM NODES (RPC Sources)                                                           │
 │                                                                                                                               │
 │  ┌─────────────────────────┐    ┌─────────────────────────┐    ┌─────────────────────────┐    ┌─────────────────────────┐   │
-│  │   C-Chain (96369)       │    │   Zoo (200200)          │    │   Hanzo (36963)         │    │   Other Subnets         │   │
+│  │   C-Chain (96369)       │    │   Zoo (200200)          │    │   AI (36963)         │    │   Other Subnets         │   │
 │  │   Primary + Backup      │    │   Primary + Backup      │    │   Primary + Backup      │    │   Primary + Backup      │   │
 │  └─────────────────────────┘    └─────────────────────────┘    └─────────────────────────┘    └─────────────────────────┘   │
 └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -388,7 +388,7 @@ CREATE TABLE chains (
 INSERT INTO chains (chain_id, name, symbol, rpc_url) VALUES
     (96369, 'Lux C-Chain', 'LUX', 'http://localhost:9650/ext/bc/C/rpc'),
     (200200, 'Zoo Network', 'ZOO', 'http://localhost:9650/ext/bc/Zoo/rpc'),
-    (36963, 'Hanzo AI', 'HANZO', 'http://localhost:9650/ext/bc/Hanzo/rpc');
+    (36963, 'AI AI', 'HANZO', 'http://localhost:9650/ext/bc/AI/rpc');
 
 -- Blocks table (partitioned by chain_id and block range)
 CREATE TABLE blocks (
