@@ -11,11 +11,11 @@ The official Solidity smart contracts library for the Lux Network ecosystem. Pro
 ### npm / pnpm / yarn
 
 ```bash
-npm install @luxfi/contracts
+npm install @luxfi/contracts@1.2.0
 # or
-pnpm add @luxfi/contracts
+pnpm add @luxfi/contracts@1.2.0
 # or
-yarn add @luxfi/contracts
+yarn add @luxfi/contracts@1.2.0
 ```
 
 ### Foundry
