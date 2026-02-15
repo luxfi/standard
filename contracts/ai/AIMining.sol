@@ -32,7 +32,7 @@ import "./ChainConfig.sol";
  *
  * Supported Chains:
  * - C-Chain (96369)
- * - Hanzo EVM (36963)
+ * - AI EVM (36963)
  * - Zoo EVM (200200)
  */
 contract AIMining is Ownable, ReentrancyGuard {

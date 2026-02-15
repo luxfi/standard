@@ -132,7 +132,6 @@ contract FreezeGuardMultisigV1 is
             )
         );
         __Ownable_init(owner_);
-        __UUPSUpgradeable_init();
         __DeploymentBlockInitializable_init();
 
         // Set timelock parameters (also emits events)

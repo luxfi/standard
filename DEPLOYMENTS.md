@@ -10,8 +10,8 @@ All deployed contracts across the Lux ecosystem networks.
 | Lux Testnet | 96368 | [explore.lux-test.network](https://explore.lux-test.network) |
 | Zoo Mainnet | 200200 | [explore.zoo.network](https://explore.zoo.network) |
 | Zoo Testnet | 200201 | [explore.zoo-test.network](https://explore.zoo-test.network) |
-| Hanzo Mainnet | 36963 | [explore.hanzo.network](https://explore.hanzo.network) |
-| Hanzo Testnet | 36964 | [explore.hanzo-test.network](https://explore.hanzo-test.network) |
+| AI Mainnet | 36963 | [explore.ai.network](https://explore.ai.network) |
+| AI Testnet | 36964 | [explore.ai-test.network](https://explore.ai-test.network) |
 
 ## Lux Mainnet (Chain ID: 96369)
 

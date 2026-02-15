@@ -9,7 +9,7 @@ import {IWarp, WarpLib} from "../../bridge/interfaces/IWarpMessenger.sol";
  * @title Hub
  * @author Lux Industries
  * @notice Central market registry on C-Chain for cross-chain prediction markets
- * @dev Receives market creation messages via Warp from spoke chains (Zoo, Hanzo, etc.)
+ * @dev Receives market creation messages via Warp from spoke chains (Zoo, AI, etc.)
  *
  * Architecture:
  * - Spoke chains create markets locally and send Warp messages to register on C-Chain

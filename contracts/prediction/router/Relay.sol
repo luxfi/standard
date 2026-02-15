@@ -38,7 +38,7 @@ interface IHub {
  * @title Relay
  * @author Lux Industries
  * @notice Relay assertions cross-chain for prediction market resolution
- * @dev Enables markets on Zoo/Hanzo chains to be resolved via C-Chain Oracle infrastructure
+ * @dev Enables markets on Zoo/AI chains to be resolved via C-Chain Oracle infrastructure
  *
  * Architecture:
  * - Spoke chains send assertion requests via Warp
@@ -46,7 +46,7 @@ interface IHub {
  * - After oracle resolution, broadcasts results back to spoke chains
  *
  * Flow:
- * 1. Market created on spoke chain (Zoo/Hanzo)
+ * 1. Market created on spoke chain (Zoo/AI)
  * 2. Assertion request sent via Warp to C-Chain
  * 3. Relay receives and creates oracle request
  * 4. After liveness period, resolution is determined

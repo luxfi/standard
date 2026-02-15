@@ -4,7 +4,7 @@ pragma solidity ^0.8.31;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -12,7 +12,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
  * @title Registry
  * @author Lux Industries Inc
  * @notice Multi-chain DID Registry for the Lux ecosystem
- * @dev Manages decentralized identities across Lux, Pars, Zoo, and Hanzo chains
+ * @dev Manages decentralized identities across Lux, Pars, Zoo, and AI chains
  *
  * DID Formats:
  *   did:lux:alice   - W3C DID method (canonical, for protocols)
@@ -22,7 +22,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
  * - Lux:   did:lux:alice   / alice[at]lux.id
  * - Pars:  did:pars:alice  / alice[at]pars.id
  * - Zoo:   did:zoo:alice   / alice[at]zoo.id
- * - Hanzo: did:hanzo:alice / alice[at]hanzo.id
+ * - AI: did:ai:alice / alice[at]ai.id
  *
  * Features:
  * - Stake-based identity registration
@@ -38,7 +38,7 @@ interface IIdentityNFT {
     function ownerOf(uint256 tokenId) external view returns (address);
 }
 
-contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
+contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -168,8 +168,6 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable, Re
     ) public initializer {
         __Ownable_init(owner_);
         __Ownable2Step_init();
-        __UUPSUpgradeable_init();
-        __ReentrancyGuard_init();
 
         stakingToken = IERC20(stakingToken_);
         identityNft = IIdentityNFT(identityNft_);
@@ -193,11 +191,11 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable, Re
         methods[200201] = "zoo-test";
         domains[200201] = "test.zoo.id";
 
-        // Hanzo ecosystem
-        methods[36963] = "hanzo";
-        domains[36963] = "hanzo.id";
-        methods[36962] = "hanzo-test";
-        domains[36962] = "test.hanzo.id";
+        // AI ecosystem
+        methods[36963] = "ai";
+        domains[36963] = "ai.id";
+        methods[36962] = "ai-test";
+        domains[36962] = "test.ai.id";
 
         // Development
         methods[31337] = "local";

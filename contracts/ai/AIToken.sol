@@ -11,7 +11,7 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title AIToken
- * @author Lux Network Foundation, Hanzo AI, Zoo Labs Foundation
+ * @author Lux Network Foundation, AI AI, Zoo Labs Foundation
  * @notice Proof of AI Token - Open Protocol for Decentralized AI Mining
  *
  * ══════════════════════════════════════════════════════════════════════════════
@@ -95,7 +95,7 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
  * └─────────────────────────────────────────────────────────────────┘
  *
  * LAUNCH CHAINS (10):
- * - Lux C-Chain (96369)    - Hanzo EVM (36963)    - Zoo EVM (200200)
+ * - Lux C-Chain (96369)    - AI EVM (36963)    - Zoo EVM (200200)
  * - Ethereum (1)           - Base (8453)          - BNB Chain (56)
  * - Avalanche (43114)      - Arbitrum (42161)     - Optimism (10)
  * - Polygon (137)
@@ -109,7 +109,7 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
  * ══════════════════════════════════════════════════════════════════════════════
  *
  * LUX NATIVE (Warp Messaging):
- *   Lux C-Chain ←─Warp─→ Hanzo EVM ←─Warp─→ Zoo EVM
+ *   Lux C-Chain ←─Warp─→ AI EVM ←─Warp─→ Zoo EVM
  *   - Native precompile at 0x0200...0005
  *   - 67% validator quorum
  *   - Instant finality via Quasar consensus
@@ -634,7 +634,7 @@ library LaunchChains {
     uint256 constant LUX = 96369;
     uint256 constant LUX_TESTNET = 96368;
 
-    /// @notice Hanzo EVM - AI-focused applications
+    /// @notice AI EVM - AI-focused applications
     uint256 constant HANZO = 36963;
     uint256 constant HANZO_TESTNET = 36962;
 

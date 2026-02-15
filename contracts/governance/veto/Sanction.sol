@@ -82,7 +82,6 @@ contract Sanction is
         address veto_
     ) public virtual initializer {
         __Ownable_init(owner_);
-        __UUPSUpgradeable_init();
 
         SanctionStorage storage $ = _getStorage();
         $.veto = veto_;

@@ -6,29 +6,29 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-interface HanzoTokenInterface is IERC20 {
+interface AITokenInterface is IERC20 {
     function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
     function transfer(address recipient, uint256 amount) external returns (bool);
 }
 
-interface HanzoNftInterface {
+interface AINftInterface {
     function mint(address to) external returns (uint256);
     function burn(uint256 tokenId) external;
     function ownerOf(uint256 tokenId) external view returns (address);
 }
 
 /**
- * @title HanzoRegistry
- * @dev Multi-network identity registry for Hanzo, Lux, and Zoo ecosystems
+ * @title AIRegistry
+ * @dev Multi-network identity registry for AI, Lux, and Zoo ecosystems
  *
  * Supported networks:
- * - Hanzo mainnet (36963) / testnet (36962)
+ * - AI mainnet (36963) / testnet (36962)
  * - Lux mainnet (96369) / testnet (96368)
  * - Zoo mainnet (200200) / testnet (200201)
  * - Sepolia testnet
  * - Arbitrum Sepolia testnet
  */
-contract HanzoRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
+contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
 
     // Structs
     struct ClaimIdentityParams {
@@ -68,8 +68,8 @@ contract HanzoRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeabl
     }
 
     // State variables
-    HanzoTokenInterface public shinToken; // AI token
-    HanzoNftInterface public hanzoNft;
+    AITokenInterface public shinToken; // AI token
+    AINftInterface public aiNft;
 
     mapping(uint256 => string) public namespaces;
     mapping(string => mapping(string => string)) public identityRecords;
@@ -133,19 +133,18 @@ contract HanzoRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeabl
     function initialize(
         address owner_,
         address shinToken_,
-        address hanzoNft_
+        address aiNft_
     ) public initializer {
         __Ownable_init(owner_);
         __Ownable2Step_init();
-        __UUPSUpgradeable_init();
 
-        shinToken = HanzoTokenInterface(shinToken_);
-        hanzoNft = HanzoNftInterface(hanzoNft_);
+        shinToken = AITokenInterface(shinToken_);
+        aiNft = AINftInterface(aiNft_);
 
         // Initialize namespaces for all networks
-        namespaces[36963] = "hanzo";           // Hanzo mainnet
-        namespaces[1] = "ai";                  // .ai alias for Hanzo mainnet
-        namespaces[36962] = "hanzo-testnet";   // Hanzo testnet
+        namespaces[36963] = "ai";           // AI mainnet
+        namespaces[1] = "ai";                  // .ai alias for AI mainnet
+        namespaces[36962] = "ai-testnet";   // AI testnet
         namespaces[96369] = "lux";             // Lux mainnet
         namespaces[96368] = "lux-testnet";     // Lux testnet
         namespaces[200200] = "zoo";            // Zoo mainnet
@@ -220,7 +219,7 @@ contract HanzoRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeabl
         shinToken.transferFrom(caller, address(this), params.stakeAmount);
 
         // Mint NFT
-        uint256 tokenId = hanzoNft.mint(params.owner);
+        uint256 tokenId = aiNft.mint(params.owner);
 
         // Store identity data
         _identityToOwner[identity] = params.owner;
@@ -462,7 +461,7 @@ contract HanzoRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeabl
         }
 
         // Burn NFT
-        hanzoNft.burn(tokenId);
+        aiNft.burn(tokenId);
 
         // Clear data
         delete _identityToOwner[identity];

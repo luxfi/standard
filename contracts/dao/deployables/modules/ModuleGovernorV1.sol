@@ -143,7 +143,6 @@ contract ModuleGovernorV1 is
                 executionPeriod_
             )
         );
-        __UUPSUpgradeable_init();
         __Ownable_init(owner_);
         __DeploymentBlockInitializable_init();
 

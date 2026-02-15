@@ -1,5 +1,5 @@
 #!/bin/bash
-# Deploy Hanzo chains and AI token to all networks
+# Deploy AI chains and AI token to all networks
 
 set -e
 
@@ -33,7 +33,7 @@ check_network 9640 "Testnet" || exit 1
 check_network 9650 "Devnet" || exit 1
 echo ""
 
-# Deploy Hanzo chains
+# Deploy AI chains
 echo "==========================================="
 echo "  DEPLOYING HANZO CHAINS"
 echo "==========================================="
@@ -80,9 +80,9 @@ deploy_chain() {
     fi
 }
 
-deploy_chain "hanzo" "mainnet" "--mainnet"
-deploy_chain "hanzotest" "testnet" "--testnet"
-deploy_chain "hanzo" "devnet" "--devnet"
+deploy_chain "ai" "mainnet" "--mainnet"
+deploy_chain "aitest" "testnet" "--testnet"
+deploy_chain "ai" "devnet" "--devnet"
 
 echo ""
 echo "==========================================="
@@ -113,9 +113,9 @@ echo "==========================================="
 echo "  DEPLOYMENT COMPLETE"
 echo "==========================================="
 echo ""
-echo "Next: Deploy AI token to Hanzo chain"
+echo "Next: Deploy AI token to AI chain"
 echo ""
-echo "Get the Hanzo blockchain ID and run:"
+echo "Get the AI blockchain ID and run:"
 echo "  cd ~/work/lux/standard"
 echo "  export LUX_MNEMONIC=\"your mnemonic\""
 echo "  export HANZO_RPC=\"http://127.0.0.1:9630/ext/bc/<HANZO_ID>/rpc\""

@@ -838,7 +838,7 @@ contract OracleSource is IOracleSource, IOracleCallbacks {
 │                       CROSS-CHAIN PREDICTION MARKETS                                    │
 ├─────────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                          │
-│  SOURCE CHAIN (Zoo, Hanzo, etc.)                   C-CHAIN (Oracle Hub)                │
+│  SOURCE CHAIN (Zoo, AI, etc.)                   C-CHAIN (Oracle Hub)                │
 │  ┌─────────────┐                                   ┌─────────────┐                     │
 │  │    Hub      │──── Warp Message ────────────────>│   Relay     │                     │
 │  │  (create    │                                   │  (receive   │                     │
@@ -1418,7 +1418,7 @@ Uniswap v4 is **intentionally excluded** from the Lux Standard Library in favor 
 - Recalculated 3-year TCO and savings percentages
 - All cost calculations now mathematically correct
 
-**HIP-005 (Hanzo KMS)** - commit `325096f`
+**HIP-005 (AI KMS)** - commit `325096f`
 - Fixed Zymbit cost savings: 99.7% → 85.6% (3-year comparison)
 - Corrected Google Cloud KMS: $60/month → $30/month (removed unjustified overhead)
 - Updated model encryption performance: 20-600 sec → 2-30 sec for 1GB (realistic throughput)
@@ -2506,7 +2506,7 @@ All implementation files verified and linked:
 # LP-2000: AI Token - Hardware-Attested GPU Mining - 2025-12-01
 
 ## Summary
-Created comprehensive multi-contract AI token system with hardware-attested GPU compute mining. The architecture spans multiple chains with Q-Chain quantum finality, A-Chain attestation storage, and multi-token payment support across C-Chain, Hanzo EVM, and Zoo EVM.
+Created comprehensive multi-contract AI token system with hardware-attested GPU compute mining. The architecture spans multiple chains with Q-Chain quantum finality, A-Chain attestation storage, and multi-token payment support across C-Chain, AI EVM, and Zoo EVM.
 
 ## Implementation Status: ✅ COMPLETE
 
@@ -2522,12 +2522,12 @@ Created comprehensive multi-contract AI token system with hardware-attested GPU 
 │  Q-Chain (Quantum Finality) - Shared quantum safety via Quasar (BLS/Ringtail)          │
 │  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
 │  │ Stores quantum-final block tips from: P-Chain | C-Chain | X-Chain | A-Chain    │   │
-│  │ | Hanzo | Zoo | All Subnets                                                     │   │
+│  │ | AI | Zoo | All Subnets                                                     │   │
 │  └─────────────────────────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
                                               │
 ┌─────────────────────────────────────────────┼───────────────────────────────────────────────┐
-│  Source Chains: C-Chain, Hanzo EVM, Zoo EVM                                             │
+│  Source Chains: C-Chain, AI EVM, Zoo EVM                                             │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐             │
 │  │ Pay with    │ -> │ Swap to LUX │ -> │ Bridge to   │ -> │ Attestation │             │
 │  │ AI/ETH/BTC  │    │ (DEX pools) │    │ A-Chain     │    │ Stored      │             │
@@ -2549,7 +2549,7 @@ Created comprehensive multi-contract AI token system with hardware-attested GPU 
 └─────────────────────────────────────────────────────────────────┼──────────────────────┘
                                                                    │ Teleport (Warp)
 ┌─────────────────────────────────────────────────────────────────┼──────────────────────┐
-│  Destination: C-Chain, Hanzo, Zoo (claim minted AI)             ▼                      │
+│  Destination: C-Chain, AI, Zoo (claim minted AI)             ▼                      │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐                                 │
 │  │ Warp Proof  │ -> │  Verify &   │ -> │  AI Mint    │                                 │
 │  │ (from A)    │    │  Claim      │    │  (Remote)   │                                 │
@@ -2559,7 +2559,7 @@ Created comprehensive multi-contract AI token system with hardware-attested GPU 
 
 ### Contracts
 
-#### 1. AIPaymentRouter (Source Chains: C-Chain, Hanzo, Zoo)
+#### 1. AIPaymentRouter (Source Chains: C-Chain, AI, Zoo)
 Multi-token payment for attestation storage - accepts any DEX-swappable token.
 
 ```solidity
@@ -2592,7 +2592,7 @@ contract AINative is ERC20B {
 }
 ```
 
-#### 3. AIRemote (Destination Chains: C-Chain, Hanzo, Zoo)
+#### 3. AIRemote (Destination Chains: C-Chain, AI, Zoo)
 Claim teleported AI tokens via Warp proof verification.
 
 ```solidity
@@ -2617,7 +2617,7 @@ contract AIRemote is ERC20B {
 |-------|----------|----------|---------|
 | A-Chain | Attestation | AINative | Mining, attestation storage |
 | C-Chain | 96369 | AIRemote + AIPaymentRouter | Claims, payments |
-| Hanzo EVM | 36963 | AIRemote + AIPaymentRouter | Claims, payments |
+| AI EVM | 36963 | AIRemote + AIPaymentRouter | Claims, payments |
 | Zoo EVM | 200200 | AIRemote + AIPaymentRouter | Claims, payments |
 | Q-Chain | Quantum | - | Block finality (consensus level) |
 
@@ -2640,7 +2640,7 @@ contract AIRemote is ERC20B {
 
 ### Payment Flow
 
-1. **User pays** on C-Chain/Hanzo/Zoo with AI/ETH/BTC/ZOO
+1. **User pays** on C-Chain/AI/Zoo with AI/ETH/BTC/ZOO
 2. **AIPaymentRouter swaps** token → LUX via DEX
 3. **LUX bridged** to A-Chain via Warp message
 4. **AINative receives** payment, records attestation request
@@ -2656,7 +2656,7 @@ contract AIRemote is ERC20B {
 // Deploy on A-Chain
 AINativeFactory.deploy() → AINative address
 
-// Deploy on C-Chain, Hanzo, Zoo
+// Deploy on C-Chain, AI, Zoo
 AIRemoteFactory.deploy(aChainId, aChainToken) → AIRemote address
 AIPaymentRouterFactory.deploy(wlux, weth, dexRouter, aChainId, aiToken, cost) → Router address
 ```
@@ -2673,7 +2673,7 @@ Q-Chain provides shared quantum safety for the entire Lux network via Quasar con
 - **LP-2000**: AI Mining Standard (this implementation)
 - **LP-1001**: Q-Chain Quantum Finality
 - **LP-1002**: Quasar Consensus (BLS/Ringtail Hybrid)
-- **HIP-006**: Hanzo AI Mining Protocol
+- **HIP-006**: AI AI Mining Protocol
 - **ZIP-005**: Zoo AI Mining Integration
 
 ### Build Status
@@ -2690,7 +2690,7 @@ Note: Full compilation requires ERC20B.sol base contract in same directory.
 **Implementation Date**: December 1, 2025
 **Status**: Complete ✅
 **Lines of Code**: 820 (3 contracts + 3 factories)
-**Architecture**: Multi-chain (A-Chain native, C/Hanzo/Zoo remote)
+**Architecture**: Multi-chain (A-Chain native, C/AI/Zoo remote)
 **Payment**: Multi-token (AI/ETH/BTC/ZOO/any → LUX)
 **Quantum Safety**: Q-Chain finality integration ✅
 **Standards**: LP-2000, LP-1001, LP-1002, HIP-006, ZIP-005 ✅

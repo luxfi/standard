@@ -65,6 +65,23 @@ All L* tokens are in `contracts/liquid/tokens/` and inherit from `LRC20B`.
 | **LiquidToken** | Base ERC20 with ERC-3156 flash loans |
 | **LiquidVault** | Cross-chain teleport vault |
 | **FeeSplitter** | Routes protocol fees to LiquidLUX |
+| **ReserveDTF** | Basket/set primitive for Stable, Yield, and Index DTF categories |
+
+## Reserve-Style DTF Categories
+
+The Liquid stack now includes a category-aware basket/set primitive at `contracts/dtf/ReserveDTF.sol` for Reserve-style DTF products:
+
+| Category | Purpose | Core Behavior |
+|----------|---------|---------------|
+| **Stable DTF** | Asset-backed currency basket (USD-like target) | Peg reference + collateral floor policy, deterministic mint/redeem basket accounting |
+| **Yield DTF** | Yield-bearing basket of staked/lending assets | Harvested yield is pulled into basket collateral and accrues pro-rata to holders |
+| **Index DTF** | On-chain multi-asset index set | Dutch-auction rebalance windows + management/mint fee model (not yield-dependent) |
+
+### Category Controls
+
+- `Category.STABLE`: enables stable-risk config (peg reference and minimum collateral ratio).
+- `Category.YIELD`: enables `harvestYield()` for harvester-role operators.
+- `Category.INDEX`: enables `accrueManagementFee()` and Dutch-auction rebalance lifecycle.
 
 ## Usage
 

@@ -24,7 +24,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
  * @title BridgeVault
  * @notice Unified vault for all Lux ecosystem bridge operations
  * @dev Manages ERC20 and ETH vaults for cross-chain bridging
- * Used by: Lux mainnet, Zoo, Hanzo, and all ecosystem chains
+ * Used by: Lux mainnet, Zoo, AI, and all ecosystem chains
  */
 contract BridgeVault is Ownable, ReentrancyGuard {
     mapping(address => address) public erc20Vault;

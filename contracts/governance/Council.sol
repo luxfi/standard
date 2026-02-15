@@ -114,7 +114,6 @@ contract Council is
         uint32 timelockPeriod_,
         uint32 executionPeriod_
     ) public virtual override initializer {
-        __UUPSUpgradeable_init();
         __Ownable_init(owner_);
 
         // Set vault and target (was avatar/target in Zodiac)

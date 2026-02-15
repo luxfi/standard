@@ -13,7 +13,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  *
  * Supported Chain IDs:
  * - 96369: C-Chain (Lux mainnet)
- * - 36963: Hanzo EVM
+ * - 36963: AI EVM
  * - 200200: Zoo EVM
  *
  * Halving Schedule:
@@ -110,7 +110,7 @@ contract ChainConfig is Ownable {
 
         // Initialize default configs for supported chains
         _initializeChain(CHAIN_C, 50 ether);      // C-Chain: 50 AI base
-        _initializeChain(CHAIN_HANZO, 50 ether);  // Hanzo: 50 AI base
+        _initializeChain(CHAIN_HANZO, 50 ether);  // AI: 50 AI base
         _initializeChain(CHAIN_ZOO, 50 ether);    // Zoo: 50 AI base
     }
 

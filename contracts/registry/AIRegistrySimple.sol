@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import "./HanzoRegistry.sol";
+import "./AIRegistry.sol";
 
 /**
- * @title HanzoRegistrySimple
- * @dev Simple non-upgradeable version of HanzoRegistry for local testing
+ * @title AIRegistrySimple
+ * @dev Simple non-upgradeable version of AIRegistry for local testing
  * This version calls initialize in the constructor for easier local deployment
  */
-contract HanzoRegistrySimple is HanzoRegistry {
+contract AIRegistrySimple is AIRegistry {
     constructor(
         address owner_,
         address shinToken_,
-        address hanzoNft_
+        address aiNft_
     ) {
         // Call parent initialize
-        initialize(owner_, shinToken_, hanzoNft_);
+        initialize(owner_, shinToken_, aiNft_);
     }
 }

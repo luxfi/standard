@@ -113,7 +113,7 @@ contract AITokenTest is Test {
     function test_AllLaunchChains() public {
         uint256[10] memory launchChains = [
             uint256(96369),  // Lux
-            uint256(36963),  // Hanzo
+            uint256(36963),  // AI
             uint256(200200), // Zoo
             uint256(1),      // Ethereum
             uint256(8453),   // Base
@@ -662,7 +662,7 @@ contract LaunchChainsTest is Test {
     function test_IsLaunchChain() public pure {
         // Lux native chains
         assertTrue(LaunchChains.isLaunchChain(96369), "Lux should be launch chain");
-        assertTrue(LaunchChains.isLaunchChain(36963), "Hanzo should be launch chain");
+        assertTrue(LaunchChains.isLaunchChain(36963), "AI should be launch chain");
         assertTrue(LaunchChains.isLaunchChain(200200), "Zoo should be launch chain");
 
         // External chains
@@ -681,7 +681,7 @@ contract LaunchChainsTest is Test {
 
     function test_IsLuxNative() public pure {
         assertTrue(LaunchChains.isLuxNative(96369), "Lux should be native");
-        assertTrue(LaunchChains.isLuxNative(36963), "Hanzo should be native");
+        assertTrue(LaunchChains.isLuxNative(36963), "AI should be native");
         assertTrue(LaunchChains.isLuxNative(200200), "Zoo should be native");
 
         assertFalse(LaunchChains.isLuxNative(1), "Ethereum should not be native");
@@ -694,7 +694,7 @@ contract LaunchChainsTest is Test {
         assertTrue(LaunchChains.isExternal(56), "BNB should be external");
 
         assertFalse(LaunchChains.isExternal(96369), "Lux should not be external");
-        assertFalse(LaunchChains.isExternal(36963), "Hanzo should not be external");
+        assertFalse(LaunchChains.isExternal(36963), "AI should not be external");
     }
 
     function test_GetLaunchChains() public pure {
@@ -702,7 +702,7 @@ contract LaunchChainsTest is Test {
 
         assertEq(chains.length, 10, "Should have 10 launch chains");
         assertEq(chains[0], 96369, "First should be Lux");
-        assertEq(chains[1], 36963, "Second should be Hanzo");
+        assertEq(chains[1], 36963, "Second should be AI");
         assertEq(chains[2], 200200, "Third should be Zoo");
     }
 
