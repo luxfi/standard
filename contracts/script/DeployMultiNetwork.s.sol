@@ -111,22 +111,25 @@ contract DeployMultiNetwork is Script {
     Markets public markets;
     Perp public perp;
 
-    // Constants
-    uint256 constant INITIAL_LUX = 10_000 ether;
-    uint256 constant INITIAL_ETH = 100 ether;
-    uint256 constant INITIAL_BTC = 10e8;
-    uint256 constant INITIAL_USDC = 1_000_000e6;
+    // Constants (reduced for low-balance deployments)
+    uint256 constant INITIAL_LUX = 100 ether;
+    uint256 constant INITIAL_ETH = 10 ether;
+    uint256 constant INITIAL_BTC = 1e8;
+    uint256 constant INITIAL_USDC = 100_000e6;
 
     function run() external {
         console.log("=== Deploying Lux Standard Contracts ===");
         console.log("Chain ID:", block.chainid);
         console.log("");
 
-        // Get deployer from mnemonic
-        string memory mnemonic = vm.envString("LUX_MNEMONIC");
-        require(bytes(mnemonic).length > 0, "LUX_MNEMONIC required");
-
-        deployerKey = vm.deriveKey(mnemonic, 0);
+        // Get deployer from private key or mnemonic
+        try vm.envUint("LUX_PRIVATE_KEY") returns (uint256 pk) {
+            deployerKey = pk;
+        } catch {
+            string memory mnemonic = vm.envString("LUX_MNEMONIC");
+            require(bytes(mnemonic).length > 0, "LUX_PRIVATE_KEY or LUX_MNEMONIC required");
+            deployerKey = vm.deriveKey(mnemonic, 0);
+        }
         deployer = vm.addr(deployerKey);
         console.log("Deployer:", deployer);
 
@@ -204,7 +207,7 @@ contract DeployMultiNetwork is Script {
         console.log("StakedLUX:", address(stakedLux));
 
         // Stake some LUX
-        uint256 stakeAmount = 1000 ether;
+        uint256 stakeAmount = 10 ether;
         wlux.approve(address(stakedLux), stakeAmount);
         stakedLux.stake(stakeAmount);
         console.log("Staked", stakeAmount / 1e18, "LUX");
@@ -226,15 +229,15 @@ contract DeployMultiNetwork is Script {
         console.log("--- Phase 4: LP Pools ---");
 
         // WLUX/LETH
-        _createPool(address(wlux), address(leth), 1000 ether, 10 ether);
+        _createPool(address(wlux), address(leth), 10 ether, 1 ether);
         console.log("WLUX/LETH pool created");
 
         // WLUX/LBTC
-        _createPool(address(wlux), address(lbtc), 1000 ether, 1e8);
+        _createPool(address(wlux), address(lbtc), 10 ether, 1e7);
         console.log("WLUX/LBTC pool created");
 
         // WLUX/LUSDC
-        _createPool(address(wlux), address(lusdc), 1000 ether, 5000e6);
+        _createPool(address(wlux), address(lusdc), 10 ether, 500e6);
         console.log("WLUX/LUSDC pool created");
 
         console.log("");
