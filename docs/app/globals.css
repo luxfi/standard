@@ -12,3 +12,11 @@
   --color-fd-primary: hsl(0, 0%, 98%);
   --color-fd-primary-foreground: hsl(0, 0%, 9%);
 }
+
+body {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+code, pre, kbd {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+}
