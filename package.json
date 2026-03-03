@@ -44,7 +44,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "^5.4.0",
     "@openzeppelin/contracts-upgradeable": "^5.4.0",
-    "viem": "^2.23.4"
+    "viem": "^2.46.3"
   },
   "scripts": {
     "build": "forge build",

@@ -129,12 +129,17 @@ contract DeployMultiNetwork is Script {
         console.log("Chain ID:", block.chainid);
         console.log("");
 
-        // Get deployer from mnemonic
-        string memory mnemonic = vm.envString("LUX_MNEMONIC");
-        require(bytes(mnemonic).length > 0, "LUX_MNEMONIC required");
-
-        deployerKey = vm.deriveKey(mnemonic, 0);
-        deployer = vm.addr(deployerKey);
+        // Get deployer from private key or mnemonic
+        uint256 privateKey = vm.envOr("LUX_PRIVATE_KEY", uint256(0));
+        if (privateKey != 0) {
+            deployerKey = privateKey;
+            deployer = vm.addr(deployerKey);
+        } else {
+            string memory mnemonic = vm.envString("LUX_MNEMONIC");
+            require(bytes(mnemonic).length > 0, "LUX_MNEMONIC or LUX_PRIVATE_KEY required");
+            deployerKey = vm.deriveKey(mnemonic, 0);
+            deployer = vm.addr(deployerKey);
+        }
         console.log("Deployer:", deployer);
         console.log("Balance:", deployer.balance / 1e18, "LUX");
         console.log("");

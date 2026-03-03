@@ -1,0 +1,19 @@
+{
+  "chainId": 96369,
+  "deployer": "0xEAbCC110fAcBfebabC66Ad6f9E7B67288e720B59",
+  "timestamp": "2026-03-03T18:03:04.153Z",
+  "evmVersion": "shanghai",
+  "contracts": {
+    "WLUX": "0x190ec57826999527d2b1abf1ea619a0e190dc3bf",
+    "LETH": "0x2d1d573097a1106eefd9f07b9eaa79ba55d09fc2",
+    "LBTC": "0xab95c8b59f68ce922f2f334dfc8bb8f5b0525326",
+    "LUSDC": "0xf85cf66fd0189c435033056edec5e525f39374a6",
+    "AMMV2Factory": "0xfcf74fe55da242d72ff063c603cd6abff4fa98b8",
+    "AMMV2Router": "0x84cf0a13db1be8e1f0676405cfcbc8b09692fd1c"
+  },
+  "pools": {
+    "WLUX/LUSDC": "0x7E09cE37D615E0A1a3841C3F4b84110865e5849a",
+    "WLUX/LETH": "0x72163c486ccB7A37Cd5261e5fF9C13CBC1C24780",
+    "WLUX/LBTC": "0x1759ab5B054a806892a8c92Ca941DBc6087A3a8F"
+  }
+}
