@@ -281,5 +281,7 @@
       "stateMutability": "nonpayable",
       "type": "function"
     }
-  ]
+  ],
+  "chainId": 96368,
+  "verified": false
 }

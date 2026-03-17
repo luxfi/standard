@@ -42,5 +42,7 @@
       "stateMutability": "view",
       "type": "function"
     }
-  ]
+  ],
+  "chainId": 96369,
+  "verified": true
 }

@@ -236,5 +236,7 @@
       "type": "function"
     }
   ],
-  "note": "Canonical V3 Factory \u2014 confirmed via eth_getCode (24,535B), subgraph, and exchange config"
+  "note": "Canonical V3 Factory \u2014 confirmed via eth_getCode (24,535B), subgraph, and exchange config",
+  "chainId": 96369,
+  "verified": false
 }

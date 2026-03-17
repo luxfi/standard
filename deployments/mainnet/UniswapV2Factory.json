@@ -193,5 +193,7 @@
       "type": "function"
     }
   ],
-  "note": "Canonical V2 Factory \u2014 confirmed via eth_getCode (13,859B) and exchange config"
+  "note": "Canonical V2 Factory \u2014 confirmed via eth_getCode (13,859B) and exchange config",
+  "chainId": 96369,
+  "verified": false
 }
