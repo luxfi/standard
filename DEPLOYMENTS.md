@@ -65,9 +65,9 @@ These addresses appear in the exchange UI config but have **no code on-chain**. 
 | UniswapV2Router02 | `0x1F6cbC7d3bc7D803ee76D80F0eEE25767431e674` | EMPTY |
 | UniswapV3Factory | `0xb732BD88F25EdD9C3456638671fB37685D4B4e3f` | EMPTY |
 
-## Lux Testnet (Chain ID: 96368) / Lux Devnet (Chain ID: 96370) — 20/20 DEPLOYED
+## Lux Testnet (Chain ID: 96368) — 20/20 DEPLOYED
 
-Both networks share addresses (deployer had same nonce). All verified on-chain 2026-02-27.
+Deployed 2026-02-27 via `DeployMultiNetwork.s.sol`. Deployer: `0xEAbCC110fAcBfebabC66Ad6f9E7B67288e720B59`
 
 | Contract | Address | Status |
 |----------|---------|--------|
@@ -91,6 +91,33 @@ Both networks share addresses (deployer had same nonce). All verified on-chain 2
 | LSSVMPairFactory | `0x28EBC6764A1c7Ed47b38772E197761102b08f3bb` | DEPLOYED |
 | Markets | `0x49B76d9ca9BcA9e9eDef5e2EC4eD425b2e6b2445` | DEPLOYED |
 | Perp | `0x308EBD39eB5E27980944630A0af6F8B0d19e31C6` | DEPLOYED |
+
+## Lux Devnet (Chain ID: 96370) — 20/20 DEPLOYED
+
+Deployed 2026-03-16 via `DeployMultiNetwork.s.sol`. Deployer: `0xEAbCC110fAcBfebabC66Ad6f9E7B67288e720B59`
+
+| Contract | Address | Status |
+|----------|---------|--------|
+| WLUX | `0x676a8ee7f694b8354ccd46161c96bc83cc081adc` | DEPLOYED |
+| LETH (BridgedETH) | `0x7d7cc8d05bb0f38d80b5ce44b4b069a6fb769468` | DEPLOYED |
+| LBTC (BridgedBTC) | `0xc5e4a6f54be469551a342872c1ab83ab46f61b22` | DEPLOYED |
+| LUSDC (BridgedUSDC) | `0xf295bd72a08cad1efdac25c204832220ae6e26ce` | DEPLOYED |
+| StakedLUX (sLUX) | `0xf85cf66fd0189c435033056edec5e525f39374a6` | DEPLOYED |
+| AMMV2Factory | `0x2382f7a49fa48e1f91bec466c32e1d7f13ec8206` | DEPLOYED |
+| AMMV2Router | `0xfecb71e7bd6f93594905b20fea4259a7fec8cf98` | DEPLOYED |
+| Timelock | `0x51b74dc77fcca83ecc2c5c70782c6eac27ea6197` | DEPLOYED |
+| vLUX | `0x09ab488a7434921aabc2fff20af955a62f524862` | DEPLOYED |
+| GaugeController | `0x518aba97ec84851e1c68d571e2da3bd2fc0507a0` | DEPLOYED |
+| Karma | `0x18f1df4f036ad993093f8ead20dd62712dac2996` | DEPLOYED |
+| DLUX | `0x6042014293591de798da8f40d50708d4497138d5` | DEPLOYED |
+| DIDRegistry | `0x5f6db1d3b6f41ffcb8987dbc392781a4c0020b30` | DEPLOYED |
+| FeeGov | `0x50de09afe31af68acaf7d6dd7f6fe40ae190d564` | DEPLOYED |
+| ValidatorVault | `0xd13ab81f02449b1630ecd940be5fb9cd367225b4` | DEPLOYED |
+| LinearCurve | `0xbc92f4e290f8ad03f5348f81a27fb2af3b37ec47` | DEPLOYED |
+| ExponentialCurve | `0xb43db9af0c5cacb99f783e30398ee0aee6744212` | DEPLOYED |
+| LSSVMPairFactory | `0x5b5ef3b5f3db6a549b1d3ef7d482570affd7c057` | DEPLOYED |
+| Markets | `0xd984fed38c98c1eab66e577fd1ddc8dcd88ea799` | DEPLOYED |
+| Perp | `0x45ecceb64433e1b77a706170301be97a717a01cb` | DEPLOYED |
 
 ## Testnet Subnet Chains — Pre-v5 (Addresses may be stale)
 
@@ -185,9 +212,9 @@ Deployed 2026-03-04 via `DeployMultiNetwork.s.sol`. Deployer: `0xEAbCC110fAcBfeb
 | Markets | `0x3589fd09e7dfF3f7653fc4965B7CE1b8d8fdA9Bd` | DEPLOYED |
 | Perp | `0xd984fED38C98C1eab66E577fd1DdC8dCD88eA799` | DEPLOYED |
 
-### Devnet — Not Yet Deployed
+### Devnet — Deployed 2026-03-16
 
-Devnet at `api.lux-dev.network` has 5 separate nodes. Contracts need deployment when ready.
+See "Lux Devnet (Chain ID: 96370)" section above for contract addresses.
 
 ## Ethereum Mainnet (Chain ID: 1)
 

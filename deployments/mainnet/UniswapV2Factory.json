@@ -1,5 +1,5 @@
 {
-  "address": "0xd9a95609DbB228A13568Bd9f9A285105E7596970",
+  "address": "0xD173926A10A0C4eCd3A51B1422270b65Df0551c1",
   "abi": [
     {
       "inputs": [
@@ -192,5 +192,6 @@
       "stateMutability": "nonpayable",
       "type": "function"
     }
-  ]
+  ],
+  "note": "Canonical V2 Factory \u2014 confirmed via eth_getCode (13,859B) and exchange config"
 }
