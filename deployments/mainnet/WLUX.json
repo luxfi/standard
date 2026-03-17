@@ -1,5 +1,5 @@
 {
-  "address": "0x55750d6CA62a041c06a8E28626b10Be6c688f471",
+  "address": "0x4888E4a2Ee0F03051c72d2bD3acf755Ed3498b3E",
   "abi": [
     {
       "constant": true,
@@ -278,5 +278,6 @@
       "name": "Withdrawal",
       "type": "event"
     }
-  ]
+  ],
+  "note": "Canonical WLUX \u2014 confirmed via V2 Router WETH() call and explorer"
 }

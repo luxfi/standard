@@ -1,5 +1,5 @@
 {
-  "address": "0x1F6cbC7d3bc7D803ee76D80F0eEE25767431e674",
+  "address": "0xAe2cf1E403aAFE6C05A5b8Ef63EB19ba591d8511",
   "abi": [
     {
       "inputs": [
@@ -972,5 +972,6 @@
       "stateMutability": "payable",
       "type": "receive"
     }
-  ]
+  ],
+  "note": "Canonical V2 Router \u2014 confirmed via eth_getCode (17,944B) and exchange config"
 }
