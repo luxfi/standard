@@ -278,5 +278,7 @@
       "name": "Withdrawal",
       "type": "event"
     }
-  ]
+  ],
+  "chainId": 96368,
+  "verified": false
 }

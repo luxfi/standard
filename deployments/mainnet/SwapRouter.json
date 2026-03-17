@@ -564,5 +564,7 @@
       "stateMutability": "payable",
       "type": "receive"
     }
-  ]
+  ],
+  "chainId": 96369,
+  "verified": true
 }

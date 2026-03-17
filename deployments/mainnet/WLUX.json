@@ -279,5 +279,7 @@
       "type": "event"
     }
   ],
-  "note": "Canonical WLUX \u2014 confirmed via V2 Router WETH() call and explorer"
+  "note": "Canonical WLUX \u2014 confirmed via V2 Router WETH() call and explorer",
+  "chainId": 96369,
+  "verified": false
 }

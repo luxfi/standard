@@ -973,5 +973,7 @@
       "type": "receive"
     }
   ],
-  "note": "Canonical V2 Router \u2014 confirmed via eth_getCode (17,944B) and exchange config"
+  "note": "Canonical V2 Router \u2014 confirmed via eth_getCode (17,944B) and exchange config",
+  "chainId": 96369,
+  "verified": false
 }
