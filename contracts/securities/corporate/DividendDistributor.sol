@@ -35,7 +35,7 @@ contract DividendDistributor is AccessControl {
     }
 
     /// @notice The security token whose holders receive dividends.
-    IERC20 public immutable securityToken;
+    IERC20 public immutable SECURITY_TOKEN;
 
     /// @notice All dividend rounds.
     DividendRound[] public rounds;
@@ -71,7 +71,7 @@ contract DividendDistributor is AccessControl {
         if (address(_securityToken) == address(0)) revert ZeroAddress();
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(DIVIDEND_ADMIN_ROLE, admin);
-        securityToken = _securityToken;
+        SECURITY_TOKEN = _securityToken;
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -87,7 +87,7 @@ contract DividendDistributor is AccessControl {
         if (address(paymentToken) == address(0)) revert ZeroAddress();
         if (totalAmount == 0) revert ZeroAmount();
 
-        uint256 currentSupply = securityToken.totalSupply();
+        uint256 currentSupply = SECURITY_TOKEN.totalSupply();
         if (currentSupply == 0) revert ZeroAmount();
 
         paymentToken.safeTransferFrom(_msgSender(), address(this), totalAmount);
@@ -140,7 +140,7 @@ contract DividendDistributor is AccessControl {
         address account = _msgSender();
         if (hasClaimed[roundId][account]) revert AlreadyClaimed(roundId, account);
 
-        uint256 balance = securityToken.balanceOf(account);
+        uint256 balance = SECURITY_TOKEN.balanceOf(account);
         if (balance == 0) revert NothingToClaim();
 
         uint256 amount = (round.totalAmount * balance) / round.totalSupplyAtSnapshot;
@@ -165,7 +165,7 @@ contract DividendDistributor is AccessControl {
         if (roundId >= rounds.length) return 0;
         DividendRound storage round = rounds[roundId];
         if (hasClaimed[roundId][account]) return 0;
-        uint256 balance = securityToken.balanceOf(account);
+        uint256 balance = SECURITY_TOKEN.balanceOf(account);
         return (round.totalAmount * balance) / round.totalSupplyAtSnapshot;
     }
 }

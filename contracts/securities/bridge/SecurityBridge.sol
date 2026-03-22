@@ -9,6 +9,7 @@
 pragma solidity ^0.8.24;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {SecurityToken} from "../token/SecurityToken.sol";
 
 /**
@@ -22,9 +23,11 @@ import {SecurityToken} from "../token/SecurityToken.sol";
  * that verifies cross-chain messages before executing mint/release.
  */
 contract SecurityBridge is AccessControl {
+    using SafeERC20 for SecurityToken;
+
     bytes32 public constant BRIDGE_ROLE = keccak256("BRIDGE_ROLE");
 
-    SecurityToken public immutable token;
+    SecurityToken public immutable TOKEN;
 
     /// @notice Nonce for deduplication of cross-chain messages.
     mapping(bytes32 => bool) public processedNonces;
@@ -61,7 +64,7 @@ contract SecurityBridge is AccessControl {
         if (address(_token) == address(0)) revert ZeroAddress();
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(BRIDGE_ROLE, admin);
-        token = _token;
+        TOKEN = _token;
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -80,7 +83,7 @@ contract SecurityBridge is AccessControl {
         bytes32 nonce = keccak256(abi.encodePacked(sender, amount, destinationChainId, block.timestamp, block.number));
 
         // Transfer tokens to this contract (lock)
-        token.transferFrom(sender, address(this), amount);
+        TOKEN.safeTransferFrom(sender, address(this), amount);
 
         emit BridgeLock(sender, amount, destinationChainId, destinationAddress, nonce);
     }
@@ -95,7 +98,7 @@ contract SecurityBridge is AccessControl {
         address sender = _msgSender();
         bytes32 nonce = keccak256(abi.encodePacked(sender, amount, destinationChainId, block.timestamp, block.number));
 
-        token.burnFrom(sender, amount);
+        TOKEN.burnFrom(sender, amount);
 
         emit BridgeBurn(sender, amount, destinationChainId, nonce);
     }
@@ -116,7 +119,7 @@ contract SecurityBridge is AccessControl {
         if (processedNonces[nonce]) revert NonceAlreadyProcessed(nonce);
 
         processedNonces[nonce] = true;
-        token.mint(recipient, amount);
+        TOKEN.mint(recipient, amount);
 
         emit BridgeMint(recipient, amount, sourceChainId, nonce);
     }
@@ -133,7 +136,7 @@ contract SecurityBridge is AccessControl {
         if (processedNonces[nonce]) revert NonceAlreadyProcessed(nonce);
 
         processedNonces[nonce] = true;
-        token.transfer(recipient, amount);
+        TOKEN.safeTransfer(recipient, amount);
 
         emit BridgeRelease(recipient, amount, sourceChainId, nonce);
     }

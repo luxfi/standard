@@ -21,7 +21,7 @@ import {SecurityToken} from "../token/SecurityToken.sol";
 contract CorporateActions is AccessControl {
     bytes32 public constant CORPORATE_ACTION_ROLE = keccak256("CORPORATE_ACTION_ROLE");
 
-    SecurityToken public immutable token;
+    SecurityToken public immutable TOKEN;
 
     // ──────────────────────────────────────────────────────────────────────────
     // Events
@@ -47,7 +47,7 @@ contract CorporateActions is AccessControl {
         if (address(_token) == address(0)) revert ZeroAddress();
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(CORPORATE_ACTION_ROLE, admin);
-        token = _token;
+        TOKEN = _token;
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -67,8 +67,8 @@ contract CorporateActions is AccessControl {
         if (amount == 0) revert ZeroAmount();
 
         // Burn from source, mint to destination (bypasses compliance for forced actions)
-        token.burnFrom(from, amount);
-        token.mint(to, amount);
+        TOKEN.burnFrom(from, amount);
+        TOKEN.mint(to, amount);
 
         emit ForcedTransfer(from, to, amount, reason);
     }
@@ -83,7 +83,7 @@ contract CorporateActions is AccessControl {
         if (from == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAmount();
 
-        token.burnFrom(from, amount);
+        TOKEN.burnFrom(from, amount);
 
         emit TokensSeized(from, amount, reason);
     }
@@ -99,7 +99,7 @@ contract CorporateActions is AccessControl {
         for (uint256 i; i < accounts.length; ++i) {
             if (accounts[i] == address(0)) revert ZeroAddress();
             if (amounts[i] == 0) revert ZeroAmount();
-            token.mint(accounts[i], amounts[i]);
+            TOKEN.mint(accounts[i], amounts[i]);
         }
     }
 }
