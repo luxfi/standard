@@ -39,6 +39,22 @@ contract AMMV2Factory {
         emit PairCreated(token0, token1, pair, allPairs.length);
     }
 
+    /// @notice Pre-compute the address a pair would be deployed to
+    /// @param tokenA One of the two tokens in the pair
+    /// @param tokenB The other token in the pair
+    /// @return The deterministic address via CREATE2
+    function computeAddress(address tokenA, address tokenB) external view returns (address) {
+        (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+        bytes32 salt = keccak256(abi.encodePacked(token0, token1));
+        bytes32 hash = keccak256(abi.encodePacked(
+            bytes1(0xff),
+            address(this),
+            salt,
+            keccak256(type(AMMV2Pair).creationCode)
+        ));
+        return address(uint160(uint256(hash)));
+    }
+
     function setFeeTo(address _feeTo) external {
         require(msg.sender == feeToSetter, "AMMV2: FORBIDDEN");
         feeTo = _feeTo;

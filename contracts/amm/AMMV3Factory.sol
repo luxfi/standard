@@ -83,6 +83,23 @@ contract AMMV3Factory {
         owner = _owner;
     }
 
+    /// @notice Pre-compute the address a pool would be deployed to
+    /// @param tokenA One of the two tokens in the pool
+    /// @param tokenB The other token in the pool
+    /// @param fee The fee tier for the pool
+    /// @return The deterministic address via CREATE2
+    function computeAddress(address tokenA, address tokenB, uint24 fee) external view returns (address) {
+        (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+        bytes32 salt = keccak256(abi.encodePacked(token0, token1, fee));
+        bytes32 hash = keccak256(abi.encodePacked(
+            bytes1(0xff),
+            address(this),
+            salt,
+            keccak256(type(AMMV3Pool).creationCode)
+        ));
+        return address(uint160(uint256(hash)));
+    }
+
     /// @notice Enables a fee amount with the given tickSpacing
     /// @param fee The fee amount to enable (in hundredths of a bip)
     /// @param tickSpacing The spacing between ticks for pools with this fee
