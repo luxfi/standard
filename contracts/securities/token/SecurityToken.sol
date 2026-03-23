@@ -18,7 +18,20 @@ import {ComplianceRegistry} from "../compliance/ComplianceRegistry.sol";
 
 /**
  * @title SecurityToken
- * @notice Base regulated ERC-20 security token implementing ERC-1404 and ST-20.
+ * @notice Base regulated ERC-20 security token — ERC-3643 (T-REX) compatible.
+ *
+ * Implements:
+ *   - ERC-3643 (T-REX): Token for Regulated EXchanges — the institutional standard
+ *     for permissioned security tokens with on-chain identity and compliance.
+ *   - ERC-1404: Simple Restricted Token Standard (detectTransferRestriction)
+ *   - ST-20: Security Token Standard (verifyTransfer hook)
+ *
+ * T-REX architecture mapping:
+ *   - Token              → this contract
+ *   - IdentityRegistry   → ComplianceRegistry (KYC/AML/accreditation/jurisdiction)
+ *   - ClaimTopicsRegistry→ IComplianceModule system (pluggable compliance modules)
+ *   - TrustedIssuers     → AccessControl COMPLIANCE_ROLE on ComplianceRegistry
+ *   - ONCHAINID          → Lux DIDRegistry + SoulID + IdentityHub (LP-3006)
  *
  * Ported from Arca Labs' SecurityToken.sol with modernizations:
  *   - OZ v5 `_update()` hook (catches transfer, transferFrom, mint, burn)
