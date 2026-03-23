@@ -30,7 +30,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
 
       - name: Run Forge lint
         run: |
@@ -68,7 +68,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
 
       - name: Run Coverage
         run: |
@@ -365,7 +365,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
 
       - name: Run Gas Report
         run: |
@@ -399,7 +399,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
 
       - name: Check Contract Sizes
         run: |
@@ -439,7 +439,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
 
       - name: Check Storage Layouts
         run: |
@@ -480,7 +480,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
 
       - name: Run Invariant Tests
         run: |
@@ -518,7 +518,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
 
       - name: Run All Tests
         run: |

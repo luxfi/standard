@@ -24,7 +24,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
 
       - name: Run Forge build
         run: |
@@ -48,7 +48,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
 
       - name: Run Forge fmt check
         run: forge fmt --check || true
@@ -65,10 +65,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: 10
 
@@ -102,13 +102,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
 
       - name: Build contracts
         run: forge build
