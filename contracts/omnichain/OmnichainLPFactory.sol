@@ -53,16 +53,13 @@ contract OmnichainLPFactory is Ownable {
         string memory name = string(abi.encodePacked("Lux Omnichain LP"));
         string memory symbol = string(abi.encodePacked("LUX-OLP"));
         
-        // Deploy new OmnichainLP contract
-        bytes memory bytecode = type(OmnichainLP).creationCode;
+        // Deploy new OmnichainLP contract via CREATE2
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
-        
-        assembly {
-            pair := create2(0, add(bytecode, 32), mload(bytecode), salt)
-        }
-        
+        OmnichainLP lp = new OmnichainLP{salt: salt}();
+        pair = address(lp);
+
         // Initialize the pair
-        OmnichainLP(pair).initialize(address(bridge), token0, token1, name, symbol);
+        lp.initialize(address(bridge), token0, token1, name, symbol);
         
         // Update mappings
         getPair[token0][token1] = pair;

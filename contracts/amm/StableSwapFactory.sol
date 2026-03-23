@@ -179,8 +179,9 @@ contract StableSwapFactory is AccessControl {
             decimals[i] = IERC20Metadata(tokens[i]).decimals();
         }
 
-        // Deploy pool
-        StableSwap newPool = new StableSwap(
+        // Deploy pool via CREATE2 with symbol as salt
+        bytes32 salt = keccak256(abi.encodePacked(symbol));
+        StableSwap newPool = new StableSwap{salt: salt}(
             tokens,
             decimals,
             name,
@@ -255,5 +256,37 @@ contract StableSwapFactory is AccessControl {
     /// @notice Find pool for tokens
     function findPool(address[] calldata tokens) external view returns (address) {
         return getPool[_getPoolKey(tokens)];
+    }
+
+    /// @notice Pre-compute the address a pool would be deployed to
+    /// @param tokens Array of token addresses
+    /// @param decimals Array of token decimals
+    /// @param name LP token name
+    /// @param symbol LP token symbol (used as CREATE2 salt)
+    /// @param A Amplification coefficient
+    /// @param fee Swap fee
+    /// @param adminFee Admin fee
+    /// @return The deterministic address via CREATE2
+    function computeAddress(
+        address[] memory tokens,
+        uint256[] memory decimals,
+        string memory name,
+        string memory symbol,
+        uint256 A,
+        uint256 fee,
+        uint256 adminFee
+    ) external view returns (address) {
+        bytes32 salt = keccak256(abi.encodePacked(symbol));
+        bytes memory bytecode = abi.encodePacked(
+            type(StableSwap).creationCode,
+            abi.encode(tokens, decimals, name, symbol, A, fee, adminFee, feeReceiver)
+        );
+        bytes32 hash = keccak256(abi.encodePacked(
+            bytes1(0xff),
+            address(this),
+            salt,
+            keccak256(bytecode)
+        ));
+        return address(uint160(uint256(hash)));
     }
 }

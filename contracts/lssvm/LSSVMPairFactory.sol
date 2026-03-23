@@ -93,8 +93,9 @@ contract LSSVMPairFactory is Ownable {
         if (!ICurve(_bondingCurve).validateDelta(_delta)) revert InvalidDelta();
         if (_fee > 9000) revert InvalidFee(); // Max 90%
 
-        // Create pair
-        pair = address(new LSSVMPair());
+        // Create pair via CREATE2 with deterministic salt
+        bytes32 salt = keccak256(abi.encodePacked(_nft, _bondingCurve, _token, _poolType));
+        pair = address(new LSSVMPair{salt: salt}());
         LSSVMPair(payable(pair)).initialize(
             msg.sender,
             _nft,
@@ -233,5 +234,27 @@ contract LSSVMPairFactory is Ownable {
 
     function getPairsByNftLength(address nft) external view returns (uint256) {
         return pairsByNft[nft].length;
+    }
+
+    /// @notice Pre-compute the address a pair would be deployed to
+    /// @param _nft NFT collection address
+    /// @param _bondingCurve Bonding curve address
+    /// @param _token Quote token address
+    /// @param _poolType Pool type (TOKEN, NFT, or TRADE)
+    /// @return The deterministic address via CREATE2
+    function computeAddress(
+        address _nft,
+        address _bondingCurve,
+        address _token,
+        LSSVMPair.PoolType _poolType
+    ) external view returns (address) {
+        bytes32 salt = keccak256(abi.encodePacked(_nft, _bondingCurve, _token, _poolType));
+        bytes32 hash = keccak256(abi.encodePacked(
+            bytes1(0xff),
+            address(this),
+            salt,
+            keccak256(type(LSSVMPair).creationCode)
+        ));
+        return address(uint160(uint256(hash)));
     }
 }
