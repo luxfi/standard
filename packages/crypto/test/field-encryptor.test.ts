@@ -21,7 +21,7 @@ describe('FieldEncryptor', () => {
       delete process.env.FIELD_ENCRYPTION_KEY;
 
       expect(() => new FieldEncryptor({})).toThrow(
-        'FieldEncryptor requires either a KMS key name'
+        'FieldEncryptor requires a kekProvider'
       );
 
       // Restore
@@ -32,7 +32,7 @@ describe('FieldEncryptor', () => {
     it('throws if local fallback key is wrong length', () => {
       expect(
         () => new FieldEncryptor({localFallbackKey: 'abcd'})
-      ).toThrow('64 hex characters');
+      ).toThrow('32 bytes');
     });
 
     it('accepts env var FIELD_ENCRYPTION_KEY', () => {
