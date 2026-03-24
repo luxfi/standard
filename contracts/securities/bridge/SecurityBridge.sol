@@ -17,7 +17,7 @@ import {SecurityToken} from "../token/SecurityToken.sol";
  * @notice Cross-chain mint/burn/teleport bridge for security tokens.
  *
  * Implements a lock-and-mint / burn-and-release pattern for moving security tokens
- * across Lux chains (C-Chain, Liquidity L2, Zoo EVM, subnets).
+ * across EVM chains (C-Chain, L2 subnets, Zoo EVM).
  *
  * The bridge operator (BRIDGE_ROLE) is expected to be a multisig or relay contract
  * that verifies cross-chain messages before executing mint/release.
