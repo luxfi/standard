@@ -7,12 +7,23 @@
       "explorer": "https://explore.lux.network",
       "contracts": {
         "core": {
-          "WLUX": "0x55750d6CA62a041c06a8E28626b10Be6c688f471",
+          "WLUX": "0x9b90a5fc2824aa3f3dbf6d3fa6c0688357cf9f8a",
           "Multicall3": "0xd25F88CBdAe3c2CCA3Bb75FC4E723b44C0Ea362F"
         },
+        "bridge": {
+          "LETH": "0x18f15acdc71e2de936e41be4aee0afad38c36759",
+          "LBTC": "0x919f536ba9489195c8402570524bd5b17742acab",
+          "LUSDC": "0x83b92c742922e8c9a06b3af0fb87b9dfc0fd9412",
+          "LUSDT": "0x540966abaff649f33252f0cec62d8a610d1c6907",
+          "LDAI": "0xfab7553ea19ada70396b64e87bc3a9f8d8d26535"
+        },
+        "staking": {
+          "StakedLUX": "0x80baf6c5eaca3462e574a73a888af0dc1bfc2c0c",
+          "LiquidVault": "0xc812c2a8e8032bf8d97e3e377f40a59aa9ca298f"
+        },
         "amm": {
-          "V2Factory": "0xd9a95609DbB228A13568Bd9f9A285105E7596970",
-          "V2Router": "0x1F6cbC7d3bc7D803ee76D80F0eEE25767431e674",
+          "V2Factory": "0x706bc32e05ddd346102eeba4bdabbb297ee6308c",
+          "V2Router": "0x6966b2c0f1c1003504d0309a98c9f05a9da988b9",
           "V3Factory": "0xb732BD88F25EdD9C3456638671fB37685D4B4e3f",
           "V3SwapRouter": "0xE8fb25086C8652c92f5AF90D730Bac7C63Fc9A58",
           "V3SwapRouter02": "0x939bC0Bca6F9B9c52E6e3AD8A3C590b5d9B9D10E",
@@ -22,10 +33,50 @@
           "V3NFTPositionManager": "0x7a4C48B9dae0b7c396569b34042fcA604150Ee28",
           "V3NFTDescriptor": "0x53B1aAA5b6DDFD4eD00D0A7b5Ef333dc74B605b5"
         },
-        "bridge": {
-          "LETH": "0xAA3AE95816a4A6FbC6b8Ed5a6C06f22A96A80C8C",
-          "LBTC": "0x526903E35E7106D62ED3B5d77E14e51d024Aa1D3",
-          "LUSD": "0x4B1BfA76eD63F1A0aD2E4f40b3F46C45E8F7A4E2"
+        "governance": {
+          "VotesToken": "0x976520c30903f0744814d149574f9c0d9baa1431",
+          "Timelock": "0x957d52850786db4d65e14def4f2b16a8a071c2ce",
+          "vLUX": "0x7f17e6430a6ea24af5472e89fc86e93c4f57073b",
+          "GaugeController": "0x7eceebd6fa788e1e1397c9dad92587da4858be58",
+          "Karma": "0x66aa7a581ecd85db6f9e57b1a172bbe8a793c22c",
+          "KarmaMinter": "0xd247820c84d4a6a17df39c54ccbe10f5a8141498",
+          "DLUX": "0x9cfafb624ceeed133391d495dbca1675c4edfc37",
+          "DLUXMinter": "0x5b343a81547ee370f30a4aa4568b829f312e0eb2",
+          "VotingLUX": "0x25ccea7ee9596b4985adf8de0f0d25e51b59f2d9",
+          "Governor": "0x6aaaf7be76be9dba956826780b0d4209c80c71fc"
+        },
+        "treasury": {
+          "FeeGov": "0x3e222e097b2a49eb6b5d6f98facbb7e66147c85f",
+          "Vault": "0x6810b122a431006a344fe768e2cb88f45cb95811",
+          "Router": "0xf032b713ddd6542dd6631ac3d52f4982750edf78",
+          "ValidatorVault": "0x6ea2f79f743c809d1152657ef5d5907f47a34cfc",
+          "Safe": "0x41f76735f33fdb2c81478bf4b7654c5d9ba719c1",
+          "SafeProxyFactory": "0x6e5884084814f4785e21f6f9c11d3c299ef5d7f1"
+        },
+        "lssvm": {
+          "LinearCurve": "0x188ab54a8d5a329c50af1dc337bb040912c913a5",
+          "ExponentialCurve": "0x2cfb111a66fb9c972a524751b50581c93c8396c3",
+          "Factory": "0x45ef47894c81f69d0d0affeea149fff047d9f4af",
+          "Router": "0x9de5e21acfb4015e65fc2f25b9364f13d1aa29ae"
+        },
+        "markets": {
+          "Markets": "0xefba7dbf4b9e2855b84f410f61b15975629cdb38"
+        },
+        "perps": {
+          "Perp": "0xd012f96c20a63a1621ae7ef4e9182383ca1203be"
+        },
+        "identity": {
+          "DIDRegistry": "0x160cd157d1f3a178d74962c28d71adadb7aedfcd"
+        },
+        "defi": {
+          "StableSwapFactory": "0x9c54546de3083a3359c8c6e3ec4fa5a583246d5b",
+          "Options": "0x5ba7c671ed8fcc84d91f65efc1440635074ed275",
+          "Streams": "0xc5bb703736c0a320b78a096c3acb0bd84fb5fd99",
+          "IntentRouter": "0xcf9e063698bccaf9ccb01f60a3cf3f50504bd793",
+          "Cover": "0x02c8880cb28fee1fbb360b2ca07608b7f3c37f9f"
+        },
+        "tokens": {
+          "AI": "0xf9393a778e70580e3f55af37e751dcf822ef1fe7"
         },
         "precompiles": {
           "PoolManager": "0x0000000000000000000000000000000000009010",
@@ -46,13 +97,23 @@
       "explorer": "https://explore.lux-test.network",
       "contracts": {
         "core": {
-          "WLUX": "0x732740c5c895C9FCF619930ed4293fc858eb44c7",
-          "WETH": "0xd9956542B51032d940ef076d70B69410667277A3",
+          "WLUX": "0xc65ea8882020af7cda7854d590c6fcd34bf364ec",
           "Multicall3": "0xd25F88CBdAe3c2CCA3Bb75FC4E723b44C0Ea362F"
         },
+        "bridge": {
+          "LETH": "0x413e4a820635702ec199bc5b62dcbca1749851bf",
+          "LBTC": "0x9378b62fc172d2a4f715d7ecf49de0362f1bb702",
+          "LUSDC": "0x7fc4f8a926e47fa3587c0d7658c00e7489e67916",
+          "LUSDT": "0x51c3408b9a6a0b2446ccb78c72c846ceb76201fa",
+          "LDAI": "0xc64bd67b39765127ae5dbdd750fb6a9f62c3269f"
+        },
+        "staking": {
+          "StakedLUX": "0x191067f88d61f9506555e88ceab9cf71deed61a9",
+          "LiquidVault": "0x3153c91b6b7f29cc6bce51fff639da658bd75363"
+        },
         "amm": {
-          "V2Factory": "0x81C3669B139D92909AA67DbF74a241b10540d919",
-          "V2Router": "0xDB6c703c80BFaE5F9a56482d3c8535f27E1136EB",
+          "V2Factory": "0x0570b2c59976e87d37d3a9915750bff131d295d6",
+          "V2Router": "0xa24318f24739d92a2e1c2997c18f5103d0fd708e",
           "V3Factory": "0x80bBc7C4C7a59C899D1B37BC14539A22D5830a84",
           "V3SwapRouter": "0xE8fb25086C8652c92f5AF90D730Bac7C63Fc9A58",
           "V3SwapRouter02": "0x939bC0Bca6F9B9c52E6e3AD8A3C590b5d9B9D10E",
@@ -62,10 +123,122 @@
           "V3NFTPositionManager": "0x7a4C48B9dae0b7c396569b34042fcA604150Ee28",
           "V3NFTDescriptor": "0x53B1aAA5b6DDFD4eD00D0A7b5Ef333dc74B605b5"
         },
+        "governance": {
+          "VotesToken": "0xe77e1cb5e303ed0ecb10d0d13914aaa2ed9b3b8c",
+          "Timelock": "0x80f3bd0bdf7861487ddda61bc651243ecb8b5072",
+          "vLUX": "0x91954cf6866d557c5ca1d2f384d204bce9dffd5a",
+          "GaugeController": "0x26328ac03d07bd9a7caaafbde39f9b56b5449240",
+          "Karma": "0x97c265001eb088e1de2f77a13a62b708014c9e68",
+          "KarmaMinter": "0x1fe145582c7d5683c7c69c0a2bce0e3ffe901160",
+          "DLUX": "0x316520ca05eac5d2418f562a116091f1b22bf6e0",
+          "DLUXMinter": "0xcd7ee976df9c8a2709a14bda8463af43e6097a56",
+          "VotingLUX": "0xac604fd2f423ea738de9c0d6eb03eba6f90b63fb",
+          "Governor": "0xd9e69a0a38bf48898456170cb3b4451cbaf5f597"
+        },
+        "treasury": {
+          "FeeGov": "0x92d057f8b4132ca8aa237fbd4c41f9c57079582e",
+          "Vault": "0x180ed4f186a463a2f56c7aeca7375ec39fcc0833",
+          "Router": "0xf9aec94ed6f098509ebcd5690ae2cb126cd8a3ee",
+          "ValidatorVault": "0x5ed08c64fbf027966c04e6fc87e6b58a91de4db2",
+          "Safe": "0x43222597839515180e7ad564c94a3b5c16eb987c",
+          "SafeProxyFactory": "0x4ec24da7d598cac1540f2e8078d05869e36a4ef1"
+        },
+        "lssvm": {
+          "LinearCurve": "0x13e43ae4dddfbc1f20f03782f142ae67fe52abfe",
+          "ExponentialCurve": "0x176615d944a0becf5f9ad4658b185a3aecc5d6e3",
+          "Factory": "0xc8e5c5cba86df6307f1c167bd3958979ad178a7b",
+          "Router": "0x4870621ea8be7a383efcfda225249d35888bd9f2"
+        },
+        "markets": {
+          "Markets": "0x6fc44509a32e513be1aa00d27bb298e63830c6a8"
+        },
+        "perps": {
+          "Perp": "0xb2ee1ce7b84853b83aa08702ad0ad4d79711882d"
+        },
+        "identity": {
+          "DIDRegistry": "0xb0b3df1e279d87e72738487df8d7c0d7c2d1efce"
+        },
+        "defi": {
+          "StableSwapFactory": "0xf0c54ebb09ba48393b2047e68631b81a16097705",
+          "Options": "0x742202418235b225bd77ee5ba9c4cba416aeb17d",
+          "Streams": "0xc93c01b08835a57e1fe52a1e1936b547b14b0ef8",
+          "IntentRouter": "0xac513dc33d489f354328da334717176db2d99a84",
+          "Cover": "0xf034942c1140125b5c278ae9cee1b488e915b2fe"
+        },
+        "tokens": {
+          "AI": "0x62ea1b27cdd922dbaae0572f4cd4862ca939c24c"
+        }
+      }
+    },
+    "lux-devnet": {
+      "chainId": 96370,
+      "name": "Lux Devnet",
+      "rpcUrl": "https://api.lux-dev.network/ext/bc/C/rpc",
+      "explorer": "https://explore.lux-dev.network",
+      "contracts": {
+        "core": {
+          "WLUX": "0xc65ea8882020af7cda7854d590c6fcd34bf364ec",
+          "Multicall3": "0xd25F88CBdAe3c2CCA3Bb75FC4E723b44C0Ea362F"
+        },
         "bridge": {
-          "LETH": "0x60E0a8167FC13dE89348978860466C9ceC24B9ba",
-          "LBTC": "0x1E48D32a4F5e9f08DB9aE4959163300FaF8A6C8e",
-          "LUSD": "0xb84112ac9318a0b2319aa11d4d10e9762b25f7f4"
+          "LETH": "0x413e4a820635702ec199bc5b62dcbca1749851bf",
+          "LBTC": "0x9378b62fc172d2a4f715d7ecf49de0362f1bb702",
+          "LUSDC": "0x7fc4f8a926e47fa3587c0d7658c00e7489e67916",
+          "LUSDT": "0x51c3408b9a6a0b2446ccb78c72c846ceb76201fa",
+          "LDAI": "0xc64bd67b39765127ae5dbdd750fb6a9f62c3269f"
+        },
+        "staking": {
+          "StakedLUX": "0x191067f88d61f9506555e88ceab9cf71deed61a9",
+          "LiquidVault": "0x3153c91b6b7f29cc6bce51fff639da658bd75363"
+        },
+        "amm": {
+          "V2Factory": "0x0570b2c59976e87d37d3a9915750bff131d295d6",
+          "V2Router": "0xa24318f24739d92a2e1c2997c18f5103d0fd708e"
+        },
+        "governance": {
+          "VotesToken": "0xe77e1cb5e303ed0ecb10d0d13914aaa2ed9b3b8c",
+          "Timelock": "0x80f3bd0bdf7861487ddda61bc651243ecb8b5072",
+          "vLUX": "0x91954cf6866d557c5ca1d2f384d204bce9dffd5a",
+          "GaugeController": "0x26328ac03d07bd9a7caaafbde39f9b56b5449240",
+          "Karma": "0x97c265001eb088e1de2f77a13a62b708014c9e68",
+          "KarmaMinter": "0x1fe145582c7d5683c7c69c0a2bce0e3ffe901160",
+          "DLUX": "0x316520ca05eac5d2418f562a116091f1b22bf6e0",
+          "DLUXMinter": "0xcd7ee976df9c8a2709a14bda8463af43e6097a56",
+          "VotingLUX": "0xac604fd2f423ea738de9c0d6eb03eba6f90b63fb",
+          "Governor": "0xd9e69a0a38bf48898456170cb3b4451cbaf5f597"
+        },
+        "treasury": {
+          "FeeGov": "0x92d057f8b4132ca8aa237fbd4c41f9c57079582e",
+          "Vault": "0x180ed4f186a463a2f56c7aeca7375ec39fcc0833",
+          "Router": "0xf9aec94ed6f098509ebcd5690ae2cb126cd8a3ee",
+          "ValidatorVault": "0x5ed08c64fbf027966c04e6fc87e6b58a91de4db2",
+          "Safe": "0x43222597839515180e7ad564c94a3b5c16eb987c",
+          "SafeProxyFactory": "0x4ec24da7d598cac1540f2e8078d05869e36a4ef1"
+        },
+        "lssvm": {
+          "LinearCurve": "0x13e43ae4dddfbc1f20f03782f142ae67fe52abfe",
+          "ExponentialCurve": "0x176615d944a0becf5f9ad4658b185a3aecc5d6e3",
+          "Factory": "0xc8e5c5cba86df6307f1c167bd3958979ad178a7b",
+          "Router": "0x4870621ea8be7a383efcfda225249d35888bd9f2"
+        },
+        "markets": {
+          "Markets": "0x6fc44509a32e513be1aa00d27bb298e63830c6a8"
+        },
+        "perps": {
+          "Perp": "0xb2ee1ce7b84853b83aa08702ad0ad4d79711882d"
+        },
+        "identity": {
+          "DIDRegistry": "0xb0b3df1e279d87e72738487df8d7c0d7c2d1efce"
+        },
+        "defi": {
+          "StableSwapFactory": "0xf0c54ebb09ba48393b2047e68631b81a16097705",
+          "Options": "0x742202418235b225bd77ee5ba9c4cba416aeb17d",
+          "Streams": "0xc93c01b08835a57e1fe52a1e1936b547b14b0ef8",
+          "IntentRouter": "0xac513dc33d489f354328da334717176db2d99a84",
+          "Cover": "0xf034942c1140125b5c278ae9cee1b488e915b2fe"
+        },
+        "tokens": {
+          "AI": "0x62ea1b27cdd922dbaae0572f4cd4862ca939c24c"
         }
       }
     },
@@ -126,42 +299,11 @@
           "V3NFTPositionManager": "0x7a4C48B9dae0b7c396569b34042fcA604150Ee28"
         }
       }
-    },
-    "lux-dev": {
-      "chainId": 1337,
-      "name": "Lux Dev",
-      "rpcUrl": "http://localhost:8545/ext/bc/C/rpc",
-      "contracts": {
-        "core": {
-          "WLUX": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-          "Multicall3": "0xd25F88CBdAe3c2CCA3Bb75FC4E723b44C0Ea362F"
-        },
-        "amm": {
-          "V2Factory": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
-          "V2Router": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
-          "V3Factory": "0x80bBc7C4C7a59C899D1B37BC14539A22D5830a84",
-          "V3SwapRouter": "0xE8fb25086C8652c92f5AF90D730Bac7C63Fc9A58",
-          "V3SwapRouter02": "0x939bC0Bca6F9B9c52E6e3AD8A3C590b5d9B9D10E",
-          "V3Quoter": "0x12e2B76FaF4dDA5a173a4532916bb6Bfa3645275",
-          "V3QuoterV2": "0x15C729fdd833Ba675edd466Dfc63E1B737925A4c",
-          "V3TickLens": "0x57A22965AdA0e52D785A9Aa155beF423D573b879",
-          "V3NFTPositionManager": "0x7a4C48B9dae0b7c396569b34042fcA604150Ee28",
-          "V3NFTDescriptor": "0x53B1aAA5b6DDFD4eD00D0A7b5Ef333dc74B605b5"
-        },
-        "bridge": {
-          "LETH": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-          "LBTC": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-          "LUSD": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
-        },
-        "staking": {
-          "StakedLUX": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0"
-        }
-      }
     }
   },
   "metadata": {
-    "version": "1.0.0",
-    "source": "~/work/lux/exchange/packages/exchange/src/contracts/addresses.ts",
-    "lastUpdated": "2026-01-12"
+    "version": "2.0.0",
+    "source": "broadcast/DeployFullStack.s.sol + broadcast/DeployGovernanceSuite.s.sol",
+    "lastUpdated": "2026-03-23"
   }
 }
