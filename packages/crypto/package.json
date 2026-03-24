@@ -1,0 +1,45 @@
+{
+  "name": "@luxfi/crypto",
+  "version": "1.0.0",
+  "description": "Per-customer field-level encryption — AES-256-GCM with KMS-wrapped DEKs, multi-backend (SQLite, PostgreSQL, MongoDB)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@google-cloud/kms": "^4.0.0"
+  },
+  "peerDependencies": {
+    "better-sqlite3": ">=9.0.0",
+    "pg": ">=8.0.0",
+    "mongodb": ">=6.0.0",
+    "mongoose": ">=7.0.0"
+  },
+  "peerDependenciesMeta": {
+    "better-sqlite3": { "optional": true },
+    "pg": { "optional": true },
+    "mongodb": { "optional": true },
+    "mongoose": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.4.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.0.0",
+    "@types/jest": "^29.0.0"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luxfi/standard.git",
+    "directory": "packages/crypto"
+  },
+  "license": "MIT"
+}
