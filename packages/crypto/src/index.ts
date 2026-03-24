@@ -5,6 +5,8 @@ export type { DekStore, KekProvider, MpcShard, MpcShardStore, MpcProviderOptions
 // KEK Providers — pick security level
 export { LocalKekProvider } from './providers/local';
 export { CloudKmsProvider } from './providers/cloud-kms';
+export { HsmKekProvider } from './providers/hsm';
+export type { HsmOptions } from './providers/hsm';
 export { MpcKekProvider, shamirSplit, shamirRecombine } from './providers/mpc';
 
 // DEK Stores — pick your database
