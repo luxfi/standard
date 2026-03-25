@@ -2,20 +2,26 @@
 pragma solidity ^0.8.31;
 
 import {IERC20, SafeERC20} from "@luxfi/standard/tokens/ERC20.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title Vault
  * @notice Fee vault on C-Chain. Receives fees via Warp from all chains.
- * @dev Permissionless: anyone can relay valid Warp proofs.
+ * @dev Authorized relayers deliver fees until Warp precompile is active.
  *
  * First principles:
- * - Warp proofs are validator-signed, no trusted reporters
+ * - Authorized relayers (RELAYER_ROLE) until Warp precompile verification
  * - Per-chain accounting for transparency
  * - Pull pattern for claims (no unbounded loops)
  * - Single-word naming: total, pending, claimed
  */
-contract Vault {
+contract Vault is AccessControl {
     using SafeERC20 for IERC20;
+
+    // ============ Roles ============
+
+    /// @notice Role for authorized fee relayers
+    bytes32 public constant RELAYER_ROLE = keccak256("RELAYER_ROLE");
 
     // ============ State ============
 
@@ -58,6 +64,8 @@ contract Vault {
     constructor(address _token) {
         token = IERC20(_token);
         deployer = msg.sender;
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(RELAYER_ROLE, msg.sender);
     }
 
     // ============ Receive ============
@@ -67,12 +75,9 @@ contract Vault {
     /// @param chain Source chain ID
     /// @param amount Fee amount
     /// @param warpId Unique Warp message ID
-    function receive_(bytes32 chain, uint256 amount, bytes32 warpId) external {
+    function receive_(bytes32 chain, uint256 amount, bytes32 warpId) external onlyRole(RELAYER_ROLE) {
         if (amount == 0) revert Zero();
         if (processed[warpId]) revert Replay();
-
-        // TODO: Verify Warp proof via precompile
-        // WarpLib.verify(chain, amount, warpId);
 
         processed[warpId] = true;
         total[chain] += amount;

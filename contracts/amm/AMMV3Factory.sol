@@ -100,6 +100,13 @@ contract AMMV3Factory {
         return address(uint160(uint256(hash)));
     }
 
+    /// @notice Initializes the price for a pool created by this factory
+    /// @param pool The pool to initialize
+    /// @param sqrtPriceX96 The initial sqrt price of the pool as a Q64.96
+    function initializePool(address pool, uint160 sqrtPriceX96) external {
+        AMMV3Pool(pool).initializePrice(sqrtPriceX96);
+    }
+
     /// @notice Enables a fee amount with the given tickSpacing
     /// @param fee The fee amount to enable (in hundredths of a bip)
     /// @param tickSpacing The spacing between ticks for pools with this fee

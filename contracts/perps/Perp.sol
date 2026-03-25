@@ -3,6 +3,7 @@ pragma solidity ^0.8.31;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
@@ -403,13 +404,14 @@ contract Perp is Ownable, ReentrancyGuard {
 
     function _tokenToUsd(address token, uint256 amount) internal view returns (uint256) {
         uint256 price = _getPrice(token, false);
-        // Assume 18 decimals for simplicity
-        return amount * price / 1e18;
+        uint256 decimals = IERC20Metadata(token).decimals();
+        return amount * price / (10 ** decimals);
     }
 
     function _usdToToken(address token, uint256 usdAmount) internal view returns (uint256) {
         uint256 price = _getPrice(token, true);
-        return usdAmount * 1e18 / price;
+        uint256 decimals = IERC20Metadata(token).decimals();
+        return usdAmount * (10 ** decimals) / price;
     }
 
     function _calculatePnL(

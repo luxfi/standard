@@ -74,6 +74,7 @@ contract AMMV3Pool is ReentrancyGuard {
     /// @notice Sets the initial price for the pool
     /// @param _sqrtPriceX96 The initial sqrt price of the pool as a Q64.96
     function initializePrice(uint160 _sqrtPriceX96) external {
+        require(msg.sender == factory, "AMMV3: FORBIDDEN");
         require(sqrtPriceX96 == 0, "AMMV3: ALREADY_INITIALIZED");
         require(_sqrtPriceX96 >= MIN_SQRT_RATIO && _sqrtPriceX96 < MAX_SQRT_RATIO, "AMMV3: SQRT_RATIO_OUT_OF_BOUNDS");
 
@@ -98,13 +99,15 @@ contract AMMV3Pool is ReentrancyGuard {
         // Calculate amounts
         (amount0, amount1) = _getAmountsForLiquidity(sqrtPriceX96, tickLower, tickUpper, amount);
 
-        // For simplicity, we require tokens to be transferred before calling mint
-        // Check that pool has enough tokens (caller must have transferred tokens before calling)
-        uint256 balance0 = IERC20(token0).balanceOf(address(this));
-        uint256 balance1 = IERC20(token1).balanceOf(address(this));
+        // Pull tokens from caller and verify balance delta
+        uint256 balance0Before = IERC20(token0).balanceOf(address(this));
+        uint256 balance1Before = IERC20(token1).balanceOf(address(this));
 
-        require(balance0 >= amount0, "AMMV3: INSUFFICIENT_TOKEN0");
-        require(balance1 >= amount1, "AMMV3: INSUFFICIENT_TOKEN1");
+        if (amount0 > 0) IERC20(token0).safeTransferFrom(msg.sender, address(this), amount0);
+        if (amount1 > 0) IERC20(token1).safeTransferFrom(msg.sender, address(this), amount1);
+
+        require(IERC20(token0).balanceOf(address(this)) >= balance0Before + amount0, "AMMV3: INSUFFICIENT_TOKEN0");
+        require(IERC20(token1).balanceOf(address(this)) >= balance1Before + amount1, "AMMV3: INSUFFICIENT_TOKEN1");
 
         // Update position
         bytes32 key = keccak256(abi.encodePacked(recipient, tickLower, tickUpper));
@@ -236,13 +239,31 @@ contract AMMV3Pool is ReentrancyGuard {
             amount0 = int256(amountIn);
             // forge-lint: disable-next-line(unsafe-typecast)
             amount1 = -int256(amountOut);
+            // Pull input tokens from caller, then transfer output
+            IERC20(token0).safeTransferFrom(msg.sender, address(this), amountIn);
             IERC20(token1).safeTransfer(recipient, amountOut);
         } else {
             // forge-lint: disable-next-line(unsafe-typecast)
             amount0 = -int256(amountOut);
             // forge-lint: disable-next-line(unsafe-typecast)
             amount1 = int256(amountIn);
+            // Pull input tokens from caller, then transfer output
+            IERC20(token1).safeTransferFrom(msg.sender, address(this), amountIn);
             IERC20(token0).safeTransfer(recipient, amountOut);
+        }
+
+        // Update sqrtPriceX96 and tick based on post-swap balances
+        uint256 balanceAfter0 = IERC20(token0).balanceOf(address(this));
+        uint256 balanceAfter1 = IERC20(token1).balanceOf(address(this));
+        if (balanceAfter0 > 0 && balanceAfter1 > 0) {
+            // sqrtPriceX96 = sqrt(balance1/balance0) * 2^96
+            // = sqrt(balance1 * 2^192 / balance0)
+            uint256 ratioX192 = (balanceAfter1 << 192) / balanceAfter0;
+            uint160 newSqrtPriceX96 = uint160(_sqrt(ratioX192));
+            if (newSqrtPriceX96 >= MIN_SQRT_RATIO && newSqrtPriceX96 < MAX_SQRT_RATIO) {
+                sqrtPriceX96 = newSqrtPriceX96;
+                tick = _getTickAtSqrtRatio(newSqrtPriceX96);
+            }
         }
 
         emit Swap(msg.sender, recipient, amount0, amount1, sqrtPriceX96, liquidity, tick);
@@ -354,6 +375,17 @@ contract AMMV3Pool is ReentrancyGuard {
 
         if (tick_ > 0) ratio = type(uint256).max / ratio;
         return uint160((ratio >> 32) + (ratio % (1 << 32) == 0 ? 0 : 1));
+    }
+
+    /// @dev Integer square root via Newton's method (Babylonian)
+    function _sqrt(uint256 x) internal pure returns (uint256 z) {
+        if (x == 0) return 0;
+        z = x;
+        uint256 y = x / 2 + 1;
+        while (y < z) {
+            z = y;
+            y = (x / y + y) / 2;
+        }
     }
 
     function _getTickAtSqrtRatio(uint160 sqrtPriceX96) internal pure returns (int24 tick_) {
