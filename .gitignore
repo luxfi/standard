@@ -69,3 +69,7 @@ cache_hardhat/
 # lib/  # Uncomment to ignore lib/
 out-seaport/
 .tmp
+.venv/
+slither-report.json
+semgrep-results.sarif
+aderyn-report.md

@@ -1,101 +1,167 @@
-# Lux Standard Makefile for Foundry
+# Lux Standard — Foundry + Security Tooling
 
 -include .env
 
-.PHONY: all test clean deploy
+VENV := .venv
+UV := uv
+PYTHON := $(VENV)/bin/python
+SLITHER := $(VENV)/bin/slither
+SEMGREP := $(VENV)/bin/semgrep
+ADERYN := $(HOME)/.cyfrin/bin/aderyn
 
-# Build
+.PHONY: all build test clean deploy lint fmt audit security venv
+
+# ═══════════════════════════════════════════════════════════════════
+# Build & Test
+# ═══════════════════════════════════════════════════════════════════
+
 build:
 	forge build
 
-# Clean
 clean:
 	forge clean
-	rm -rf cache_forge
+	rm -rf cache_forge out
 
-# Test
 test:
-	forge test
+	forge test --summary
 
-test-verbose:
+test-v:
 	forge test -vvvv
 
 test-gas:
 	forge test --gas-report
 
-# Coverage
+test-fuzz:
+	forge test --match-path "test/foundry/fuzz/*.sol" --fuzz-runs 1000
+
 coverage:
-	forge coverage
+	forge coverage --ir-minimum --report summary
 
-coverage-report:
-	forge coverage --report lcov
+coverage-lcov:
+	forge coverage --ir-minimum --report lcov --report-file lcov.info
 
-# Format
-format:
+# ═══════════════════════════════════════════════════════════════════
+# Format & Lint
+# ═══════════════════════════════════════════════════════════════════
+
+fmt:
 	forge fmt
 
-# Lint
 lint:
 	forge fmt --check
+	forge lint contracts/
 
-# Deploy with CREATE2 for deterministic addresses
-deploy-local:
-	forge script script/DeployWithCreate2.s.sol:DeployWithCreate2 --rpc-url localhost --broadcast
+# ═══════════════════════════════════════════════════════════════════
+# Security (Python tools via uv virtualenv)
+# ═══════════════════════════════════════════════════════════════════
+
+venv: $(VENV)/.installed
+
+$(VENV)/.installed:
+	$(UV) venv $(VENV)
+	$(UV) pip install --python $(VENV)/bin/python slither-analyzer semgrep
+	@touch $@
+
+slither: venv
+	$(SLITHER) contracts/ \
+		--exclude-dependencies \
+		--exclude-informational \
+		--filter-paths "test/,mocks/,script/" \
+		--json slither-report.json || true
+	@echo "Report: slither-report.json"
+
+semgrep: venv
+	$(SEMGREP) scan --config p/solidity --config p/smart-contracts \
+		contracts/ --sarif -o semgrep-results.sarif || true
+	@echo "Report: semgrep-results.sarif"
+
+aderyn:
+	@if [ ! -f "$(ADERYN)" ]; then \
+		echo "Installing aderyn..."; \
+		curl -L https://raw.githubusercontent.com/Cyfrin/aderyn/main/cyfrinup/install | bash; \
+		$(HOME)/.cyfrin/bin/cyfrinup; \
+	fi
+	$(ADERYN) . --src contracts/ --output aderyn-report.md || true
+	@echo "Report: aderyn-report.md"
+
+# Run ALL security tools
+security: slither semgrep aderyn
+	@echo ""
+	@echo "═══════════════════════════════════════════"
+	@echo "  Security Audit Complete"
+	@echo "═══════════════════════════════════════════"
+	@echo "  Slither:  slither-report.json"
+	@echo "  Semgrep:  semgrep-results.sarif"
+	@echo "  Aderyn:   aderyn-report.md"
+	@echo "═══════════════════════════════════════════"
+
+# Full audit: lint + test + security
+audit: lint test security
+	@echo "Full audit complete."
+
+# ═══════════════════════════════════════════════════════════════════
+# Deploy
+# ═══════════════════════════════════════════════════════════════════
+
+deploy-devnet:
+	forge script script/DeployFullStack.s.sol:DeployFullStack \
+		--rpc-url https://api.lux-dev.network/ext/bc/C/rpc \
+		--mnemonics "$$LUX_MNEMONIC" --broadcast -vvv
 
 deploy-testnet:
-	forge script script/DeployWithCreate2.s.sol:DeployWithCreate2 --rpc-url testnet --broadcast --verify
+	forge script script/DeployFullStack.s.sol:DeployFullStack \
+		--rpc-url https://api.lux-test.network/ext/bc/C/rpc \
+		--mnemonics "$$LUX_MNEMONIC" --broadcast -vvv
 
 deploy-mainnet:
-	forge script script/DeployWithCreate2.s.sol:DeployWithCreate2 --rpc-url mainnet --broadcast --verify
+	forge script script/DeployFullStack.s.sol:DeployFullStack \
+		--rpc-url https://api.lux.network/ext/bc/C/rpc \
+		--mnemonics "$$LUX_MNEMONIC" --broadcast -vvv
 
-# Compute addresses before deployment
-compute-addresses:
-	forge script script/DeployWithCreate2.s.sol:ComputeCreate2Addresses
+deploy-all: deploy-devnet deploy-testnet deploy-mainnet
 
-# Install
-install:
-	forge install foundry-rs/forge-std --no-commit
-	forge install openzeppelin/openzeppelin-contracts@v4.9.3 --no-commit
+# ═══════════════════════════════════════════════════════════════════
+# Utilities
+# ═══════════════════════════════════════════════════════════════════
 
-# Update
-update:
-	forge update
-
-# Snapshot
 snapshot:
 	forge snapshot
 
-# Anvil
+sizes:
+	forge build --sizes
+
 anvil:
-	anvil
+	anvil --chain-id 96369 --mnemonic "$$LUX_MNEMONIC" --balance 10000000000
 
-anvil-fork-mainnet:
-	anvil --fork-url ${RPC_MAINNET}
+update:
+	forge update
 
-anvil-fork-testnet:
-	anvil --fork-url ${RPC_TESTNET}
+install:
+	forge install
 
-# Verify
-verify:
-	forge verify-contract ${contract} ${address} --chain-id ${chain} --etherscan-api-key ${ETHERSCAN_API_KEY}
-
-# Slither
-slither:
-	slither src/
-
-# Help
 help:
-	@echo "Usage:"
-	@echo "  make build          - Build contracts"
-	@echo "  make test           - Run tests"
-	@echo "  make test-verbose   - Run tests with verbose output"
-	@echo "  make test-gas       - Run tests with gas report"
-	@echo "  make coverage       - Generate coverage report"
-	@echo "  make format         - Format code"
-	@echo "  make lint           - Check code formatting"
-	@echo "  make deploy-local   - Deploy to local network"
-	@echo "  make deploy-testnet - Deploy to testnet"
-	@echo "  make deploy-mainnet - Deploy to mainnet"
-	@echo "  make install        - Install dependencies"
-	@echo "  make anvil          - Start local Anvil node"
-	@echo "  make snapshot       - Create gas snapshot"
+	@echo "Build & Test:"
+	@echo "  make build         Build contracts"
+	@echo "  make test          Run all tests"
+	@echo "  make test-v        Tests with full traces"
+	@echo "  make test-fuzz     Fuzz tests (1000 runs)"
+	@echo "  make coverage      Coverage summary"
+	@echo ""
+	@echo "Security:"
+	@echo "  make security      Run slither + semgrep + aderyn"
+	@echo "  make slither       Slither static analysis"
+	@echo "  make semgrep       Semgrep SAST"
+	@echo "  make aderyn        Aderyn Solidity analyzer"
+	@echo "  make audit         Full: lint + test + security"
+	@echo ""
+	@echo "Deploy:"
+	@echo "  make deploy-devnet   Deploy to devnet"
+	@echo "  make deploy-testnet  Deploy to testnet"
+	@echo "  make deploy-mainnet  Deploy to mainnet"
+	@echo "  make deploy-all      Deploy to all networks"
+	@echo ""
+	@echo "Other:"
+	@echo "  make fmt           Format code"
+	@echo "  make lint          Check formatting + lint"
+	@echo "  make sizes         Contract sizes"
+	@echo "  make anvil         Start local node"
