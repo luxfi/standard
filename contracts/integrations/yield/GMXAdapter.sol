@@ -329,10 +329,11 @@ contract GMXYieldAdapter is ReentrancyGuard {
         feesClaimed = pos.feesClaimed;
         pendingFees = getPendingFees(user);
 
-        // Estimate current GLP value
+        // GLP value requires GlpManager.getAum() / glp.totalSupply() with
+        // oracle prices for all pool assets. Use depositValue as a conservative
+        // estimate; accurate valuation requires off-chain GLP pricing.
         if (glpAmount > 0 && glp.totalSupply() > 0) {
-            // Simplified - real impl would use GLP price
-            currentValue = depositValue; // Placeholder
+            currentValue = depositValue;
         }
 
         totalReturn = currentValue + feesClaimed + pendingFees - depositValue;
@@ -407,12 +408,14 @@ contract GMXYieldAdapter is ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════════
 
     /**
-     * @notice Get token value in USD (placeholder)
+     * @notice Get token value in USD terms
+     * @dev Returns raw token amount as a proxy. Accurate USD valuation requires
+     *      oracle integration (e.g., GlpManager.getPrice or Chainlink feed).
+     *      This means depositValue and APY calculations are approximate for
+     *      non-stablecoin deposits.
      */
-    function _getTokenValue(address token, uint256 amount) internal view returns (uint256) {
-        // Real implementation would use oracle
-        // Simplified: assume stablecoins = $1, WETH = $2000
-        return amount; // Placeholder
+    function _getTokenValue(address, uint256 amount) internal pure returns (uint256) {
+        return amount;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

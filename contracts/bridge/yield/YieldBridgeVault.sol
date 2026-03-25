@@ -81,6 +81,9 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
     /// @notice Yield receiver on Lux chain
     address public yieldReceiver;
 
+    /// @notice Authorized relayer for cross-chain yield reports
+    address public relayer;
+
     /// @notice Asset configurations
     mapping(address => AssetConfig) public assetConfigs;
 
@@ -109,6 +112,7 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
     event StrategyRemoved(address indexed asset, address indexed strategy);
     event YieldHarvested(address indexed asset, uint256 amount, uint256 timestamp);
     event YieldDistributed(address indexed asset, uint256 amount, bytes32 reportId);
+    event YieldReportSent(bytes32 indexed reportId, address indexed asset, uint256 totalAssets, uint256 yieldAmount);
     event StrategyRebalanced(address indexed asset, address indexed strategy, uint256 newAmount);
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -117,6 +121,11 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
 
     modifier onlyBridge() {
         require(msg.sender == bridge, "YieldBridgeVault: only bridge");
+        _;
+    }
+
+    modifier onlyRelayer() {
+        require(msg.sender == relayer, "YieldBridgeVault: only relayer");
         _;
     }
 
@@ -484,22 +493,11 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
         }
     }
 
+    /// @notice Emit yield report for relayer to deliver cross-chain
+    /// @dev Authorized relayer picks up YieldReportSent events and delivers
+    ///      them to Lux C-Chain via Warp messaging (same pattern as treasury Vault.sol).
     function _sendYieldReport(YieldReport memory report) internal {
-        // Encode and send via Warp messaging
-        // This is a placeholder - actual implementation depends on Warp precompile
-        bytes memory payload = abi.encode(
-            uint8(2), // Message type: YIELD_REPORT
-            luxChainId,
-            yieldReceiver,
-            report.asset,
-            report.totalAssets,
-            report.yieldAmount,
-            report.timestamp,
-            report.reportId
-        );
-
-        // IWarp(WARP_PRECOMPILE).sendWarpMessage(payload);
-        // For now, just emit event (cross-chain messaging handled by relayer)
+        emit YieldReportSent(report.reportId, report.asset, report.totalAssets, report.yieldAmount);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -512,6 +510,10 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
 
     function setYieldReceiver(address _yieldReceiver) external onlyOwner {
         yieldReceiver = _yieldReceiver;
+    }
+
+    function setRelayer(address _relayer) external onlyOwner {
+        relayer = _relayer;
     }
 
     function setHarvestInterval(uint256 _interval) external onlyOwner {

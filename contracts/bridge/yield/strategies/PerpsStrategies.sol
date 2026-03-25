@@ -517,9 +517,13 @@ contract HyperliquidHLPStrategy is BasePerpsStrategy {
         // Bridge USDC to Hyperliquid L1
         IHyperliquidBridge(hlpBridge).deposit(address(underlyingAsset), amount, address(this));
 
-        // Deposit into HLP vault (happens on L1, tracked via events)
-        // Note: Actual shares arrive asynchronously
-        shares = amount; // 1:1 placeholder
+        // Compute shares proportional to existing deposits
+        if (totalDeposited == 0 || hlpShares == 0) {
+            shares = amount;
+        } else {
+            shares = (amount * hlpShares) / totalDeposited;
+        }
+        require(shares > 0, "Zero shares");
         totalDeposited += amount;
 
         emit HLPDeposited(amount, shares);
