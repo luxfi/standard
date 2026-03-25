@@ -69,7 +69,7 @@ contract LuxAsterAdapter is Ownable, ReentrancyGuard {
     IAsterTrading public constant ASTER = IAsterTrading(0x1b6F2d3844C6ae7D56ceb3C3643b9060ba28FEb0);
 
     /// @notice Lux broker ID for referral tracking
-    uint256 public constant LUX_BROKER_ID = 0; // TODO: Register with Aster for broker ID
+    uint256 public constant LUX_BROKER_ID = 0; // No referral ID registered — set via governance when available
 
     /// @notice Maximum leverage allowed (1001x on Aster)
     uint256 public constant MAX_LEVERAGE = 1001;

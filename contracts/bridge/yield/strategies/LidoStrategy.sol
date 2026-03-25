@@ -1335,8 +1335,10 @@ contract LidoCurveStrategy is Ownable, ReentrancyGuard {
             }
         }
 
-        // Return placeholder value (actual ETH conversion would need oracle)
-        totalValue = crvClaimed + ldoClaimed;
+        // CRV and LDO are different tokens with different prices.
+        // Accurate ETH-denominated value requires a price oracle.
+        // Return 0; callers should value claimed tokens independently.
+        totalValue = 0;
     }
 
     /// @notice Receive ETH

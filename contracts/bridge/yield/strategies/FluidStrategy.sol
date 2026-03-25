@@ -918,15 +918,13 @@ contract FluidDexStrategy is Ownable, ReentrancyGuard {
         return (position.lpBalance * reserve0) / totalLp;
     }
 
-    /// @notice
+    /// @notice Get current APY estimate
+    /// @dev Returns 0 because accurate APY requires off-chain volume data.
+    ///      Fee-based APY depends on pool volume, TVL, and fee tier -- none of
+    ///      which can be reliably computed on-chain without an oracle.
+    /// @return APY in basis points (0 until oracle integration)
     function currentAPY() external view returns (uint256) {
-        // Estimate APY from trading fees
-        // This would need historical data or oracle integration for accuracy
-        // Return a placeholder based on fee tier
-        uint24 feeRate = pool.fee();
-        // Assume 100% volume turnover per day, very rough estimate
-        // Real implementation would query historical volume
-        return uint256(feeRate) * 365 / 10; // Simplified estimation
+        return 0;
     }
 
     /// @notice

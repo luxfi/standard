@@ -67,8 +67,15 @@ contract TreasuryTest is Test {
         vm.prank(owner);
         router.setBatch(recipients, weights);
 
-        // Grant relayer role and fund for bridging
+        // Grant relayer roles and fund for bridging
         vault.grantRole(vault.RELAYER_ROLE(), relayer);
+
+        // Collect uses AccessControl — owner is admin, grant RELAYER_ROLE
+        vm.startPrank(owner);
+        collect.grantRole(collect.RELAYER_ROLE(), owner);
+        collect.grantRole(collect.RELAYER_ROLE(), address(this));
+        vm.stopPrank();
+
         wlux.mint(relayer, 1000 ether);
     }
 

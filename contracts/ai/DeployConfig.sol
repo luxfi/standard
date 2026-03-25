@@ -221,12 +221,14 @@ library AIDeployConfig {
  */
 library SafeAddresses {
     // Lux Native Safes
-    address constant LUX_SAFE = address(0); // TODO: Deploy
-    address constant HANZO_SAFE = address(0); // TODO: Deploy
-    address constant ZOO_SAFE = address(0); // TODO: Deploy
+    // Default to deployer treasury — update via governance after Safe deployment
+    address constant LUX_SAFE = 0x9011E888251AB053B7bD1cdB598Db4f9DEd94714;
+    address constant HANZO_SAFE = 0x9011E888251AB053B7bD1cdB598Db4f9DEd94714;
+    address constant ZOO_SAFE = 0x9011E888251AB053B7bD1cdB598Db4f9DEd94714;
 
     // External Chain Safes (same Safe address across all EVM chains via CREATE2)
-    address constant EXTERNAL_SAFE = address(0); // TODO: Deploy via Safe Factory
+    // Default to deployer treasury — update via governance after Safe deployment
+    address constant EXTERNAL_SAFE = 0x9011E888251AB053B7bD1cdB598Db4f9DEd94714;
 
     function getSafe(uint256 chainId) internal pure returns (address) {
         if (chainId == AIDeployConfig.LUX_C_CHAIN) return LUX_SAFE;

@@ -57,7 +57,7 @@ library ProtocolRegistry {
     address constant AERODROME_ROUTER_BASE = 0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43;
 
     // Katana (Polygon CDK OP Stack) - Chain ID: 747474
-    address constant KATANA_SUSHI_ROUTER = 0x0000000000000000000000000000000000000000; // TODO: Add actual address
+    address constant KATANA_SUSHI_ROUTER = address(0); // Katana not available on Lux — disabled
     address constant KATANA_MORPHO = 0xD50F2DffFd62f94Ee4AEd9ca05C61d0753268aBc;
     address constant KATANA_BRIDGE = 0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe;
 

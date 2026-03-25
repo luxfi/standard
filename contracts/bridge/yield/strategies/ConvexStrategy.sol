@@ -515,27 +515,12 @@ contract ConvexCurveStrategy is Ownable {
         return (crvAmount * reduction) / totalCliffs;
     }
 
-    /// @notice Compound rewards back into LP (placeholder - needs DEX integration)
-    function _compound(uint256 crvAmount, uint256 cvxAmount) internal returns (uint256 lpMinted) {
-        // In production, this would:
-        // 1. Sell CRV + CVX for underlying tokens via DEX
-        // 2. Add liquidity to Curve pool
-        // 3. Deposit LP to Convex
-
-        // For now, just transfer to vault for manual handling
-        if (crvAmount > 0) {
-            IERC20(CRV).safeTransfer(vault, crvAmount);
-        }
-        if (cvxAmount > 0) {
-            if (lockCvx) {
-                _lockCvxRewards(cvxAmount);
-            } else {
-                IERC20(CVX).safeTransfer(vault, cvxAmount);
-            }
-        }
-
-        emit Compounded(crvAmount, cvxAmount, lpMinted);
-        return 0; // No LP minted in simplified version
+    /// @notice Compound rewards back into LP
+    /// @dev Requires DEX integration to swap CRV/CVX into LP tokens.
+    ///      Reverts to prevent silent no-ops. Claim rewards via harvest() and
+    ///      compound manually, or integrate a DEX router.
+    function _compound(uint256, uint256) internal pure returns (uint256) {
+        revert("DEX integration required for auto-compounding");
     }
 
     /// @notice Lock CVX for vlCVX
@@ -917,20 +902,9 @@ contract ConvexFraxStrategy is Ownable {
     // INTERNAL
     // =========================================================================
 
-    function _compound(uint256 crvAmount, uint256 cvxAmount, uint256 fxsAmount) internal returns (uint256) {
-        // Simplified: transfer to vault
-        if (crvAmount > 0) IERC20(CRV).safeTransfer(vault, crvAmount);
-        if (cvxAmount > 0) {
-            if (lockCvx) {
-                ICvxLocker(CVX_LOCKER).lock(address(this), cvxAmount, 0);
-            } else {
-                IERC20(CVX).safeTransfer(vault, cvxAmount);
-            }
-        }
-        if (fxsAmount > 0) IERC20(FXS).safeTransfer(vault, fxsAmount);
-
-        emit Compounded(crvAmount, cvxAmount, fxsAmount, 0);
-        return 0;
+    /// @dev Requires DEX integration to swap CRV/CVX/FXS into LP tokens.
+    function _compound(uint256, uint256, uint256) internal pure returns (uint256) {
+        revert("DEX integration required for auto-compounding");
     }
 
     // =========================================================================

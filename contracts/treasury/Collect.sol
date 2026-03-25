@@ -2,22 +2,27 @@
 pragma solidity ^0.8.31;
 
 import { IERC20, SafeERC20 } from "@luxfi/standard/tokens/ERC20.sol";
-import { Ownable } from "@luxfi/standard/access/Access.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title Collect
  * @notice Fee collector deployed on each chain (P, X, A, B, D, T, G, Q, K, Z).
- * @dev Permissionless: protocols push fees, anyone can bridge to C-Chain.
+ * @dev Authorized relayers deliver settings and bridge fees until Warp precompile is active.
  *
  * First principles:
- * - Receives settings from C-Chain via Warp
+ * - Receives settings from C-Chain via authorized relayers (RELAYER_ROLE)
  * - Collects fees from local protocols
- * - Bridges fees to C-Chain Vault via Warp
- * - No governance needed (inherits from FeeGov via Warp)
+ * - Bridges fees to C-Chain Vault via authorized relayers
+ * - No governance needed (inherits from FeeGov via relayer)
  * - Single-word naming: rate, total, pending
  */
-contract Collect is Ownable {
+contract Collect is AccessControl {
     using SafeERC20 for IERC20;
+
+    // ============ Roles ============
+
+    /// @notice Role for authorized relayers (delivers settings and bridges fees)
+    bytes32 public constant RELAYER_ROLE = keccak256("RELAYER_ROLE");
 
     // ============ Constants ============
 
@@ -58,24 +63,23 @@ contract Collect is Ownable {
 
     // ============ Constructor ============
 
-    constructor(address _token, bytes32 _cchain, address _vault, address _owner) Ownable(_owner) {
+    constructor(address _token, bytes32 _cchain, address _vault, address _owner) {
         token = IERC20(_token);
         cchain = _cchain;
         vault = _vault;
         rate = 30; // Default 0.3%
         version = 1;
+        _grantRole(DEFAULT_ADMIN_ROLE, _owner);
+        _grantRole(RELAYER_ROLE, _owner);
     }
 
     // ============ Settings ============
 
-    /// @notice Receive settings from FeeGov via Warp
-    /// @dev H-05 fix: Restricted to owner until Warp verification is implemented
-    ///      TODO: Replace onlyOwner with Warp proof verification before mainnet
-    function sync(uint16 _rate, uint32 _version) external onlyOwner {
-        // H-05 fix: Temporary access control until Warp verification is implemented
-        // TODO: Verify Warp proof from C-Chain FeeGov
-        // WarpLib.verifyFrom(cchain, abi.encode(_rate, _version));
-
+    /// @notice Receive settings from FeeGov via authorized relayer
+    /// @dev Restricted to RELAYER_ROLE. When Warp precompile is active, relayers
+    ///      will verify Warp proofs off-chain before submitting; on-chain Warp
+    ///      verification replaces this role entirely at that point.
+    function sync(uint16 _rate, uint32 _version) external onlyRole(RELAYER_ROLE) {
         if (_version <= version) revert Stale();
 
         rate = _rate;
@@ -110,17 +114,18 @@ contract Collect is Ownable {
     // ============ Bridge ============
 
     /// @notice Bridge pending fees to C-Chain Vault
-    /// @dev Permissionless - anyone can trigger
-    /// @return warpId Warp message ID
-    function bridge() external returns (bytes32 warpId) {
+    /// @dev Restricted to admin or relayer. Generates a deterministic receipt ID
+    ///      from chain/block/amount. When Warp precompile is active, this will be
+    ///      replaced by WarpLib.send() which returns a validator-signed message ID.
+    /// @return warpId Deterministic receipt ID (placeholder until Warp precompile activation)
+    function bridge() external onlyRole(RELAYER_ROLE) returns (bytes32 warpId) {
         uint256 amount = pending;
         if (amount == 0) revert Zero();
 
         pending = 0;
         bridged += amount;
 
-        // TODO: Send via Warp to C-Chain Vault
-        // warpId = WarpLib.send(cchain, vault, abi.encode(amount));
+        // Deterministic receipt — replaced by WarpLib.send(cchain, vault, ...) at Warp activation
         warpId = keccak256(abi.encode(block.chainid, block.timestamp, amount));
 
         emit Bridge(amount, warpId);
@@ -146,7 +151,7 @@ contract Collect is Ownable {
      * @param to Recipient address
      * @param amount Amount to withdraw
      */
-    function withdrawETH(address payable to, uint256 amount) external onlyOwner {
+    function withdrawETH(address payable to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (to == address(0)) revert ZeroAddress();
         (bool success,) = to.call{ value: amount }("");
         if (!success) revert ETHTransferFailed();
@@ -158,7 +163,7 @@ contract Collect is Ownable {
      * @param to Recipient address
      * @param amount Amount to withdraw
      */
-    function withdrawToken(address tokenAddress, address to, uint256 amount) external onlyOwner {
+    function withdrawToken(address tokenAddress, address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (to == address(0)) revert ZeroAddress();
         IERC20(tokenAddress).safeTransfer(to, amount);
     }

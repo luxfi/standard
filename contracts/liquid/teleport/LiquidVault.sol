@@ -6,7 +6,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { TeleportVault } from "./TeleportVault.sol";
-import { IYieldStrategy } from "../../yield/IYieldStrategy.sol";
+import { IYieldStrategy } from "../../bridge/yield/IYieldStrategy.sol";
 
 // Note: LiquidVault deploys on external chains (Base/Ethereum) where yield strategies run
 

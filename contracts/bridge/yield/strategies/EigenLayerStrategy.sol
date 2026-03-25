@@ -628,13 +628,11 @@ contract EigenLayerLSTStrategy is Ownable, ReentrancyGuard {
 
     /**
      * @notice Harvest AVS rewards
-     * @dev Claims rewards via RewardsCoordinator
-     * @return harvested Amount of rewards harvested
+     * @dev EigenLayer rewards are distributed via merkle trees. Use claimRewards()
+     *      with a merkle proof generated off-chain instead of this function.
      */
-    function harvest() external nonReentrant returns (uint256 harvested) {
-        // Note: In production, this would require merkle proofs from AVS
-        // Rewards are distributed via merkle trees, claimed through RewardsCoordinator
-        return 0; // Placeholder - actual implementation needs merkle proof
+    function harvest() external nonReentrant returns (uint256) {
+        revert("Use claimRewards() with merkle proof from off-chain computation");
     }
 
     /**

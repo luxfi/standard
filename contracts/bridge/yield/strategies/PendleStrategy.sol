@@ -506,12 +506,12 @@ contract PendleLPStrategy is Ownable, ReentrancyGuard {
 
     /**
      * @notice Get current APY
-     * @return APY in basis points
+     * @dev Returns 0 because accurate APY requires off-chain integration with
+     *      Pendle's APY oracle (trading fees + PENDLE incentives vary per epoch).
+     * @return APY in basis points (0 until oracle is integrated)
      */
     function currentAPY() external view returns (uint256) {
-        // APY from trading fees + PENDLE rewards
-        // Simplified estimate - actual APY varies with volume and incentives
-        return 1000; // 10% placeholder - should integrate with Pendle's APY oracle
+        return 0;
     }
 
     /**
@@ -1145,12 +1145,12 @@ contract VePendleStrategy is Ownable, ReentrancyGuard {
 
     /**
      * @notice Get current APY from protocol fees
-     * @return APY in basis points
+     * @dev Returns 0 because accurate APY requires integration with Pendle's
+     *      FeeDistributorV2 and vePENDLE accounting (revenue varies per epoch).
+     * @return APY in basis points (0 until fee distributor is integrated)
      */
     function currentAPY() external view returns (uint256) {
-        // APY from protocol fees - varies based on protocol revenue
-        // Placeholder - should integrate with fee distributor for actual data
-        return 500; // 5% placeholder
+        return 0;
     }
 
     /**

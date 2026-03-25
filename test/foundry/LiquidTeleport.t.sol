@@ -4,7 +4,7 @@ pragma solidity ^0.8.31;
 import "forge-std/Test.sol";
 import "../../contracts/liquid/teleport/TeleportVault.sol";
 import "../../contracts/liquid/teleport/LiquidVault.sol";
-import "../../contracts/yield/IYieldStrategy.sol";
+import "../../contracts/bridge/yield/IYieldStrategy.sol";
 
 /**
  * @title LiquidTeleportTest

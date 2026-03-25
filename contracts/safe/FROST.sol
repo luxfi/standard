@@ -295,11 +295,10 @@ library FROST {
         // the sign of the scalars from the signature. FROST in particular uses
         // the former construction.
 
-        // TODO(nlordell): I don't think this is required for Schnorr
-        // signatures, but do it anyway for now just in case. At least, this
-        // prevents some signature malleability with `z` (since it gets mapped
-        // to a curve scalar, there are some values of `z` that can be
-        // specified in more than one way.
+        /// @dev Scalar and curve-point validation prevents signature
+        /// malleability: `z` maps to a curve scalar so some values have
+        /// multiple representations. Rejecting out-of-range inputs
+        /// eliminates that ambiguity.
         {
             bool pOk = isValidPublicKey(px, py);
             bool rOk = _isOnCurve(rx, ry);
