@@ -6,6 +6,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
+interface IPriceFeed {
+    function getPrice(address token, bool maximize) external view returns (uint256);
+}
+
 /// @title Perp
 /// @notice Lux perpetual trading interface - simplified wrapper for perpetual trading
 /// @dev Implements LPX perpetuals protocol for Lux Network
@@ -389,9 +393,8 @@ contract Perp is Ownable, ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     function _getPrice(address token, bool maximize) internal view returns (uint256) {
-        // TODO: Integrate with price feed
-        // For now, return mock price
-        return 1e30; // $1 placeholder
+        require(priceFeed != address(0), "Price feed not configured");
+        return IPriceFeed(priceFeed).getPrice(token, maximize);
     }
 
     function _tokenToUsd(address token, uint256 amount) internal view returns (uint256) {

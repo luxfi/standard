@@ -38,7 +38,8 @@ contract DeployLocal is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envOr("PRIVATE_KEY", uint256(0));
         if (deployerPrivateKey == 0) {
-            // Default Anvil private key
+            // Default Anvil private key — only safe on local chains
+            require(block.chainid == 31337 || block.chainid == 1337, "Anvil key only on local chains");
             deployerPrivateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
         }
 
