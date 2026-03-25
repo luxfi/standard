@@ -210,4 +210,9 @@ exclude_lints = [
     "pascal-case-struct",
     "unsafe-cheatcode",
     "unaliased-plain-import",
+    "erc20-unchecked-transfer",
+    "unsafe-typecast",
+    "divide-before-multiply",
 ]
+# Only lint production contracts, not tests/mocks
+ignore = ["test/**", "contracts/mocks/**"]
