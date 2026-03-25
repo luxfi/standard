@@ -1,0 +1,5 @@
+{
+  "filter_paths": ["lib/", "test/", "contracts/mocks/", "contracts/script/"],
+  "compile_force_framework": "foundry",
+  "detectors_to_exclude": "naming-convention,pragma,solc-version,assembly"
+}

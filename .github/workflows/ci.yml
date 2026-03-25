@@ -51,7 +51,7 @@ jobs:
           version: stable
 
       - name: Run Forge fmt check
-        run: forge fmt --check || true
+        run: forge fmt --check
         id: fmt
 
   docs:
