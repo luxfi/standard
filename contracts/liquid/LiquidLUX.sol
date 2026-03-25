@@ -81,10 +81,17 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     bytes32 public constant EMERGENCY_ROLE = keccak256("EMERGENCY_ROLE");
 
     // ============ Constants ============
-    
+
     uint256 public constant BPS = 10_000;
     uint256 public constant MAX_PERF_FEE_BPS = 2000; // 20% max
     uint256 public constant MAX_SLASHING_RESERVE_BPS = 2000; // 20% max
+
+    /// @notice Virtual shares offset to prevent first-depositor inflation attack
+    /// @dev Follows the Morpho Blue pattern (see contracts/markets/libraries/SharesMathLib.sol)
+    uint256 internal constant VIRTUAL_SHARES = 1e6;
+
+    /// @notice Virtual assets offset to prevent first-depositor inflation attack
+    uint256 internal constant VIRTUAL_ASSETS = 1;
 
     // ============ Immutables ============
     
@@ -405,9 +412,7 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
      * @notice Current exchange rate (LUX per xLUX, scaled by 1e18)
      */
     function exchangeRate() external view returns (uint256) {
-        uint256 supply = totalSupply();
-        if (supply == 0) return 1e18;
-        return (totalAssets() * 1e18) / supply;
+        return ((totalAssets() + VIRTUAL_ASSETS) * 1e18) / (totalSupply() + VIRTUAL_SHARES);
     }
 
     /**
@@ -458,19 +463,11 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     // ============ Internal ============
     
     function _convertToShares(uint256 assets) internal view returns (uint256) {
-        uint256 supply = totalSupply();
-        if (supply == 0) {
-            return assets; // 1:1 for first deposit
-        }
-        return (assets * supply) / totalAssets();
+        return (assets * (totalSupply() + VIRTUAL_SHARES)) / (totalAssets() + VIRTUAL_ASSETS);
     }
 
     function _convertToAssets(uint256 shares) internal view returns (uint256) {
-        uint256 supply = totalSupply();
-        if (supply == 0) {
-            return shares; // 1:1 if no supply
-        }
-        return (shares * totalAssets()) / supply;
+        return (shares * (totalAssets() + VIRTUAL_ASSETS)) / (totalSupply() + VIRTUAL_SHARES);
     }
 
     // ============ ERC20 Overrides (for ERC20Votes) ============

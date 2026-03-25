@@ -97,6 +97,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
         address payoutAddress_,
         uint256 feeRate_
     ) public onlyAdmin {
+        require(feeRate_ <= 500, "Fee rate exceeds 5% maximum");
         address oldPayoutAddress = payoutAddress;
         uint256 oldFeeRate = feeRate;
         payoutAddress = payoutAddress_;
@@ -235,7 +236,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
         } else {
             _shareAddress = vault.erc20Vault(tokenAddr_);
         }
-        IERC20(_shareAddress).approve(address(vault), type(uint256).max);
+        IERC20(_shareAddress).forceApprove(address(vault), amount_);
         vault.withdraw(tokenAddr_, receiver_, amount_);
         emit VaultWithdraw(receiver_, amount_, tokenAddr_);
     }
@@ -256,7 +257,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
      * @param amount_ token amount to burn
      * @param tokenAddr_ token address to burn
      */
-    function bridgeBurn(uint256 amount_, address tokenAddr_) public {
+    function bridgeBurn(uint256 amount_, address tokenAddr_) public nonReentrant {
         TeleportStruct memory teleport;
         teleport.token = LRC20B(tokenAddr_);
         require(
@@ -593,7 +594,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
         } else {
             shareAddress = vault.erc20Vault(tokenAddr_);
         }
-        IERC20(shareAddress).approve(address(vault), type(uint256).max);
+        IERC20(shareAddress).forceApprove(address(vault), amount_);
         vault.withdraw(tokenAddr_, receiver_, amount_);
         emit VaultWithdraw(receiver_, amount_, tokenAddr_);
     }

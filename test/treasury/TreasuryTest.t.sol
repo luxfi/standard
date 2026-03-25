@@ -66,7 +66,8 @@ contract TreasuryTest is Test {
         vm.prank(owner);
         router.setBatch(recipients, weights);
 
-        // Fund relayer for bridging
+        // Grant relayer role and fund for bridging
+        vault.grantRole(vault.RELAYER_ROLE(), relayer);
         wlux.mint(relayer, 1000 ether);
     }
 

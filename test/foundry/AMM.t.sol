@@ -876,7 +876,7 @@ contract AMMV3Test is Test {
         // For price = 2: sqrt(2) * 2^96 ≈ 1.414 * 2^96
         uint160 sqrtPriceX96 = 112045541949572279837463876454; // sqrt(2) * 2^96
 
-        poolContract.initializePrice(sqrtPriceX96);
+        factory.initializePool(pool, sqrtPriceX96);
 
         assertEq(poolContract.sqrtPriceX96(), sqrtPriceX96);
         assertGt(poolContract.tick(), 0); // Should be positive for price > 1
@@ -887,10 +887,10 @@ contract AMMV3Test is Test {
         AMMV3Pool poolContract = AMMV3Pool(pool);
 
         uint160 sqrtPriceX96 = 79228162514264337593543950336; // 1:1 price
-        poolContract.initializePrice(sqrtPriceX96);
+        factory.initializePool(pool, sqrtPriceX96);
 
         vm.expectRevert("AMMV3: ALREADY_INITIALIZED");
-        poolContract.initializePrice(sqrtPriceX96);
+        factory.initializePool(pool, sqrtPriceX96);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -903,7 +903,7 @@ contract AMMV3Test is Test {
 
         // Initialize at 1:1 price
         uint160 sqrtPriceX96 = 79228162514264337593543950336;
-        poolContract.initializePrice(sqrtPriceX96);
+        factory.initializePool(pool, sqrtPriceX96);
 
         // Mint liquidity in range
         vm.startPrank(alice);
@@ -911,9 +911,9 @@ contract AMMV3Test is Test {
             ? (address(tokenA), address(tokenB))
             : (address(tokenB), address(tokenA));
 
-        // AMMV3Pool requires tokens to be transferred BEFORE calling mint
-        MockToken(token0).transfer(address(poolContract), 100e18);
-        MockToken(token1).transfer(address(poolContract), 100e18);
+        // Approve pool to pull tokens (mint now uses safeTransferFrom)
+        MockToken(token0).approve(address(poolContract), 100e18);
+        MockToken(token1).approve(address(poolContract), 100e18);
 
         // Use smaller liquidity to avoid overflow in _getAmount0ForLiquidity
         // The contract's math: (liquidity << 96) can overflow for large liquidity values
@@ -936,7 +936,7 @@ contract AMMV3Test is Test {
         AMMV3Pool poolContract = AMMV3Pool(pool);
 
         uint160 sqrtPriceX96 = 79228162514264337593543950336;
-        poolContract.initializePrice(sqrtPriceX96);
+        factory.initializePool(pool, sqrtPriceX96);
 
         vm.startPrank(alice);
         vm.expectRevert("AMMV3: INVALID_TICK_RANGE");
@@ -949,7 +949,7 @@ contract AMMV3Test is Test {
         AMMV3Pool poolContract = AMMV3Pool(pool);
 
         uint160 sqrtPriceX96 = 79228162514264337593543950336;
-        poolContract.initializePrice(sqrtPriceX96);
+        factory.initializePool(pool, sqrtPriceX96);
 
         vm.startPrank(alice);
         // tickSpacing = 60, so ticks must be multiples of 60
@@ -993,16 +993,16 @@ contract AMMV3Test is Test {
         AMMV3Pool poolContract = AMMV3Pool(pool);
 
         uint160 sqrtPriceX96 = 79228162514264337593543950336;
-        poolContract.initializePrice(sqrtPriceX96);
+        factory.initializePool(pool, sqrtPriceX96);
 
         vm.startPrank(alice);
         (address token0, address token1) = address(tokenA) < address(tokenB)
             ? (address(tokenA), address(tokenB))
             : (address(tokenB), address(tokenA));
 
-        // Transfer tokens to the pool before minting (required by AMMV3Pool)
-        MockToken(token0).transfer(address(poolContract), 100e18);
-        MockToken(token1).transfer(address(poolContract), 100e18);
+        // Approve pool to pull tokens (mint now uses safeTransferFrom)
+        MockToken(token0).approve(address(poolContract), 100e18);
+        MockToken(token1).approve(address(poolContract), 100e18);
 
         // Use smaller liquidity to avoid overflow in _getAmount0ForLiquidity
         poolContract.mint(alice, tickLower, tickUpper, 1000);
@@ -1053,7 +1053,7 @@ contract AMMIntegrationTest is Test {
 
         // Create V3 pool with different price
         address poolV3 = factoryV3.createPool(address(tokenA), address(tokenB), 3000);
-        AMMV3Pool(poolV3).initializePrice(79228162514264337593543950336); // 1:1 price
+        factoryV3.initializePool(poolV3, 79228162514264337593543950336); // 1:1 price
 
         vm.stopPrank();
 
