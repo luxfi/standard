@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "./ZNote.sol";
-import "./PrivateBridge.sol";
-import "../interfaces/IZChainAMM.sol";
-import "../interfaces/IShieldedPool.sol";
+import {ZNote} from "./ZNote.sol";
+import {PrivateBridge} from "./PrivateBridge.sol";
+import {IZChainAMM} from "../interfaces/IZChainAMM.sol";
 
 /**
  * @title PrivateTeleport

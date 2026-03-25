@@ -15,7 +15,6 @@ pragma solidity ^0.8.31;
 
 import {LRC721} from "./LRC721/LRC721.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title LRC721B

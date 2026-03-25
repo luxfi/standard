@@ -534,6 +534,7 @@ contract Resolver is IResolver, IOracleCallbacks {
             address(this),               // asserter
             address(this),               // callbackRecipient
             address(0),                  // escalationManager (use default DVM)
+            // forge-lint: disable-next-line(unsafe-typecast)
             uint64(liveness),            // liveness
             IERC20(rewardToken),         // currency
             bond,                        // bond

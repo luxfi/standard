@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.31;
 
-import "./BaseToken.sol";
-import "./interfaces/IMintable.sol";
+import {BaseToken} from "./BaseToken.sol";
+import {IMintable} from "./interfaces/IMintable.sol";
 
 contract MintableBaseToken is BaseToken, IMintable {
 

@@ -38,18 +38,21 @@ library Math {
     }
 
     function to128(uint256 number) internal pure returns (uint128) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint128 result = uint128(number);
         require(result == number, "Math: Unsafe cast to uint128");
         return result;
     }
 
     function to96(uint256 number) internal pure returns (uint96) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint96 result = uint96(number);
         require(result == number, "Math: Unsafe cast to uint96");
         return result;
     }
 
     function to32(uint256 number) internal pure returns (uint32) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint32 result = uint32(number);
         require(result == number, "Math: Unsafe cast to uint32");
         return result;

@@ -2,7 +2,6 @@
 pragma solidity ^0.8.31;
 
 import {IERC1271, ILegacyERC1271} from "./interfaces/IERC1271.sol";
-import {ISafe} from "./interfaces/ISafe.sol";
 
 /// @title ICGGMP21
 /// @dev Interface for ECDSA verification (LSS produces standard ECDSA signatures)

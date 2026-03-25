@@ -138,6 +138,7 @@ contract VotingWeightLRC20 is IVotingWeight, ERC165, Initializable {
         // Find checkpoint at or before timestamp (iterate backwards)
         uint256 votingBalance = 0;
         for (uint256 i = numCheckpoints; i > 0;) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             Checkpoints.Checkpoint208 memory checkpoint = governanceToken.checkpoints(voter, uint32(i - 1));
 
             if (checkpoint._key <= timestamp) {

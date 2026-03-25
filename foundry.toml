@@ -195,3 +195,19 @@ remappings = [
     "solarray/=lib/seaport/lib/solarray/src/",
     "murky/=lib/seaport/lib/murky/src/",
 ]
+
+# Lint: only run safety lints, suppress naming convention notes
+# Naming follows upstream forks (GMX, Uniswap) for ABI compatibility
+[profile.default.lint]
+severity = ["high", "med"]
+exclude_lints = [
+    "mixed-case-function",
+    "mixed-case-variable",
+    "screaming-snake-case-immutable",
+    "screaming-snake-case-const",
+    "unwrapped-modifier-logic",
+    "named-struct-fields",
+    "pascal-case-struct",
+    "unsafe-cheatcode",
+    "unaliased-plain-import",
+]

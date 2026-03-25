@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.31;
 
-import "../core/PositionRouter.sol";
+import {IPositionRouter} from "../../interfaces/perps/IPositionRouter.sol";
 
 contract PositionRouterReader {
     function getTransferTokenOfIncreasePositionRequests(

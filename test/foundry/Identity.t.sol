@@ -6,8 +6,6 @@ import "forge-std/Test.sol";
 import {DIDRegistry} from "../../contracts/identity/DIDRegistry.sol";
 import {DIDResolver, OmnichainDIDResolver} from "../../contracts/identity/DIDResolver.sol";
 import {
-    IDIDRegistry,
-    IDIDResolver,
     DIDDocument,
     VerificationMethod,
     VerificationMethodType,

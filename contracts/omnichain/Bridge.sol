@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 /// @title Bridge interface for OmnichainLP
 interface IBridge {
     function bridge(address token, uint256 amount, uint256 destChainId, bytes calldata extraData) external payable;

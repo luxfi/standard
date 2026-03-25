@@ -62,7 +62,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
     - LP-1002: Quasar Consensus (BLS/Ringtail Hybrid)
  */
 
-import "./LRC20B.sol";
+import {LRC20B} from "./LRC20B.sol";
 // IERC20 is already defined in ERC20B.sol (flattened)
 
 // ============ Precompile Interfaces ============

@@ -28,19 +28,6 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // Seaport interfaces
 import {SeaportInterface} from "seaport-types/src/interfaces/SeaportInterface.sol";
-import {ConduitInterface} from "seaport-types/src/interfaces/ConduitInterface.sol";
-import {
-    OrderComponents,
-    OfferItem,
-    ConsiderationItem,
-    OrderParameters,
-    Order,
-    AdvancedOrder,
-    CriteriaResolver,
-    Fulfillment,
-    FulfillmentComponent
-} from "seaport-types/src/lib/ConsiderationStructs.sol";
-import {OrderType, ItemType} from "seaport-types/src/lib/ConsiderationEnums.sol";
 import {ILRC20} from "../tokens/interfaces/ILRC20.sol";
 
 /**

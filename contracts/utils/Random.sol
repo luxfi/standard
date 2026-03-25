@@ -63,6 +63,7 @@ contract Random {
 
         uint256 random = bytesHashToUint % max;
 
+        // forge-lint: disable-next-line(unsafe-typecast)
         emit RevealHash(msg.sender, revealHash, uint8(random));
     }
 

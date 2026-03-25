@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.31;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./interfaces/IGMT.sol";
-import "../peripherals/interfaces/ITimelockTarget.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IGMT} from "./interfaces/IGMT.sol";
+import {ITimelockTarget} from "../peripherals/interfaces/ITimelockTarget.sol";
 
 contract GMT is IERC20, IGMT, ITimelockTarget {
     

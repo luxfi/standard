@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.31;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import "./interfaces/IRewardDistributor.sol";
-import "./interfaces/IRewardTracker.sol";
-import "../access/Governable.sol";
+import {IRewardDistributor} from "./interfaces/IRewardDistributor.sol";
+import {IRewardTracker} from "./interfaces/IRewardTracker.sol";
+import {Governable} from "../access/Governable.sol";
 
 contract RewardTracker is IERC20, ReentrancyGuard, IRewardTracker, Governable {
     

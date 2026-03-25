@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.31;
 
-import "./MintableBaseToken.sol";
+import {MintableBaseToken} from "./MintableBaseToken.sol";
 
 /// @title xLPX Token  
 /// @notice Escrowed LPX token earned from staking, vests to LPX over time

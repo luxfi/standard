@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../FHE.sol";
+import {FHE, ebool, einput, euint64} from "../FHE.sol";
 import {TFHEApp} from "../threshold/TFHEApp.sol";
 import {TFHE} from "../threshold/TFHE.sol";
 import { Ownable2Step, Ownable } from "@openzeppelin/contracts/access/Ownable2Step.sol";
@@ -539,7 +539,9 @@ abstract contract ConfidentialGovernor is Ownable2Step, TFHEApp {
         uint256 proposalId = _requestIdToProposalId[requestId];
 
         /// @dev It is safe to downcast since the original values were euint64.
+        // forge-lint: disable-next-line(unsafe-typecast)
         _proposals[proposalId].forVotesDecrypted = uint64(forVotesDecrypted);
+        // forge-lint: disable-next-line(unsafe-typecast)
         _proposals[proposalId].againstVotesDecrypted = uint64(againstVotesDecrypted);
 
         if (forVotesDecrypted > againstVotesDecrypted && forVotesDecrypted >= QUORUM_VOTES) {

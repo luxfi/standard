@@ -68,6 +68,7 @@ contract StrategyV1ValidatorV1 is
         bytes calldata callData_
     ) public view virtual override returns (bool) {
         // confirm here that the calldata selector is correct: `castVote(uint32,uint8,(address,bytes)[],uint256)`
+        // forge-lint: disable-next-line(unsafe-typecast)
         if (bytes4(callData_) != IStrategyV1.castVote.selector) {
             return false;
         }

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title AMMV3Pool - Concentrated Liquidity Pool
 /// @notice Implements Uniswap V3-style concentrated liquidity
@@ -112,7 +112,9 @@ contract AMMV3Pool is ReentrancyGuard {
         position.liquidity += amount;
 
         // Update ticks
+        // forge-lint: disable-next-line(unsafe-typecast)
         _updateTick(tickLower, int128(uint128(amount)));
+        // forge-lint: disable-next-line(unsafe-typecast)
         _updateTick(tickUpper, -int128(uint128(amount)));
 
         // Update global liquidity if in range
@@ -138,11 +140,15 @@ contract AMMV3Pool is ReentrancyGuard {
 
         // Update position
         position.liquidity -= amount;
+        // forge-lint: disable-next-line(unsafe-typecast)
         position.tokensOwed0 += uint128(amount0);
+        // forge-lint: disable-next-line(unsafe-typecast)
         position.tokensOwed1 += uint128(amount1);
 
         // Update ticks
+        // forge-lint: disable-next-line(unsafe-typecast)
         _updateTick(tickLower, -int128(uint128(amount)));
+        // forge-lint: disable-next-line(unsafe-typecast)
         _updateTick(tickUpper, int128(uint128(amount)));
 
         // Update global liquidity if in range
@@ -205,6 +211,7 @@ contract AMMV3Pool is ReentrancyGuard {
         uint256 amountOut;
 
         if (exactInput) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             amountIn = uint256(amountSpecified);
             // Calculate output with fee
             uint256 amountInWithFee = amountIn * (1000000 - uint256(fee)) / 1000000;
@@ -214,6 +221,7 @@ contract AMMV3Pool is ReentrancyGuard {
                 amountOut = (amountInWithFee * balanceBefore0) / (balanceBefore1 + amountInWithFee);
             }
         } else {
+            // forge-lint: disable-next-line(unsafe-typecast)
             amountOut = uint256(-amountSpecified);
             // Calculate input with fee
             if (zeroForOne) {
@@ -224,11 +232,15 @@ contract AMMV3Pool is ReentrancyGuard {
         }
 
         if (zeroForOne) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             amount0 = int256(amountIn);
+            // forge-lint: disable-next-line(unsafe-typecast)
             amount1 = -int256(amountOut);
             IERC20(token1).safeTransfer(recipient, amountOut);
         } else {
+            // forge-lint: disable-next-line(unsafe-typecast)
             amount0 = -int256(amountOut);
+            // forge-lint: disable-next-line(unsafe-typecast)
             amount1 = int256(amountIn);
             IERC20(token0).safeTransfer(recipient, amountOut);
         }
@@ -269,6 +281,7 @@ contract AMMV3Pool is ReentrancyGuard {
         }
         // liquidityGross tracks total liquidity referencing this tick (always use absolute value)
         // liquidityNet tracks the net change when price crosses this tick
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint128 absDelta = liquidityDelta > 0 ? uint128(liquidityDelta) : uint128(-liquidityDelta);
         info.liquidityGross = info.liquidityGross + absDelta;
         // For liquidityNet, use the original signed delta
@@ -313,7 +326,9 @@ contract AMMV3Pool is ReentrancyGuard {
 
     function _getSqrtRatioAtTick(int24 tick_) internal pure returns (uint160) {
         // Simplified: approximate sqrt price ratio
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint256 absTick = tick_ < 0 ? uint256(uint24(-tick_)) : uint256(uint24(tick_));
+        // forge-lint: disable-next-line(unsafe-typecast)
         require(absTick <= uint256(int256(MAX_TICK)), "AMMV3: TICK_OUT_OF_BOUNDS");
 
         uint256 ratio = absTick & 0x1 != 0 ? 0xfffcb933bd6fad37aa2d162d1a594001 : 0x100000000000000000000000000000000;
@@ -391,6 +406,7 @@ contract AMMV3Pool is ReentrancyGuard {
         if (msb >= 128) r = ratio >> (msb - 127);
         else r = ratio << (127 - msb);
 
+        // forge-lint: disable-next-line(unsafe-typecast)
         int256 log_2 = (int256(msb) - 128) << 64;
 
         assembly {

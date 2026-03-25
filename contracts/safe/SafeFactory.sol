@@ -2,7 +2,6 @@
 pragma solidity ^0.8.31;
 
 import {SafeProxyFactory} from "@safe-global/safe-smart-account/proxies/SafeProxyFactory.sol";
-import {SafeProxy} from "@safe-global/safe-smart-account/proxies/SafeProxy.sol";
 
 /**
  * @title SafeFactory

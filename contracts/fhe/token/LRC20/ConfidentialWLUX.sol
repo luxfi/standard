@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../../FHE.sol";
+import {FHE, ebool, euint64} from "../../FHE.sol";
 import {TFHEApp} from "../../threshold/TFHEApp.sol";
 import {TFHE} from "../../threshold/TFHE.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -91,6 +91,7 @@ abstract contract ConfidentialWLUX is
             revert AmountTooHigh();
         }
 
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint64 amountUint64 = uint64(amountAdjusted);
 
         _unsafeMint(msg.sender, amountUint64);

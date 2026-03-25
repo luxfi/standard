@@ -9,7 +9,6 @@ import {LSSVMPair} from "../../contracts/lssvm/LSSVMPair.sol";
 import {LSSVMRouter} from "../../contracts/lssvm/LSSVMRouter.sol";
 import {LinearCurve} from "../../contracts/lssvm/LinearCurve.sol";
 import {ExponentialCurve} from "../../contracts/lssvm/ExponentialCurve.sol";
-import {ICurve} from "../../contracts/lssvm/ICurve.sol";
 
 // Shared mocks
 import {MockNFTWithId as MockNFT, MockERC20Simple as MockERC20} from "./TestMocks.sol";

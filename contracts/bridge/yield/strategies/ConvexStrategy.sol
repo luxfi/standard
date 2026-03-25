@@ -18,7 +18,6 @@ pragma solidity ^0.8.24;
  * - Curve LP trading fees (embedded in LP value)
  */
 
-import {IYieldStrategy} from "../IYieldStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";

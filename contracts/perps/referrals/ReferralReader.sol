@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.31;
 
-import "./interfaces/IReferralStorage.sol";
+import {IReferralStorage} from "./interfaces/IReferralStorage.sol";
 
 contract ReferralReader {
     function getCodeOwners(IReferralStorage _referralStorage, bytes32[] memory _codes) public view returns (address[] memory) {

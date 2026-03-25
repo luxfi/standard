@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 
 
-import "./interfaces/ISecondaryPriceFeed.sol";
-import "./interfaces/IFastPriceFeed.sol";
-import "./interfaces/IFastPriceEvents.sol";
-import "../core/interfaces/IVaultPriceFeed.sol";
-import "../core/interfaces/IPositionRouter.sol";
-import "../access/Governable.sol";
+import {ISecondaryPriceFeed} from "./interfaces/ISecondaryPriceFeed.sol";
+import {IFastPriceFeed} from "./interfaces/IFastPriceFeed.sol";
+import {IFastPriceEvents} from "./interfaces/IFastPriceEvents.sol";
+import {IVaultPriceFeed} from "../core/interfaces/IVaultPriceFeed.sol";
+import {IPositionRouter} from "../core/interfaces/IPositionRouter.sol";
+import {Governable} from "../access/Governable.sol";
 
 pragma solidity ^0.8.31;
 
@@ -438,9 +438,12 @@ contract FastPriceFeed is ISecondaryPriceFeed, IFastPriceFeed, Governable {
         require(_cumulativeFastDelta < MAX_CUMULATIVE_FAST_DELTA, "FastPriceFeed: invalid cumulativeFastDelta");
 
         priceData[_token] = PriceDataItem(
+            // forge-lint: disable-next-line(unsafe-typecast)
             uint160(_refPrice),
             uint32(block.timestamp),
+            // forge-lint: disable-next-line(unsafe-typecast)
             uint32(_cumulativeRefDelta),
+            // forge-lint: disable-next-line(unsafe-typecast)
             uint32(_cumulativeFastDelta)
         );
     }

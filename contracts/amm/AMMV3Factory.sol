@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import "./AMMV3Pool.sol";
+import {AMMV3Pool} from "./AMMV3Pool.sol";
 
 /// @title AMMV3Factory - Uniswap V3 Compatible Factory
 /// @notice Creates and manages concentrated liquidity pools

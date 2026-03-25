@@ -446,7 +446,9 @@ contract LiquidBond is Ownable, ReentrancyGuard {
 
         // Convert to sats: (amount * tokenPriceUSD * SATS_PER_BTC) / btcPriceUSD
         // Normalize decimals
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint256 tokenPriceNorm = uint256(tokenPrice) * (10 ** (18 - tokenDecimals));
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint256 btcPriceNorm = uint256(btcPrice) * (10 ** (18 - btcDecimals));
 
         return (amount * tokenPriceNorm * SATS_PER_BTC) / (btcPriceNorm * 1e18);

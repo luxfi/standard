@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
-import "../FHE.sol";
+import {FHE, euint256} from "../FHE.sol";
 import {TFHE} from "../threshold/TFHE.sol";
 import {TFHEApp} from "../threshold/TFHEApp.sol";
 import {ICharter} from "../../governance/interfaces/ICharter.sol";
-import {IStrategy} from "../../interfaces/governance/IStrategy.sol";
 import {IVotingTypes} from "../../governance/interfaces/IVotingTypes.sol";
 import {IVotingWeight} from "../../governance/interfaces/IVotingWeight.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**

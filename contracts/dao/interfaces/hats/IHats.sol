@@ -16,9 +16,9 @@
 
 pragma solidity >=0.8.13;
 
-import "./IHatsIdUtilities.sol";
-import "./HatsErrors.sol";
-import "./HatsEvents.sol";
+import {IHatsIdUtilities} from "./IHatsIdUtilities.sol";
+import {HatsErrors} from "./HatsErrors.sol";
+import {HatsEvents} from "./HatsEvents.sol";
 
 interface IHats is IHatsIdUtilities, HatsErrors, HatsEvents {
     function mintTopHat(

@@ -50,8 +50,10 @@ contract MockChainlinkOracle is IOracle {
         if (msg.sender != owner) revert Unauthorized();
         uint256 oldPrice = currentPrice;
         if (basisPoints >= 0) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             currentPrice = currentPrice * (10000 + uint256(basisPoints)) / 10000;
         } else {
+            // forge-lint: disable-next-line(unsafe-typecast)
             currentPrice = currentPrice * (10000 - uint256(-basisPoints)) / 10000;
         }
         priceHistory.push(currentPrice);

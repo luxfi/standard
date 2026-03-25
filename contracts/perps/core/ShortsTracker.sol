@@ -3,9 +3,9 @@
 pragma solidity ^0.8.31;
 
 
-import "../access/Governable.sol";
-import "./interfaces/IShortsTracker.sol";
-import "./interfaces/IVault.sol";
+import {Governable} from "../access/Governable.sol";
+import {IShortsTracker} from "./interfaces/IShortsTracker.sol";
+import {IVault} from "./interfaces/IVault.sol";
 
 contract ShortsTracker is Governable, IShortsTracker {
     
@@ -156,6 +156,7 @@ contract ShortsTracker is Governable, IShortsTracker {
         // get the proportional change in pnl
         uint256 adjustedDelta = _sizeDelta * delta / size;
         require(adjustedDelta < MAX_INT256, "ShortsTracker: overflow");
+        // forge-lint: disable-next-line(unsafe-typecast)
         return hasProfit ? int256(adjustedDelta) : -int256(adjustedDelta);
     }
 
@@ -190,13 +191,17 @@ contract ShortsTracker is Governable, IShortsTracker {
         if (hasProfit) {
             // global shorts pnl is positive
             if (_realisedPnl > 0) {
+                // forge-lint: disable-next-line(unsafe-typecast)
                 if (uint256(_realisedPnl) > _delta) {
+                    // forge-lint: disable-next-line(unsafe-typecast)
                     _delta = uint256(_realisedPnl) - _delta;
                     hasProfit = false;
                 } else {
+                    // forge-lint: disable-next-line(unsafe-typecast)
                     _delta = _delta - uint256(_realisedPnl);
                 }
             } else {
+                // forge-lint: disable-next-line(unsafe-typecast)
                 _delta = _delta + uint256(-_realisedPnl);
             }
 
@@ -204,12 +209,16 @@ contract ShortsTracker is Governable, IShortsTracker {
         }
 
         if (_realisedPnl > 0) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             _delta = _delta + uint256(_realisedPnl);
         } else {
+            // forge-lint: disable-next-line(unsafe-typecast)
             if (uint256(-_realisedPnl) > _delta) {
+                // forge-lint: disable-next-line(unsafe-typecast)
                 _delta = uint256(-_realisedPnl) - _delta;
                 hasProfit = true;
             } else {
+                // forge-lint: disable-next-line(unsafe-typecast)
                 _delta = _delta - uint256(-_realisedPnl);
             }
         }

@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.31;
 
-import "./MintableBaseToken.sol";
+import {MintableBaseToken} from "./MintableBaseToken.sol";
 
 contract SnapshotToken is MintableBaseToken {
     constructor(string memory _name, string memory _symbol, uint256 _initialSupply) public MintableBaseToken(_name, _symbol, _initialSupply) {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../FHE.sol";
+import {FHE, ebool, euint8} from "../FHE.sol";
 
 /**
  * @title       EncryptedErrors.

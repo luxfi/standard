@@ -2,7 +2,6 @@
 pragma solidity ^0.8.31;
 
 import {IERC1271, ILegacyERC1271} from "./interfaces/IERC1271.sol";
-import {ISafe} from "./interfaces/ISafe.sol";
 import {IERC165} from "./interfaces/IERC165.sol";
 
 /// @title IFROST

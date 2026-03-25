@@ -141,6 +141,7 @@ contract Markets is IMarkets, ReentrancyGuard {
         if (newFee > MAX_FEE) revert MaxFeeExceeded();
         
         _accrueInterest(marketParams, id);
+        // forge-lint: disable-next-line(unsafe-typecast)
         market[id].fee = uint128(newFee);
         emit SetFee(id, newFee);
     }
@@ -183,7 +184,9 @@ contract Markets is IMarkets, ReentrancyGuard {
         if (assets == 0 || shares == 0) revert ZeroAssets();
 
         position[id][onBehalf].supplyShares += shares;
+        // forge-lint: disable-next-line(unsafe-typecast)
         market[id].totalSupplyShares += uint128(shares);
+        // forge-lint: disable-next-line(unsafe-typecast)
         market[id].totalSupplyAssets += uint128(assets);
 
         emit Supply(id, msg.sender, onBehalf, assets, shares);
@@ -220,7 +223,9 @@ contract Markets is IMarkets, ReentrancyGuard {
         if (assets == 0 || shares == 0) revert ZeroAssets();
 
         position[id][onBehalf].supplyShares -= shares;
+        // forge-lint: disable-next-line(unsafe-typecast)
         market[id].totalSupplyShares -= uint128(shares);
+        // forge-lint: disable-next-line(unsafe-typecast)
         market[id].totalSupplyAssets -= uint128(assets);
 
         if (market[id].totalBorrowAssets > market[id].totalSupplyAssets) revert InsufficientLiquidity();
@@ -257,7 +262,9 @@ contract Markets is IMarkets, ReentrancyGuard {
         if (assets == 0 || shares == 0) revert ZeroAssets();
 
         position[id][onBehalf].borrowShares += shares;
+        // forge-lint: disable-next-line(unsafe-typecast)
         market[id].totalBorrowShares += uint128(shares);
+        // forge-lint: disable-next-line(unsafe-typecast)
         market[id].totalBorrowAssets += uint128(assets);
 
         if (market[id].totalBorrowAssets > market[id].totalSupplyAssets) revert InsufficientLiquidity();
@@ -292,7 +299,9 @@ contract Markets is IMarkets, ReentrancyGuard {
         if (assets == 0 || shares == 0) revert ZeroAssets();
 
         position[id][onBehalf].borrowShares -= shares;
+        // forge-lint: disable-next-line(unsafe-typecast)
         market[id].totalBorrowShares -= uint128(shares);
+        // forge-lint: disable-next-line(unsafe-typecast)
         market[id].totalBorrowAssets -= uint128(assets);
 
         emit Repay(id, msg.sender, onBehalf, assets, shares);
@@ -387,7 +396,9 @@ contract Markets is IMarkets, ReentrancyGuard {
         uint256 badDebtShares;
 
         position[id][borrower].borrowShares -= repaidShares;
+        // forge-lint: disable-next-line(unsafe-typecast)
         market[id].totalBorrowShares -= uint128(repaidShares);
+        // forge-lint: disable-next-line(unsafe-typecast)
         market[id].totalBorrowAssets -= uint128(repaidAssets);
 
         position[id][borrower].collateral -= seizedAssets;
@@ -397,8 +408,11 @@ contract Markets is IMarkets, ReentrancyGuard {
             badDebtShares = position[id][borrower].borrowShares;
             badDebtAssets = badDebtShares.toAssetsUp(market[id].totalBorrowAssets, market[id].totalBorrowShares);
 
+            // forge-lint: disable-next-line(unsafe-typecast)
             market[id].totalBorrowAssets -= uint128(badDebtAssets);
+            // forge-lint: disable-next-line(unsafe-typecast)
             market[id].totalBorrowShares -= uint128(badDebtShares);
+            // forge-lint: disable-next-line(unsafe-typecast)
             market[id].totalSupplyAssets -= uint128(badDebtAssets);
             position[id][borrower].borrowShares = 0;
         }
@@ -454,7 +468,9 @@ contract Markets is IMarkets, ReentrancyGuard {
         uint256 borrowRate = IRateModel(marketParams.rateModel).borrowRate(marketParams, market[id]);
         uint256 interest = uint256(market[id].totalBorrowAssets).mulDivDown(borrowRate * elapsed, 1e18 * 365 days);
 
+        // forge-lint: disable-next-line(unsafe-typecast)
         market[id].totalBorrowAssets += uint128(interest);
+        // forge-lint: disable-next-line(unsafe-typecast)
         market[id].totalSupplyAssets += uint128(interest);
 
         uint256 feeShares;
@@ -462,6 +478,7 @@ contract Markets is IMarkets, ReentrancyGuard {
             uint256 feeAmount = interest.mulDivDown(market[id].fee, 1e18);
             feeShares = feeAmount.toSharesDown(market[id].totalSupplyAssets - feeAmount, market[id].totalSupplyShares);
             position[id][feeRecipient].supplyShares += feeShares;
+            // forge-lint: disable-next-line(unsafe-typecast)
             market[id].totalSupplyShares += uint128(feeShares);
         }
 

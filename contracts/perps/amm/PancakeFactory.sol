@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.31;
 
-import "./interfaces/IPancakeFactory.sol";
+import {IPancakeFactory} from "./interfaces/IPancakeFactory.sol";
 
 contract PancakeFactory is IPancakeFactory {
     address public btc;

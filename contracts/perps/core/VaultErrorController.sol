@@ -3,8 +3,8 @@
 pragma solidity ^0.8.31;
 
 
-import "./interfaces/IVault.sol";
-import "../access/Governable.sol";
+import {IVault} from "./interfaces/IVault.sol";
+import {Governable} from "../access/Governable.sol";
 
 contract VaultErrorController is Governable {
     function setErrors(IVault _vault, string[] calldata _errors) external onlyGov {

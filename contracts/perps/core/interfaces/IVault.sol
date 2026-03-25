@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.31;
 
-import "./IVaultUtils.sol";
+import {IVaultUtils} from "./IVaultUtils.sol";
 
 interface IVault {
     function isInitialized() external view returns (bool);

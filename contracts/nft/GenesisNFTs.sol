@@ -693,8 +693,10 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
         uint8 oracleDecimals = chainlinkPriceFeed.decimals();
         uint256 price;
         if (oracleDecimals < 18) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             price = uint256(answer) * 10**(18 - oracleDecimals);
         } else {
+            // forge-lint: disable-next-line(unsafe-typecast)
             price = uint256(answer) / 10**(oracleDecimals - 18);
         }
 
@@ -817,6 +819,7 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
         bytes memory buffer = new bytes(digits);
         while (value != 0) {
             digits -= 1;
+            // forge-lint: disable-next-line(unsafe-typecast)
             buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
             value /= 10;
         }

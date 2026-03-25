@@ -172,13 +172,18 @@ contract PythAdapter is IOracleSource, AccessControl {
 
         if (expo > targetExpo) {
             // Need to divide
+            // forge-lint: disable-next-line(unsafe-typecast)
             uint32 diff = uint32(expo - targetExpo);
+            // forge-lint: disable-next-line(unsafe-typecast)
             return uint256(int256(rawPrice)) / (10 ** diff);
         } else if (expo < targetExpo) {
             // Need to multiply
+            // forge-lint: disable-next-line(unsafe-typecast)
             uint32 diff = uint32(targetExpo - expo);
+            // forge-lint: disable-next-line(unsafe-typecast)
             return uint256(int256(rawPrice)) * (10 ** diff);
         }
+        // forge-lint: disable-next-line(unsafe-typecast)
         return uint256(int256(rawPrice));
     }
 }

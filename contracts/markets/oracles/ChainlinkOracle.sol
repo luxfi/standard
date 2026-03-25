@@ -105,10 +105,13 @@ contract ChainlinkOracle is IOracle {
 
         // Normalize to 8 decimals for consistency
         if (feedDecimals > 8) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             return uint256(answer) / (10 ** (feedDecimals - 8));
         } else if (feedDecimals < 8) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             return uint256(answer) * (10 ** (8 - feedDecimals));
         }
+        // forge-lint: disable-next-line(unsafe-typecast)
         return uint256(answer);
     }
 }

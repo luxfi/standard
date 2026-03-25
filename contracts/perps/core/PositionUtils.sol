@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.31;
 
-import "../peripherals/interfaces/ITimelock.sol";
+import {ITimelock} from "../peripherals/interfaces/ITimelock.sol";
 
-import "./interfaces/IVault.sol";
-import "./interfaces/IRouter.sol";
-import "./interfaces/IShortsTracker.sol";
+import {IVault} from "./interfaces/IVault.sol";
+import {IRouter} from "./interfaces/IRouter.sol";
+import {IShortsTracker} from "./interfaces/IShortsTracker.sol";
 
 library PositionUtils {
     

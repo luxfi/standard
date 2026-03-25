@@ -426,6 +426,7 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
         expectedBalance = totalProtocolFeesIn + totalValidatorRewardsIn 
                         - totalPerfFeesTaken - totalSlashingLosses;
         actualBalance = lux.balanceOf(address(this));
+        // forge-lint: disable-next-line(unsafe-typecast)
         discrepancy = int256(actualBalance) - int256(expectedBalance);
     }
 

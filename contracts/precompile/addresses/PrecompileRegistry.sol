@@ -455,6 +455,7 @@ library PrecompileRegistry {
     function precompileAddress(uint8 p, uint8 c, uint8 ii) internal pure returns (address) {
         require(p <= 15 && c <= 15, "Invalid P or C nibble");
         uint256 selector = (uint256(p) << 12) | (uint256(c) << 8) | uint256(ii);
+        // forge-lint: disable-next-line(unsafe-typecast)
         return address(uint160(0x10000 + selector));
     }
 

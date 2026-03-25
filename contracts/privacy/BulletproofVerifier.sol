@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../interfaces/IRangeProofVerifier.sol";
+import {IRangeProofVerifier} from "../interfaces/IRangeProofVerifier.sol";
 
 /**
  * @title BulletproofVerifier

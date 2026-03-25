@@ -283,10 +283,11 @@ contract WarrantHedgeyV1 is
         if (rate_ > amount_) revert RateExceedsAmount();
         if (period_ == 0) revert InvalidPeriod();
 
-        // Calculate vesting end time
+        // Calculate vesting end time (integer division for vesting periods)
+        uint256 vestingPeriods = amount_ / rate_;
         uint256 end = (amount_ % rate_ == 0)
-            ? (amount_ / rate_) * period_ + start_
-            : ((amount_ / rate_) * period_) + period_ + start_;
+            ? vestingPeriods * period_ + start_
+            : (vestingPeriods * period_) + period_ + start_;
 
         if (cliff_ > end) revert CliffExceedsEnd(cliff_, end);
     }

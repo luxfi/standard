@@ -149,6 +149,7 @@ contract Allocator is ERC4626, ReentrancyGuard {
         
         Id id = marketParams.id();
         config[id] = MarketConfig({
+            // forge-lint: disable-next-line(unsafe-typecast)
             cap: uint184(cap),
             enabled: true,
             removableAt: 0
@@ -176,6 +177,7 @@ contract Allocator is ERC4626, ReentrancyGuard {
         Id id = marketParams.id();
         if (!config[id].enabled) revert MarketNotEnabled();
         
+        // forge-lint: disable-next-line(unsafe-typecast)
         config[id].cap = uint184(newCap);
         emit SetMarketCap(id, newCap);
     }
@@ -184,6 +186,7 @@ contract Allocator is ERC4626, ReentrancyGuard {
     function disableMarket(MarketParams calldata marketParams) external onlyCurator {
         Id id = marketParams.id();
         config[id].enabled = false;
+        // forge-lint: disable-next-line(unsafe-typecast)
         config[id].removableAt = uint64(block.timestamp + TIMELOCK);
         emit MarketDisabled(id);
     }

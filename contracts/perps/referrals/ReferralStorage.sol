@@ -3,10 +3,9 @@
 pragma solidity ^0.8.31;
 
 
-import "../access/Governable.sol";
-import "../peripherals/interfaces/ITimelock.sol";
+import {Governable} from "../access/Governable.sol";
 
-import "./interfaces/IReferralStorage.sol";
+import {IReferralStorage} from "./interfaces/IReferralStorage.sol";
 
 contract ReferralStorage is Governable, IReferralStorage {
     

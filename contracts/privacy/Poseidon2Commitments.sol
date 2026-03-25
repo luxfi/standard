@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../interfaces/IPoseidon2.sol";
+import {Poseidon2} from "../interfaces/IPoseidon2.sol";
 
 /**
  * @title Poseidon2Commitments

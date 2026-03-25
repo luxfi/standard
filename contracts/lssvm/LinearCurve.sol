@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import "./ICurve.sol";
+import {ICurve} from "./ICurve.sol";
 
 /// @title LinearCurve - Linear Bonding Curve
 /// @notice Implements linear price changes for NFT AMM
@@ -48,6 +48,7 @@ contract LinearCurve is ICurve {
         uint256 priceIncrease = uint256(delta) * numItems;
         uint256 newSpotPrice256 = uint256(spotPrice) + priceIncrease;
         if (newSpotPrice256 > type(uint128).max) revert SpotPriceOverflow();
+        // forge-lint: disable-next-line(unsafe-typecast)
         newSpotPrice = uint128(newSpotPrice256);
 
         // Delta doesn't change for linear curve
@@ -105,6 +106,7 @@ contract LinearCurve is ICurve {
             }
             priceDecrease = uint256(delta) * numItems;
         }
+        // forge-lint: disable-next-line(unsafe-typecast)
         newSpotPrice = uint128(uint256(spotPrice) - priceDecrease);
 
         // Delta doesn't change for linear curve

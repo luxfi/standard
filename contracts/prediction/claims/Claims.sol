@@ -115,6 +115,7 @@ contract Claims is ERC1155, IClaims {
 
         // fullIndexSet is a bitmask with all outcome bits set
         // e.g., for 4 outcomes: 0b1111 = 15
+        // forge-lint: disable-next-line(incorrect-shift)
         uint256 fullIndexSet = (1 << outcomeSlotCount) - 1;
         uint256 freeIndexSet = fullIndexSet;
 
@@ -186,6 +187,7 @@ contract Claims is ERC1155, IClaims {
         uint256 outcomeSlotCount = _payoutNumerators[conditionId].length;
         if (outcomeSlotCount == 0) revert ConditionNotPrepared();
 
+        // forge-lint: disable-next-line(incorrect-shift)
         uint256 fullIndexSet = (1 << outcomeSlotCount) - 1;
         uint256 freeIndexSet = fullIndexSet;
 
@@ -255,6 +257,7 @@ contract Claims is ERC1155, IClaims {
         if (outcomeSlotCount == 0) revert ConditionNotPrepared();
 
         uint256 totalPayout = 0;
+        // forge-lint: disable-next-line(incorrect-shift)
         uint256 fullIndexSet = (1 << outcomeSlotCount) - 1;
 
         for (uint256 i = 0; i < indexSets.length;) {
@@ -269,6 +272,7 @@ contract Claims is ERC1155, IClaims {
             // Calculate payout numerator for this index set
             uint256 payoutNumerator = 0;
             for (uint256 j = 0; j < outcomeSlotCount;) {
+                // forge-lint: disable-next-line(incorrect-shift)
                 if (indexSet & (1 << j) != 0) {
                     payoutNumerator += _payoutNumerators[conditionId][j];
                 }

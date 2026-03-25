@@ -2,7 +2,6 @@
 pragma solidity ^0.8.31;
 
 import {FHE, BindingsEbool, BindingsEuint8, BindingsEuint16, BindingsEuint32, BindingsEuint64, BindingsEuint128, BindingsEaddress, ebool, euint8, euint16, euint32, euint64, euint128, euint256, eaddress} from "../FHE.sol";
-import {SealedBool, SealedUint, SealedAddress} from "../IFHE.sol";
 import {PermissionedV2, PermissionV2} from "../access/PermissionedV2.sol";
 
 contract TypedSealedOutputsTest is PermissionedV2 {

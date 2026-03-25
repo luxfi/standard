@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Currency, PoolKey, BalanceDelta, HookPermissions, SwapParams, ModifyLiquidityParams} from "./Types.sol";
+import {PoolKey, BalanceDelta, HookPermissions, SwapParams, ModifyLiquidityParams} from "./Types.sol";
 
 /// @title IHooks
 /// @notice Interface for DEX hook contracts

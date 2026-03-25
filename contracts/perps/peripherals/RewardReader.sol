@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.31;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../staking/interfaces/IVester.sol";
-import "../staking/interfaces/IRewardTracker.sol";
+import {IVester} from "../staking/interfaces/IVester.sol";
+import {IRewardTracker} from "../staking/interfaces/IRewardTracker.sol";
 
 contract RewardReader {
     

@@ -2,11 +2,10 @@
 
 pragma solidity ^0.8.31;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./interfaces/IVault.sol";
-import "./interfaces/IVaultUtils.sol";
+import {IVault} from "./interfaces/IVault.sol";
+import {IVaultUtils} from "./interfaces/IVaultUtils.sol";
 
-import "../access/Governable.sol";
+import {Governable} from "../access/Governable.sol";
 
 contract VaultUtils is IVaultUtils, Governable {
     

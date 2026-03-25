@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../../FHE.sol";
+import {FHE, ebool, euint64} from "../../FHE.sol";
 import {TFHEApp} from "../../threshold/TFHEApp.sol";
 import {TFHE} from "../../threshold/TFHE.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -103,6 +103,7 @@ abstract contract ConfidentialLRC20Wrapped is
             revert AmountTooHigh();
         }
 
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint64 amountUint64 = uint64(amountAdjusted);
 
         _unsafeMint(msg.sender, amountUint64);

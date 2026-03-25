@@ -101,6 +101,7 @@ contract MockFheOps {
         uint8 toType,
         int32
     ) external pure returns (bytes memory) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         bytes32 result = bytes32(input);
         return bytes32ToBytes(result, toType);
     }
@@ -136,6 +137,7 @@ contract MockFheOps {
         bytes memory input,
         uint8 toType
     ) external pure returns (bytes memory) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         bytes32 result = bytes32(input);
         return bytes32ToBytes(result, toType);
     }
@@ -256,6 +258,7 @@ contract MockFheOps {
         bytes memory lhsHash,
         bytes memory rhsHash
     ) external pure returns (bytes memory) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         bytes32 result = bytes32(lhsHash) & bytes32(rhsHash);
         return bytes32ToBytes(result, utype);
     }
@@ -265,6 +268,7 @@ contract MockFheOps {
         bytes memory lhsHash,
         bytes memory rhsHash
     ) external pure returns (bytes memory) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         bytes32 result = bytes32(lhsHash) | bytes32(rhsHash);
         return bytes32ToBytes(result, utype);
     }
@@ -274,6 +278,7 @@ contract MockFheOps {
         bytes memory lhsHash,
         bytes memory rhsHash
     ) external pure returns (bytes memory) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         bytes32 result = bytes32(lhsHash) ^ bytes32(rhsHash);
         return bytes32ToBytes(result, utype);
     }
@@ -354,6 +359,7 @@ contract MockFheOps {
         uint8 utype,
         bytes memory value
     ) external pure returns (bytes memory) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         bytes32 result = ~bytes32(value);
         return bytes32ToBytes(result, utype);
     }

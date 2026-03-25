@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
 
-import "./interfaces/IFastPriceEvents.sol";
-import "../access/Governable.sol";
+import {IFastPriceEvents} from "./interfaces/IFastPriceEvents.sol";
+import {Governable} from "../access/Governable.sol";
 
 pragma solidity ^0.8.31;
 

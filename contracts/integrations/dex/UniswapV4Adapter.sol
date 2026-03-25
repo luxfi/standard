@@ -168,6 +168,7 @@ contract UniswapV4Adapter is ILiquidityEngine {
         bool zeroForOne = tokenIn == currency0;
         IPoolManager.SwapParams memory params = IPoolManager.SwapParams({
             zeroForOne: zeroForOne,
+            // forge-lint: disable-next-line(unsafe-typecast)
             amountSpecified: int256(amountIn),
             sqrtPriceLimitX96: zeroForOne ? 4295128740 : 1461446703485210103287273052203988822378723970341
         });

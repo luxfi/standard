@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.31;
 
-import "./MintableBaseToken.sol";
+import {MintableBaseToken} from "./MintableBaseToken.sol";
 
 /// @title LPX Token
 /// @notice Governance token for the Lux Perps protocol

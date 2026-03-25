@@ -28,7 +28,6 @@ pragma solidity ^0.8.24;
  * - Slashing protection during unbonding
  */
 
-import {IYieldStrategy} from "../IYieldStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -1084,6 +1083,7 @@ contract EigenPodStrategy is Ownable, ReentrancyGuard{
             ? eigenPod.nonBeaconChainETHBalanceWei() 
             : 0;
         
+        // forge-lint: disable-next-line(unsafe-typecast)
         return totalStaked + podBalance + (podShares > 0 ? uint256(podShares) : 0);
     }
 

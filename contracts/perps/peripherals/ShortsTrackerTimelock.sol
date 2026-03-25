@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-import "../access/Governable.sol";
-import "../core/interfaces/IShortsTracker.sol";
-import "./interfaces/IHandlerTarget.sol";
+import {Governable} from "../access/Governable.sol";
+import {IShortsTracker} from "../core/interfaces/IShortsTracker.sol";
+import {IHandlerTarget} from "./interfaces/IHandlerTarget.sol";
 
 pragma solidity ^0.8.31;
 

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 
 
-import "./interfaces/IVaultPriceFeed.sol";
-import "../oracle/interfaces/IPriceFeed.sol";
-import "../oracle/interfaces/ISecondaryPriceFeed.sol";
-import "../oracle/interfaces/IChainlinkFlags.sol";
-import "../amm/interfaces/IPancakePair.sol";
+import {IVaultPriceFeed} from "./interfaces/IVaultPriceFeed.sol";
+import {IPriceFeed} from "../oracle/interfaces/IPriceFeed.sol";
+import {ISecondaryPriceFeed} from "../oracle/interfaces/ISecondaryPriceFeed.sol";
+import {IChainlinkFlags} from "../oracle/interfaces/IChainlinkFlags.sol";
+import {IPancakePair} from "../amm/interfaces/IPancakePair.sol";
 
 pragma solidity ^0.8.31;
 
@@ -262,6 +262,7 @@ contract VaultPriceFeed is IVaultPriceFeed {
         uint256 _maxPriceAge = getMaxPriceAge(_token);
         require(block.timestamp - updatedAt <= _maxPriceAge, "VaultPriceFeed: price too old");
 
+        // forge-lint: disable-next-line(unsafe-typecast)
         return uint256(price);
     }
 
@@ -301,6 +302,7 @@ contract VaultPriceFeed is IVaultPriceFeed {
                 continue;
             }
             
+            // forge-lint: disable-next-line(unsafe-typecast)
             p = uint256(_p);
 
             if (price == 0) {

@@ -16,6 +16,7 @@ library FHECommon {
         if (value < 0) {
             revert SecurityZoneOutOfBounds(value);
         }
+        // forge-lint: disable-next-line(unsafe-typecast)
         return uint256(uint32(value));
     }
 
