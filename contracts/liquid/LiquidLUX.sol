@@ -86,12 +86,13 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     uint256 public constant MAX_PERF_FEE_BPS = 2000; // 20% max
     uint256 public constant MAX_SLASHING_RESERVE_BPS = 2000; // 20% max
 
-    /// @notice Virtual shares offset to prevent first-depositor inflation attack
-    /// @dev Follows the Morpho Blue pattern (see contracts/markets/libraries/SharesMathLib.sol)
+    /// @notice Minimum liquidity permanently locked on first deposit (like Uniswap V2)
+    uint256 public constant MINIMUM_LIQUIDITY = 1e6;
+    /// @notice Dead address for burning minimum liquidity
+    address internal constant DEAD = 0x000000000000000000000000000000000000dEaD;
+    /// @notice Virtual shares/assets offset (additional protection on top of MINIMUM_LIQUIDITY)
     uint256 internal constant VIRTUAL_SHARES = 1e6;
-
-    /// @notice Virtual assets offset to prevent first-depositor inflation attack
-    uint256 internal constant VIRTUAL_ASSETS = 1;
+    uint256 internal constant VIRTUAL_ASSETS = 1e6;
 
     // ============ Immutables ============
     
@@ -189,15 +190,22 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
      */
     function deposit(uint256 amount) external nonReentrant whenNotPaused returns (uint256 shares) {
         if (amount == 0) revert ZeroAmount();
-        
+
+        // Transfer LUX from user first (prevents reentrancy manipulation of totalAssets)
+        lux.safeTransferFrom(msg.sender, address(this), amount);
+
+        bool isFirstDeposit = totalSupply() == 0;
         shares = _convertToShares(amount);
         if (shares == 0) revert ZeroAmount();
-        
-        // CEI: Effects before interactions
+
+        if (isFirstDeposit) {
+            // Lock MINIMUM_LIQUIDITY to dead address — prevents inflation attack
+            require(shares > MINIMUM_LIQUIDITY, "Deposit too small");
+            _mint(DEAD, MINIMUM_LIQUIDITY);
+            shares -= MINIMUM_LIQUIDITY;
+        }
+
         _mint(msg.sender, shares);
-        
-        // Transfer LUX from user
-        lux.safeTransferFrom(msg.sender, address(this), amount);
     }
 
     /**
