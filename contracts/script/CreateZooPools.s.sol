@@ -132,7 +132,9 @@ contract CreateZooPools is Script {
     // =========================================================================
 
     function _getSqrtRatioAtTick(int24 tick_) internal pure returns (uint160) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint256 absTick = tick_ < 0 ? uint256(uint24(-tick_)) : uint256(uint24(tick_));
+        // forge-lint: disable-next-line(unsafe-typecast)
         require(absTick <= uint256(int256(MAX_TICK)), "tick OOB");
 
         uint256 ratio = absTick & 0x1 != 0
@@ -172,6 +174,7 @@ contract CreateZooPools is Script {
         if (diff == 0) return 0;
         uint256 intermediate = (amount0 * uint256(sqrtA)) / (1 << 96);
         uint256 liq = (intermediate * uint256(sqrtB)) / diff;
+        // forge-lint: disable-next-line(unsafe-typecast)
         return liq > type(uint128).max ? type(uint128).max : uint128(liq);
     }
 
@@ -197,7 +200,9 @@ contract CreateZooPools is Script {
     }
 
     function _tickStr(int24 t) internal pure returns (string memory) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         if (t >= 0) return vm.toString(uint256(uint24(t)));
+        // forge-lint: disable-next-line(unsafe-typecast)
         return string.concat("-", vm.toString(uint256(uint24(-t))));
     }
 }

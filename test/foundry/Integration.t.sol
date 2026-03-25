@@ -78,7 +78,9 @@ contract MockV2Pair {
         balanceOf[to] += liquidity;
         totalSupply += liquidity;
 
+        // forge-lint: disable-next-line(unsafe-typecast)
         reserve0 = uint112(balance0);
+        // forge-lint: disable-next-line(unsafe-typecast)
         reserve1 = uint112(balance1);
         blockTimestampLast = uint32(block.timestamp);
     }
@@ -96,7 +98,9 @@ contract MockV2Pair {
         // Simplified K check with 0.3% fee
         require(balance0 * balance1 >= uint256(reserve0) * uint256(reserve1) * 997 / 1000, "K");
 
+        // forge-lint: disable-next-line(unsafe-typecast)
         reserve0 = uint112(balance0);
+        // forge-lint: disable-next-line(unsafe-typecast)
         reserve1 = uint112(balance1);
         blockTimestampLast = uint32(block.timestamp);
     }

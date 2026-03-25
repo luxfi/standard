@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.24;
 
-import "../IYieldStrategy.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title Perpetual DEX Yield Strategies
 /// @notice High-yield strategies from perpetual futures liquidity provision
@@ -684,6 +683,7 @@ contract VertexStrategy is BasePerpsStrategy {
         IVertexEndpoint.DepositCollateral memory txn = IVertexEndpoint.DepositCollateral({
             sender: subaccount,
             productId: USDC_PRODUCT_ID,
+            // forge-lint: disable-next-line(unsafe-typecast)
             amount: uint128(amount)
         });
 
@@ -709,6 +709,7 @@ contract VertexStrategy is BasePerpsStrategy {
         IVertexEndpoint(ENDPOINT).withdrawCollateral(
             subaccount,
             USDC_PRODUCT_ID,
+            // forge-lint: disable-next-line(unsafe-typecast)
             uint128(amount),
             uint64(block.timestamp)
         );

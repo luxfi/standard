@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.31;
 
-import "./IVault.sol";
+import {IVault} from "./IVault.sol";
 
 interface ILLPManager {
     function llp() external view returns (address);

@@ -2,19 +2,13 @@
 
 pragma solidity ^0.8.31;
 
-import "./interfaces/ITimelockTarget.sol";
-import "./interfaces/IHandlerTarget.sol";
-import "../access/interfaces/IAdmin.sol";
-import "../core/interfaces/IVaultPriceFeed.sol";
-import "../oracle/interfaces/IFastPriceFeed.sol";
-import "../referrals/interfaces/IReferralStorage.sol";
-import "../tokens/interfaces/IYieldToken.sol";
-import "../tokens/interfaces/IBaseToken.sol";
-import "../tokens/interfaces/IMintable.sol";
-import "../tokens/interfaces/ILPUSD.sol";
-import "../staking/interfaces/IVester.sol";
+import {ITimelockTarget} from "./interfaces/ITimelockTarget.sol";
+import {IAdmin} from "../access/interfaces/IAdmin.sol";
+import {IVaultPriceFeed} from "../core/interfaces/IVaultPriceFeed.sol";
+import {IFastPriceFeed} from "../oracle/interfaces/IFastPriceFeed.sol";
+import {IBaseToken} from "../tokens/interfaces/IBaseToken.sol";
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract PriceFeedTimelock {
     

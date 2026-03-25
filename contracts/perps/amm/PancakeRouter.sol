@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.31;
 
-import "../../mocks/PerpsTestToken.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./interfaces/IPancakeRouter.sol";
+import {Token} from "../../mocks/PerpsTestToken.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IPancakeRouter} from "./interfaces/IPancakeRouter.sol";
 
 contract PancakeRouter is IPancakeRouter {
     address public pair;

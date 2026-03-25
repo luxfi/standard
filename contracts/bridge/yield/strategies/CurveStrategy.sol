@@ -12,7 +12,6 @@ pragma solidity ^0.8.24;
  * - Convex boost (if using Convex)
  */
 
-import {IYieldStrategy} from "../IYieldStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -150,6 +149,7 @@ contract CurveStrategy is Ownable {
 
         // Prepare amounts array (only our coin has value)
         uint256[3] memory amounts;
+        // forge-lint: disable-next-line(unsafe-typecast)
         amounts[uint256(int256(coinIndex))] = amount;
 
         // Add liquidity to Curve

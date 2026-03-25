@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
 import {SecurityToken} from "../../contracts/securities/token/SecurityToken.sol";
-import {RestrictedToken} from "../../contracts/securities/token/RestrictedToken.sol";
 import {ComplianceRegistry} from "../../contracts/securities/compliance/ComplianceRegistry.sol";
 import {WhitelistModule} from "../../contracts/securities/compliance/WhitelistModule.sol";
 import {LockupModule} from "../../contracts/securities/compliance/LockupModule.sol";
@@ -11,9 +10,6 @@ import {JurisdictionModule} from "../../contracts/securities/compliance/Jurisdic
 import {IERC1404} from "../../contracts/securities/interfaces/IERC1404.sol";
 import {IST20} from "../../contracts/securities/interfaces/IST20.sol";
 import {IComplianceModule} from "../../contracts/securities/interfaces/IComplianceModule.sol";
-import {CorporateActions} from "../../contracts/securities/corporate/CorporateActions.sol";
-import {DividendDistributor} from "../../contracts/securities/corporate/DividendDistributor.sol";
-import {DocumentRegistry} from "../../contracts/securities/registry/DocumentRegistry.sol";
 
 /**
  * @title Securities Module Tests

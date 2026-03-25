@@ -5,7 +5,8 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "../../contracts/nft/Market.sol";
 import "../../contracts/tokens/LRC1155/LRC1155.sol";
-import {ILRC20} from "../../contracts/tokens/interfaces/ILRC20.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 // Shared mocks
 import {MockERC721Full as MockERC721, MockERC721FullWithRoyalty as MockERC721WithRoyalty, MockLRC20} from "./TestMocks.sol";

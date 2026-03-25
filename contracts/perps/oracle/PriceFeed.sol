@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.31;
 
-import "./interfaces/IPriceFeed.sol";
+import {IPriceFeed} from "./interfaces/IPriceFeed.sol";
 
 contract PriceFeed is IPriceFeed {
     int256 public answer;

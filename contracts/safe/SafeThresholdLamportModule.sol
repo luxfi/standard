@@ -112,10 +112,8 @@ contract SafeThresholdLamportModule is SafeModule {
             for (uint256 i; i < 256; i++) {
                 // Select pub[i][0] if bit is 0, pub[i][1] if bit is 1
                 // Verify keccak256(sig[i]) == pub[i][bit]
-                if (
-                    pub[i][((bits & (1 << (255 - i))) > 0) ? 1 : 0] !=
-                    keccak256(sig[i])
-                ) return false;
+                // forge-lint: disable-next-line(incorrect-shift)
+                if (pub[i][((bits & (1 << (255 - i))) > 0) ? 1 : 0] != keccak256(sig[i])) return false;
             }
             return true;
         }

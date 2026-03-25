@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.24;
 
-import "../IYieldStrategy.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title L2 DEX Yield Strategies
 /// @notice Yield strategies for L2 DEX protocols with gauge staking and ve-tokenomics
@@ -1180,6 +1179,7 @@ contract TraderJoeStrategy is L2DexBaseStrategy {
         (amountX, amountY) = ILBRouter(LB_ROUTER).removeLiquidity(
             address(tokenA),
             address(tokenB),
+            // forge-lint: disable-next-line(unsafe-typecast)
             uint16(binStep),
             amountXMin,
             amountYMin,

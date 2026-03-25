@@ -18,7 +18,6 @@ import {sLUX as StakedLUX} from "../../contracts/staking/sLUX.sol";
 // AMM
 import {AMMV2Factory} from "../../contracts/amm/AMMV2Factory.sol";
 import {AMMV2Router} from "../../contracts/amm/AMMV2Router.sol";
-import {AMMV2Pair} from "../../contracts/amm/AMMV2Pair.sol";
 
 // Governance (using DAO for simple governance - Governor is Zodiac-style for Safe)
 import {Stake} from "../../contracts/governance/Stake.sol";
@@ -36,12 +35,7 @@ import {LSSVMRouter} from "../../contracts/lssvm/LSSVMRouter.sol";
 
 // Markets (Lending)
 import {Markets} from "../../contracts/markets/Markets.sol";
-import {MarketParams, Position, Market, Id} from "../../contracts/markets/interfaces/IMarkets.sol";
-
-// OpenZeppelin
-import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
-import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {MarketParams} from "../../contracts/markets/interfaces/IMarkets.sol";
 
 // Shared mocks
 import {MockNFT, MockOracle, MockRateModel} from "./TestMocks.sol";
@@ -484,6 +478,7 @@ contract LuxE2ETest is Test {
         wlux.approve(address(voteLux), lockAmount);
 
         // Lock for vLUX
+        // forge-lint: disable-next-line(divide-before-multiply)
         uint256 unlockTime = ((block.timestamp + lockTime) / 1 weeks) * 1 weeks;
         voteLux.createLock(lockAmount, unlockTime);
 
@@ -819,6 +814,7 @@ contract LuxE2ETest is Test {
         // Step 5: Lock for governance
         uint256 lockAmount = 1000 ether;
         wlux.approve(address(voteLux), lockAmount);
+        // forge-lint: disable-next-line(divide-before-multiply)
         uint256 unlockTime = ((block.timestamp + 365 days) / 1 weeks) * 1 weeks;
         voteLux.createLock(lockAmount, unlockTime);
         console.log("5. Locked", lockAmount / 1e18, "WLUX for vLUX");

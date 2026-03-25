@@ -562,8 +562,10 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
 
         // Simplified PnL calculation
         if (token0Position >= 0) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             unrealizedPnL = uint256(token0Position) * midPrice / 1e18;
         } else {
+            // forge-lint: disable-next-line(unsafe-typecast)
             unrealizedPnL = uint256(-token0Position) * midPrice / 1e18;
         }
     }

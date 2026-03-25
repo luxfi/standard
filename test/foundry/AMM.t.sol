@@ -980,6 +980,7 @@ contract AMMV3Test is Test {
         // Use direct tick values that are multiples of 60 for tickLower
         int24 tickLower = int24(bound(int256(tick), -887220, 887100));
         // Round to nearest multiple of 60 (towards zero)
+        // forge-lint: disable-next-line(divide-before-multiply)
         tickLower = (tickLower / 60) * 60;
         int24 tickUpper = tickLower + 120;
 

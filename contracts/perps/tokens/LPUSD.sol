@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.31;
 
-import "./interfaces/ILPUSD.sol";
-import "./YieldToken.sol";
+import {ILPUSD} from "./interfaces/ILPUSD.sol";
+import {YieldToken} from "./YieldToken.sol";
 
 contract LPUSD is YieldToken, ILPUSD {
 

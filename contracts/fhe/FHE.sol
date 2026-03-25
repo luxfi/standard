@@ -2089,6 +2089,7 @@ library FHE {
     /// @return ready Flag indicating if the value was successfully decrypted
     function revealSafe(euint8 input) internal view returns (uint8 result, bool ready) {
         (uint256 _result, bool _ready) = FHENetwork.revealSafe(euint8.unwrap(input));
+        // forge-lint: disable-next-line(unsafe-typecast)
         return (uint8(_result), _ready);
     }
 
@@ -2099,6 +2100,7 @@ library FHE {
     /// @return ready Flag indicating if the value was successfully decrypted
     function revealSafe(euint16 input) internal view returns (uint16 result, bool ready) {
         (uint256 _result, bool _ready) = FHENetwork.revealSafe(euint16.unwrap(input));
+        // forge-lint: disable-next-line(unsafe-typecast)
         return (uint16(_result), _ready);
     }
 
@@ -2109,6 +2111,7 @@ library FHE {
     /// @return ready Flag indicating if the value was successfully decrypted
     function revealSafe(euint32 input) internal view returns (uint32 result, bool ready) {
         (uint256 _result, bool _ready) = FHENetwork.revealSafe(euint32.unwrap(input));
+        // forge-lint: disable-next-line(unsafe-typecast)
         return (uint32(_result), _ready);
     }
 
@@ -2119,6 +2122,7 @@ library FHE {
     /// @return ready Flag indicating if the value was successfully decrypted
     function revealSafe(euint64 input) internal view returns (uint64 result, bool ready) {
         (uint256 _result, bool _ready) = FHENetwork.revealSafe(euint64.unwrap(input));
+        // forge-lint: disable-next-line(unsafe-typecast)
         return (uint64(_result), _ready);
     }
 
@@ -2129,6 +2133,7 @@ library FHE {
     /// @return ready Flag indicating if the value was successfully decrypted
     function revealSafe(euint128 input) internal view returns (uint128 result, bool ready) {
         (uint256 _result, bool _ready) = FHENetwork.revealSafe(euint128.unwrap(input));
+        // forge-lint: disable-next-line(unsafe-typecast)
         return (uint128(_result), _ready);
     }
 
@@ -2139,6 +2144,7 @@ library FHE {
     /// @return ready Flag indicating if the value was successfully decrypted
     function revealSafe(eaddress input) internal view returns (address result, bool ready) {
         (uint256 _result, bool _ready) = FHENetwork.revealSafe(eaddress.unwrap(input));
+        // forge-lint: disable-next-line(unsafe-typecast)
         return (address(uint160(_result)), _ready);
     }
 

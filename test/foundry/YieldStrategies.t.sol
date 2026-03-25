@@ -4,9 +4,8 @@ pragma solidity ^0.8.24;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-import {AaveV3SupplyStrategy, AaveV3LeverageStrategy, IPool, IAToken, IRewardsController, IPriceOracle, DataTypes} from "../../contracts/bridge/yield/strategies/AaveV3Strategy.sol";
-import {YearnV3Strategy, IYearnV3Vault, IYearnGauge, IERC4626} from "../../contracts/bridge/yield/strategies/YearnV3Strategy.sol";
-import {IYieldStrategy} from "../../contracts/bridge/yield/IYieldStrategy.sol";
+import {AaveV3SupplyStrategy, AaveV3LeverageStrategy, IPool, IRewardsController, IPriceOracle, DataTypes} from "../../contracts/bridge/yield/strategies/AaveV3Strategy.sol";
+import {YearnV3Strategy} from "../../contracts/bridge/yield/strategies/YearnV3Strategy.sol";
 
 import {ILRC20} from "../../contracts/tokens/interfaces/ILRC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -85,8 +84,10 @@ contract MockAavePool is IPool {
         reserves[asset] = DataTypes.ReserveData({
             configuration: DataTypes.ReserveConfigurationMap(0),
             liquidityIndex: 1e27,
+            // forge-lint: disable-next-line(unsafe-typecast)
             currentLiquidityRate: uint128(supplyRate),
             variableBorrowIndex: 1e27,
+            // forge-lint: disable-next-line(unsafe-typecast)
             currentVariableBorrowRate: uint128(borrowRate),
             currentStableBorrowRate: 0,
             lastUpdateTimestamp: uint40(block.timestamp),
@@ -177,6 +178,7 @@ contract MockAavePool is IPool {
         if (totalDebtBase == 0) {
             healthFactor = type(uint256).max;
         } else {
+            // forge-lint: disable-next-line(divide-before-multiply)
             healthFactor = (totalCollateralBase * currentLiquidationThreshold / 10000) * 1e18 / totalDebtBase;
         }
     }

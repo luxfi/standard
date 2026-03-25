@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 interface IPriceFeed {
     function getPrice(address token, bool maximize) external view returns (uint256);
@@ -223,10 +223,12 @@ contract Perp is Ownable, ReentrancyGuard {
         }
 
         // Calculate payout
+        // forge-lint: disable-next-line(unsafe-typecast)
         int256 payout = int256(collateralDelta) + pnl - int256(fee);
         
         if (payout > 0) {
             // Convert USD to tokens and transfer
+            // forge-lint: disable-next-line(unsafe-typecast)
             uint256 payoutTokens = _usdToToken(collateralToken, uint256(payout));
             IERC20(collateralToken).safeTransfer(msg.sender, payoutTokens);
         }
@@ -258,6 +260,7 @@ contract Perp is Ownable, ReentrancyGuard {
         int256 remainingCollateral = int256(position.collateral) + pnl;
         uint256 maintenanceMargin = position.size * 500 / BASIS_POINTS; // 5%
         
+        // forge-lint: disable-next-line(unsafe-typecast)
         if (remainingCollateral >= int256(maintenanceMargin)) revert NotLiquidatable();
 
         // Calculate liquidation fee
@@ -338,6 +341,7 @@ contract Perp is Ownable, ReentrancyGuard {
         
         int256 effectiveCollateral = int256(position.collateral) + pnl;
         if (effectiveCollateral > 0) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             leverage = position.size * PRICE_PRECISION / uint256(effectiveCollateral);
         }
     }
@@ -416,12 +420,14 @@ contract Perp is Ownable, ReentrancyGuard {
     ) internal view returns (int256) {
         if (position.averagePrice == 0) return 0;
 
+        // forge-lint: disable-next-line(unsafe-typecast)
         int256 priceDelta = int256(currentPrice) - int256(position.averagePrice);
         
         if (!isLong) {
             priceDelta = -priceDelta;
         }
 
+        // forge-lint: disable-next-line(unsafe-typecast)
         return int256(sizeDelta) * priceDelta / int256(position.averagePrice);
     }
 }

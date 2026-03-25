@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "./ISTARKVerifier.sol";
+import {Program, Receipt} from "./ISTARKVerifier.sol";
 
 /*
  * IReceiptRegistry - Z-chain Receipt Registry - core interoperability layer

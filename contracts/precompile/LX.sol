@@ -60,6 +60,7 @@ library LX {
     /// @param precompile The precompile address
     /// @return The LP number
     function toLP(address precompile) internal pure returns (uint16) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         return uint16(uint160(precompile));
     }
 
@@ -67,6 +68,7 @@ library LX {
     /// @param addr The address to check
     /// @return True if address is in LP-9xxx range
     function isLXPrecompile(address addr) internal pure returns (bool) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint16 lp = uint16(uint160(addr));
         return lp >= 9000 && lp < 10000;
     }
@@ -75,6 +77,7 @@ library LX {
     /// @param addr The address to check
     /// @return True if address is in LP-6xxx range
     function isBridgePrecompile(address addr) internal pure returns (bool) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint16 lp = uint16(uint160(addr));
         return lp >= 6000 && lp < 7000;
     }

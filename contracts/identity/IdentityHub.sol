@@ -4,7 +4,7 @@ pragma solidity ^0.8.31;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IDIDRegistry, DIDDocument} from "./interfaces/IDID.sol";
+import {IDIDRegistry} from "./interfaces/IDID.sol";
 
 /// @notice Interface for Karma token
 interface IKarma {

@@ -2,12 +2,12 @@
 
 pragma solidity ^0.8.31;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../core/interfaces/ILLPManager.sol";
+import {ILLPManager} from "../core/interfaces/ILLPManager.sol";
 
-import "./interfaces/IRewardTracker.sol";
-import "./interfaces/IRewardTracker.sol";
+import {IRewardTracker} from "./interfaces/IRewardTracker.sol";
+import {IRewardTracker} from "./interfaces/IRewardTracker.sol";
 
 // provide a way to transfer staked LLP tokens by unstaking from the sender
 // and staking for the receiver

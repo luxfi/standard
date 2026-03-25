@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.31;
 
-import "./interfaces/IRewardTracker.sol";
-import "../access/Governable.sol";
+import {IRewardTracker} from "./interfaces/IRewardTracker.sol";
+import {Governable} from "../access/Governable.sol";
 
 contract StakeManager is Governable {
     function stakeForAccount(

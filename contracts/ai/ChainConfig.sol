@@ -3,7 +3,7 @@
 // Copyright (C) 2019-2025, Lux Industries Inc. All rights reserved.
 pragma solidity ^0.8.31;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title ChainConfig

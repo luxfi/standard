@@ -2,7 +2,7 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import {IFheOps, Precompiles} from "../../IFHE.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 library Console {
     function _logImpl(string memory payload) internal pure {

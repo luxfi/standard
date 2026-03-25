@@ -8,9 +8,7 @@ import {
     IDIDRegistry,
     DIDDocument,
     VerificationMethod,
-    VerificationMethodType,
-    Service,
-    ServiceType
+    Service
 } from "./interfaces/IDID.sol";
 
 /**

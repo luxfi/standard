@@ -199,6 +199,7 @@ contract VotingWeightERC20V1 is
         for (uint256 i = numCheckpoints; i > 0; ) {
             // Get checkpoint (indices are 0-based, loop counter is 1-based)
             Checkpoints.Checkpoint208 memory checkpoint = governanceToken
+                // forge-lint: disable-next-line(unsafe-typecast)
                 .checkpoints(voter_, uint32(i - 1));
 
             // Check if this checkpoint was created at or before our target timestamp

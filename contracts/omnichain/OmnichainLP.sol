@@ -438,7 +438,9 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
             price1CumulativeLast += uint256(_reserve0) * timeElapsed / _reserve1;
         }
 
+        // forge-lint: disable-next-line(unsafe-typecast)
         reserve0 = uint112(balance0);
+        // forge-lint: disable-next-line(unsafe-typecast)
         reserve1 = uint112(balance1);
         blockTimestampLast = blockTimestamp;
 

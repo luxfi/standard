@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import "./ICurve.sol";
+import {ICurve} from "./ICurve.sol";
 
 /// @title ExponentialCurve - Exponential Bonding Curve
 /// @notice Implements exponential price changes for NFT AMM
@@ -53,6 +53,7 @@ contract ExponentialCurve is ICurve {
         // New spot price = spotPrice * delta^numItems
         uint256 newSpotPrice256 = (uint256(spotPrice) * deltaPowN) / WAD;
         if (newSpotPrice256 > type(uint128).max) revert SpotPriceOverflow();
+        // forge-lint: disable-next-line(unsafe-typecast)
         newSpotPrice = uint128(newSpotPrice256);
 
         // Delta doesn't change
@@ -111,6 +112,7 @@ contract ExponentialCurve is ICurve {
         if (newSpotPrice256 < MIN_PRICE) {
             newSpotPrice256 = MIN_PRICE;
         }
+        // forge-lint: disable-next-line(unsafe-typecast)
         newSpotPrice = uint128(newSpotPrice256);
 
         // Delta doesn't change

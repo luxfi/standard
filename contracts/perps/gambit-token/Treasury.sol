@@ -2,12 +2,12 @@
 
 pragma solidity ^0.8.31;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import "../amm/interfaces/IPancakeRouter.sol";
-import "./interfaces/IGMT.sol";
-import "../peripherals/interfaces/ITimelockTarget.sol";
+import {IPancakeRouter} from "../amm/interfaces/IPancakeRouter.sol";
+import {IGMT} from "./interfaces/IGMT.sol";
+import {ITimelockTarget} from "../peripherals/interfaces/ITimelockTarget.sol";
 
 contract Treasury is ReentrancyGuard, ITimelockTarget {
     

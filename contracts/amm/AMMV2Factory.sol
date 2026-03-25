@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import "./AMMV2Pair.sol";
+import {AMMV2Pair} from "./AMMV2Pair.sol";
 
 /// @title AMMV2Factory - Uniswap V2 Compatible Factory
 /// @notice Creates and manages LP pairs for token swaps

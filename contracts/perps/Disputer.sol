@@ -15,7 +15,6 @@ import {
     IDisputer
 } from "./interfaces/IDisputer.sol";
 
-import {IFastPriceFeed} from "./oracle/interfaces/IFastPriceFeed.sol";
 import {IVaultPriceFeed} from "./core/interfaces/IVaultPriceFeed.sol";
 import {ISecondaryPriceFeed} from "./oracle/interfaces/ISecondaryPriceFeed.sol";
 
@@ -544,7 +543,9 @@ contract Disputer is IDisputer, IOracleCallbacks {
         str[0] = "0";
         str[1] = "x";
         for (uint256 i = 0; i < 20; i++) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             str[2 + i * 2] = alphabet[uint8(uint160(addr) >> (8 * (19 - i)) >> 4)];
+            // forge-lint: disable-next-line(unsafe-typecast)
             str[3 + i * 2] = alphabet[uint8(uint160(addr) >> (8 * (19 - i))) & 0x0f];
         }
         return string(str);
@@ -564,6 +565,7 @@ contract Disputer is IDisputer, IOracleCallbacks {
         bytes memory buffer = new bytes(digits);
         while (value != 0) {
             digits -= 1;
+            // forge-lint: disable-next-line(unsafe-typecast)
             buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
             value /= 10;
         }

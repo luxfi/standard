@@ -140,6 +140,7 @@ contract vLUX is ReentrancyGuard {
         if (amount == 0) revert ZeroAmount();
         if (locked[msg.sender].amount != 0) revert WithdrawOldTokensFirst();
         
+        // forge-lint: disable-next-line(divide-before-multiply)
         uint256 roundedUnlock = (unlockTime / WEEK) * WEEK; // Round to week
         
         if (roundedUnlock <= block.timestamp) revert LockTooShort();
@@ -167,6 +168,7 @@ contract vLUX is ReentrancyGuard {
         if (_locked.amount == 0) revert NoExistingLock();
         if (_locked.end <= block.timestamp) revert LockExpired();
         
+        // forge-lint: disable-next-line(divide-before-multiply)
         uint256 roundedUnlock = (newUnlockTime / WEEK) * WEEK;
         
         if (roundedUnlock <= _locked.end) revert CanOnlyIncreaseLockEnd();
@@ -268,13 +270,17 @@ contract vLUX is ReentrancyGuard {
             if (oldLocked.end > block.timestamp && oldLocked.amount > 0) {
                 // Multiply before divide to preserve precision
                 uint256 oldDuration = oldLocked.end - block.timestamp;
+                // forge-lint: disable-next-line(unsafe-typecast)
                 uOld.bias = int128(int256((oldLocked.amount * oldDuration) / MAX_LOCK_TIME));
+                // forge-lint: disable-next-line(unsafe-typecast)
                 uOld.slope = int128(int256(oldLocked.amount / MAX_LOCK_TIME));
             }
             if (newLocked.end > block.timestamp && newLocked.amount > 0) {
                 // Multiply before divide to preserve precision
                 uint256 newDuration = newLocked.end - block.timestamp;
+                // forge-lint: disable-next-line(unsafe-typecast)
                 uNew.bias = int128(int256((newLocked.amount * newDuration) / MAX_LOCK_TIME));
+                // forge-lint: disable-next-line(unsafe-typecast)
                 uNew.slope = int128(int256(newLocked.amount / MAX_LOCK_TIME));
             }
             
@@ -292,6 +298,7 @@ contract vLUX is ReentrancyGuard {
         uint256 lastCheckpoint = lastPoint.ts;
         
         // Fill history
+        // forge-lint: disable-next-line(divide-before-multiply)
         uint256 ti = (lastCheckpoint / WEEK) * WEEK;
         for (uint256 i = 0; i < 255; i++) {
             ti += WEEK;
@@ -301,6 +308,7 @@ contract vLUX is ReentrancyGuard {
             } else {
                 dSlope = slopeChanges[ti];
             }
+            // forge-lint: disable-next-line(unsafe-typecast)
             lastPoint.bias -= lastPoint.slope * int128(int256(ti - lastCheckpoint));
             lastPoint.slope += dSlope;
             if (lastPoint.bias < 0) {
@@ -361,15 +369,18 @@ contract vLUX is ReentrancyGuard {
             return 0;
         }
         Point memory lastPoint = userPointHistory[user][_epoch];
+        // forge-lint: disable-next-line(unsafe-typecast)
         lastPoint.bias -= lastPoint.slope * int128(int256(ts - lastPoint.ts));
         if (lastPoint.bias < 0) {
             lastPoint.bias = 0;
         }
+        // forge-lint: disable-next-line(unsafe-typecast)
         return uint256(int256(lastPoint.bias));
     }
-    
+
     function _totalSupply(uint256 ts) internal view returns (uint256) {
         Point memory lastPoint = pointHistory[epoch];
+        // forge-lint: disable-next-line(unsafe-typecast)
         lastPoint.bias -= lastPoint.slope * int128(int256(ts - lastPoint.ts));
         if (lastPoint.bias < 0) {
             lastPoint.bias = 0;

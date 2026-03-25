@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import "../../bridge/LRC20B.sol";
+import {LRC20B} from "../../bridge/LRC20B.sol";
 
 contract LuxDOGS is LRC20B {
     constructor() LRC20B("Liquid DOGS", "LDOGS") {}

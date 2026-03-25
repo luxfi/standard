@@ -402,6 +402,7 @@ contract PerpsTest is Test {
     function testFuzz_PriceImpact(uint256 price) public {
         price = bound(price, 100e8, 100000e8); // $100 - $100,000
         
+        // forge-lint: disable-next-line(unsafe-typecast)
         ethPriceFeed.setAnswer(int256(price));
         
         uint256 fetchedPrice = vaultPriceFeed.getPrice(address(weth), true, true, true);

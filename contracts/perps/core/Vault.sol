@@ -2,14 +2,14 @@
 
 pragma solidity ^0.8.31;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import "../tokens/interfaces/ILPUSD.sol";
-import "./interfaces/IVault.sol";
-import "./interfaces/IVaultUtils.sol";
-import "./interfaces/IVaultPriceFeed.sol";
+import {ILPUSD} from "../tokens/interfaces/ILPUSD.sol";
+import {IVault} from "./interfaces/IVault.sol";
+import {IVaultUtils} from "./interfaces/IVaultUtils.sol";
+import {IVaultPriceFeed} from "./interfaces/IVaultPriceFeed.sol";
 
 contract Vault is ReentrancyGuard, IVault {
     
@@ -1009,6 +1009,7 @@ contract Vault is ReentrancyGuard, IVault {
         // transfer profits out
         if (hasProfit && adjustedDelta > 0) {
             usdOut = adjustedDelta;
+            // forge-lint: disable-next-line(unsafe-typecast)
             position.realisedPnl = position.realisedPnl + int256(adjustedDelta);
 
             // pay out realised profits from the pool amount for short positions
@@ -1029,6 +1030,7 @@ contract Vault is ReentrancyGuard, IVault {
                 _increasePoolAmount(_collateralToken, tokenAmount);
             }
 
+            // forge-lint: disable-next-line(unsafe-typecast)
             position.realisedPnl = position.realisedPnl - int256(adjustedDelta);
         }
 

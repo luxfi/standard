@@ -3,11 +3,11 @@
 // Copyright (C) 2019-2025, Lux Industries Inc. All rights reserved.
 pragma solidity ^0.8.31;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 /**
  * @title ComputeMarket
@@ -728,6 +728,7 @@ contract ComputeMarket is Ownable, ReentrancyGuard {
         }
 
         // Update velocity (momentum) with damping
+        // forge-lint: disable-next-line(unsafe-typecast)
         int256 newVelocity = (int256(marketState.priceVelocity) * int256(DAMPING_FACTOR) / 10000) + force;
 
         // Update price (position)
@@ -737,11 +738,14 @@ contract ComputeMarket is Ownable, ReentrancyGuard {
         if (newPrice < 1e12) newPrice = 1e12; // Floor: 0.000001 AI
         if (newPrice > 1e21) newPrice = 1e21; // Cap: 1000 AI per token
 
+        // forge-lint: disable-next-line(unsafe-typecast)
         marketState.equilibriumPrice = uint256(newPrice);
+        // forge-lint: disable-next-line(unsafe-typecast)
         marketState.priceVelocity = newVelocity >= 0 ? uint256(newVelocity) : 0;
         marketState.utilizationRate = utilization;
         marketState.lastUpdateBlock = block.number;
 
+        // forge-lint: disable-next-line(unsafe-typecast)
         emit MarketStateUpdated(uint256(newPrice), utilization);
     }
 

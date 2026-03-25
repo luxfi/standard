@@ -19,7 +19,6 @@ pragma solidity ^0.8.24;
  * - veFXS: Vote-escrowed FXS for boosted yields
  */
 
-import {IYieldStrategy} from "../IYieldStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -789,6 +788,7 @@ contract veFXSStrategy is Ownable {
             // Create new lock
             uint256 unlockTime = block.timestamp + defaultLockDuration;
             // Round down to week
+            // forge-lint: disable-next-line(divide-before-multiply)
             unlockTime = (unlockTime / 1 weeks) * 1 weeks;
             
             VEFXS.create_lock(amount, unlockTime);
@@ -873,6 +873,7 @@ contract veFXSStrategy is Ownable {
         require(newUnlockTime <= block.timestamp + MAX_LOCK_TIME, "veFXSStrategy: too long");
         
         // Round down to week
+        // forge-lint: disable-next-line(divide-before-multiply)
         newUnlockTime = (newUnlockTime / 1 weeks) * 1 weeks;
         
         VEFXS.increase_unlock_time(newUnlockTime);

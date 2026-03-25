@@ -103,10 +103,13 @@ contract ChainlinkAdapter is IOracleSource, AccessControl {
         // Normalize to 18 decimals
         uint8 decimals = feedDecimals[asset];
         if (decimals < 18) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             price = uint256(answer) * 10**(18 - decimals);
         } else if (decimals > 18) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             price = uint256(answer) / 10**(decimals - 18);
         } else {
+            // forge-lint: disable-next-line(unsafe-typecast)
             price = uint256(answer);
         }
 
@@ -155,10 +158,13 @@ contract ChainlinkAdapter is IOracleSource, AccessControl {
 
         uint8 decimals = feedDecimals[asset];
         if (decimals < 18) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             price = uint256(answer) * 10**(18 - decimals);
         } else if (decimals > 18) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             price = uint256(answer) / 10**(decimals - 18);
         } else {
+            // forge-lint: disable-next-line(unsafe-typecast)
             price = uint256(answer);
         }
     }

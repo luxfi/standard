@@ -2,14 +2,14 @@
 
 pragma solidity ^0.8.31;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import "../access/Governable.sol";
-import "./interfaces/IRewardTracker.sol";
-import "./interfaces/IVester.sol";
-import "../../mocks/PerpsTestToken.sol";
+import {Governable} from "../access/Governable.sol";
+import {IRewardTracker} from "./interfaces/IRewardTracker.sol";
+import {IVester} from "./interfaces/IVester.sol";
+import {Token} from "../../mocks/PerpsTestToken.sol";
 
 /// @title VesterCap
 /// @notice Manages DLUX (governance token) staking caps and conversions

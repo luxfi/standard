@@ -4,7 +4,6 @@ pragma solidity ^0.8.31;
 import "forge-std/Test.sol";
 import {OracleHub} from "../../contracts/oracle/OracleHub.sol";
 import {IOracleWriter} from "../../contracts/oracle/interfaces/IOracleWriter.sol";
-import {IOracle} from "../../contracts/oracle/IOracle.sol";
 
 /**
  * @title OracleHub Test Suite

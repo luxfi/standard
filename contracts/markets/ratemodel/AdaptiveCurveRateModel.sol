@@ -67,12 +67,17 @@ contract AdaptiveCurveRateModel is IRateModel {
         // Adapt rate based on utilization deviation from target
         uint256 elapsed = block.timestamp - lastUpdate[id];
         if (elapsed > 0) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             int256 deviation = int256(utilization) - int256(TARGET_UTILIZATION);
+            // forge-lint: disable-next-line(unsafe-typecast)
             int256 adjustment = (deviation * int256(ADJUSTMENT_SPEED) * int256(elapsed)) / 1e18;
 
+            // forge-lint: disable-next-line(unsafe-typecast)
             int256 newRate = int256(currentRateAtTarget) + adjustment;
+            // forge-lint: disable-next-line(unsafe-typecast)
             newRate = _bound(newRate, int256(MIN_RATE), int256(MAX_RATE));
 
+            // forge-lint: disable-next-line(unsafe-typecast)
             currentRateAtTarget = uint256(newRate);
             rateAtTarget[id] = currentRateAtTarget;
             lastUpdate[id] = block.timestamp;

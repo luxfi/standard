@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "./LSSVMPair.sol";
-import "./ICurve.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {LSSVMPair} from "./LSSVMPair.sol";
+import {ICurve} from "./ICurve.sol";
 
 /// @title LSSVMPairFactory - NFT AMM Factory
 /// @notice Creates and manages LSSVM pairs for NFT trading

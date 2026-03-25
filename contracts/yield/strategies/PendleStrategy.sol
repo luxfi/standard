@@ -23,7 +23,6 @@ pragma solidity ^0.8.24;
  * - VePendleStrategy: Protocol fees (ETH) + vote incentives + boosted rewards
  */
 
-import {IYieldStrategy} from "../IYieldStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -1132,14 +1131,17 @@ contract VePendleStrategy is Ownable, ReentrancyGuard {
         // Calculate new expiry (extend to max or keep current if longer)
         uint128 newExpiry;
         if (lockExpiry == 0 || block.timestamp >= lockExpiry) {
-            // New lock: set to 2 years, rounded to week
-            newExpiry = uint128(((block.timestamp + MAX_LOCK_DURATION) / WEEK) * WEEK);
+            // New lock: set to 2 years, rounded to week (floor to week boundary)
+            uint256 rawExpiry = (block.timestamp + MAX_LOCK_DURATION) / WEEK;
+            // forge-lint: disable-next-line(unsafe-typecast)
+            newExpiry = uint128(rawExpiry * WEEK);
         } else {
             // Existing lock: keep expiry (could optionally extend here)
             newExpiry = lockExpiry;
         }
 
         // Lock PENDLE
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint128 newVeBalance = vePendle.increaseLockPosition(uint128(amount), newExpiry);
 
         lockExpiry = newExpiry;

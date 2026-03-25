@@ -385,8 +385,11 @@ contract Charter is ICharter, ERC165, Initializable {
 
         // C-01/C-02 fix: Add minimum voting delay to prevent flash loan attacks
         // Voting starts in the future, ensuring snapshot block is in the past
+        // forge-lint: disable-next-line(unsafe-typecast)
         proposal.votingStartTimestamp = uint48(block.timestamp + MIN_VOTING_DELAY_SECONDS);
+        // forge-lint: disable-next-line(unsafe-typecast)
         proposal.votingEndTimestamp = uint48(block.timestamp + MIN_VOTING_DELAY_SECONDS + $.votingPeriod);
+        // forge-lint: disable-next-line(unsafe-typecast)
         proposal.votingStartBlock = uint32(block.number + MIN_VOTING_DELAY_BLOCKS);
         proposal.yesVotes = 0;
         proposal.noVotes = 0;

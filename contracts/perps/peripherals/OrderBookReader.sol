@@ -3,7 +3,7 @@
 pragma solidity ^0.8.31;
 
 
-import "../core/interfaces/IOrderBook.sol";
+import {IOrderBook} from "../core/interfaces/IOrderBook.sol";
 
 contract OrderBookReader {
     

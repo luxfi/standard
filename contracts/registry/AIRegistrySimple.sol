@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import "./AIRegistry.sol";
+import {AIRegistry} from "./AIRegistry.sol";
 
 /**
  * @title AIRegistrySimple

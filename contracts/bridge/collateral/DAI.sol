@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import "../LRC20B.sol";
+import {LRC20B} from "../LRC20B.sol";
 
 /**
  * @title Bridged DAI

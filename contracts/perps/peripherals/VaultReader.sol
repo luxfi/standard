@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.31;
 
-import "../core/interfaces/IVault.sol";
-import "../core/interfaces/IVaultPriceFeed.sol";
-import "../core/interfaces/IBasePositionManager.sol";
+import {IVault} from "../core/interfaces/IVault.sol";
+import {IVaultPriceFeed} from "../core/interfaces/IVaultPriceFeed.sol";
+import {IBasePositionManager} from "../core/interfaces/IBasePositionManager.sol";
 
 contract VaultReader {
     function getVaultTokenInfoV3(address _vault, address _positionManager, address _weth, uint256 _lpusdAmount, address[] memory _tokens) public view returns (uint256[] memory) {

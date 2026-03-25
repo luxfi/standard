@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.31;
 
-import "./interfaces/IPancakePair.sol";
+import {IPancakePair} from "./interfaces/IPancakePair.sol";
 
 contract PancakePair is IPancakePair {
     uint112 private reserve0;           // uses single storage slot, accessible via getReserves
@@ -10,7 +10,9 @@ contract PancakePair is IPancakePair {
     uint32  private blockTimestampLast; // uses single storage slot, accessible via getReserves
 
     function setReserves(uint256 balance0, uint256 balance1) external {
+        // forge-lint: disable-next-line(unsafe-typecast)
         reserve0 = uint112(balance0);
+        // forge-lint: disable-next-line(unsafe-typecast)
         reserve1 = uint112(balance1);
         blockTimestampLast = uint32(block.timestamp);
     }

@@ -246,6 +246,7 @@ contract PaymasterV1 is
         ) = _validateUserOp(userOp_);
 
         // Step 2: Extract function selector from calldata
+        // forge-lint: disable-next-line(unsafe-typecast)
         bytes4 selector = bytes4(innerCallData);
 
         DAOPaymasterStorage storage $ = _getDAOPaymasterStorage();

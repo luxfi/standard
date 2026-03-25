@@ -93,16 +93,19 @@ contract PythOracle is IOracle {
         
         if (priceData.expo > targetExpo) {
             // Need to divide
+            // forge-lint: disable-next-line(unsafe-typecast)
             uint32 diff = uint32(priceData.expo - targetExpo);
             scaledPrice = int256(priceData.price) / int256(10 ** diff);
         } else if (priceData.expo < targetExpo) {
             // Need to multiply
+            // forge-lint: disable-next-line(unsafe-typecast)
             uint32 diff = uint32(targetExpo - priceData.expo);
             scaledPrice = int256(priceData.price) * int256(10 ** diff);
         } else {
             scaledPrice = int256(priceData.price);
         }
 
+        // forge-lint: disable-next-line(unsafe-typecast)
         return uint256(scaledPrice);
     }
 }

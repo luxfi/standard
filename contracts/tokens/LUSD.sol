@@ -15,7 +15,7 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import "./LRC20B.sol";
+import {LRC20B} from "./LRC20B.sol";
 
 contract LuxDollar is LRC20B {
     string public constant _name = 'Lux Dollar';

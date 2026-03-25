@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import "./interfaces/IVault.sol";
-import "./interfaces/ILLPManager.sol";
-import "./interfaces/IShortsTracker.sol";
-import "../tokens/interfaces/ILPUSD.sol";
-import "../tokens/interfaces/IMintable.sol";
-import "../access/Governable.sol";
+import {IVault} from "./interfaces/IVault.sol";
+import {ILLPManager} from "./interfaces/ILLPManager.sol";
+import {IShortsTracker} from "./interfaces/IShortsTracker.sol";
+import {ILPUSD} from "../tokens/interfaces/ILPUSD.sol";
+import {IMintable} from "../tokens/interfaces/IMintable.sol";
+import {Governable} from "../access/Governable.sol";
 
 pragma solidity ^0.8.31;
 

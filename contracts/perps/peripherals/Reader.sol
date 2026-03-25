@@ -2,16 +2,16 @@
 
 pragma solidity ^0.8.31;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../core/interfaces/IVault.sol";
-import "../core/interfaces/IVaultPriceFeed.sol";
-import "../tokens/interfaces/IYieldTracker.sol";
-import "../tokens/interfaces/IYieldToken.sol";
-import "../amm/interfaces/IPancakeFactory.sol";
+import {IVault} from "../core/interfaces/IVault.sol";
+import {IVaultPriceFeed} from "../core/interfaces/IVaultPriceFeed.sol";
+import {IYieldTracker} from "../tokens/interfaces/IYieldTracker.sol";
+import {IYieldToken} from "../tokens/interfaces/IYieldToken.sol";
+import {IPancakeFactory} from "../amm/interfaces/IPancakeFactory.sol";
 
-import "../staking/interfaces/IVester.sol";
-import "../access/Governable.sol";
+import {IVester} from "../staking/interfaces/IVester.sol";
+import {Governable} from "../access/Governable.sol";
 
 contract Reader is Governable {
     

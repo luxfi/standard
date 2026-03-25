@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../FHE.sol";
+import {FHE, euint64} from "../FHE.sol";
 import { IConfidentialLRC20 } from "../token/LRC20/IConfidentialLRC20.sol";
 
 /**

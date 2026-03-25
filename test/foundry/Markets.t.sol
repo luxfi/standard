@@ -5,8 +5,7 @@ import "forge-std/Test.sol";
 import {Markets} from "../../contracts/markets/Markets.sol";
 import {AdaptiveCurveRateModel} from "../../contracts/markets/ratemodel/AdaptiveCurveRateModel.sol";
 import {MockChainlinkOracle} from "../../contracts/mocks/MockChainlinkOracle.sol";
-import {MarketParams, Position, Market, Id} from "../../contracts/markets/interfaces/IMarkets.sol";
-import {IOracle} from "../../contracts/markets/interfaces/IOracle.sol";
+import {MarketParams, Id} from "../../contracts/markets/interfaces/IMarkets.sol";
 import {MarketParamsLib} from "../../contracts/markets/libraries/MarketParamsLib.sol";
 import {ILRC20} from "../../contracts/tokens/interfaces/ILRC20.sol";
 

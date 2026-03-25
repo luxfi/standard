@@ -186,6 +186,7 @@ contract GaugeController is ReentrancyGuard, Ownable2Step {
         userVote.lastVoteTime = block.timestamp;
         
         // Queue weight change (applied at next epoch)
+        // forge-lint: disable-next-line(unsafe-typecast)
         int256 weightDelta = int256(weight * votingPower / BPS) - int256(oldWeight * votingPower / BPS);
         pendingWeightChanges[gaugeId] += weightDelta;
         
@@ -219,6 +220,7 @@ contract GaugeController is ReentrancyGuard, Ownable2Step {
             
             newTotalWeight += weight;
             
+            // forge-lint: disable-next-line(unsafe-typecast)
             int256 weightDelta = int256(weight * votingPower / BPS) - int256(oldWeight * votingPower / BPS);
             pendingWeightChanges[gaugeId] += weightDelta;
             
@@ -239,8 +241,10 @@ contract GaugeController is ReentrancyGuard, Ownable2Step {
             int256 delta = pendingWeightChanges[i];
             if (delta != 0) {
                 if (delta > 0) {
+                    // forge-lint: disable-next-line(unsafe-typecast)
                     gaugeWeights[i] += uint256(delta);
                 } else {
+                    // forge-lint: disable-next-line(unsafe-typecast)
                     uint256 decrease = uint256(-delta);
                     if (decrease > gaugeWeights[i]) {
                         gaugeWeights[i] = 0;
