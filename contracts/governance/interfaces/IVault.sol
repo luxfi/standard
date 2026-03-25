@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.31;
 
-import {Enum} from "../base/Enum.sol";
+import { Enum } from "../base/Enum.sol";
 
 /**
  * @title IVault
@@ -31,12 +31,9 @@ interface IVault {
      * @param operation Call or DelegateCall
      * @return success True if the transaction succeeded
      */
-    function execTransactionFromModule(
-        address to,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation
-    ) external returns (bool success);
+    function execTransactionFromModule(address to, uint256 value, bytes memory data, Enum.Operation operation)
+        external
+        returns (bool success);
 
     /**
      * @notice Executes a transaction from an enabled module and returns result data
@@ -47,12 +44,9 @@ interface IVault {
      * @return success True if the transaction succeeded
      * @return returnData The data returned by the call
      */
-    function execTransactionFromModuleReturnData(
-        address to,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation
-    ) external returns (bool success, bytes memory returnData);
+    function execTransactionFromModuleReturnData(address to, uint256 value, bytes memory data, Enum.Operation operation)
+        external
+        returns (bool success, bytes memory returnData);
 
     /**
      * @notice Checks if a module is enabled
@@ -68,8 +62,8 @@ interface IVault {
      * @return array Array of module addresses
      * @return next Next start address for pagination
      */
-    function getModulesPaginated(
-        address start,
-        uint256 pageSize
-    ) external view returns (address[] memory array, address next);
+    function getModulesPaginated(address start, uint256 pageSize)
+        external
+        view
+        returns (address[] memory array, address next);
 }

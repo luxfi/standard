@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.22;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {Lockup, LockupLinear} from "./types/DataTypes.sol";
-import {ISablierV2Lockup} from "./ISablierV2Lockup.sol";
+import { Lockup, LockupLinear } from "./types/DataTypes.sol";
+import { ISablierV2Lockup } from "./ISablierV2Lockup.sol";
 
 /// @title ISablierV2LockupLinear
 /// @notice Creates and manages Lockup streams with a linear distribution function.
@@ -47,25 +47,19 @@ interface ISablierV2LockupLinear is ISablierV2Lockup {
     /// is no cliff.
     /// @dev Reverts if `streamId` references a null stream.
     /// @param streamId The stream ID for the query.
-    function getCliffTime(
-        uint256 streamId
-    ) external view returns (uint40 cliffTime);
+    function getCliffTime(uint256 streamId) external view returns (uint40 cliffTime);
 
     /// @notice Retrieves the full stream details.
     /// @dev Reverts if `streamId` references a null stream.
     /// @param streamId The stream ID for the query.
     /// @return stream See the documentation in {DataTypes}.
-    function getStream(
-        uint256 streamId
-    ) external view returns (LockupLinear.StreamLL memory stream);
+    function getStream(uint256 streamId) external view returns (LockupLinear.StreamLL memory stream);
 
     /// @notice Retrieves the stream's start, cliff and end timestamps.
     /// @dev Reverts if `streamId` references a null stream.
     /// @param streamId The stream ID for the query.
     /// @return timestamps See the documentation in {DataTypes}.
-    function getTimestamps(
-        uint256 streamId
-    ) external view returns (LockupLinear.Timestamps memory timestamps);
+    function getTimestamps(uint256 streamId) external view returns (LockupLinear.Timestamps memory timestamps);
 
     /*//////////////////////////////////////////////////////////////////////////
                                NON-CONSTANT FUNCTIONS
@@ -82,9 +76,7 @@ interface ISablierV2LockupLinear is ISablierV2Lockup {
     ///
     /// @param params Struct encapsulating the function parameters, which are documented in {DataTypes}.
     /// @return streamId The ID of the newly created stream.
-    function createWithDurations(
-        LockupLinear.CreateWithDurations calldata params
-    ) external returns (uint256 streamId);
+    function createWithDurations(LockupLinear.CreateWithDurations calldata params) external returns (uint256 streamId);
 
     /// @notice Creates a stream with the provided start time and end time. The stream is funded by `msg.sender` and is
     /// wrapped in an ERC-721 NFT.
@@ -108,7 +100,5 @@ interface ISablierV2LockupLinear is ISablierV2Lockup {
     ///
     /// @param params Struct encapsulating the function parameters, which are documented in {DataTypes}.
     /// @return streamId The ID of the newly created stream.
-    function createWithTimestamps(
-        LockupLinear.CreateWithTimestamps calldata params
-    ) external returns (uint256 streamId);
+    function createWithTimestamps(LockupLinear.CreateWithTimestamps calldata params) external returns (uint256 streamId);
 }

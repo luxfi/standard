@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IHats} from "../hats/IHats.sol";
+import { IHats } from "../hats/IHats.sol";
 
 /**
  * @title IAutonomousAdminV1
@@ -31,7 +31,9 @@ import {IHats} from "../hats/IHats.sol";
 interface IAutonomousAdminV1 {
     // --- Errors ---
 
-    /** @notice Thrown when caller is not the current wearer of the hat */
+    /**
+     * @notice Thrown when caller is not the current wearer of the hat
+     */
     error NotCurrentWearer();
 
     // --- Structs ---

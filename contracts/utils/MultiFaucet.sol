@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title MultiFaucet
 /// @notice Testnet faucet that distributes multiple tokens
@@ -13,9 +13,9 @@ contract MultiFaucet is Ownable {
 
     /// @notice Token configuration
     struct TokenConfig {
-        uint256 dripAmount;    // Amount per request
-        uint256 cooldown;      // Cooldown between requests
-        bool enabled;          // Whether token is active
+        uint256 dripAmount; // Amount per request
+        uint256 cooldown; // Cooldown between requests
+        bool enabled; // Whether token is active
     }
 
     /// @notice Token configs by address
@@ -44,7 +44,7 @@ contract MultiFaucet is Ownable {
     error TransferFailed();
 
     constructor() Ownable(msg.sender) {
-        nativeDripAmount = 1 ether;  // 1 LUX
+        nativeDripAmount = 1 ether; // 1 LUX
         nativeCooldown = 1 hours;
     }
 
@@ -81,7 +81,7 @@ contract MultiFaucet is Ownable {
 
         lastDrip[msg.sender][address(0)] = block.timestamp;
 
-        (bool success,) = msg.sender.call{value: nativeDripAmount}("");
+        (bool success,) = msg.sender.call{ value: nativeDripAmount }("");
         if (!success) revert TransferFailed();
 
         emit NativeDrip(msg.sender, nativeDripAmount);
@@ -94,7 +94,7 @@ contract MultiFaucet is Ownable {
             uint256 lastNative = lastDrip[msg.sender][address(0)];
             if (block.timestamp >= lastNative + nativeCooldown) {
                 lastDrip[msg.sender][address(0)] = block.timestamp;
-                (bool success,) = msg.sender.call{value: nativeDripAmount}("");
+                (bool success,) = msg.sender.call{ value: nativeDripAmount }("");
                 if (success) emit NativeDrip(msg.sender, nativeDripAmount);
             }
         }
@@ -121,22 +121,14 @@ contract MultiFaucet is Ownable {
 
     /// @notice Add a token to the faucet
     function addToken(address token, uint256 dripAmount, uint256 cooldown) external onlyOwner {
-        tokens[token] = TokenConfig({
-            dripAmount: dripAmount,
-            cooldown: cooldown,
-            enabled: true
-        });
+        tokens[token] = TokenConfig({ dripAmount: dripAmount, cooldown: cooldown, enabled: true });
         tokenList.push(token);
         emit TokenAdded(token, dripAmount, cooldown);
     }
 
     /// @notice Update token configuration
     function updateToken(address token, uint256 dripAmount, uint256 cooldown, bool enabled) external onlyOwner {
-        tokens[token] = TokenConfig({
-            dripAmount: dripAmount,
-            cooldown: cooldown,
-            enabled: enabled
-        });
+        tokens[token] = TokenConfig({ dripAmount: dripAmount, cooldown: cooldown, enabled: enabled });
     }
 
     /// @notice Update native token settings
@@ -152,7 +144,7 @@ contract MultiFaucet is Ownable {
 
     /// @notice Withdraw native (admin)
     function withdrawNative(uint256 amount) external onlyOwner {
-        (bool success,) = owner().call{value: amount}("");
+        (bool success,) = owner().call{ value: amount }("");
         require(success, "Transfer failed");
     }
 
@@ -186,5 +178,5 @@ contract MultiFaucet is Ownable {
         return (false, lastTime + config.cooldown - block.timestamp);
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

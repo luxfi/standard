@@ -25,8 +25,5 @@ interface IProposerAdapter {
      * @param data_ Adapter-specific data (e.g., hat ID for Hats adapter)
      * @return isProposer True if the address can create proposals
      */
-    function isProposer(
-        address address_,
-        bytes calldata data_
-    ) external view returns (bool isProposer);
+    function isProposer(address address_, bytes calldata data_) external view returns (bool isProposer);
 }

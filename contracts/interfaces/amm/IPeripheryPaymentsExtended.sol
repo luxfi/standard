@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.31;
 
-import '@uniswap/v3-periphery/contracts/interfaces/IPeripheryPayments.sol';
+import "@uniswap/v3-periphery/contracts/interfaces/IPeripheryPayments.sol";
 
 /// @title Periphery Payments Extended
 /// @notice Functions to ease deposits and withdrawals of ETH and tokens

@@ -1,27 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IWarrantBase
-} from "../../interfaces/deployables/IWarrantBase.sol";
-import {
-    IWarrantHedgeyV1
-} from "../../interfaces/deployables/IWarrantHedgeyV1.sol";
-import {
-    IVotingTokenLockupPlans
-} from "../../interfaces/hedgey/IVotingTokenLockupPlans.sol";
-import {
-    IVotesERC20V1
-} from "../../interfaces/deployables/IVotesERC20V1.sol";
-import {IVersion} from "../../interfaces/deployables/IVersion.sol";
-import {IDeploymentBlock} from "../../interfaces/IDeploymentBlock.sol";
-import {WarrantBase} from "./WarrantBase.sol";
-import {
-    DeploymentBlockInitializable
-} from "../../DeploymentBlockInitializable.sol";
-import {InitializerEventEmitter} from "../../InitializerEventEmitter.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { IWarrantBase } from "../../interfaces/deployables/IWarrantBase.sol";
+import { IWarrantHedgeyV1 } from "../../interfaces/deployables/IWarrantHedgeyV1.sol";
+import { IVotingTokenLockupPlans } from "../../interfaces/hedgey/IVotingTokenLockupPlans.sol";
+import { IVotesERC20V1 } from "../../interfaces/deployables/IVotesERC20V1.sol";
+import { IVersion } from "../../interfaces/deployables/IVersion.sol";
+import { IDeploymentBlock } from "../../interfaces/IDeploymentBlock.sol";
+import { WarrantBase } from "./WarrantBase.sol";
+import { DeploymentBlockInitializable } from "../../DeploymentBlockInitializable.sol";
+import { InitializerEventEmitter } from "../../InitializerEventEmitter.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
  * @title WarrantHedgeyV1
@@ -56,15 +46,25 @@ contract WarrantHedgeyV1 is
      * @custom:storage-location erc7201:DAO.WarrantHedgey.main
      */
     struct WarrantHedgeyStorage {
-        /** @notice Address of Hedgey TokenLockupPlans contract */
+        /**
+         * @notice Address of Hedgey TokenLockupPlans contract
+         */
         address hedgeyTokenLockupPlans;
-        /** @notice Start time for vesting (absolute or relative) */
+        /**
+         * @notice Start time for vesting (absolute or relative)
+         */
         uint256 hedgeyStart;
-        /** @notice Cliff duration from start time */
+        /**
+         * @notice Cliff duration from start time
+         */
         uint256 hedgeyRelativeCliff;
-        /** @notice Amount of tokens vested per period */
+        /**
+         * @notice Amount of tokens vested per period
+         */
         uint256 hedgeyRate;
-        /** @notice Duration of each vesting period */
+        /**
+         * @notice Duration of each vesting period
+         */
         uint256 hedgeyPeriod;
     }
 
@@ -79,11 +79,7 @@ contract WarrantHedgeyV1 is
      * @dev Returns the storage struct for WarrantHedgeyV1
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      */
-    function _getWarrantHedgeyStorage()
-        internal
-        pure
-        returns (WarrantHedgeyStorage storage $)
-    {
+    function _getWarrantHedgeyStorage() internal pure returns (WarrantHedgeyStorage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := WARRANT_HEDGEY_STORAGE_LOCATION
@@ -102,9 +98,7 @@ contract WarrantHedgeyV1 is
      * @inheritdoc IWarrantHedgeyV1
      * @dev Initializes both base warrant and Hedgey-specific parameters
      */
-    function initialize(
-        InitParams calldata params_
-    ) public virtual override initializer {
+    function initialize(InitParams calldata params_) public virtual override initializer {
         // Initialize base warrant functionality
         __WarrantBase_init(
             params_.relativeTime,
@@ -121,8 +115,7 @@ contract WarrantHedgeyV1 is
         __InitializerEventEmitter_init(abi.encode(params_));
 
         // Validate Hedgey parameters
-        uint256 absoluteCliff = params_.hedgeyStart +
-            params_.hedgeyRelativeCliff;
+        uint256 absoluteCliff = params_.hedgeyStart + params_.hedgeyRelativeCliff;
         _validateHedgeyParams(
             params_.warrantToken,
             params_.hedgeyStart,
@@ -150,13 +143,7 @@ contract WarrantHedgeyV1 is
     /**
      * @inheritdoc IWarrantHedgeyV1
      */
-    function hedgeyTokenLockupPlans()
-        public
-        view
-        virtual
-        override
-        returns (address)
-    {
+    function hedgeyTokenLockupPlans() public view virtual override returns (address) {
         WarrantHedgeyStorage storage $ = _getWarrantHedgeyStorage();
         return $.hedgeyTokenLockupPlans;
     }
@@ -172,13 +159,7 @@ contract WarrantHedgeyV1 is
     /**
      * @inheritdoc IWarrantHedgeyV1
      */
-    function hedgeyRelativeCliff()
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function hedgeyRelativeCliff() public view virtual override returns (uint256) {
         WarrantHedgeyStorage storage $ = _getWarrantHedgeyStorage();
         return $.hedgeyRelativeCliff;
     }
@@ -217,9 +198,7 @@ contract WarrantHedgeyV1 is
         // Calculate actual start time based on time mode
         uint256 startTime;
         if (base$.relativeTime) {
-            startTime =
-                IVotesERC20V1(base$.warrantToken).getUnlockTime() +
-                $.hedgeyStart;
+            startTime = IVotesERC20V1(base$.warrantToken).getUnlockTime() + $.hedgeyStart;
         } else {
             // Check if we've reached the hedgey start time in absolute mode
             if (block.timestamp < $.hedgeyStart) revert HedgeyStartNotElapsed();
@@ -230,10 +209,7 @@ contract WarrantHedgeyV1 is
         uint256 hedgeyAbsoluteCliff = startTime + $.hedgeyRelativeCliff;
 
         // Approve Hedgey contract to transfer tokens
-        IERC20(base$.warrantToken).approve(
-            $.hedgeyTokenLockupPlans,
-            base$.warrantTokenAmount
-        );
+        IERC20(base$.warrantToken).approve($.hedgeyTokenLockupPlans, base$.warrantTokenAmount);
 
         // Create vesting plan through Hedgey
         uint256 planId = IVotingTokenLockupPlans($.hedgeyTokenLockupPlans)
@@ -285,9 +261,8 @@ contract WarrantHedgeyV1 is
 
         // Calculate vesting end time (integer division for vesting periods)
         uint256 vestingPeriods = amount_ / rate_;
-        uint256 end = (amount_ % rate_ == 0)
-            ? vestingPeriods * period_ + start_
-            : (vestingPeriods * period_) + period_ + start_;
+        uint256 end =
+            (amount_ % rate_ == 0) ? vestingPeriods * period_ + start_ : (vestingPeriods * period_) + period_ + start_;
 
         if (cliff_ > end) revert CliffExceedsEnd(cliff_, end);
     }
@@ -311,14 +286,9 @@ contract WarrantHedgeyV1 is
      * @notice Check if contract supports a given interface
      * @dev Supports IWarrantHedgeyV1, IWarrantBase, IVersion, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(IWarrantHedgeyV1).interfaceId ||
-            interfaceId_ == type(IWarrantBase).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(IWarrantHedgeyV1).interfaceId || interfaceId_ == type(IWarrantBase).interfaceId
+            || interfaceId_ == type(IVersion).interfaceId || interfaceId_ == type(IDeploymentBlock).interfaceId
+            || super.supportsInterface(interfaceId_);
     }
 }

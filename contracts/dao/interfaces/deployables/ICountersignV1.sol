@@ -31,31 +31,49 @@ pragma solidity ^0.8.30;
 interface ICountersignV1 {
     // --- Errors ---
 
-    /** @notice Thrown when a non-signer attempts to sign */
+    /**
+     * @notice Thrown when a non-signer attempts to sign
+     */
     error InvalidSigner();
 
-    /** @notice Thrown when attempting to sign after the signing deadline */
+    /**
+     * @notice Thrown when attempting to sign after the signing deadline
+     */
     error SigningDeadlineElapsed();
 
-    /** @notice Thrown when attempting to execute after the execution deadline */
+    /**
+     * @notice Thrown when attempting to execute after the execution deadline
+     */
     error ExecutionDeadlineElapsed();
 
-    /** @notice Thrown when a signer attempts to sign more than once */
+    /**
+     * @notice Thrown when a signer attempts to sign more than once
+     */
     error SignerAlreadySigned();
 
-    /** @notice Thrown when executing without all required signers having signed */
+    /**
+     * @notice Thrown when executing without all required signers having signed
+     */
     error RequiredSignerNotSigned(address signer);
 
-    /** @notice Thrown when a required signer's transaction bundle fails during execution */
+    /**
+     * @notice Thrown when a required signer's transaction bundle fails during execution
+     */
     error RequiredSignerTxFailed(address signer);
 
-    /** @notice Thrown when the total weight of signatures doesn't meet the minimum threshold */
+    /**
+     * @notice Thrown when the total weight of signatures doesn't meet the minimum threshold
+     */
     error MinimumWeightNotMet();
 
-    /** @notice Thrown when attempting to execute before the signing deadline has passed */
+    /**
+     * @notice Thrown when attempting to execute before the signing deadline has passed
+     */
     error SigningDeadlineNotElapsed();
 
-    /** @notice Thrown when pre-execution transactions fail during execution */
+    /**
+     * @notice Thrown when pre-execution transactions fail during execution
+     */
     error PreExecutionTxFailed();
 
     // --- Structs ---
@@ -177,10 +195,7 @@ interface ICountersignV1 {
      * @dev After this timestamp, execute() will revert
      * @return executionDeadline The execution deadline timestamp
      */
-    function executionDeadline()
-        external
-        view
-        returns (uint48 executionDeadline);
+    function executionDeadline() external view returns (uint48 executionDeadline);
 
     /**
      * @notice Returns the address of the MultiSend contract used for batch execution
@@ -201,10 +216,7 @@ interface ICountersignV1 {
      * @dev Includes both required and optional signers
      * @return signerAddresses Array of signer addresses
      */
-    function signerAddresses()
-        external
-        view
-        returns (address[] memory signerAddresses);
+    function signerAddresses() external view returns (address[] memory signerAddresses);
 
     /**
      * @notice Returns complete data for a specific signer
@@ -217,9 +229,7 @@ interface ICountersignV1 {
      * @return weight This signer's signing weight
      * @return transactions This signer's transaction data
      */
-    function signerData(
-        address signer_
-    )
+    function signerData(address signer_)
         external
         view
         returns (
@@ -237,10 +247,7 @@ interface ICountersignV1 {
      * @dev These transactions are executed before any signer transactions
      * @return preExecutionTransactions Encoded transaction data for pre-execution
      */
-    function preExecutionTransactions()
-        external
-        view
-        returns (bytes memory preExecutionTransactions);
+    function preExecutionTransactions() external view returns (bytes memory preExecutionTransactions);
 
     // --- State-Changing Functions ---
 
@@ -257,10 +264,7 @@ interface ICountersignV1 {
      * @custom:throws KYCVerificationFailed if KYC verification fails
      * @custom:emits Signed when signature is recorded
      */
-    function sign(
-        bytes calldata verifyingSignature_,
-        uint48 signatureExpiration_
-    ) external;
+    function sign(bytes calldata verifyingSignature_, uint48 signatureExpiration_) external;
 
     /**
      * @notice Executes the agreement after signing period ends

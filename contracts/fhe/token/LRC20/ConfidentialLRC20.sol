@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {FHE, ebool, einput, euint64} from "../../FHE.sol";
+import { FHE, ebool, einput, euint64 } from "../../FHE.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { IConfidentialLRC20 } from "./IConfidentialLRC20.sol";
 import { TFHEErrors } from "../../utils/TFHEErrors.sol";
@@ -83,12 +83,11 @@ abstract contract ConfidentialLRC20 is IConfidentialLRC20, IERC20Errors, TFHEErr
     /**
      * @notice See {IConfidentialLRC20-transferFrom}.
      */
-    function transferFrom(
-        address from,
-        address to,
-        einput encryptedAmount,
-        bytes calldata inputProof
-    ) public virtual returns (bool) {
+    function transferFrom(address from, address to, einput encryptedAmount, bytes calldata inputProof)
+        public
+        virtual
+        returns (bool)
+    {
         transferFrom(from, to, FHE.asEuint64(encryptedAmount, inputProof));
         return true;
     }

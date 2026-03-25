@@ -2,14 +2,17 @@
 pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {sLUX} from "../../../contracts/staking/sLUX.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { sLUX } from "../../../contracts/staking/sLUX.sol";
 
 contract MockWLUX is ERC20 {
     constructor() ERC20("Wrapped LUX", "WLUX") {
         _mint(msg.sender, 100_000_000e18);
     }
-    function mint(address to, uint256 amount) external { _mint(to, amount); }
+
+    function mint(address to, uint256 amount) external {
+        _mint(to, amount);
+    }
 }
 
 contract StakingHandler is Test {
@@ -34,7 +37,7 @@ contract StakingHandler is Test {
         uint256 bal = wlux.balanceOf(actor);
         if (bal < amount) return;
         vm.prank(actor);
-        try staking.stake(amount) {} catch {}
+        try staking.stake(amount) { } catch { }
     }
 
     function instantUnstake(uint256 actorSeed, uint256 amount) external {
@@ -43,14 +46,14 @@ contract StakingHandler is Test {
         if (sbal == 0) return;
         amount = bound(amount, 1, sbal);
         vm.prank(actor);
-        try staking.instantUnstake(amount) {} catch {}
+        try staking.instantUnstake(amount) { } catch { }
     }
 
     function addRewards(uint256 amount) external {
         amount = bound(amount, 1e18, 10_000e18);
         wlux.mint(address(this), amount);
         wlux.approve(address(staking), amount);
-        try staking.addRewards(amount) {} catch {}
+        try staking.addRewards(amount) { } catch { }
     }
 }
 
@@ -69,11 +72,7 @@ contract InvariantStakingTest is Test {
 
     /// @notice Total staked always matches actual WLUX balance in contract
     function invariant_totalStakedMatchesBalance() public view {
-        assertGe(
-            wlux.balanceOf(address(staking)),
-            staking.totalStaked(),
-            "Balance < totalStaked"
-        );
+        assertGe(wlux.balanceOf(address(staking)), staking.totalStaked(), "Balance < totalStaked");
     }
 
     /// @notice sLUX totalSupply > 0 iff totalStaked > 0

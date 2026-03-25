@@ -18,9 +18,9 @@ pragma solidity ^0.8.24;
  * - Performance fees returned as vault appreciation
  */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // YEARN V3 INTERFACES
@@ -169,7 +169,7 @@ interface IYFI is IERC20 {
  * @notice Base strategy for Yearn V3 ERC-4626 vaults
  * @dev Handles vault deposits, gauge staking, and YFI reward claiming
  */
-contract YearnV3Strategy is Ownable{
+contract YearnV3Strategy is Ownable {
     using SafeERC20 for IERC20;
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -266,11 +266,7 @@ contract YearnV3Strategy is Ownable{
      * @param _yearnVault Yearn V3 vault address
      * @param _gauge Optional gauge for YFI rewards (address(0) to skip)
      */
-    constructor(
-        address _vault,
-        address _yearnVault,
-        address _gauge
-    ) Ownable(msg.sender) {
+    constructor(address _vault, address _yearnVault, address _gauge) Ownable(msg.sender) {
         vault = _vault;
         yearnVault = IYearnV3Vault(_yearnVault);
         asset = IYearnV3Vault(_yearnVault).asset();
@@ -454,14 +450,18 @@ contract YearnV3Strategy is Ownable{
     }
 
     /// @notice Get vault info
-    function vaultInfo() external view returns (
-        string memory vaultName,
-        string memory vaultSymbol,
-        uint256 managementFee,
-        uint256 performanceFee,
-        uint256 depositLimit,
-        bool isShutdown
-    ) {
+    function vaultInfo()
+        external
+        view
+        returns (
+            string memory vaultName,
+            string memory vaultSymbol,
+            uint256 managementFee,
+            uint256 performanceFee,
+            uint256 depositLimit,
+            bool isShutdown
+        )
+    {
         return (
             yearnVault.name(),
             yearnVault.symbol(),
@@ -546,11 +546,7 @@ contract YearnV3USDCStrategy is YearnV3Strategy {
     address public constant YV_USDC = 0xa354F35829Ae975e850e23e9615b11Da1B3dC4DE; // yvUSDC-1 V3
     address public constant YV_USDC_GAUGE = 0x7Fd8Af959B54A677a1D8F92265Bd0714274C56a3; // USDC gauge
 
-    constructor(address _vault) YearnV3Strategy(
-        _vault,
-        YV_USDC,
-        YV_USDC_GAUGE
-    ) {}
+    constructor(address _vault) YearnV3Strategy(_vault, YV_USDC, YV_USDC_GAUGE) { }
 }
 
 /**
@@ -570,11 +566,7 @@ contract YearnV3WETHStrategy is YearnV3Strategy {
     address public constant YV_WETH = 0xa258C4606Ca8206D8aA700cE2143D7db854D168c; // yvWETH-1 V3
     address public constant YV_WETH_GAUGE = 0x81d93531720d86f0491DeE7D03f30b3b5aC24e59; // WETH gauge
 
-    constructor(address _vault) YearnV3Strategy(
-        _vault,
-        YV_WETH,
-        YV_WETH_GAUGE
-    ) {}
+    constructor(address _vault) YearnV3Strategy(_vault, YV_WETH, YV_WETH_GAUGE) { }
 }
 
 /**
@@ -594,11 +586,7 @@ contract YearnV3DAIStrategy is YearnV3Strategy {
     address public constant YV_DAI = 0xdA816459F1AB5631232FE5e97a05BBBb94970c95; // yvDAI-1 V3
     address public constant YV_DAI_GAUGE = 0x16df8A95c3A2b8b67CF70A6D4c8B7D33f8B3D6f7; // DAI gauge
 
-    constructor(address _vault) YearnV3Strategy(
-        _vault,
-        YV_DAI,
-        YV_DAI_GAUGE
-    ) {}
+    constructor(address _vault) YearnV3Strategy(_vault, YV_DAI, YV_DAI_GAUGE) { }
 }
 
 /**
@@ -617,11 +605,7 @@ contract YearnV3WBTCStrategy is YearnV3Strategy {
     address public constant YV_WBTC = 0xA696a63cc78DfFa1a63E9E50587C197387FF6C7E; // yvWBTC-1 V3
     address public constant YV_WBTC_GAUGE = 0x0000000000000000000000000000000000000000; // No gauge yet
 
-    constructor(address _vault) YearnV3Strategy(
-        _vault,
-        YV_WBTC,
-        YV_WBTC_GAUGE
-    ) {}
+    constructor(address _vault) YearnV3Strategy(_vault, YV_WBTC, YV_WBTC_GAUGE) { }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -636,11 +620,7 @@ contract YearnV3StrategyFactory {
     event StrategyDeployed(address indexed strategy, address indexed vault, address indexed yearnVault);
 
     /// @notice Deploy a generic Yearn V3 strategy
-    function deploy(
-        address vault,
-        address yearnVault,
-        address gauge
-    ) external returns (address strategy) {
+    function deploy(address vault, address yearnVault, address gauge) external returns (address strategy) {
         strategy = address(new YearnV3Strategy(vault, yearnVault, gauge));
         emit StrategyDeployed(strategy, vault, yearnVault);
     }

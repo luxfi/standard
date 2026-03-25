@@ -128,14 +128,7 @@ library LSSLib {
         if (signature.length != SIGNATURE_SIZE) revert InvalidSignature();
         if (generation == 0) revert InvalidGeneration();
 
-        bool valid = ILSS(LSS_PRECOMPILE).verify(
-            threshold,
-            totalSigners,
-            generation,
-            publicKey,
-            messageHash,
-            signature
-        );
+        bool valid = ILSS(LSS_PRECOMPILE).verify(threshold, totalSigners, generation, publicKey, messageHash, signature);
 
         if (!valid) revert SignatureVerificationFailed();
     }
@@ -160,18 +153,9 @@ library LSSLib {
  * @dev Abstract contract for LSS signature verification with T-Chain
  */
 abstract contract LSSVerifier {
-    event LSSSignatureVerified(
-        uint32 threshold,
-        uint32 totalSigners,
-        uint64 generation,
-        bytes32 indexed messageHash
-    );
+    event LSSSignatureVerified(uint32 threshold, uint32 totalSigners, uint64 generation, bytes32 indexed messageHash);
 
-    event LSSReshareVerified(
-        uint64 oldGeneration,
-        uint64 newGeneration,
-        bytes32 commitment
-    );
+    event LSSReshareVerified(uint64 oldGeneration, uint64 newGeneration, bytes32 commitment);
 
     /**
      * @dev Verify LSS threshold signature

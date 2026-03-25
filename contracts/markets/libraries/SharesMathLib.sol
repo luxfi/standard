@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {MathLib} from "./MathLib.sol";
+import { MathLib } from "./MathLib.sol";
 
 /// @title SharesMathLib
 /// @notice Shares math utilities for Markets
@@ -10,7 +10,7 @@ library SharesMathLib {
 
     /// @notice Virtual assets for share calculations (prevents inflation attacks)
     uint256 internal constant VIRTUAL_ASSETS = 1;
-    
+
     /// @notice Virtual shares for share calculations
     uint256 internal constant VIRTUAL_SHARES = 1e6;
 

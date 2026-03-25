@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC1155 } from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {Helpers} from "./Helpers.sol";
-import {IClaims} from "./interfaces/IClaims.sol";
+import { Helpers } from "./Helpers.sol";
+import { IClaims } from "./interfaces/IClaims.sol";
 
 /// @title Claims
 /// @author Gnosis (original Solidity 0.5.x), Lux Industries (0.8.31 port)
@@ -37,16 +37,12 @@ contract Claims is ERC1155, IClaims {
 
     /// @notice Creates the Claims contract
     /// @dev URI can be empty as positions derive their metadata from condition/collection
-    constructor() ERC1155("") {}
+    constructor() ERC1155("") { }
 
     // ============ External Functions ============
 
     /// @inheritdoc IClaims
-    function prepareCondition(
-        address oracle,
-        bytes32 questionId,
-        uint256 outcomeSlotCount
-    ) external override {
+    function prepareCondition(address oracle, bytes32 questionId, uint256 outcomeSlotCount) external override {
         // Validate outcome count (2-256 outcomes supported)
         if (outcomeSlotCount > 256) revert TooManyOutcomeSlots();
         if (outcomeSlotCount <= 1) revert TooFewOutcomeSlots();
@@ -89,7 +85,9 @@ contract Claims is ERC1155, IClaims {
             if (numerators[i] != 0) revert PayoutNumeratorAlreadySet();
             numerators[i] = num;
 
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
 
         // At least one outcome must have non-zero payout
@@ -134,12 +132,13 @@ contract Claims is ERC1155, IClaims {
 
             // Calculate position ID for this outcome collection
             positionIds[i] = Helpers.getPositionId(
-                collateralToken,
-                Helpers.getCollectionId(parentCollectionId, conditionId, indexSet)
+                collateralToken, Helpers.getCollectionId(parentCollectionId, conditionId, indexSet)
             );
             amounts[i] = amount;
 
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
 
         if (freeIndexSet == 0) {
@@ -149,11 +148,7 @@ contract Claims is ERC1155, IClaims {
                 collateralToken.safeTransferFrom(msg.sender, address(this), amount);
             } else {
                 // Splitting from parent position - burn parent tokens
-                _burn(
-                    msg.sender,
-                    Helpers.getPositionId(collateralToken, parentCollectionId),
-                    amount
-                );
+                _burn(msg.sender, Helpers.getPositionId(collateralToken, parentCollectionId), amount);
             }
         } else {
             // Partial partition - splitting from existing conditional position
@@ -202,12 +197,13 @@ contract Claims is ERC1155, IClaims {
             freeIndexSet ^= indexSet;
 
             positionIds[i] = Helpers.getPositionId(
-                collateralToken,
-                Helpers.getCollectionId(parentCollectionId, conditionId, indexSet)
+                collateralToken, Helpers.getCollectionId(parentCollectionId, conditionId, indexSet)
             );
             amounts[i] = amount;
 
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
 
         // Burn the conditional position tokens being merged
@@ -220,12 +216,7 @@ contract Claims is ERC1155, IClaims {
                 collateralToken.safeTransfer(msg.sender, amount);
             } else {
                 // Merging to parent position - mint parent tokens
-                _mint(
-                    msg.sender,
-                    Helpers.getPositionId(collateralToken, parentCollectionId),
-                    amount,
-                    ""
-                );
+                _mint(msg.sender, Helpers.getPositionId(collateralToken, parentCollectionId), amount, "");
             }
         } else {
             // Partial partition - merging back to conditional position
@@ -265,8 +256,7 @@ contract Claims is ERC1155, IClaims {
             if (indexSet == 0 || indexSet >= fullIndexSet) revert InvalidIndexSet();
 
             uint256 positionId = Helpers.getPositionId(
-                collateralToken,
-                Helpers.getCollectionId(parentCollectionId, conditionId, indexSet)
+                collateralToken, Helpers.getCollectionId(parentCollectionId, conditionId, indexSet)
             );
 
             // Calculate payout numerator for this index set
@@ -276,7 +266,9 @@ contract Claims is ERC1155, IClaims {
                 if (indexSet & (1 << j) != 0) {
                     payoutNumerator += _payoutNumerators[conditionId][j];
                 }
-                unchecked { ++j; }
+                unchecked {
+                    ++j;
+                }
             }
 
             // Get user's stake in this position
@@ -287,7 +279,9 @@ contract Claims is ERC1155, IClaims {
                 _burn(msg.sender, positionId, payoutStake);
             }
 
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
 
         // Transfer payout
@@ -297,12 +291,7 @@ contract Claims is ERC1155, IClaims {
                 collateralToken.safeTransfer(msg.sender, totalPayout);
             } else {
                 // Payout in parent position tokens
-                _mint(
-                    msg.sender,
-                    Helpers.getPositionId(collateralToken, parentCollectionId),
-                    totalPayout,
-                    ""
-                );
+                _mint(msg.sender, Helpers.getPositionId(collateralToken, parentCollectionId), totalPayout, "");
             }
         }
 
@@ -336,28 +325,27 @@ contract Claims is ERC1155, IClaims {
     // ============ Pure/View Helper Functions ============
 
     /// @inheritdoc IClaims
-    function getConditionId(
-        address oracle,
-        bytes32 questionId,
-        uint256 outcomeSlotCount
-    ) external pure override returns (bytes32) {
+    function getConditionId(address oracle, bytes32 questionId, uint256 outcomeSlotCount)
+        external
+        pure
+        override
+        returns (bytes32)
+    {
         return Helpers.getConditionId(oracle, questionId, outcomeSlotCount);
     }
 
     /// @inheritdoc IClaims
-    function getCollectionId(
-        bytes32 parentCollectionId,
-        bytes32 conditionId,
-        uint256 indexSet
-    ) external view override returns (bytes32) {
+    function getCollectionId(bytes32 parentCollectionId, bytes32 conditionId, uint256 indexSet)
+        external
+        view
+        override
+        returns (bytes32)
+    {
         return Helpers.getCollectionId(parentCollectionId, conditionId, indexSet);
     }
 
     /// @inheritdoc IClaims
-    function getPositionId(
-        IERC20 collateralToken,
-        bytes32 collectionId
-    ) external pure override returns (uint256) {
+    function getPositionId(IERC20 collateralToken, bytes32 collectionId) external pure override returns (uint256) {
         return Helpers.getPositionId(collateralToken, collectionId);
     }
 

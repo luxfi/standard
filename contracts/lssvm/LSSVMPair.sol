@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {ICurve} from "./ICurve.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ICurve } from "./ICurve.sol";
 
 /// @title LSSVMPair - NFT AMM Pair
 /// @notice Single-sided liquidity pool for NFT trading
@@ -17,9 +17,9 @@ contract LSSVMPair is IERC721Receiver, ReentrancyGuard {
 
     /// @notice Pool types
     enum PoolType {
-        TOKEN,  // Pool only trades token for NFT (buy-only)
-        NFT,    // Pool only trades NFT for token (sell-only)
-        TRADE   // Pool does both (two-sided)
+        TOKEN, // Pool only trades token for NFT (buy-only)
+        NFT, // Pool only trades NFT for token (sell-only)
+        TRADE // Pool does both (two-sided)
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -128,16 +128,17 @@ contract LSSVMPair is IERC721Receiver, ReentrancyGuard {
     /// @param maxInput Maximum amount willing to pay
     /// @param recipient Address to receive NFTs
     /// @return inputAmount Amount paid for NFTs
-    function swapTokenForNFTs(
-        uint256[] calldata nftIds,
-        uint256 maxInput,
-        address recipient
-    ) external payable nonReentrant returns (uint256 inputAmount) {
+    function swapTokenForNFTs(uint256[] calldata nftIds, uint256 maxInput, address recipient)
+        external
+        payable
+        nonReentrant
+        returns (uint256 inputAmount)
+    {
         if (poolType == PoolType.NFT) revert InvalidPoolType();
         if (nftIds.length == 0) return 0;
 
         // Get buy price
-        (uint128 newSpotPrice, , uint256 totalCost, uint256 tradeFee, uint256 protocolFee) =
+        (uint128 newSpotPrice,, uint256 totalCost, uint256 tradeFee, uint256 protocolFee) =
             bondingCurve.getBuyInfo(spotPrice, delta, nftIds.length, fee, _getProtocolFee());
 
         inputAmount = totalCost;
@@ -175,16 +176,16 @@ contract LSSVMPair is IERC721Receiver, ReentrancyGuard {
     /// @param minOutput Minimum amount expected to receive
     /// @param recipient Address to receive tokens
     /// @return outputAmount Amount received for NFTs
-    function swapNFTsForToken(
-        uint256[] calldata nftIds,
-        uint256 minOutput,
-        address recipient
-    ) external nonReentrant returns (uint256 outputAmount) {
+    function swapNFTsForToken(uint256[] calldata nftIds, uint256 minOutput, address recipient)
+        external
+        nonReentrant
+        returns (uint256 outputAmount)
+    {
         if (poolType == PoolType.TOKEN) revert InvalidPoolType();
         if (nftIds.length == 0) return 0;
 
         // Get sell price
-        (uint128 newSpotPrice, , uint256 totalOutput, uint256 tradeFee, uint256 protocolFee) =
+        (uint128 newSpotPrice,, uint256 totalOutput, uint256 tradeFee, uint256 protocolFee) =
             bondingCurve.getSellInfo(spotPrice, delta, nftIds.length, fee, _getProtocolFee());
 
         outputAmount = totalOutput;
@@ -303,13 +304,7 @@ contract LSSVMPair is IERC721Receiver, ReentrancyGuard {
     function getBuyNFTQuote(uint256 numItems)
         external
         view
-        returns (
-            uint128 newSpotPrice,
-            uint128 newDelta,
-            uint256 inputAmount,
-            uint256 tradeFee,
-            uint256 protocolFee
-        )
+        returns (uint128 newSpotPrice, uint128 newDelta, uint256 inputAmount, uint256 tradeFee, uint256 protocolFee)
     {
         return bondingCurve.getBuyInfo(spotPrice, delta, numItems, fee, _getProtocolFee());
     }
@@ -317,13 +312,7 @@ contract LSSVMPair is IERC721Receiver, ReentrancyGuard {
     function getSellNFTQuote(uint256 numItems)
         external
         view
-        returns (
-            uint128 newSpotPrice,
-            uint128 newDelta,
-            uint256 outputAmount,
-            uint256 tradeFee,
-            uint256 protocolFee
-        )
+        returns (uint128 newSpotPrice, uint128 newDelta, uint256 outputAmount, uint256 tradeFee, uint256 protocolFee)
     {
         return bondingCurve.getSellInfo(spotPrice, delta, numItems, fee, _getProtocolFee());
     }
@@ -344,7 +333,7 @@ contract LSSVMPair is IERC721Receiver, ReentrancyGuard {
             require(msg.value >= amount, "LSSVMPair: INSUFFICIENT_VALUE");
             // Refund excess
             if (msg.value > amount) {
-                (bool success,) = from.call{value: msg.value - amount}("");
+                (bool success,) = from.call{ value: msg.value - amount }("");
                 require(success, "LSSVMPair: REFUND_FAILED");
             }
         } else {
@@ -354,7 +343,7 @@ contract LSSVMPair is IERC721Receiver, ReentrancyGuard {
 
     function _sendTokens(address to, uint256 amount) internal {
         if (token == address(0)) {
-            (bool success,) = to.call{value: amount}("");
+            (bool success,) = to.call{ value: amount }("");
             require(success, "LSSVMPair: TRANSFER_FAILED");
         } else {
             IERC20(token).safeTransfer(to, amount);
@@ -402,7 +391,7 @@ contract LSSVMPair is IERC721Receiver, ReentrancyGuard {
     }
 
     // Allow receiving LUX
-    receive() external payable {}
+    receive() external payable { }
 }
 
 interface ILSSVMPairFactory {

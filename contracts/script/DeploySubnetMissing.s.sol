@@ -1,32 +1,32 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {Script, console} from "forge-std/Script.sol";
+import { Script, console } from "forge-std/Script.sol";
 
 // Core native token
-import {WLUX} from "@luxfi/contracts/tokens/WLUX.sol";
+import { WLUX } from "@luxfi/contracts/tokens/WLUX.sol";
 
 // Bridged Collateral Tokens
-import {BridgedETH} from "@luxfi/contracts/bridge/collateral/ETH.sol";
-import {BridgedBTC} from "@luxfi/contracts/bridge/collateral/BTC.sol";
-import {BridgedUSDC} from "@luxfi/contracts/bridge/collateral/USDC.sol";
+import { BridgedETH } from "@luxfi/contracts/bridge/collateral/ETH.sol";
+import { BridgedBTC } from "@luxfi/contracts/bridge/collateral/BTC.sol";
+import { BridgedUSDC } from "@luxfi/contracts/bridge/collateral/USDC.sol";
 
 // Governance
-import {Timelock} from "@luxfi/contracts/governance/Timelock.sol";
-import {vLUX} from "@luxfi/contracts/governance/vLUX.sol";
-import {GaugeController} from "@luxfi/contracts/governance/GaugeController.sol";
-import {Karma} from "@luxfi/contracts/governance/Karma.sol";
-import {DLUX} from "@luxfi/contracts/governance/DLUX.sol";
+import { Timelock } from "@luxfi/contracts/governance/Timelock.sol";
+import { vLUX } from "@luxfi/contracts/governance/vLUX.sol";
+import { GaugeController } from "@luxfi/contracts/governance/GaugeController.sol";
+import { Karma } from "@luxfi/contracts/governance/Karma.sol";
+import { DLUX } from "@luxfi/contracts/governance/DLUX.sol";
 
 // Identity/DID
-import {DIDRegistry} from "@luxfi/contracts/identity/DIDRegistry.sol";
+import { DIDRegistry } from "@luxfi/contracts/identity/DIDRegistry.sol";
 
 // Treasury
-import {FeeGov} from "@luxfi/contracts/treasury/FeeGov.sol";
-import {ValidatorVault} from "@luxfi/contracts/treasury/ValidatorVault.sol";
+import { FeeGov } from "@luxfi/contracts/treasury/FeeGov.sol";
+import { ValidatorVault } from "@luxfi/contracts/treasury/ValidatorVault.sol";
 
 // Markets (Lending)
-import {Markets} from "@luxfi/contracts/markets/Markets.sol";
+import { Markets } from "@luxfi/contracts/markets/Markets.sol";
 
 /**
  * @title DeploySubnetMissing
@@ -136,7 +136,7 @@ contract DeploySubnetMissing is Script {
         console.log("WLUX:", address(wlux));
 
         // Wrap some LUX
-        wlux.deposit{value: INITIAL_LUX}();
+        wlux.deposit{ value: INITIAL_LUX }();
         console.log("Wrapped", INITIAL_LUX / 1e18, "LUX");
 
         leth = new BridgedETH();

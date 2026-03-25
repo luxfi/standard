@@ -3,18 +3,18 @@
 pragma solidity ^0.8.31;
 
 /**
-    ██╗     ██████╗  ██████╗ ██╗ ██╗███████╗███████╗██████╗
-    ██║     ██╔══██╗██╔════╝███║███║██╔════╝██╔════╝██╔══██╗
-    ██║     ██████╔╝██║     ╚██║╚██║███████╗███████╗██████╔╝
-    ██║     ██╔══██╗██║      ██║ ██║╚════██║╚════██║██╔══██╗
-    ███████╗██║  ██║╚██████╗ ██║ ██║███████║███████║██████╔╝
-    ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝ ╚═╝╚══════╝╚══════╝╚═════╝
-
-    LRC1155B - Bridge-compatible multi-token base using LRC1155 standards
+ *     ██╗     ██████╗  ██████╗ ██╗ ██╗███████╗███████╗██████╗
+ *     ██║     ██╔══██╗██╔════╝███║███║██╔════╝██╔════╝██╔══██╗
+ *     ██║     ██████╔╝██║     ╚██║╚██║███████╗███████╗██████╔╝
+ *     ██║     ██╔══██╗██║      ██║ ██║╚════██║╚════██║██╔══██╗
+ *     ███████╗██║  ██║╚██████╗ ██║ ██║███████║███████║██████╔╝
+ *     ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝ ╚═╝╚══════╝╚══════╝╚═════╝
+ *
+ *     LRC1155B - Bridge-compatible multi-token base using LRC1155 standards
  */
 
-import {LRC1155} from "./LRC1155/LRC1155.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { LRC1155 } from "./LRC1155/LRC1155.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title LRC1155B
@@ -33,11 +33,7 @@ contract LRC1155B is LRC1155, Ownable {
      * @param symbol_ Collection symbol
      * @param baseURI_ Base URI for metadata
      */
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        string memory baseURI_
-    )
+    constructor(string memory name_, string memory symbol_, string memory baseURI_)
         LRC1155(name_, symbol_, baseURI_, address(0), 0)
         Ownable(msg.sender)
     {
@@ -74,11 +70,10 @@ contract LRC1155B is LRC1155, Ownable {
      * @param ids Array of token IDs
      * @param amounts Array of amounts
      */
-    function bridgeMintBatch(
-        address to,
-        uint256[] calldata ids,
-        uint256[] calldata amounts
-    ) external onlyRole(MINTER_ROLE) {
+    function bridgeMintBatch(address to, uint256[] calldata ids, uint256[] calldata amounts)
+        external
+        onlyRole(MINTER_ROLE)
+    {
         _mintBatch(to, ids, amounts, "");
         emit BridgeMintBatch(to, ids, amounts);
     }
@@ -89,11 +84,10 @@ contract LRC1155B is LRC1155, Ownable {
      * @param ids Array of token IDs
      * @param amounts Array of amounts
      */
-    function bridgeBurnBatch(
-        address from,
-        uint256[] calldata ids,
-        uint256[] calldata amounts
-    ) external onlyRole(MINTER_ROLE) {
+    function bridgeBurnBatch(address from, uint256[] calldata ids, uint256[] calldata amounts)
+        external
+        onlyRole(MINTER_ROLE)
+    {
         _burnBatch(from, ids, amounts);
         emit BridgeBurnBatch(from, ids, amounts);
     }
@@ -126,12 +120,7 @@ contract LRC1155B is LRC1155, Ownable {
     /**
      * @dev Override supportsInterface
      */
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(LRC1155)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(LRC1155) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }

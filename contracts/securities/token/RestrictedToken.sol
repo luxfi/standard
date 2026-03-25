@@ -8,9 +8,9 @@
 // Copyright (c) 2019 Arca Labs Inc — https://arca.digital
 pragma solidity ^0.8.24;
 
-import {SecurityToken} from "./SecurityToken.sol";
-import {ComplianceRegistry} from "../compliance/ComplianceRegistry.sol";
-import {TransferRestriction} from "../registry/TransferRestriction.sol";
+import { SecurityToken } from "./SecurityToken.sol";
+import { ComplianceRegistry } from "../compliance/ComplianceRegistry.sol";
+import { TransferRestriction } from "../registry/TransferRestriction.sol";
 
 /**
  * @title RestrictedToken

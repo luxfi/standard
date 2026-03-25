@@ -39,10 +39,10 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
     uint256 public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
 
     // Constants
-    uint256 public constant MINIMUM_LIQUIDITY = 10**3;
+    uint256 public constant MINIMUM_LIQUIDITY = 10 ** 3;
     uint256 public constant FEE_DENOMINATOR = 10000;
     uint256 public bridgeFee = 30; // 0.3% bridge fee
-    
+
     // Dead address for permanently locking MINIMUM_LIQUIDITY
     // Using 0xdead instead of address(0) to comply with ERC20 which rejects minting to address(0)
     address public constant DEAD_ADDRESS = 0x000000000000000000000000000000000000dEaD;
@@ -68,13 +68,9 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
     /**
      * @dev Initialize the LP pair (called once by factory)
      */
-    function initialize(
-        address _bridge,
-        address _token0,
-        address _token1,
-        string memory _name,
-        string memory _symbol
-    ) external {
+    function initialize(address _bridge, address _token0, address _token1, string memory _name, string memory _symbol)
+        external
+    {
         require(!initialized, "OmnichainLP: Already initialized");
         require(_bridge != address(0), "OmnichainLP: Invalid bridge");
         require(_token0 != address(0) && _token1 != address(0), "OmnichainLP: Invalid tokens");
@@ -131,13 +127,11 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
     /**
      * @dev Remove liquidity from the pool
      */
-    function removeLiquidity(
-        uint256 liquidity,
-        uint256 amount0Min,
-        uint256 amount1Min,
-        address to,
-        uint256 deadline
-    ) external nonReentrant returns (uint256 amount0, uint256 amount1) {
+    function removeLiquidity(uint256 liquidity, uint256 amount0Min, uint256 amount1Min, address to, uint256 deadline)
+        external
+        nonReentrant
+        returns (uint256 amount0, uint256 amount1)
+    {
         require(deadline >= block.timestamp, "OmnichainLP: Expired");
         require(liquidity > 0, "OmnichainLP: Insufficient liquidity");
         require(to != address(0), "OmnichainLP: Invalid recipient");
@@ -161,12 +155,7 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
         IERC20(token1).safeTransfer(to, amount1);
 
         // Update reserves
-        _update(
-            IERC20(token0).balanceOf(address(this)),
-            IERC20(token1).balanceOf(address(this)),
-            reserve0,
-            reserve1
-        );
+        _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
 
         // Update chain liquidity tracking
         chainLiquidity[block.chainid] = chainLiquidity[block.chainid] - liquidity;
@@ -178,11 +167,7 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
     /**
      * @dev Bridge LP tokens to another chain
      */
-    function bridgeLPTokens(
-        uint256 amount,
-        uint256 targetChainId,
-        address recipient
-    ) external nonReentrant {
+    function bridgeLPTokens(uint256 amount, uint256 targetChainId, address recipient) external nonReentrant {
         require(amount > 0, "OmnichainLP: Invalid amount");
         require(recipient != address(0), "OmnichainLP: Invalid recipient");
         require(targetChainId != block.chainid, "OmnichainLP: Same chain");
@@ -201,19 +186,11 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
 
         // Prepare bridge transaction
         Bridge.Token memory fromToken = Bridge.Token({
-            kind: Bridge.Type.ERC20,
-            id: 0,
-            chainId: block.chainid,
-            tokenAddress: address(this),
-            enabled: true
+            kind: Bridge.Type.ERC20, id: 0, chainId: block.chainid, tokenAddress: address(this), enabled: true
         });
 
         Bridge.Token memory toToken = Bridge.Token({
-            kind: Bridge.Type.ERC20,
-            id: 0,
-            chainId: targetChainId,
-            tokenAddress: address(this),
-            enabled: true
+            kind: Bridge.Type.ERC20, id: 0, chainId: targetChainId, tokenAddress: address(this), enabled: true
         });
 
         // Initiate bridge transfer
@@ -245,12 +222,7 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
     /**
      * @dev Swap tokens in the pool
      */
-    function swap(
-        uint256 amount0Out,
-        uint256 amount1Out,
-        address to,
-        bytes calldata data
-    ) external nonReentrant {
+    function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external nonReentrant {
         require(amount0Out > 0 || amount1Out > 0, "OmnichainLP: Insufficient output amount");
         (uint112 _reserve0, uint112 _reserve1,) = getReserves();
         require(amount0Out < _reserve0 && amount1Out < _reserve1, "OmnichainLP: Insufficient liquidity");
@@ -279,7 +251,7 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
         uint256 balance0Adjusted = balance0 * 10000 - amount0In * 30;
         uint256 balance1Adjusted = balance1 * 10000 - amount1In * 30;
         require(
-            balance0Adjusted * balance1Adjusted >= uint256(_reserve0) * uint256(_reserve1) * 10000**2,
+            balance0Adjusted * balance1Adjusted >= uint256(_reserve0) * uint256(_reserve1) * 10000 ** 2,
             "OmnichainLP: K invariant failed"
         );
 
@@ -290,12 +262,7 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
      * @dev Sync reserves to current balances
      */
     function sync() external nonReentrant {
-        _update(
-            IERC20(token0).balanceOf(address(this)),
-            IERC20(token1).balanceOf(address(this)),
-            reserve0,
-            reserve1
-        );
+        _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
     }
 
     /**
@@ -313,10 +280,7 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
             liquidity = _sqrt(amount0 * amount1) - MINIMUM_LIQUIDITY;
             _mint(DEAD_ADDRESS, MINIMUM_LIQUIDITY); // Permanently lock the first MINIMUM_LIQUIDITY tokens
         } else {
-            liquidity = _min(
-                (amount0 * _totalSupply) / _reserve0,
-                (amount1 * _totalSupply) / _reserve1
-            );
+            liquidity = _min((amount0 * _totalSupply) / _reserve0, (amount1 * _totalSupply) / _reserve1);
         }
 
         require(liquidity > 0, "OmnichainLP: Insufficient liquidity minted");
@@ -384,12 +348,11 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
 
     // Internal functions
 
-    function _addLiquidity(
-        uint256 amount0Desired,
-        uint256 amount1Desired,
-        uint256 amount0Min,
-        uint256 amount1Min
-    ) internal view returns (uint256 amount0, uint256 amount1) {
+    function _addLiquidity(uint256 amount0Desired, uint256 amount1Desired, uint256 amount0Min, uint256 amount1Min)
+        internal
+        view
+        returns (uint256 amount0, uint256 amount1)
+    {
         if (reserve0 == 0 && reserve1 == 0) {
             (amount0, amount1) = (amount0Desired, amount1Desired);
         } else {
@@ -412,25 +375,17 @@ contract OmnichainLP is ERC20, IERC20Bridgable, Ownable, ReentrancyGuard {
             liquidity = _sqrt(amount0 * amount1) - MINIMUM_LIQUIDITY;
             _mint(DEAD_ADDRESS, MINIMUM_LIQUIDITY); // Permanently lock the first MINIMUM_LIQUIDITY tokens
         } else {
-            liquidity = _min(
-                (amount0 * _totalSupply) / reserve0,
-                (amount1 * _totalSupply) / reserve1
-            );
+            liquidity = _min((amount0 * _totalSupply) / reserve0, (amount1 * _totalSupply) / reserve1);
         }
         require(liquidity > 0, "OmnichainLP: Insufficient liquidity minted");
         _mint(to, liquidity);
 
-        _update(
-            IERC20(token0).balanceOf(address(this)),
-            IERC20(token1).balanceOf(address(this)),
-            reserve0,
-            reserve1
-        );
+        _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
     }
 
     function _update(uint256 balance0, uint256 balance1, uint112 _reserve0, uint112 _reserve1) internal {
         require(balance0 <= type(uint112).max && balance1 <= type(uint112).max, "OmnichainLP: Overflow");
-        uint32 blockTimestamp = uint32(block.timestamp % 2**32);
+        uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
         uint32 timeElapsed = blockTimestamp - blockTimestampLast;
 
         if (timeElapsed > 0 && _reserve0 != 0 && _reserve1 != 0) {

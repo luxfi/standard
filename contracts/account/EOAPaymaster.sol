@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {BasePaymaster} from "@account-abstraction/core/BasePaymaster.sol";
-import {IEntryPoint} from "@account-abstraction/interfaces/IEntryPoint.sol";
-import {PackedUserOperation} from "@account-abstraction/interfaces/PackedUserOperation.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { BasePaymaster } from "@account-abstraction/core/BasePaymaster.sol";
+import { IEntryPoint } from "@account-abstraction/interfaces/IEntryPoint.sol";
+import { PackedUserOperation } from "@account-abstraction/interfaces/PackedUserOperation.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /**
  * @title EOAPaymaster
@@ -29,20 +29,17 @@ contract EOAPaymaster is BasePaymaster {
     /// @param entryPoint The ERC-4337 EntryPoint contract
     /// @param owner The owner of the paymaster
     /// @param _verifyingSigner The signer address for paymaster verification
-    constructor(
-        IEntryPoint entryPoint,
-        address owner,
-        address _verifyingSigner
-    ) BasePaymaster(entryPoint, owner) {
+    constructor(IEntryPoint entryPoint, address owner, address _verifyingSigner) BasePaymaster(entryPoint, owner) {
         verifyingSigner = _verifyingSigner;
     }
 
     /// @inheritdoc BasePaymaster
-    function _validatePaymasterUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash,
-        uint256 maxCost
-    ) internal view override returns (bytes memory context, uint256 validationData) {
+    function _validatePaymasterUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash, uint256 maxCost)
+        internal
+        view
+        override
+        returns (bytes memory context, uint256 validationData)
+    {
         (userOp, maxCost); // silence unused variable warning
 
         // Extract signature from paymasterAndData

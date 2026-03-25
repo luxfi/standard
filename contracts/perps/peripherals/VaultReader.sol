@@ -2,12 +2,18 @@
 
 pragma solidity ^0.8.31;
 
-import {IVault} from "../core/interfaces/IVault.sol";
-import {IVaultPriceFeed} from "../core/interfaces/IVaultPriceFeed.sol";
-import {IBasePositionManager} from "../core/interfaces/IBasePositionManager.sol";
+import { IVault } from "../core/interfaces/IVault.sol";
+import { IVaultPriceFeed } from "../core/interfaces/IVaultPriceFeed.sol";
+import { IBasePositionManager } from "../core/interfaces/IBasePositionManager.sol";
 
 contract VaultReader {
-    function getVaultTokenInfoV3(address _vault, address _positionManager, address _weth, uint256 _lpusdAmount, address[] memory _tokens) public view returns (uint256[] memory) {
+    function getVaultTokenInfoV3(
+        address _vault,
+        address _positionManager,
+        address _weth,
+        uint256 _lpusdAmount,
+        address[] memory _tokens
+    ) public view returns (uint256[] memory) {
         uint256 propsLength = 14;
 
         IVault vault = IVault(_vault);
@@ -40,7 +46,13 @@ contract VaultReader {
         return amounts;
     }
 
-    function getVaultTokenInfoV4(address _vault, address _positionManager, address _weth, uint256 _lpusdAmount, address[] memory _tokens) public view returns (uint256[] memory) {
+    function getVaultTokenInfoV4(
+        address _vault,
+        address _positionManager,
+        address _weth,
+        uint256 _lpusdAmount,
+        address[] memory _tokens
+    ) public view returns (uint256[] memory) {
         uint256 propsLength = 15;
 
         IVault vault = IVault(_vault);

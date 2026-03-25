@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {FHE, ebool, einput, euint8} from "../../FHE.sol";
+import { FHE, ebool, einput, euint8 } from "../../FHE.sol";
 import { EncryptedErrors } from "../../utils/EncryptedErrors.sol";
 
 contract TestEncryptedErrors is EncryptedErrors {
@@ -38,22 +38,20 @@ contract TestEncryptedErrors is EncryptedErrors {
         FHE.allow(newErrorCode, msg.sender);
     }
 
-    function errorDefineIf(
-        einput encryptedCondition,
-        bytes calldata inputProof,
-        uint8 indexCode
-    ) external returns (euint8 errorCode) {
+    function errorDefineIf(einput encryptedCondition, bytes calldata inputProof, uint8 indexCode)
+        external
+        returns (euint8 errorCode)
+    {
         ebool condition = FHE.asEbool(encryptedCondition, inputProof);
         errorCode = _errorDefineIf(condition, indexCode);
         _errorSave(errorCode);
         FHE.allow(errorCode, msg.sender);
     }
 
-    function errorDefineIfNot(
-        einput encryptedCondition,
-        bytes calldata inputProof,
-        uint8 indexCode
-    ) external returns (euint8 errorCode) {
+    function errorDefineIfNot(einput encryptedCondition, bytes calldata inputProof, uint8 indexCode)
+        external
+        returns (euint8 errorCode)
+    {
         ebool condition = FHE.asEbool(encryptedCondition, inputProof);
         errorCode = _errorDefineIfNot(condition, indexCode);
         _errorSave(errorCode);

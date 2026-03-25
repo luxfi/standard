@@ -34,10 +34,10 @@ pragma solidity ^0.8.24;
  * - Pending transactions tracked until confirmation
  */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // WORMHOLE INTERFACES
@@ -66,11 +66,10 @@ interface IWormholeRelayer {
     /// @param gasLimit Gas limit for execution
     /// @return nativePriceQuote Cost in native tokens
     /// @return targetChainRefundPerGasUnused Refund rate for unused gas
-    function quoteEVMDeliveryPrice(
-        uint16 targetChain,
-        uint256 receiverValue,
-        uint256 gasLimit
-    ) external view returns (uint256 nativePriceQuote, uint256 targetChainRefundPerGasUnused);
+    function quoteEVMDeliveryPrice(uint16 targetChain, uint256 receiverValue, uint256 gasLimit)
+        external
+        view
+        returns (uint256 nativePriceQuote, uint256 targetChainRefundPerGasUnused);
 }
 
 /// @notice Oracle for Solana yield protocol exchange rates
@@ -127,28 +126,28 @@ enum SolanaAction {
 
 /// @notice Cross-chain deposit/withdraw message
 struct SolanaDepositMessage {
-    uint8 action;          // 0=deposit, 1=withdraw, 2=claim
-    bytes32 protocol;      // marinade, jito, kamino
-    uint256 amount;        // Amount in lamports/shares
-    bytes32 recipient;     // Solana pubkey (32 bytes)
+    uint8 action; // 0=deposit, 1=withdraw, 2=claim
+    bytes32 protocol; // marinade, jito, kamino
+    uint256 amount; // Amount in lamports/shares
+    bytes32 recipient; // Solana pubkey (32 bytes)
 }
 
 /// @notice Yield report from Solana
 struct SolanaYieldReport {
-    bytes32 protocol;      // Protocol identifier
-    uint256 deposited;     // Total SOL deposited
-    uint256 currentValue;  // Current value in SOL
-    uint256 pendingRewards;// Unclaimed rewards
-    uint64 lastUpdate;     // Timestamp of last update
+    bytes32 protocol; // Protocol identifier
+    uint256 deposited; // Total SOL deposited
+    uint256 currentValue; // Current value in SOL
+    uint256 pendingRewards; // Unclaimed rewards
+    uint64 lastUpdate; // Timestamp of last update
 }
 
 /// @notice Pending cross-chain transaction
 struct PendingTransaction {
-    uint64 sequence;       // Wormhole sequence number
-    SolanaAction action;   // Action type
-    uint256 amount;        // Amount involved
-    uint256 timestamp;     // When sent
-    bool completed;        // Whether confirmed
+    uint64 sequence; // Wormhole sequence number
+    SolanaAction action; // Action type
+    uint256 amount; // Amount involved
+    uint256 timestamp; // When sent
+    bool completed; // Whether confirmed
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -173,41 +172,19 @@ error InvalidExchangeRate();
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /// @notice Emitted when cross-chain deposit is initiated
-event CrossChainDeposit(
-    bytes32 indexed protocol,
-    uint256 amount,
-    bytes32 solanaRecipient,
-    uint64 sequence
-);
+event CrossChainDeposit(bytes32 indexed protocol, uint256 amount, bytes32 solanaRecipient, uint64 sequence);
 
 /// @notice Emitted when cross-chain withdrawal is initiated
-event CrossChainWithdraw(
-    bytes32 indexed protocol,
-    uint256 shares,
-    bytes32 solanaRecipient,
-    uint64 sequence
-);
+event CrossChainWithdraw(bytes32 indexed protocol, uint256 shares, bytes32 solanaRecipient, uint64 sequence);
 
 /// @notice Emitted when yield report is received
-event YieldReported(
-    bytes32 indexed protocol,
-    uint256 deposited,
-    uint256 currentValue,
-    uint256 pendingRewards
-);
+event YieldReported(bytes32 indexed protocol, uint256 deposited, uint256 currentValue, uint256 pendingRewards);
 
 /// @notice Emitted when Wormhole message is sent
-event MessageSent(
-    uint16 targetChain,
-    uint64 sequence,
-    bytes payload
-);
+event MessageSent(uint16 targetChain, uint64 sequence, bytes payload);
 
 /// @notice Emitted when pending transaction is confirmed
-event TransactionConfirmed(
-    uint64 indexed sequence,
-    bool success
-);
+event TransactionConfirmed(uint64 indexed sequence, bool success);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SOLANA STRATEGY BASE
@@ -348,18 +325,11 @@ abstract contract SolanaStrategyBase is Ownable, ReentrancyGuard {
 
         // Encode deposit message
         SolanaDepositMessage memory message = SolanaDepositMessage({
-            action: uint8(SolanaAction.DEPOSIT),
-            protocol: protocolId,
-            amount: amount,
-            recipient: solanaReceiver
+            action: uint8(SolanaAction.DEPOSIT), protocol: protocolId, amount: amount, recipient: solanaReceiver
         });
 
         // Get Wormhole fee
-        (uint256 fee,) = wormholeRelayer.quoteEVMDeliveryPrice(
-            SOLANA_CHAIN_ID,
-            0,
-            SOLANA_GAS_LIMIT
-        );
+        (uint256 fee,) = wormholeRelayer.quoteEVMDeliveryPrice(SOLANA_CHAIN_ID, 0, SOLANA_GAS_LIMIT);
 
         // Send via Wormhole
         uint64 sequence = _sendWormholeMessage(abi.encode(message), fee);
@@ -384,18 +354,11 @@ abstract contract SolanaStrategyBase is Ownable, ReentrancyGuard {
 
         // Encode withdraw message
         SolanaDepositMessage memory message = SolanaDepositMessage({
-            action: uint8(SolanaAction.WITHDRAW),
-            protocol: protocolId,
-            amount: shares,
-            recipient: solanaReceiver
+            action: uint8(SolanaAction.WITHDRAW), protocol: protocolId, amount: shares, recipient: solanaReceiver
         });
 
         // Get Wormhole quote
-        (uint256 fee,) = wormholeRelayer.quoteEVMDeliveryPrice(
-            SOLANA_CHAIN_ID,
-            0,
-            SOLANA_GAS_LIMIT
-        );
+        (uint256 fee,) = wormholeRelayer.quoteEVMDeliveryPrice(SOLANA_CHAIN_ID, 0, SOLANA_GAS_LIMIT);
 
         // Send via Wormhole (requires ETH for fee)
         uint64 sequence = _sendWormholeMessage(abi.encode(message), fee);
@@ -414,18 +377,11 @@ abstract contract SolanaStrategyBase is Ownable, ReentrancyGuard {
     function harvest() external returns (uint256 harvested) {
         // Encode claim message
         SolanaDepositMessage memory message = SolanaDepositMessage({
-            action: uint8(SolanaAction.CLAIM),
-            protocol: protocolId,
-            amount: 0,
-            recipient: solanaReceiver
+            action: uint8(SolanaAction.CLAIM), protocol: protocolId, amount: 0, recipient: solanaReceiver
         });
 
         // Get Wormhole quote
-        (uint256 fee,) = wormholeRelayer.quoteEVMDeliveryPrice(
-            SOLANA_CHAIN_ID,
-            0,
-            SOLANA_GAS_LIMIT
-        );
+        (uint256 fee,) = wormholeRelayer.quoteEVMDeliveryPrice(SOLANA_CHAIN_ID, 0, SOLANA_GAS_LIMIT);
 
         // Send via Wormhole
         uint64 sequence = _sendWormholeMessage(abi.encode(message), fee);
@@ -476,15 +432,11 @@ abstract contract SolanaStrategyBase is Ownable, ReentrancyGuard {
      * @return sequence Wormhole sequence number
      */
     function _sendWormholeMessage(bytes memory payload, uint256 fee) internal returns (uint64 sequence) {
-        (uint256 requiredFee,) = wormholeRelayer.quoteEVMDeliveryPrice(
-            SOLANA_CHAIN_ID,
-            0,
-            SOLANA_GAS_LIMIT
-        );
+        (uint256 requiredFee,) = wormholeRelayer.quoteEVMDeliveryPrice(SOLANA_CHAIN_ID, 0, SOLANA_GAS_LIMIT);
 
         if (fee < requiredFee) revert InsufficientFee();
 
-        sequence = wormholeRelayer.sendPayloadToEvm{value: fee}(
+        sequence = wormholeRelayer.sendPayloadToEvm{ value: fee }(
             SOLANA_CHAIN_ID,
             address(0), // Target address encoded in payload for Solana
             payload,
@@ -500,11 +452,7 @@ abstract contract SolanaStrategyBase is Ownable, ReentrancyGuard {
      * @return fee Native token fee required
      */
     function quoteDeliveryFee() external view returns (uint256 fee) {
-        (fee,) = wormholeRelayer.quoteEVMDeliveryPrice(
-            SOLANA_CHAIN_ID,
-            0,
-            SOLANA_GAS_LIMIT
-        );
+        (fee,) = wormholeRelayer.quoteEVMDeliveryPrice(SOLANA_CHAIN_ID, 0, SOLANA_GAS_LIMIT);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -516,11 +464,7 @@ abstract contract SolanaStrategyBase is Ownable, ReentrancyGuard {
      */
     function _addPendingTransaction(uint64 sequence, SolanaAction action, uint256 amount) internal {
         pendingTransactions[sequence] = PendingTransaction({
-            sequence: sequence,
-            action: action,
-            amount: amount,
-            timestamp: block.timestamp,
-            completed: false
+            sequence: sequence, action: action, amount: amount, timestamp: block.timestamp, completed: false
         });
         pendingSequences.push(sequence);
     }
@@ -584,12 +528,7 @@ abstract contract SolanaStrategyBase is Ownable, ReentrancyGuard {
 
         latestReport = report;
 
-        emit YieldReported(
-            report.protocol,
-            report.deposited,
-            report.currentValue,
-            report.pendingRewards
-        );
+        emit YieldReported(report.protocol, report.deposited, report.currentValue, report.pendingRewards);
     }
 
     /**
@@ -631,7 +570,7 @@ abstract contract SolanaStrategyBase is Ownable, ReentrancyGuard {
     }
 
     /// @notice Receive ETH for Wormhole fees
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -676,14 +615,7 @@ contract MarinadeStrategy is SolanaStrategyBase {
         address _wSOL,
         address _wMSOL,
         bytes32 _solanaReceiver
-    ) SolanaStrategyBase(
-        _vault,
-        _wormholeRelayer,
-        _oracle,
-        _wSOL,
-        _solanaReceiver,
-        MARINADE_PROTOCOL
-    ) {
+    ) SolanaStrategyBase(_vault, _wormholeRelayer, _oracle, _wSOL, _solanaReceiver, MARINADE_PROTOCOL) {
         wMSOL = _wMSOL;
     }
 
@@ -770,14 +702,7 @@ contract JitoStrategy is SolanaStrategyBase {
         address _wSOL,
         address _wJitoSOL,
         bytes32 _solanaReceiver
-    ) SolanaStrategyBase(
-        _vault,
-        _wormholeRelayer,
-        _oracle,
-        _wSOL,
-        _solanaReceiver,
-        JITO_PROTOCOL
-    ) {
+    ) SolanaStrategyBase(_vault, _wormholeRelayer, _oracle, _wSOL, _solanaReceiver, JITO_PROTOCOL) {
         wJitoSOL = _wJitoSOL;
     }
 
@@ -888,14 +813,7 @@ contract KaminoStrategy is SolanaStrategyBase {
         address _kToken,
         bytes32 _solanaReceiver,
         bytes32 _market
-    ) SolanaStrategyBase(
-        _vault,
-        _wormholeRelayer,
-        _oracle,
-        _wSOL,
-        _solanaReceiver,
-        KAMINO_PROTOCOL
-    ) {
+    ) SolanaStrategyBase(_vault, _wormholeRelayer, _oracle, _wSOL, _solanaReceiver, KAMINO_PROTOCOL) {
         kToken = _kToken;
         market = _market;
     }
@@ -957,20 +875,13 @@ contract KaminoStrategy is SolanaStrategyBase {
         // Encode deposit message with market
         bytes memory payload = abi.encode(
             SolanaDepositMessage({
-                action: uint8(SolanaAction.DEPOSIT),
-                protocol: protocolId,
-                amount: amount,
-                recipient: solanaReceiver
+                action: uint8(SolanaAction.DEPOSIT), protocol: protocolId, amount: amount, recipient: solanaReceiver
             }),
             market // Include market ID
         );
 
         // Get Wormhole fee
-        (uint256 fee,) = wormholeRelayer.quoteEVMDeliveryPrice(
-            SOLANA_CHAIN_ID,
-            0,
-            SOLANA_GAS_LIMIT
-        );
+        (uint256 fee,) = wormholeRelayer.quoteEVMDeliveryPrice(SOLANA_CHAIN_ID, 0, SOLANA_GAS_LIMIT);
 
         // Send via Wormhole
         uint64 sequence = _sendWormholeMessage(payload, fee);
@@ -1019,14 +930,7 @@ contract SolanaStrategyFactory {
         address wMSOL,
         bytes32 solanaReceiver
     ) external returns (address strategy) {
-        strategy = address(new MarinadeStrategy(
-            vault,
-            wormholeRelayer,
-            oracle,
-            wSOL,
-            wMSOL,
-            solanaReceiver
-        ));
+        strategy = address(new MarinadeStrategy(vault, wormholeRelayer, oracle, wSOL, wMSOL, solanaReceiver));
         emit MarinadeStrategyDeployed(strategy, vault);
     }
 
@@ -1041,14 +945,7 @@ contract SolanaStrategyFactory {
         address wJitoSOL,
         bytes32 solanaReceiver
     ) external returns (address strategy) {
-        strategy = address(new JitoStrategy(
-            vault,
-            wormholeRelayer,
-            oracle,
-            wSOL,
-            wJitoSOL,
-            solanaReceiver
-        ));
+        strategy = address(new JitoStrategy(vault, wormholeRelayer, oracle, wSOL, wJitoSOL, solanaReceiver));
         emit JitoStrategyDeployed(strategy, vault);
     }
 
@@ -1064,15 +961,7 @@ contract SolanaStrategyFactory {
         bytes32 solanaReceiver,
         bytes32 market
     ) external returns (address strategy) {
-        strategy = address(new KaminoStrategy(
-            vault,
-            wormholeRelayer,
-            oracle,
-            wSOL,
-            kToken,
-            solanaReceiver,
-            market
-        ));
+        strategy = address(new KaminoStrategy(vault, wormholeRelayer, oracle, wSOL, kToken, solanaReceiver, market));
         emit KaminoStrategyDeployed(strategy, vault, market);
     }
 }

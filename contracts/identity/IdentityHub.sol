@@ -2,9 +2,9 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IDIDRegistry} from "./interfaces/IDID.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IDIDRegistry } from "./interfaces/IDID.sol";
 
 /// @notice Interface for Karma token
 interface IKarma {
@@ -20,15 +20,18 @@ interface ISoulIDToken {
     function soulOf(address account) external view returns (uint256);
     function hasSoul(address account) external view returns (bool);
     function mintSoul(address to) external returns (uint256);
-    function reputation(uint256 tokenId) external view returns (
-        uint256 karma,
-        uint256 humanityScore,
-        uint256 governanceParticipation,
-        uint256 communityContribution,
-        uint256 protocolUsage,
-        uint256 trustLevel,
-        uint256 lastUpdated
-    );
+    function reputation(uint256 tokenId)
+        external
+        view
+        returns (
+            uint256 karma,
+            uint256 humanityScore,
+            uint256 governanceParticipation,
+            uint256 communityContribution,
+            uint256 protocolUsage,
+            uint256 trustLevel,
+            uint256 lastUpdated
+        );
     function didOf(uint256 tokenId) external view returns (bytes32);
     function updateKarma(uint256 tokenId, uint256 karma) external;
     function updateTrustLevel(uint256 tokenId, uint256 level) external;
@@ -105,28 +108,28 @@ contract IdentityHub is AccessControl, ReentrancyGuard {
     /// @notice Complete identity view
     struct Identity {
         // DID Layer
-        string did;                       // W3C DID string
-        bool hasDID;                      // Whether DID exists
+        string did; // W3C DID string
+        bool hasDID; // Whether DID exists
 
         // SoulID Layer
-        uint256 soulId;                   // SoulID token ID
-        bool hasSoul;                     // Whether soul exists
+        uint256 soulId; // SoulID token ID
+        bool hasSoul; // Whether soul exists
 
         // Karma Layer
-        uint256 karma;                    // Current karma balance
-        bool isVerified;                  // DID verified in Karma
+        uint256 karma; // Current karma balance
+        bool isVerified; // DID verified in Karma
 
         // Reputation (from SoulID)
-        uint256 humanityScore;            // 0-100
-        uint256 governanceParticipation;  // 0-100
-        uint256 communityContribution;    // 0-100
-        uint256 protocolUsage;            // 0-100
-        uint256 trustLevel;               // 0-100 composite
+        uint256 humanityScore; // 0-100
+        uint256 governanceParticipation; // 0-100
+        uint256 communityContribution; // 0-100
+        uint256 protocolUsage; // 0-100
+        uint256 trustLevel; // 0-100 composite
 
         // Governance
-        uint256 votingPower;              // Calculated voting power
-        bool canPropose;                  // Can create proposals
-        bool isHuman;                     // Passed humanity check
+        uint256 votingPower; // Calculated voting power
+        bool canPropose; // Can create proposals
+        bool isHuman; // Passed humanity check
     }
 
     // ============ Constants ============
@@ -183,11 +186,7 @@ contract IdentityHub is AccessControl, ReentrancyGuard {
      * @param _networkName Network identifier (lux, asha, cyrus, miga, pars)
      * @param _isPrimaryChain Whether this is the primary chain
      */
-    constructor(
-        address admin,
-        string memory _networkName,
-        bool _isPrimaryChain
-    ) {
+    constructor(address admin, string memory _networkName, bool _isPrimaryChain) {
         if (admin == address(0)) revert ZeroAddress();
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
@@ -206,9 +205,11 @@ contract IdentityHub is AccessControl, ReentrancyGuard {
      * @return did The created DID string
      * @return soulId The minted SoulID token
      */
-    function createIdentity(
-        string calldata identifier
-    ) external nonReentrant returns (string memory did, uint256 soulId) {
+    function createIdentity(string calldata identifier)
+        external
+        nonReentrant
+        returns (string memory did, uint256 soulId)
+    {
         if (address(didRegistry) == address(0)) revert ContractNotSet();
         if (address(soulID) == address(0)) revert ContractNotSet();
 
@@ -274,7 +275,7 @@ contract IdentityHub is AccessControl, ReentrancyGuard {
         }
 
         uint256 soulId = soulID.soulOf(account);
-        (,,,,,uint256 trustLevel,) = soulID.reputation(soulId);
+        (,,,,, uint256 trustLevel,) = soulID.reputation(soulId);
 
         // votingPower = karma * (50 + trustLevel/2) / 100
         // This gives range: karma * 0.5 (trust=0) to karma * 1.0 (trust=100)
@@ -301,7 +302,7 @@ contract IdentityHub is AccessControl, ReentrancyGuard {
         if (!soulID.hasSoul(account)) return false;
 
         uint256 soulId = soulID.soulOf(account);
-        (,uint256 humanityScore,,,,,) = soulID.reputation(soulId);
+        (, uint256 humanityScore,,,,,) = soulID.reputation(soulId);
 
         return humanityScore >= MIN_HUMANITY_SCORE;
     }
@@ -392,11 +393,7 @@ contract IdentityHub is AccessControl, ReentrancyGuard {
      * @param _karma Karma contract address
      * @param _soulID SoulID contract address
      */
-    function setContracts(
-        address _didRegistry,
-        address _karma,
-        address _soulID
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setContracts(address _didRegistry, address _karma, address _soulID) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_didRegistry != address(0)) {
             didRegistry = IDIDRegistry(_didRegistry);
         }

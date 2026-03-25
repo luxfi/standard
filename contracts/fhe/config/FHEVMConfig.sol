@@ -9,14 +9,19 @@ pragma solidity >=0.8.19 <0.9.0;
 abstract contract FHEVMConfig {
     // LuxFHE native chain doesn't need external configuration
     // FHE operations are handled natively by the VM
-}
+
+    }
 
 // Network-specific configs
-abstract contract LuxFHEVMConfig is FHEVMConfig {}
-abstract contract LuxTestnetFHEVMConfig is FHEVMConfig {}
-abstract contract LuxMainnetFHEVMConfig is FHEVMConfig {}
+abstract contract LuxFHEVMConfig is FHEVMConfig { }
+
+abstract contract LuxTestnetFHEVMConfig is FHEVMConfig { }
+
+abstract contract LuxMainnetFHEVMConfig is FHEVMConfig { }
 
 // Legacy aliases for backward compatibility
-abstract contract SepoliaLegacyFHEVMConfig is LuxFHEVMConfig {}
-abstract contract SepoliaFHEVMConfig is LuxTestnetFHEVMConfig {}
-abstract contract MainnetFHEVMConfig is LuxMainnetFHEVMConfig {}
+abstract contract SepoliaLegacyFHEVMConfig is LuxFHEVMConfig { }
+
+abstract contract SepoliaFHEVMConfig is LuxTestnetFHEVMConfig { }
+
+abstract contract MainnetFHEVMConfig is LuxMainnetFHEVMConfig { }

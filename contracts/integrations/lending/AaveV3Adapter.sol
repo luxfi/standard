@@ -2,42 +2,27 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ILiquidityEngine} from "@luxfi/contracts/interfaces/liquidity/ILiquidityEngine.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ILiquidityEngine } from "@luxfi/contracts/interfaces/liquidity/ILiquidityEngine.sol";
 
 /// @title Aave V3 Pool Interface
 interface IPool {
-    function supply(
-        address asset,
-        uint256 amount,
-        address onBehalfOf,
-        uint16 referralCode
-    ) external;
+    function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
 
-    function withdraw(
-        address asset,
-        uint256 amount,
-        address to
-    ) external returns (uint256);
+    function withdraw(address asset, uint256 amount, address to) external returns (uint256);
 
-    function borrow(
-        address asset,
-        uint256 amount,
-        uint256 interestRateMode,
-        uint16 referralCode,
-        address onBehalfOf
-    ) external;
+    function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf)
+        external;
 
-    function repay(
-        address asset,
-        uint256 amount,
-        uint256 interestRateMode,
-        address onBehalfOf
-    ) external returns (uint256);
+    function repay(address asset, uint256 amount, uint256 interestRateMode, address onBehalfOf)
+        external
+        returns (uint256);
 
     function getUserAccountData(address user)
-        external view returns (
+        external
+        view
+        returns (
             uint256 totalCollateralBase,
             uint256 totalDebtBase,
             uint256 availableBorrowsBase,
@@ -46,8 +31,7 @@ interface IPool {
             uint256 healthFactor
         );
 
-    function getReserveData(address asset)
-        external view returns (ReserveData memory);
+    function getReserveData(address asset) external view returns (ReserveData memory);
 
     struct ReserveData {
         uint256 configuration;
@@ -103,20 +87,19 @@ contract AaveV3Adapter is ILiquidityEngine {
                             SWAP FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function getSwapQuote(address, address, uint256)
-        external pure override returns (SwapQuote memory)
-    {
+    function getSwapQuote(address, address, uint256) external pure override returns (SwapQuote memory) {
         revert("Not a DEX");
     }
 
-    function swap(address, address, uint256, uint256, address, uint256)
-        external payable override returns (uint256)
-    {
+    function swap(address, address, uint256, uint256, address, uint256) external payable override returns (uint256) {
         revert("Not a DEX");
     }
 
     function swapWithRoute(bytes calldata, uint256, uint256, address, uint256)
-        external payable override returns (uint256)
+        external
+        payable
+        override
+        returns (uint256)
     {
         revert("Not a DEX");
     }
@@ -126,13 +109,19 @@ contract AaveV3Adapter is ILiquidityEngine {
     //////////////////////////////////////////////////////////////*/
 
     function addLiquidity(address, uint256, uint256, uint256, uint256, address, uint256)
-        external pure override returns (uint256)
+        external
+        pure
+        override
+        returns (uint256)
     {
         revert("Use supply() for Aave");
     }
 
     function removeLiquidity(address, uint256, uint256, uint256, address, uint256)
-        external pure override returns (uint256, uint256)
+        external
+        pure
+        override
+        returns (uint256, uint256)
     {
         revert("Use withdraw() for Aave");
     }
@@ -145,11 +134,12 @@ contract AaveV3Adapter is ILiquidityEngine {
                           LENDING FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function getLendingQuote(
-        address token,
-        uint256 amount,
-        bool isSupply
-    ) external view override returns (LendingQuote memory quote) {
+    function getLendingQuote(address token, uint256 amount, bool isSupply)
+        external
+        view
+        override
+        returns (LendingQuote memory quote)
+    {
         IPool pool = IPool(ADDRESSES_PROVIDER.getPool());
         IPool.ReserveData memory reserveData = pool.getReserveData(token);
 
@@ -171,11 +161,7 @@ contract AaveV3Adapter is ILiquidityEngine {
         });
     }
 
-    function supply(
-        address token,
-        uint256 amount,
-        address onBehalfOf
-    ) external override returns (uint256 shares) {
+    function supply(address token, uint256 amount, address onBehalfOf) external override returns (uint256 shares) {
         IPool pool = IPool(ADDRESSES_PROVIDER.getPool());
         IPool.ReserveData memory reserveData = pool.getReserveData(token);
 
@@ -195,23 +181,14 @@ contract AaveV3Adapter is ILiquidityEngine {
         emit Supplied(onBehalfOf, token, amount, "AAVE_V3");
     }
 
-    function withdraw(
-        address token,
-        uint256 amount,
-        address recipient
-    ) external override returns (uint256 withdrawn) {
+    function withdraw(address token, uint256 amount, address recipient) external override returns (uint256 withdrawn) {
         IPool pool = IPool(ADDRESSES_PROVIDER.getPool());
 
         // Withdraw from Aave (caller must have approved aTokens)
         withdrawn = pool.withdraw(token, amount, recipient);
     }
 
-    function borrow(
-        address token,
-        uint256 amount,
-        uint256 rateMode,
-        address onBehalfOf
-    ) external override {
+    function borrow(address token, uint256 amount, uint256 rateMode, address onBehalfOf) external override {
         IPool pool = IPool(ADDRESSES_PROVIDER.getPool());
 
         pool.borrow(token, amount, rateMode, REFERRAL_CODE, onBehalfOf);
@@ -219,12 +196,11 @@ contract AaveV3Adapter is ILiquidityEngine {
         emit Borrowed(onBehalfOf, token, amount, "AAVE_V3");
     }
 
-    function repay(
-        address token,
-        uint256 amount,
-        uint256 rateMode,
-        address onBehalfOf
-    ) external override returns (uint256 repaid) {
+    function repay(address token, uint256 amount, uint256 rateMode, address onBehalfOf)
+        external
+        override
+        returns (uint256 repaid)
+    {
         IPool pool = IPool(ADDRESSES_PROVIDER.getPool());
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
@@ -238,22 +214,24 @@ contract AaveV3Adapter is ILiquidityEngine {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Get user account data
-    function getUserData(address user) external view returns (
-        uint256 totalCollateral,
-        uint256 totalDebt,
-        uint256 availableBorrows,
-        uint256 liquidationThreshold,
-        uint256 ltv,
-        uint256 healthFactor
-    ) {
+    function getUserData(address user)
+        external
+        view
+        returns (
+            uint256 totalCollateral,
+            uint256 totalDebt,
+            uint256 availableBorrows,
+            uint256 liquidationThreshold,
+            uint256 ltv,
+            uint256 healthFactor
+        )
+    {
         IPool pool = IPool(ADDRESSES_PROVIDER.getPool());
         return pool.getUserAccountData(user);
     }
 
     /// @notice Get reserve data
-    function getReserveData(address asset)
-        external view returns (IPool.ReserveData memory)
-    {
+    function getReserveData(address asset) external view returns (IPool.ReserveData memory) {
         IPool pool = IPool(ADDRESSES_PROVIDER.getPool());
         return pool.getReserveData(asset);
     }
@@ -275,9 +253,7 @@ contract AaveV3Adapter is ILiquidityEngine {
     }
 
     function isTokenSupported(address token) external view override returns (bool) {
-        try IPool(ADDRESSES_PROVIDER.getPool()).getReserveData(token)
-            returns (IPool.ReserveData memory data)
-        {
+        try IPool(ADDRESSES_PROVIDER.getPool()).getReserveData(token) returns (IPool.ReserveData memory data) {
             return data.aTokenAddress != address(0);
         } catch {
             return false;
@@ -288,9 +264,7 @@ contract AaveV3Adapter is ILiquidityEngine {
                          INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function _calculateUtilization(IPool.ReserveData memory data)
-        internal pure returns (uint256)
-    {
+    function _calculateUtilization(IPool.ReserveData memory data) internal pure returns (uint256) {
         // Simplified - would calculate from indices
         return 0;
     }

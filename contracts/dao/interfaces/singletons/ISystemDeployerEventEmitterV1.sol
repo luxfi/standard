@@ -41,12 +41,7 @@ interface ISystemDeployerEventEmitterV1 {
      * @param salt The salt used for deterministic deployment
      * @param initData The initialization data passed to the Safe
      */
-    event SystemDeployed(
-        address indexed safeProxy,
-        address indexed safeProxyFactory,
-        bytes32 salt,
-        bytes initData
-    );
+    event SystemDeployed(address indexed safeProxy, address indexed safeProxyFactory, bytes32 salt, bytes initData);
 
     // --- State-Changing Functions ---
 
@@ -61,9 +56,5 @@ interface ISystemDeployerEventEmitterV1 {
      * @param initData_ The complete initialization data for the Safe
      * @custom:emits SystemDeployed with msg.sender as safeProxy
      */
-    function emitSystemDeployed(
-        address safeProxyFactory_,
-        bytes32 salt_,
-        bytes calldata initData_
-    ) external;
+    function emitSystemDeployed(address safeProxyFactory_, bytes32 salt_, bytes calldata initData_) external;
 }

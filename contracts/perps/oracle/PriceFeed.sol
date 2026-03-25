@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.31;
 
-import {IPriceFeed} from "./interfaces/IPriceFeed.sol";
+import { IPriceFeed } from "./interfaces/IPriceFeed.sol";
 
 contract PriceFeed is IPriceFeed {
     int256 public answer;
@@ -14,8 +14,8 @@ contract PriceFeed is IPriceFeed {
 
     address public gov;
 
-    mapping (uint80 => int256) public answers;
-    mapping (address => bool) public isAdmin;
+    mapping(uint80 => int256) public answers;
+    mapping(address => bool) public isAdmin;
 
     constructor() public {
         gov = msg.sender;
@@ -27,11 +27,11 @@ contract PriceFeed is IPriceFeed {
         isAdmin[_account] = _isAdmin;
     }
 
-    function latestAnswer() public override view returns (int256) {
+    function latestAnswer() public view override returns (int256) {
         return answer;
     }
 
-    function latestRound() public override view returns (uint80) {
+    function latestRound() public view override returns (uint80) {
         return roundId;
     }
 
@@ -43,16 +43,12 @@ contract PriceFeed is IPriceFeed {
     }
 
     // returns roundId, answer, startedAt, updatedAt, answeredInRound
-    function getRoundData(uint80 _roundId) public override view
-        returns (uint80, int256, uint256, uint256, uint80)
-    {
+    function getRoundData(uint80 _roundId) public view override returns (uint80, int256, uint256, uint256, uint80) {
         return (_roundId, answers[_roundId], 0, block.timestamp, _roundId);
     }
 
     /// @notice Get latest round data with staleness info (Chainlink AggregatorV3Interface compatible)
-    function latestRoundData() public override view
-        returns (uint80, int256, uint256, uint256, uint80)
-    {
+    function latestRoundData() public view override returns (uint80, int256, uint256, uint256, uint80) {
         return (roundId, answer, 0, block.timestamp, roundId);
     }
 }

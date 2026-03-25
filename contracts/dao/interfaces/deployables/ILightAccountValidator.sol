@@ -27,16 +27,24 @@ pragma solidity ^0.8.30;
 interface ILightAccountValidator {
     // --- Errors ---
 
-    /** @notice Thrown when the sender is not a valid Light Account created by the factory */
+    /**
+     * @notice Thrown when the sender is not a valid Light Account created by the factory
+     */
     error InvalidLightAccount();
 
-    /** @notice Thrown when UserOperation calldata is too short to contain a valid selector */
+    /**
+     * @notice Thrown when UserOperation calldata is too short to contain a valid selector
+     */
     error InvalidUserOpCallDataLength();
 
-    /** @notice Thrown when the outer call is not to Light Account's execute() function */
+    /**
+     * @notice Thrown when the outer call is not to Light Account's execute() function
+     */
     error InvalidCallData();
 
-    /** @notice Thrown when the inner calldata is too short to extract a function selector */
+    /**
+     * @notice Thrown when the inner calldata is too short to extract a function selector
+     */
     error InvalidInnerCallDataLength();
 
     // --- View Functions ---
@@ -46,10 +54,7 @@ interface ILightAccountValidator {
      * @dev This factory is used to verify that Light Accounts are legitimate
      * @return lightAccountFactory The authorized Light Account Factory address
      */
-    function lightAccountFactory()
-        external
-        view
-        returns (address lightAccountFactory);
+    function lightAccountFactory() external view returns (address lightAccountFactory);
 
     /**
      * @notice Resolves the owner of a potential Light Account or returns the address itself
@@ -59,8 +64,8 @@ interface ILightAccountValidator {
      * @param lightAccountIndex_ The index used when creating the Light Account
      * @return potentialLightAccountResolvedOwner The Light Account owner or the input address
      */
-    function potentialLightAccountResolvedOwner(
-        address potentialLightAccount_,
-        uint256 lightAccountIndex_
-    ) external view returns (address potentialLightAccountResolvedOwner);
+    function potentialLightAccountResolvedOwner(address potentialLightAccount_, uint256 lightAccountIndex_)
+        external
+        view
+        returns (address potentialLightAccountResolvedOwner);
 }

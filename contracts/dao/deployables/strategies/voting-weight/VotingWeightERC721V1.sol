@@ -1,22 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IVotingWeightV1
-} from "../../../interfaces/deployables/IVotingWeightV1.sol";
-import {
-    IVotingWeightERC721V1
-} from "../../../interfaces/deployables/IVotingWeightERC721V1.sol";
-import {IVersion} from "../../../interfaces/deployables/IVersion.sol";
-import {
-    IDeploymentBlock
-} from "../../../interfaces/IDeploymentBlock.sol";
-import {
-    DeploymentBlockInitializable
-} from "../../../DeploymentBlockInitializable.sol";
-import {InitializerEventEmitter} from "../../../InitializerEventEmitter.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { IVotingWeightV1 } from "../../../interfaces/deployables/IVotingWeightV1.sol";
+import { IVotingWeightERC721V1 } from "../../../interfaces/deployables/IVotingWeightERC721V1.sol";
+import { IVersion } from "../../../interfaces/deployables/IVersion.sol";
+import { IDeploymentBlock } from "../../../interfaces/IDeploymentBlock.sol";
+import { DeploymentBlockInitializable } from "../../../DeploymentBlockInitializable.sol";
+import { InitializerEventEmitter } from "../../../InitializerEventEmitter.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
  * @title VotingWeightERC721V1
@@ -52,9 +44,13 @@ contract VotingWeightERC721V1 is
      * @custom:storage-location erc7201:DAO.VotingWeightERC721.main
      */
     struct VotingWeightERC721Storage {
-        /** @notice The ERC721 token used for voting weight calculation */
+        /**
+         * @notice The ERC721 token used for voting weight calculation
+         */
         IERC721 token;
-        /** @notice Weight granted by each NFT */
+        /**
+         * @notice Weight granted by each NFT
+         */
         uint256 weightPerToken;
     }
 
@@ -70,11 +66,7 @@ contract VotingWeightERC721V1 is
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      * @return $ The storage struct for VotingWeightERC721V1
      */
-    function _getVotingWeightERC721Storage()
-        internal
-        pure
-        returns (VotingWeightERC721Storage storage $)
-    {
+    function _getVotingWeightERC721Storage() internal pure returns (VotingWeightERC721Storage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := VOTING_WEIGHT_ERC721_STORAGE_LOCATION
@@ -92,10 +84,7 @@ contract VotingWeightERC721V1 is
     /**
      * @inheritdoc IVotingWeightERC721V1
      */
-    function initialize(
-        address token_,
-        uint256 weightPerToken_
-    ) public virtual override initializer {
+    function initialize(address token_, uint256 weightPerToken_) public virtual override initializer {
         __InitializerEventEmitter_init(abi.encode(token_, weightPerToken_));
         __DeploymentBlockInitializable_init();
 
@@ -145,9 +134,16 @@ contract VotingWeightERC721V1 is
      */
     function calculateWeight(
         address voter_,
-        uint256 /* timestamp_ */,
+        uint256,
+        /* timestamp_ */
         bytes calldata voteData_
-    ) external view virtual override returns (uint256, bytes memory) {
+    )
+        external
+        view
+        virtual
+        override
+        returns (uint256, bytes memory)
+    {
         VotingWeightERC721Storage storage $ = _getVotingWeightERC721Storage();
 
         // Decode token IDs from vote data
@@ -190,9 +186,16 @@ contract VotingWeightERC721V1 is
      */
     function getVotingWeightForPaymaster(
         address voter_,
-        uint256 /* timestamp_ */,
+        uint256,
+        /* timestamp_ */
         bytes calldata voteData_
-    ) external view virtual override returns (uint256) {
+    )
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         VotingWeightERC721Storage storage $ = _getVotingWeightERC721Storage();
 
         // Decode token IDs from vote data
@@ -204,14 +207,14 @@ contract VotingWeightERC721V1 is
         }
 
         // Track unique token IDs to prevent duplicates
-        for (uint256 i = 0; i < tokenIds.length; ) {
+        for (uint256 i = 0; i < tokenIds.length;) {
             // Check current ownership
             if ($.token.ownerOf(tokenIds[i]) != voter_) {
                 return 0; // Not the owner
             }
 
             // Check for duplicates
-            for (uint256 j = i + 1; j < tokenIds.length; ) {
+            for (uint256 j = i + 1; j < tokenIds.length;) {
                 if (tokenIds[i] == tokenIds[j]) {
                     return 0; // Duplicate found
                 }
@@ -252,14 +255,9 @@ contract VotingWeightERC721V1 is
      * @inheritdoc ERC165
      * @dev Supports IVotingWeightV1, IVotingWeightERC721V1, IVersion, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(IVotingWeightERC721V1).interfaceId ||
-            interfaceId_ == type(IVotingWeightV1).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(IVotingWeightERC721V1).interfaceId
+            || interfaceId_ == type(IVotingWeightV1).interfaceId || interfaceId_ == type(IVersion).interfaceId
+            || interfaceId_ == type(IDeploymentBlock).interfaceId || super.supportsInterface(interfaceId_);
     }
 }

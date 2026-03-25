@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.31;
 
-import {ISanction} from "../interfaces/ISanction.sol";
-import {IVeto} from "../interfaces/IVeto.sol";
-import {Enum} from "../base/Enum.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { ISanction } from "../interfaces/ISanction.sol";
+import { IVeto } from "../interfaces/IVeto.sol";
+import { Enum } from "../base/Enum.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
 // Note: Initializable is inherited through Ownable2StepUpgradeable and UUPSUpgradeable
 
 /**
@@ -29,12 +30,7 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
  *
  * @custom:security-contact security@lux.network
  */
-contract Sanction is
-    ISanction,
-    Ownable2StepUpgradeable,
-    UUPSUpgradeable,
-    ERC165
-{
+contract Sanction is ISanction, Ownable2StepUpgradeable, UUPSUpgradeable, ERC165 {
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
@@ -77,10 +73,7 @@ contract Sanction is
      * @param owner_ Owner who can upgrade the contract
      * @param veto_ Veto contract address
      */
-    function initialize(
-        address owner_,
-        address veto_
-    ) public virtual initializer {
+    function initialize(address owner_, address veto_) public virtual initializer {
         __Ownable_init(owner_);
 
         SanctionStorage storage $ = _getStorage();
@@ -91,7 +84,7 @@ contract Sanction is
     // UUPSUpgradeable
     // ======================================================================
 
-    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
+    function _authorizeUpgrade(address) internal virtual override onlyOwner { }
 
     // ======================================================================
     // VIEW FUNCTIONS
@@ -143,8 +136,6 @@ contract Sanction is
     // ======================================================================
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return
-            interfaceId == type(ISanction).interfaceId ||
-            super.supportsInterface(interfaceId);
+        return interfaceId == type(ISanction).interfaceId || super.supportsInterface(interfaceId);
     }
 }

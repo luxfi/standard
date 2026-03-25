@@ -3,7 +3,7 @@
 // Copyright (C) 2019-2025, Lux Industries Inc. All rights reserved.
 pragma solidity ^0.8.31;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title ChainConfig
@@ -41,28 +41,28 @@ contract ChainConfig is Ownable {
     uint256 public constant CHAIN_C_TESTNET = 96368;
     uint256 public constant CHAIN_HANZO_TESTNET = 36962;
     uint256 public constant CHAIN_ZOO_TESTNET = 200201;
-    uint256 public constant CHAIN_ANVIL = 31337;  // Local testing
+    uint256 public constant CHAIN_ANVIL = 31337; // Local testing
 
     // ============ Types ============
 
     /// @notice GPU hardware tier for reward multipliers
     enum GPUTier {
-        Consumer,     // 0: Consumer GPUs (RTX 30xx, 40xx)
+        Consumer, // 0: Consumer GPUs (RTX 30xx, 40xx)
         Professional, // 1: Professional (A4000, A5000, A6000)
-        DataCenter,   // 2: Data center (A100, H100)
-        Sovereign     // 3: Sovereign TEE (H100 TDX, Blackwell)
+        DataCenter, // 2: Data center (A100, H100)
+        Sovereign // 3: Sovereign TEE (H100 TDX, Blackwell)
     }
 
     /// @notice Chain configuration parameters
     struct Config {
-        uint256 baseRewardRate;        // Base reward per valid proof (in wei)
-        uint256 difficultyTarget;      // Current difficulty target
+        uint256 baseRewardRate; // Base reward per valid proof (in wei)
+        uint256 difficultyTarget; // Current difficulty target
         uint256 difficultyAdjustInterval; // Blocks between difficulty adjustments
-        uint256 targetBlockTime;       // Target seconds between blocks
-        address treasury;              // Treasury address for research allocation
-        uint256 treasuryBps;           // Treasury allocation in basis points (100 = 1%)
-        uint256 genesisBlock;          // Block when mining started
-        bool active;                   // Whether mining is active on this chain
+        uint256 targetBlockTime; // Target seconds between blocks
+        address treasury; // Treasury address for research allocation
+        uint256 treasuryBps; // Treasury allocation in basis points (100 = 1%)
+        uint256 genesisBlock; // Block when mining started
+        bool active; // Whether mining is active on this chain
     }
 
     // ============ State ============
@@ -103,15 +103,15 @@ contract ChainConfig is Ownable {
 
     constructor() Ownable(msg.sender) {
         // Initialize GPU tier multipliers (basis points)
-        gpuMultipliers[GPUTier.Consumer] = 5000;       // 0.5x
-        gpuMultipliers[GPUTier.Professional] = 10000;  // 1.0x
-        gpuMultipliers[GPUTier.DataCenter] = 15000;    // 1.5x
-        gpuMultipliers[GPUTier.Sovereign] = 20000;     // 2.0x
+        gpuMultipliers[GPUTier.Consumer] = 5000; // 0.5x
+        gpuMultipliers[GPUTier.Professional] = 10000; // 1.0x
+        gpuMultipliers[GPUTier.DataCenter] = 15000; // 1.5x
+        gpuMultipliers[GPUTier.Sovereign] = 20000; // 2.0x
 
         // Initialize default configs for supported chains
-        _initializeChain(CHAIN_C, 50 ether);      // C-Chain: 50 AI base
-        _initializeChain(CHAIN_HANZO, 50 ether);  // AI: 50 AI base
-        _initializeChain(CHAIN_ZOO, 50 ether);    // Zoo: 50 AI base
+        _initializeChain(CHAIN_C, 50 ether); // C-Chain: 50 AI base
+        _initializeChain(CHAIN_HANZO, 50 ether); // AI: 50 AI base
+        _initializeChain(CHAIN_ZOO, 50 ether); // Zoo: 50 AI base
     }
 
     // ============ View Functions ============
@@ -125,9 +125,7 @@ contract ChainConfig is Ownable {
         Config storage config = configs[chainId];
         if (!config.active || config.genesisBlock == 0) return 0;
 
-        uint256 blocksSinceGenesis = block.number > config.genesisBlock
-            ? block.number - config.genesisBlock
-            : 0;
+        uint256 blocksSinceGenesis = block.number > config.genesisBlock ? block.number - config.genesisBlock : 0;
 
         epoch = blocksSinceGenesis / HALVING_INTERVAL;
         if (epoch > MAX_HALVINGS) epoch = MAX_HALVINGS;
@@ -170,9 +168,7 @@ contract ChainConfig is Ownable {
         Config storage config = configs[chainId];
         if (!config.active || config.genesisBlock == 0) return 0;
 
-        uint256 blocksSinceGenesis = block.number > config.genesisBlock
-            ? block.number - config.genesisBlock
-            : 0;
+        uint256 blocksSinceGenesis = block.number > config.genesisBlock ? block.number - config.genesisBlock : 0;
 
         uint256 blocksIntoEpoch = blocksSinceGenesis % HALVING_INTERVAL;
         blocks = HALVING_INTERVAL - blocksIntoEpoch;
@@ -184,10 +180,9 @@ contract ChainConfig is Ownable {
      * @return supported True if chain is supported
      */
     function isValidChainId(uint256 chainId) public pure returns (bool supported) {
-        return chainId == CHAIN_C || chainId == CHAIN_C_TESTNET ||
-               chainId == CHAIN_HANZO || chainId == CHAIN_HANZO_TESTNET ||
-               chainId == CHAIN_ZOO || chainId == CHAIN_ZOO_TESTNET ||
-               chainId == CHAIN_ANVIL;
+        return chainId == CHAIN_C || chainId == CHAIN_C_TESTNET || chainId == CHAIN_HANZO
+            || chainId == CHAIN_HANZO_TESTNET || chainId == CHAIN_ZOO || chainId == CHAIN_ZOO_TESTNET
+            || chainId == CHAIN_ANVIL;
     }
 
     /**

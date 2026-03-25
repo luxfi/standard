@@ -2,7 +2,7 @@
 pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
-import {Stake} from "../../../contracts/governance/Stake.sol";
+import { Stake } from "../../../contracts/governance/Stake.sol";
 
 /// @title StakeFuzzTest
 /// @notice Fuzz tests for Stake.sol - ERC20Votes governance token
@@ -30,8 +30,8 @@ contract StakeFuzzTest is Test {
             "GOV",
             allocations,
             owner,
-            0,           // unlimited supply
-            false        // not soulbound
+            0, // unlimited supply
+            false // not soulbound
         );
     }
 
@@ -59,23 +59,10 @@ contract StakeFuzzTest is Test {
         // Deploy token with max supply
         Stake.Allocation[] memory allocations = new Stake.Allocation[](0);
         vm.prank(owner);
-        Stake capped = new Stake(
-            "Capped Token",
-            "CAP",
-            allocations,
-            owner,
-            maxSupply,
-            false
-        );
+        Stake capped = new Stake("Capped Token", "CAP", allocations, owner, maxSupply, false);
 
         if (mintAmount > maxSupply) {
-            vm.expectRevert(
-                abi.encodeWithSelector(
-                    Stake.MaxSupplyExceeded.selector,
-                    mintAmount,
-                    maxSupply
-                )
-            );
+            vm.expectRevert(abi.encodeWithSelector(Stake.MaxSupplyExceeded.selector, mintAmount, maxSupply));
             vm.prank(owner);
             capped.mint(alice, mintAmount);
         } else {
@@ -86,11 +73,7 @@ contract StakeFuzzTest is Test {
     }
 
     /// @notice Fuzz test cumulative minting respects max supply
-    function testFuzz_Mint_CumulativeRespectsMaxSupply(
-        uint256 maxSupply,
-        uint256 amount1,
-        uint256 amount2
-    ) public {
+    function testFuzz_Mint_CumulativeRespectsMaxSupply(uint256 maxSupply, uint256 amount1, uint256 amount2) public {
         maxSupply = bound(maxSupply, 1e18, type(uint128).max);
         amount1 = bound(amount1, 1, maxSupply);
         amount2 = bound(amount2, 1, type(uint128).max);
@@ -106,13 +89,7 @@ contract StakeFuzzTest is Test {
         uint256 remaining = maxSupply - amount1;
 
         if (amount2 > remaining) {
-            vm.expectRevert(
-                abi.encodeWithSelector(
-                    Stake.MaxSupplyExceeded.selector,
-                    amount2,
-                    remaining
-                )
-            );
+            vm.expectRevert(abi.encodeWithSelector(Stake.MaxSupplyExceeded.selector, amount2, remaining));
             vm.prank(owner);
             capped.mint(bob, amount2);
         } else {
@@ -299,7 +276,7 @@ contract StakeFuzzTest is Test {
             allocations,
             owner,
             0,
-            true  // soulbound
+            true // soulbound
         );
 
         vm.prank(owner);
@@ -416,10 +393,7 @@ contract StakeFuzzTest is Test {
     }
 
     /// @notice Fuzz test different users can link different DIDs
-    function testFuzz_DID_DifferentUsersDifferentDIDs(
-        string calldata did1,
-        string calldata did2
-    ) public {
+    function testFuzz_DID_DifferentUsersDifferentDIDs(string calldata did1, string calldata did2) public {
         vm.assume(bytes(did1).length > 0);
         vm.assume(bytes(did2).length > 0);
 
@@ -438,26 +412,16 @@ contract StakeFuzzTest is Test {
     // =========================================================================
 
     /// @notice Fuzz test initial allocations are minted correctly
-    function testFuzz_InitialAllocations(
-        uint256 amount1,
-        uint256 amount2
-    ) public {
+    function testFuzz_InitialAllocations(uint256 amount1, uint256 amount2) public {
         amount1 = bound(amount1, 1e18, type(uint64).max);
         amount2 = bound(amount2, 1e18, type(uint64).max);
 
         Stake.Allocation[] memory allocations = new Stake.Allocation[](2);
-        allocations[0] = Stake.Allocation({recipient: alice, amount: amount1});
-        allocations[1] = Stake.Allocation({recipient: bob, amount: amount2});
+        allocations[0] = Stake.Allocation({ recipient: alice, amount: amount1 });
+        allocations[1] = Stake.Allocation({ recipient: bob, amount: amount2 });
 
         vm.prank(owner);
-        Stake allocated = new Stake(
-            "Allocated",
-            "ALLOC",
-            allocations,
-            owner,
-            0,
-            false
-        );
+        Stake allocated = new Stake("Allocated", "ALLOC", allocations, owner, 0, false);
 
         assertEq(allocated.balanceOf(alice), amount1);
         assertEq(allocated.balanceOf(bob), amount2);
@@ -465,27 +429,17 @@ contract StakeFuzzTest is Test {
     }
 
     /// @notice Fuzz test initial allocations respect max supply
-    function testFuzz_InitialAllocations_RespectsMaxSupply(
-        uint256 maxSupply,
-        uint256 amount
-    ) public {
+    function testFuzz_InitialAllocations_RespectsMaxSupply(uint256 maxSupply, uint256 amount) public {
         maxSupply = bound(maxSupply, 1e18, type(uint64).max);
         amount = bound(amount, maxSupply + 1, type(uint128).max);
 
         Stake.Allocation[] memory allocations = new Stake.Allocation[](1);
-        allocations[0] = Stake.Allocation({recipient: alice, amount: amount});
+        allocations[0] = Stake.Allocation({ recipient: alice, amount: amount });
 
         // This should not revert during construction (OZ doesn't check in constructor)
         // but would fail on subsequent mints
         vm.prank(owner);
-        Stake allocated = new Stake(
-            "Allocated",
-            "ALLOC",
-            allocations,
-            owner,
-            maxSupply,
-            false
-        );
+        Stake allocated = new Stake("Allocated", "ALLOC", allocations, owner, maxSupply, false);
 
         // Initial allocation went through
         assertEq(allocated.balanceOf(alice), amount);
@@ -518,7 +472,7 @@ contract StakeFuzzTest is Test {
 
         // Checkpoint written at block 100
         // We MUST advance before we can query it
-        vm.roll(102);  // Now at block 102, can query blocks < 102
+        vm.roll(102); // Now at block 102, can query blocks < 102
 
         // Query past votes at block 100
         uint256 pastVotes = token.getPastVotes(alice, 100);
@@ -593,11 +547,7 @@ contract StakeFuzzTest is Test {
     // =========================================================================
 
     /// @notice Invariant: total supply equals sum of all balances
-    function testFuzz_Invariant_TotalSupplyEqualsBalances(
-        uint256 amount1,
-        uint256 amount2,
-        uint256 burnAmount
-    ) public {
+    function testFuzz_Invariant_TotalSupplyEqualsBalances(uint256 amount1, uint256 amount2, uint256 burnAmount) public {
         amount1 = bound(amount1, 1e18, type(uint64).max);
         amount2 = bound(amount2, 1e18, type(uint64).max);
         burnAmount = bound(burnAmount, 0, amount1);

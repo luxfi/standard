@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {einput, euint64} from "../../FHE.sol";
+import { einput, euint64 } from "../../FHE.sol";
 
 /**
  * @title   IConfidentialLRC20.
@@ -35,11 +35,9 @@ interface IConfidentialLRC20 {
      * @param inputProof        Input proof.
      * @return isSuccess        Whether it succeeds.
      */
-    function approve(
-        address spender,
-        einput encryptedAmount,
-        bytes calldata inputProof
-    ) external returns (bool isSuccess);
+    function approve(address spender, einput encryptedAmount, bytes calldata inputProof)
+        external
+        returns (bool isSuccess);
 
     /**
      * @notice                  Set the `amount` as the allowance of `spender` over the caller's tokens.
@@ -83,12 +81,9 @@ interface IConfidentialLRC20 {
      * @param inputProof        Input proof.
      * @return isSuccess        Whether it succeeds.
      */
-    function transferFrom(
-        address from,
-        address to,
-        einput encryptedAmount,
-        bytes calldata inputProof
-    ) external returns (bool isSuccess);
+    function transferFrom(address from, address to, einput encryptedAmount, bytes calldata inputProof)
+        external
+        returns (bool isSuccess);
 
     /**
      * @notice              Return the remaining number of tokens that `spender` is allowed to spend

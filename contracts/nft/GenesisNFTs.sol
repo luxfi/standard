@@ -3,29 +3,29 @@
 pragma solidity ^0.8.31;
 
 /**
-    ██╗     ██╗   ██╗██╗  ██╗     ██████╗ ███████╗███╗   ██╗███████╗███████╗██╗███████╗
-    ██║     ██║   ██║╚██╗██╔╝    ██╔════╝ ██╔════╝████╗  ██║██╔════╝██╔════╝██║██╔════╝
-    ██║     ██║   ██║ ╚███╔╝     ██║  ███╗█████╗  ██╔██╗ ██║█████╗  ███████╗██║███████╗
-    ██║     ██║   ██║ ██╔██╗     ██║   ██║██╔══╝  ██║╚██╗██║██╔══╝  ╚════██║██║╚════██║
-    ███████╗╚██████╔╝██╔╝ ██╗    ╚██████╔╝███████╗██║ ╚████║███████╗███████║██║███████║
-    ╚══════╝ ╚═════╝ ╚═╝  ╚═╝     ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚══════╝╚══════╝╚═╝╚══════╝
+ *     ██╗     ██╗   ██╗██╗  ██╗     ██████╗ ███████╗███╗   ██╗███████╗███████╗██╗███████╗
+ *     ██║     ██║   ██║╚██╗██╔╝    ██╔════╝ ██╔════╝████╗  ██║██╔════╝██╔════╝██║██╔════╝
+ *     ██║     ██║   ██║ ╚███╔╝     ██║  ███╗█████╗  ██╔██╗ ██║█████╗  ███████╗██║███████╗
+ *     ██║     ██║   ██║ ██╔██╗     ██║   ██║██╔══╝  ██║╚██╗██║██╔══╝  ╚════██║██║╚════██║
+ *     ███████╗╚██████╔╝██╔╝ ██╗    ╚██████╔╝███████╗██║ ╚████║███████╗███████║██║███████║
+ *     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝     ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚══════╝╚══════╝╚═╝╚══════╝
+ *
+ *     GenesisNFTs - Genesis NFT collection for Lux ecosystem
+ *     Migrated from Ethereum to Lux C-Chain with LRC721 standard
+ *
+ *     PERMANENT LUX LOCKING:
+ *     - Each Genesis NFT has 1 billion LUX permanently locked
+ *     - LUX backing can NEVER be unlocked (permanent lockup)
+ *     - Staking rewards flow to current NFT holder
+ *     - NFT can be transferred; new holder receives future rewards
+ *
+ *     Migration from Ethereum collection: 0x31e0f919c67cedd2bc3e294340dc900735810311
+ */
 
-    GenesisNFTs - Genesis NFT collection for Lux ecosystem
-    Migrated from Ethereum to Lux C-Chain with LRC721 standard
-    
-    PERMANENT LUX LOCKING:
-    - Each Genesis NFT has 1 billion LUX permanently locked
-    - LUX backing can NEVER be unlocked (permanent lockup)
-    - Staking rewards flow to current NFT holder
-    - NFT can be transferred; new holder receives future rewards
-    
-    Migration from Ethereum collection: 0x31e0f919c67cedd2bc3e294340dc900735810311
-*/
-
-import {LRC721} from "../tokens/LRC721/LRC721.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {SafeLRC20, ILRC20} from "../tokens/LRC20/SafeLRC20.sol";
+import { LRC721 } from "../tokens/LRC721/LRC721.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { SafeLRC20, ILRC20 } from "../tokens/LRC20/SafeLRC20.sol";
 
 /**
  * @title IChainlinkAggregator
@@ -33,13 +33,10 @@ import {SafeLRC20, ILRC20} from "../tokens/LRC20/SafeLRC20.sol";
  * @dev Used as primary oracle to prevent flash loan price manipulation
  */
 interface IChainlinkAggregator {
-    function latestRoundData() external view returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    );
+    function latestRoundData()
+        external
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
     function decimals() external view returns (uint8);
 }
 
@@ -59,9 +56,9 @@ interface ILuxV2Pair {
  */
 interface IGenesisMarket {
     struct BidShares {
-        uint256 creator;    // Creator's share (basis points)
-        uint256 owner;      // Owner's share (basis points)
-        uint256 protocol;   // Protocol's share (basis points)
+        uint256 creator; // Creator's share (basis points)
+        uint256 owner; // Owner's share (basis points)
+        uint256 protocol; // Protocol's share (basis points)
     }
 
     function configure(address mediaContract) external;
@@ -83,7 +80,7 @@ interface IStakingRewards {
  * @author Lux Network
  * @notice Genesis NFT collection with permanently locked LUX and staking rewards
  * @dev Preserves Zora-style content/metadata URIs and marketplace integration
- * 
+ *
  * Token Tiers:
  * - Genesis: 1,000,000,000 LUX (1B) - $1M value
  * - Validator: 100,000,000 LUX (100M) - $100K value
@@ -99,7 +96,7 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
 
     /// @notice Amount of LUX locked per Genesis NFT (1 billion)
     uint256 public constant LUX_LOCKED_PER_NFT = 1_000_000_000 ether;
-    
+
     /// @notice DAO Treasury (receives all sale proceeds)
     address payable public constant DAO_TREASURY = payable(0x9011E888251AB053B7bD1cdB598Db4f9DEd94714);
 
@@ -129,38 +126,38 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     enum NFTType {
-        VALIDATOR,  // Validator NFT
-        CARD,       // Membership card NFT
-        COIN        // Collectible coin NFT
+        VALIDATOR, // Validator NFT
+        CARD, // Membership card NFT
+        COIN // Collectible coin NFT
     }
 
     enum Tier {
-        GENESIS,    // $1M - 1B LUX
-        VALIDATOR,  // $100K - 100M LUX
-        MINI,       // $10K - 10M LUX
-        NANO        // $1K - 1M LUX
+        GENESIS, // $1M - 1B LUX
+        VALIDATOR, // $100K - 100M LUX
+        MINI, // $10K - 10M LUX
+        NANO // $1K - 1M LUX
     }
 
     struct MediaData {
-        string tokenURI;      // Combined URI (IPFS/Arweave)
-        string contentURI;    // Direct content URI (legacy compatibility)
-        string metadataURI;   // Metadata URI (legacy compatibility)
-        bytes32 contentHash;  // SHA256 hash of content
+        string tokenURI; // Combined URI (IPFS/Arweave)
+        string contentURI; // Direct content URI (legacy compatibility)
+        string metadataURI; // Metadata URI (legacy compatibility)
+        bytes32 contentHash; // SHA256 hash of content
         bytes32 metadataHash; // SHA256 hash of metadata
     }
 
     struct TokenMeta {
-        NFTType nftType;      // NFT type (validator/card/coin)
-        Tier tier;            // Tier (genesis/validator/mini/nano)
-        string name;          // Token name
+        NFTType nftType; // NFT type (validator/card/coin)
+        Tier tier; // Tier (genesis/validator/mini/nano)
+        string name; // Token name
         uint256 originTokenId; // Original Ethereum token ID
-        uint256 luxLocked;    // Amount of LUX locked (PERMANENT)
-        uint256 timestamp;    // Creation timestamp
-        bool reserved;        // Reserved for future use
+        uint256 luxLocked; // Amount of LUX locked (PERMANENT)
+        uint256 timestamp; // Creation timestamp
+        bool reserved; // Reserved for future use
     }
 
     struct RewardInfo {
-        uint256 claimedRewards;     // Total rewards claimed by this token
+        uint256 claimedRewards; // Total rewards claimed by this token
         uint256 lastClaimTimestamp; // Last claim timestamp
     }
 
@@ -229,38 +226,19 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
     // EVENTS
     // ═══════════════════════════════════════════════════════════════════════
 
-    event TokenMinted(
-        uint256 indexed tokenId,
-        address indexed creator,
-        NFTType nftType,
-        Tier tier,
-        uint256 luxLocked
-    );
+    event TokenMinted(uint256 indexed tokenId, address indexed creator, NFTType nftType, Tier tier, uint256 luxLocked);
 
     event TokenMigrated(
-        uint256 indexed newTokenId,
-        uint256 indexed originTokenId,
-        address indexed holder,
-        uint256 luxLocked
+        uint256 indexed newTokenId, uint256 indexed originTokenId, address indexed holder, uint256 luxLocked
     );
 
-    event RewardsClaimed(
-        uint256 indexed tokenId,
-        address indexed holder,
-        uint256 amount
-    );
+    event RewardsClaimed(uint256 indexed tokenId, address indexed holder, uint256 amount);
 
     event StakingRewardsSet(address indexed stakingRewards);
     event MarketSet(address indexed market);
     event MigrationCompleted();
 
-    event TokenPurchased(
-        uint256 indexed tokenId,
-        address indexed buyer,
-        NFTType nftType,
-        Tier tier,
-        uint256 price
-    );
+    event TokenPurchased(uint256 indexed tokenId, address indexed buyer, NFTType nftType, Tier tier, uint256 price);
 
     event SalesOpened(uint256 timestamp);
 
@@ -285,7 +263,6 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
     error PriceOutOfBounds();
     error SlippageExceeded();
 
-
     // ═══════════════════════════════════════════════════════════════════════
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
@@ -306,10 +283,7 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
         address wlux_,
         address lusd_,
         address luxLusdPair_
-    )
-        LRC721("Lux Genesis", "GENESIS", baseURI_, royaltyReceiver, royaltyBps)
-        Ownable(msg.sender)
-    {
+    ) LRC721("Lux Genesis", "GENESIS", baseURI_, royaltyReceiver, royaltyBps) Ownable(msg.sender) {
         // Validate constructor parameters - prevent zero addresses
         if (wlux_ == address(0)) revert ZeroAddress();
         if (lusd_ == address(0)) revert ZeroAddress();
@@ -319,7 +293,7 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
         wlux = ILRC20(wlux_);
         lusd = ILRC20(lusd_);
         luxLusdPair = ILuxV2Pair(luxLusdPair_);
-        
+
         // Determine which token in pair is LUX (WLUX)
         luxIsToken0 = (luxLusdPair.token0() == wlux_);
 
@@ -358,13 +332,8 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
 
         uint256 len = holders.length;
         require(
-            len == originTokenIds.length &&
-            len == uris.length &&
-            len == contentHashes.length &&
-            len == metadataHashes.length &&
-            len == nftTypes.length &&
-            len == tiers.length &&
-            len == names.length,
+            len == originTokenIds.length && len == uris.length && len == contentHashes.length
+                && len == metadataHashes.length && len == nftTypes.length && len == tiers.length && len == names.length,
             "Array length mismatch"
         );
 
@@ -401,11 +370,7 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
         _setTokenURI(tokenId, uri);
 
         mediaData[tokenId] = MediaData({
-            tokenURI: uri,
-            contentURI: uri,
-            metadataURI: uri,
-            contentHash: contentHash,
-            metadataHash: metadataHash
+            tokenURI: uri, contentURI: uri, metadataURI: uri, contentHash: contentHash, metadataHash: metadataHash
         });
 
         tokenMeta[tokenId] = TokenMeta({
@@ -418,10 +383,7 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
             reserved: false
         });
 
-        rewardInfo[tokenId] = RewardInfo({
-            claimedRewards: 0,
-            lastClaimTimestamp: block.timestamp
-        });
+        rewardInfo[tokenId] = RewardInfo({ claimedRewards: 0, lastClaimTimestamp: block.timestamp });
 
         tokenCreators[tokenId] = holder;
         originToToken[originTokenId] = tokenId;
@@ -438,10 +400,10 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
      * @notice Get LUX amount for a tier
      */
     function _getLuxForTier(Tier tier) internal pure returns (uint256) {
-        if (tier == Tier.GENESIS) return 1_000_000_000 ether;   // 1B LUX
-        if (tier == Tier.VALIDATOR) return 100_000_000 ether;   // 100M LUX
-        if (tier == Tier.MINI) return 10_000_000 ether;         // 10M LUX
-        if (tier == Tier.NANO) return 1_000_000 ether;          // 1M LUX
+        if (tier == Tier.GENESIS) return 1_000_000_000 ether; // 1B LUX
+        if (tier == Tier.VALIDATOR) return 100_000_000 ether; // 100M LUX
+        if (tier == Tier.MINI) return 10_000_000 ether; // 10M LUX
+        if (tier == Tier.NANO) return 1_000_000 ether; // 1M LUX
         return 0;
     }
 
@@ -467,10 +429,10 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
         if (address(stakingRewards) == address(0)) revert InvalidStakingRewards();
 
         TokenMeta memory meta = tokenMeta[tokenId];
-        
+
         // Claim rewards from staking contract based on locked LUX
         uint256 rewards = stakingRewards.claimRewardsFor(msg.sender, meta.luxLocked);
-        
+
         if (rewards == 0) revert NoRewardsAvailable();
 
         // Update reward info
@@ -478,7 +440,7 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
         rewardInfo[tokenId].lastClaimTimestamp = block.timestamp;
 
         emit RewardsClaimed(tokenId, msg.sender, rewards);
-        
+
         return rewards;
     }
 
@@ -488,7 +450,7 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
      */
     function pendingRewards(uint256 tokenId) external view returns (uint256) {
         if (address(stakingRewards) == address(0)) return 0;
-        
+
         TokenMeta memory meta = tokenMeta[tokenId];
         return stakingRewards.pendingRewards(meta.luxLocked);
     }
@@ -510,7 +472,12 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
      * @notice LUX locked in Genesis NFTs can NEVER be unlocked
      * @dev This function always reverts - it exists to make the intent clear
      */
-    function unlockLux(uint256 /*tokenId*/) external pure {
+    function unlockLux(
+        uint256 /*tokenId*/
+    )
+        external
+        pure
+    {
         revert LuxCannotBeUnlocked();
     }
 
@@ -537,13 +504,11 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
      * @param tier Token tier
      * @param name Token name
      */
-    function mintToken(
-        address to,
-        MediaData calldata data,
-        NFTType nftType,
-        Tier tier,
-        string calldata name
-    ) external onlyRole(MINTER_ROLE) returns (uint256) {
+    function mintToken(address to, MediaData calldata data, NFTType nftType, Tier tier, string calldata name)
+        external
+        onlyRole(MINTER_ROLE)
+        returns (uint256)
+    {
         if (!migrationComplete) revert MigrationNotComplete();
         if (bytes(data.contentURI).length == 0) revert InvalidMediaData();
 
@@ -569,10 +534,7 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
             reserved: false
         });
 
-        rewardInfo[tokenId] = RewardInfo({
-            claimedRewards: 0,
-            lastClaimTimestamp: block.timestamp
-        });
+        rewardInfo[tokenId] = RewardInfo({ claimedRewards: 0, lastClaimTimestamp: block.timestamp });
 
         tokenCreators[tokenId] = msg.sender;
         totalLuxLocked += luxLocked;
@@ -598,12 +560,11 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
      * @param name Custom name for the NFT
      * @param maxPrice Maximum price willing to pay (slippage protection, 0 = no limit)
      */
-    function buy(
-        NFTType nftType,
-        Tier tier,
-        string calldata name,
-        uint256 maxPrice
-    ) external nonReentrant returns (uint256) {
+    function buy(NFTType nftType, Tier tier, string calldata name, uint256 maxPrice)
+        external
+        nonReentrant
+        returns (uint256)
+    {
         if (!salesOpen) revert SalesNotOpen();
         if (!migrationComplete) revert MigrationNotComplete();
 
@@ -623,7 +584,7 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
 
         // Default media data for purchased NFTs
         string memory defaultURI = string(abi.encodePacked("ipfs://genesis/", _toString(tokenId)));
-        
+
         mediaData[tokenId] = MediaData({
             tokenURI: defaultURI,
             contentURI: defaultURI,
@@ -642,10 +603,7 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
             reserved: false
         });
 
-        rewardInfo[tokenId] = RewardInfo({
-            claimedRewards: 0,
-            lastClaimTimestamp: block.timestamp
-        });
+        rewardInfo[tokenId] = RewardInfo({ claimedRewards: 0, lastClaimTimestamp: block.timestamp });
 
         tokenCreators[tokenId] = msg.sender;
         totalLuxLocked += luxLocked;
@@ -675,13 +633,8 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
      * @dev Includes staleness check and sanity bounds
      */
     function _getChainlinkPrice() internal view returns (uint256) {
-        (
-            uint80 roundId,
-            int256 answer,
-            ,
-            uint256 updatedAt,
-            uint80 answeredInRound
-        ) = chainlinkPriceFeed.latestRoundData();
+        (uint80 roundId, int256 answer,, uint256 updatedAt, uint80 answeredInRound) =
+            chainlinkPriceFeed.latestRoundData();
 
         // Validate oracle data
         if (answer <= 0) revert PriceOutOfBounds();
@@ -694,10 +647,10 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
         uint256 price;
         if (oracleDecimals < 18) {
             // forge-lint: disable-next-line(unsafe-typecast)
-            price = uint256(answer) * 10**(18 - oracleDecimals);
+            price = uint256(answer) * 10 ** (18 - oracleDecimals);
         } else {
             // forge-lint: disable-next-line(unsafe-typecast)
-            price = uint256(answer) / 10**(oracleDecimals - 18);
+            price = uint256(answer) / 10 ** (oracleDecimals - 18);
         }
 
         // Sanity check bounds
@@ -733,7 +686,6 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
         return price;
     }
 
-
     /**
      * @notice Get current discount percentage based on elapsed time
      * @dev Linear interpolation from 11% (start) to 1% (Jan 1, 2026)
@@ -742,15 +694,15 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
     function getCurrentDiscount() public view returns (uint256) {
         // If sales haven't started, return starting discount
         if (salesStartTimestamp == 0) return START_DISCOUNT_BPS;
-        
+
         // If past end date, return ending discount (1%)
         if (block.timestamp >= DISCOUNT_END_TIMESTAMP) return END_DISCOUNT_BPS;
-        
+
         // Linear interpolation: starts at 11%, ends at 1%
         uint256 elapsed = block.timestamp - salesStartTimestamp;
         uint256 totalDuration = DISCOUNT_END_TIMESTAMP - salesStartTimestamp;
         uint256 discountRange = START_DISCOUNT_BPS - END_DISCOUNT_BPS; // 1000 bps (10%)
-        
+
         // Discount decreases linearly over time
         uint256 discountReduction = (elapsed * discountRange) / totalDuration;
         return START_DISCOUNT_BPS - discountReduction;
@@ -853,13 +805,17 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
     /**
      * @notice Get full token data
      */
-    function getToken(uint256 tokenId) external view returns (
-        address owner,
-        address creator,
-        MediaData memory data,
-        TokenMeta memory meta,
-        RewardInfo memory rewards
-    ) {
+    function getToken(uint256 tokenId)
+        external
+        view
+        returns (
+            address owner,
+            address creator,
+            MediaData memory data,
+            TokenMeta memory meta,
+            RewardInfo memory rewards
+        )
+    {
         owner = ownerOf(tokenId);
         creator = tokenCreators[tokenId];
         data = mediaData[tokenId];
@@ -885,12 +841,7 @@ contract GenesisNFTs is LRC721, Ownable, ReentrancyGuard {
         _setTokenURI(tokenId, uri);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(LRC721)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(LRC721) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }

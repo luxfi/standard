@@ -71,11 +71,11 @@ library BalanceDeltaLib {
 /// @notice Defines a pool's characteristics
 /// @dev Currencies must be sorted (currency0 < currency1 by address)
 struct PoolKey {
-    Currency currency0;      // Lower address token
-    Currency currency1;      // Higher address token
-    uint24 fee;              // Fee in basis points (e.g., 3000 = 0.30%)
-    int24 tickSpacing;       // Tick spacing for concentrated liquidity
-    address hooks;           // Hook contract address (address(0) = no hooks)
+    Currency currency0; // Lower address token
+    Currency currency1; // Higher address token
+    uint24 fee; // Fee in basis points (e.g., 3000 = 0.30%)
+    int24 tickSpacing; // Tick spacing for concentrated liquidity
+    address hooks; // Hook contract address (address(0) = no hooks)
 }
 
 /// @notice Library for PoolKey operations
@@ -83,13 +83,7 @@ library PoolKeyLib {
     /// @notice Compute the unique ID for a pool key
     /// @dev Uses BLAKE3 hash of the key components
     function ID(PoolKey calldata key) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            key.currency0,
-            key.currency1,
-            key.fee,
-            key.tickSpacing,
-            key.hooks
-        ));
+        return keccak256(abi.encode(key.currency0, key.currency1, key.fee, key.tickSpacing, key.hooks));
     }
 }
 
@@ -185,17 +179,17 @@ library HookPermissionsLib {
 
 /// @notice Parameters for a swap
 struct SwapParams {
-    bool zeroForOne;           // Direction: true = currency0 -> currency1
-    int256 amountSpecified;    // Amount to swap (positive = exact input, negative = exact output)
+    bool zeroForOne; // Direction: true = currency0 -> currency1
+    int256 amountSpecified; // Amount to swap (positive = exact input, negative = exact output)
     uint160 sqrtPriceLimitX96; // Price limit (0 = no limit)
 }
 
 /// @notice Parameters for modifying liquidity
 struct ModifyLiquidityParams {
-    int24 tickLower;           // Lower tick bound
-    int24 tickUpper;           // Upper tick bound
-    int128 liquidityDelta;     // Change in liquidity (positive = add, negative = remove)
-    bytes32 salt;              // Salt for position key (for uniqueness)
+    int24 tickLower; // Lower tick bound
+    int24 tickUpper; // Upper tick bound
+    int128 liquidityDelta; // Change in liquidity (positive = add, negative = remove)
+    bytes32 salt; // Salt for position key (for uniqueness)
 }
 
 // =========================================================================
@@ -203,11 +197,11 @@ struct ModifyLiquidityParams {
 // =========================================================================
 
 // Fee tier constants (in basis points)
-uint24 constant FEE_001 = 100;     // 0.01% - stablecoins
-uint24 constant FEE_005 = 500;     // 0.05% - stable pairs
-uint24 constant FEE_030 = 3000;    // 0.30% - standard
-uint24 constant FEE_100 = 10000;   // 1.00% - exotic pairs
-uint24 constant FEE_MAX = 100000;  // 10% max fee
+uint24 constant FEE_001 = 100; // 0.01% - stablecoins
+uint24 constant FEE_005 = 500; // 0.05% - stable pairs
+uint24 constant FEE_030 = 3000; // 0.30% - standard
+uint24 constant FEE_100 = 10000; // 1.00% - exotic pairs
+uint24 constant FEE_MAX = 100000; // 10% max fee
 
 // Tick spacing constants
 int24 constant TICK_SPACING_001 = 1;

@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {IERC1271, ILegacyERC1271} from "./interfaces/IERC1271.sol";
+import { IERC1271, ILegacyERC1271 } from "./interfaces/IERC1271.sol";
 
 /// @title IMLDSA
 /// @dev Interface for the ML-DSA precompile at 0x0200000000000000000000000000000000000006
 interface IMLDSA {
-    function verify(
-        bytes calldata publicKey,
-        bytes calldata message,
-        bytes calldata signature
-    ) external view returns (bool valid);
+    function verify(bytes calldata publicKey, bytes calldata message, bytes calldata signature)
+        external
+        view
+        returns (bool valid);
 }
 
 /// @title Safe ML-DSA Signer
@@ -97,11 +96,7 @@ contract SafeMLDSASigner is IERC1271, ILegacyERC1271 {
         // Call the ML-DSA precompile to verify the signature
         // The precompile expects: publicKey, message, signature
         // We pass the messageHash as a 32-byte message
-        return IMLDSA(MLDSA_PRECOMPILE).verify(
-            _PUBLIC_KEY,
-            abi.encodePacked(messageHash),
-            signature
-        );
+        return IMLDSA(MLDSA_PRECOMPILE).verify(_PUBLIC_KEY, abi.encodePacked(messageHash), signature);
     }
 
     /// @inheritdoc IERC1271
@@ -181,11 +176,7 @@ contract SafeMLDSACoSigner is IERC1271 {
             revert InvalidCoSignature();
         }
 
-        bool valid = IMLDSA(MLDSA_PRECOMPILE).verify(
-            _PUBLIC_KEY,
-            abi.encodePacked(safeTxHash),
-            coSignature
-        );
+        bool valid = IMLDSA(MLDSA_PRECOMPILE).verify(_PUBLIC_KEY, abi.encodePacked(safeTxHash), coSignature);
 
         if (!valid) {
             revert InvalidCoSignature();
@@ -200,11 +191,7 @@ contract SafeMLDSACoSigner is IERC1271 {
             return bytes4(0);
         }
 
-        bool valid = IMLDSA(MLDSA_PRECOMPILE).verify(
-            _PUBLIC_KEY,
-            abi.encodePacked(message),
-            signature
-        );
+        bool valid = IMLDSA(MLDSA_PRECOMPILE).verify(_PUBLIC_KEY, abi.encodePacked(message), signature);
 
         if (valid) {
             magicValue = IERC1271.isValidSignature.selector;

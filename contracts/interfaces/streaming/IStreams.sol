@@ -14,10 +14,10 @@ interface IStreams {
 
     /// @notice Stream curve type
     enum StreamType {
-        LINEAR,         // Constant rate
-        LINEAR_CLIFF,   // Cliff then linear
-        EXPONENTIAL,    // Accelerating release
-        UNLOCK_LINEAR   // Discrete unlocks + linear between
+        LINEAR, // Constant rate
+        LINEAR_CLIFF, // Cliff then linear
+        EXPONENTIAL, // Accelerating release
+        UNLOCK_LINEAR // Discrete unlocks + linear between
     }
 
     /**
@@ -141,11 +141,7 @@ interface IStreams {
      * @param recipient Recipient address
      * @param amount Amount withdrawn
      */
-    event Withdrawn(
-        uint256 indexed streamId,
-        address indexed recipient,
-        uint256 amount
-    );
+    event Withdrawn(uint256 indexed streamId, address indexed recipient, uint256 amount);
 
     /**
      * @notice Emitted when a stream is canceled
@@ -155,10 +151,7 @@ interface IStreams {
      * @param senderAmount Amount refunded to sender
      */
     event StreamCanceled(
-        uint256 indexed streamId,
-        address indexed sender,
-        uint256 recipientAmount,
-        uint256 senderAmount
+        uint256 indexed streamId, address indexed sender, uint256 recipientAmount, uint256 senderAmount
     );
 
     /**
@@ -167,11 +160,7 @@ interface IStreams {
      * @param from Previous owner
      * @param to New owner
      */
-    event StreamTransferred(
-        uint256 indexed streamId,
-        address indexed from,
-        address indexed to
-    );
+    event StreamTransferred(uint256 indexed streamId, address indexed from, address indexed to);
 
     /**
      * @notice Emitted when protocol fees are collected
@@ -179,11 +168,7 @@ interface IStreams {
      * @param receiver Fee receiver
      * @param amount Amount collected
      */
-    event FeesCollected(
-        address indexed token,
-        address indexed receiver,
-        uint256 amount
-    );
+    event FeesCollected(address indexed token, address indexed receiver, uint256 amount);
 
     // ═══════════════════════════════════════════════════════════════════════
     // CREATE STREAMS
@@ -211,12 +196,9 @@ interface IStreams {
      * @param duration Stream duration in seconds
      * @return streamId ID of created stream
      */
-    function createLinearStream(
-        address recipient,
-        address token,
-        uint256 amount,
-        uint256 duration
-    ) external returns (uint256 streamId);
+    function createLinearStream(address recipient, address token, uint256 amount, uint256 duration)
+        external
+        returns (uint256 streamId);
 
     /**
      * @notice Create a vesting stream with cliff

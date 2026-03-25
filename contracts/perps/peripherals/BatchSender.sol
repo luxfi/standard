@@ -2,23 +2,17 @@
 
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {Governable} from "../access/Governable.sol";
+import { Governable } from "../access/Governable.sol";
 
 contract BatchSender is Governable {
     using SafeERC20 for IERC20;
 
+    mapping(address => bool) public isHandler;
 
-    mapping (address => bool) public isHandler;
-
-    event BatchSend(
-        uint256 indexed typeId,
-        address indexed token,
-        address[] accounts,
-        uint256[] amounts
-    );
+    event BatchSend(uint256 indexed typeId, address indexed token, address[] accounts, uint256[] amounts);
 
     modifier onlyHandler() {
         require(isHandler[msg.sender], "BatchSender: forbidden");
@@ -37,7 +31,10 @@ contract BatchSender is Governable {
         _send(_token, _accounts, _amounts, 0);
     }
 
-    function sendAndEmit(IERC20 _token, address[] memory _accounts, uint256[] memory _amounts, uint256 _typeId) public onlyHandler {
+    function sendAndEmit(IERC20 _token, address[] memory _accounts, uint256[] memory _amounts, uint256 _typeId)
+        public
+        onlyHandler
+    {
         _send(_token, _accounts, _amounts, _typeId);
     }
 

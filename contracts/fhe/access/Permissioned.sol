@@ -16,18 +16,18 @@ abstract contract Permissioned is EIP712 {
 
     /// @dev Constructor that initializes EIP712 domain separator with a name and version
     /// solhint-disable-next-line func-visibility, no-empty-blocks
-    constructor() EIP712("LuxFHE Permission", "1.0") {} 
+    constructor() EIP712("LuxFHE Permission", "1.0") { }
 
     /// @notice Modifier that requires the provided signature to be signed by the message sender
     /// @param permission Data structure containing the public key and the signature to be verified
     modifier onlySender(Permission memory permission) {
-        bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(
-            keccak256("Permissioned(bytes32 publicKey)"),
-            permission.publicKey
-        )));
+        bytes32 digest = _hashTypedDataV4(
+            keccak256(abi.encode(keccak256("Permissioned(bytes32 publicKey)"), permission.publicKey))
+        );
         address signer = ECDSA.recover(digest, permission.signature);
-        if (signer != msg.sender)
+        if (signer != msg.sender) {
             revert SignerNotMessageSender();
+        }
         _;
     }
 
@@ -35,13 +35,13 @@ abstract contract Permissioned is EIP712 {
     /// @param permission Data structure containing the public key and the signature to be verified
     /// @param owner The expected owner of the public key to match against the recovered signer
     modifier onlyPermitted(Permission memory permission, address owner) {
-        bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(
-            keccak256("Permissioned(bytes32 publicKey)"),
-            permission.publicKey
-        )));
+        bytes32 digest = _hashTypedDataV4(
+            keccak256(abi.encode(keccak256("Permissioned(bytes32 publicKey)"), permission.publicKey))
+        );
         address signer = ECDSA.recover(digest, permission.signature);
-        if (signer != owner)
+        if (signer != owner) {
             revert SignerNotOwner();
+        }
         _;
     }
 
@@ -50,13 +50,13 @@ abstract contract Permissioned is EIP712 {
     /// @param owner The expected owner of the public key to match against the recovered signer
     /// @param permitted A second permitted owner of the public key to match against the recovered signer
     modifier onlyBetweenPermitted(Permission memory permission, address owner, address permitted) {
-        bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(
-            keccak256("Permissioned(bytes32 publicKey)"),
-            permission.publicKey
-        )));
+        bytes32 digest = _hashTypedDataV4(
+            keccak256(abi.encode(keccak256("Permissioned(bytes32 publicKey)"), permission.publicKey))
+        );
         address signer = ECDSA.recover(digest, permission.signature);
-        if (signer != owner && signer != permitted)
+        if (signer != owner && signer != permitted) {
             revert SignerNotOwner();
+        }
         _;
     }
 }

@@ -16,7 +16,7 @@ import "../../contracts/amm/AMMV3Pool.sol";
 import "../../contracts/amm/interfaces/IWLUX.sol";
 
 // Shared mocks
-import {MockERC20 as MockToken, MockWLUX} from "./TestMocks.sol";
+import { MockERC20 as MockToken, MockWLUX } from "./TestMocks.sol";
 
 /// @title AMMV2Test
 /// @notice Comprehensive tests for AMM V2 (Uniswap V2-style)
@@ -84,9 +84,8 @@ contract AMMV2Test is Test {
         assertEq(factory.getPair(address(tokenB), address(tokenA)), pair);
 
         AMMV2Pair pairContract = AMMV2Pair(pair);
-        (address token0, address token1) = address(tokenA) < address(tokenB)
-            ? (address(tokenA), address(tokenB))
-            : (address(tokenB), address(tokenA));
+        (address token0, address token1) =
+            address(tokenA) < address(tokenB) ? (address(tokenA), address(tokenB)) : (address(tokenB), address(tokenA));
 
         assertEq(pairContract.token0(), token0);
         assertEq(pairContract.token1(), token1);
@@ -164,26 +163,13 @@ contract AMMV2Test is Test {
         vm.startPrank(alice);
         tokenA.approve(address(router), 100e18);
         tokenB.approve(address(router), 200e18);
-        router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            100e18,
-            200e18,
-            0, 0, alice,
-            block.timestamp
-        );
+        router.addLiquidity(address(tokenA), address(tokenB), 100e18, 200e18, 0, 0, alice, block.timestamp);
 
         // Second liquidity provision (should maintain ratio)
         tokenA.approve(address(router), 50e18);
         tokenB.approve(address(router), 100e18);
-        (uint256 actualA, uint256 actualB,) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            50e18,
-            100e18,
-            0, 0, alice,
-            block.timestamp
-        );
+        (uint256 actualA, uint256 actualB,) =
+            router.addLiquidity(address(tokenA), address(tokenB), 50e18, 100e18, 0, 0, alice, block.timestamp);
         vm.stopPrank();
 
         // Should maintain 1:2 ratio
@@ -198,7 +184,7 @@ contract AMMV2Test is Test {
         vm.startPrank(alice);
         tokenA.approve(address(router), tokenAmount);
 
-        (uint256 actualToken, uint256 actualLUX, uint256 liquidity) = router.addLiquidityLUX{value: luxAmount}(
+        (uint256 actualToken, uint256 actualLUX, uint256 liquidity) = router.addLiquidityLUX{ value: luxAmount }(
             address(tokenA),
             tokenAmount,
             0, // min amounts
@@ -218,14 +204,8 @@ contract AMMV2Test is Test {
         vm.startPrank(alice);
         tokenA.approve(address(router), 100e18);
         tokenB.approve(address(router), 200e18);
-        (,, uint256 liquidity) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            100e18,
-            200e18,
-            0, 0, alice,
-            block.timestamp
-        );
+        (,, uint256 liquidity) =
+            router.addLiquidity(address(tokenA), address(tokenB), 100e18, 200e18, 0, 0, alice, block.timestamp);
 
         // Remove liquidity
         address pair = factory.getPair(address(tokenA), address(tokenB));
@@ -250,24 +230,16 @@ contract AMMV2Test is Test {
         // Add LUX liquidity first
         vm.startPrank(alice);
         tokenA.approve(address(router), 100e18);
-        (,, uint256 liquidity) = router.addLiquidityLUX{value: 10 ether}(
-            address(tokenA),
-            100e18,
-            0, 0, alice,
-            block.timestamp
-        );
+        (,, uint256 liquidity) =
+            router.addLiquidityLUX{ value: 10 ether }(address(tokenA), 100e18, 0, 0, alice, block.timestamp);
 
         // Remove liquidity
         address pair = factory.getPair(address(tokenA), address(wlux));
         AMMV2Pair(pair).approve(address(router), liquidity);
 
         uint256 luxBefore = alice.balance;
-        (uint256 amountToken, uint256 amountLUX) = router.removeLiquidityLUX(
-            address(tokenA),
-            liquidity,
-            0, 0, alice,
-            block.timestamp
-        );
+        (uint256 amountToken, uint256 amountLUX) =
+            router.removeLiquidityLUX(address(tokenA), liquidity, 0, 0, alice, block.timestamp);
         vm.stopPrank();
 
         assertGt(amountToken, 0);
@@ -279,14 +251,7 @@ contract AMMV2Test is Test {
         vm.startPrank(alice);
         tokenA.approve(address(router), 100e18);
         tokenB.approve(address(router), 200e18);
-        router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            100e18,
-            200e18,
-            0, 0, alice,
-            block.timestamp
-        );
+        router.addLiquidity(address(tokenA), address(tokenB), 100e18, 200e18, 0, 0, alice, block.timestamp);
         vm.stopPrank();
 
         address pair = factory.getPair(address(tokenA), address(tokenB));
@@ -361,7 +326,7 @@ contract AMMV2Test is Test {
         path[1] = address(tokenA);
 
         vm.startPrank(bob);
-        uint256[] memory amounts = router.swapExactLUXForTokens{value: 1 ether}(
+        uint256[] memory amounts = router.swapExactLUXForTokens{ value: 1 ether }(
             0, // min out
             path,
             bob,
@@ -385,13 +350,7 @@ contract AMMV2Test is Test {
         tokenA.approve(address(router), swapAmount);
 
         uint256 luxBefore = bob.balance;
-        uint256[] memory amounts = router.swapExactTokensForLUX(
-            swapAmount,
-            0,
-            path,
-            bob,
-            block.timestamp
-        );
+        uint256[] memory amounts = router.swapExactTokensForLUX(swapAmount, 0, path, bob, block.timestamp);
         vm.stopPrank();
 
         assertEq(amounts[0], swapAmount);
@@ -415,13 +374,7 @@ contract AMMV2Test is Test {
         vm.startPrank(bob);
         tokenA.approve(address(router), 10e18);
 
-        uint256[] memory amounts = router.swapExactTokensForTokens(
-            10e18,
-            0,
-            path,
-            bob,
-            block.timestamp
-        );
+        uint256[] memory amounts = router.swapExactTokensForTokens(10e18, 0, path, bob, block.timestamp);
         vm.stopPrank();
 
         assertEq(amounts.length, 3);
@@ -477,13 +430,7 @@ contract AMMV2Test is Test {
         tokenA.approve(address(router), 10e18);
 
         // This should succeed with realistic slippage
-        router.swapExactTokensForTokens(
-            10e18,
-            minOut,
-            path,
-            bob,
-            block.timestamp
-        );
+        router.swapExactTokensForTokens(10e18, minOut, path, bob, block.timestamp);
         vm.stopPrank();
     }
 
@@ -520,14 +467,7 @@ contract AMMV2Test is Test {
 
         // Set deadline in the past
         vm.expectRevert("AMMV2Router: EXPIRED");
-        router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            100e18,
-            200e18,
-            0, 0, alice,
-            block.timestamp - 1
-        );
+        router.addLiquidity(address(tokenA), address(tokenB), 100e18, 200e18, 0, 0, alice, block.timestamp - 1);
         vm.stopPrank();
     }
 
@@ -579,20 +519,17 @@ contract AMMV2Test is Test {
 
         // Calculate expected output
         (uint112 reserve0, uint112 reserve1,) = AMMV2Pair(pair).getReserves();
-        (address token0,) = address(tokenA) < address(tokenB)
-            ? (address(tokenA), address(tokenB))
-            : (address(tokenB), address(tokenA));
+        (address token0,) =
+            address(tokenA) < address(tokenB) ? (address(tokenA), address(tokenB)) : (address(tokenB), address(tokenA));
 
-        (uint256 reserveIn, uint256 reserveOut) = address(tokenA) == token0
-            ? (uint256(reserve0), uint256(reserve1))
-            : (uint256(reserve1), uint256(reserve0));
+        (uint256 reserveIn, uint256 reserveOut) =
+            address(tokenA) == token0 ? (uint256(reserve0), uint256(reserve1)) : (uint256(reserve1), uint256(reserve0));
 
         uint256 amountOut = router.getAmountOut(swapAmount, reserveIn, reserveOut);
 
         // Execute swap
-        (uint256 amount0Out, uint256 amount1Out) = address(tokenA) == token0
-            ? (uint256(0), amountOut)
-            : (amountOut, uint256(0));
+        (uint256 amount0Out, uint256 amount1Out) =
+            address(tokenA) == token0 ? (uint256(0), amountOut) : (amountOut, uint256(0));
 
         AMMV2Pair(pair).swap(amount0Out, amount1Out, bob, new bytes(0));
         vm.stopPrank();
@@ -614,13 +551,7 @@ contract AMMV2Test is Test {
         vm.startPrank(bob);
         tokenA.approve(address(router), swapAmount);
 
-        uint256[] memory amounts = router.swapExactTokensForTokens(
-            swapAmount,
-            0,
-            path,
-            bob,
-            block.timestamp
-        );
+        uint256[] memory amounts = router.swapExactTokensForTokens(swapAmount, 0, path, bob, block.timestamp);
         vm.stopPrank();
 
         // Verify constant product (with fees)
@@ -636,14 +567,8 @@ contract AMMV2Test is Test {
         tokenA.approve(address(router), amountA);
         tokenB.approve(address(router), amountB);
 
-        (uint256 actualA, uint256 actualB, uint256 liquidity) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            amountA,
-            amountB,
-            0, 0, alice,
-            block.timestamp
-        );
+        (uint256 actualA, uint256 actualB, uint256 liquidity) =
+            router.addLiquidity(address(tokenA), address(tokenB), amountA, amountB, 0, 0, alice, block.timestamp);
         vm.stopPrank();
 
         assertEq(actualA, amountA);
@@ -674,7 +599,7 @@ contract AMMV2Test is Test {
         _addLiquidity(alice, address(tokenA), address(tokenB), 100e18, 200e18);
 
         // Perform multiple swaps to generate fees
-        for (uint i = 0; i < 10; i++) {
+        for (uint256 i = 0; i < 10; i++) {
             _swap(bob, address(tokenA), address(tokenB), 1e18);
         }
 
@@ -683,13 +608,7 @@ contract AMMV2Test is Test {
         vm.startPrank(alice);
         uint256 liquidity = AMMV2Pair(pair).balanceOf(alice);
         AMMV2Pair(pair).approve(address(router), liquidity);
-        router.removeLiquidity(
-            address(tokenA),
-            address(tokenB),
-            liquidity,
-            0, 0, alice,
-            block.timestamp
-        );
+        router.removeLiquidity(address(tokenA), address(tokenB), liquidity, 0, 0, alice, block.timestamp);
         vm.stopPrank();
 
         // Fee collector should have received LP tokens
@@ -700,13 +619,7 @@ contract AMMV2Test is Test {
     // HELPER FUNCTIONS
     // ═══════════════════════════════════════════════════════════════════════
 
-    function _addLiquidity(
-        address user,
-        address tokenX,
-        address tokenY,
-        uint256 amountX,
-        uint256 amountY
-    ) internal {
+    function _addLiquidity(address user, address tokenX, address tokenY, uint256 amountX, uint256 amountY) internal {
         vm.startPrank(user);
 
         if (tokenX == address(wlux) || tokenY == address(wlux)) {
@@ -715,47 +628,24 @@ contract AMMV2Test is Test {
             uint256 luxAmount = tokenX == address(wlux) ? amountX : amountY;
 
             MockToken(token).approve(address(router), tokenAmount);
-            router.addLiquidityLUX{value: luxAmount}(
-                token,
-                tokenAmount,
-                0, 0, user,
-                block.timestamp
-            );
+            router.addLiquidityLUX{ value: luxAmount }(token, tokenAmount, 0, 0, user, block.timestamp);
         } else {
             MockToken(tokenX).approve(address(router), amountX);
             MockToken(tokenY).approve(address(router), amountY);
-            router.addLiquidity(
-                tokenX,
-                tokenY,
-                amountX,
-                amountY,
-                0, 0, user,
-                block.timestamp
-            );
+            router.addLiquidity(tokenX, tokenY, amountX, amountY, 0, 0, user, block.timestamp);
         }
 
         vm.stopPrank();
     }
 
-    function _swap(
-        address user,
-        address tokenIn,
-        address tokenOut,
-        uint256 amountIn
-    ) internal {
+    function _swap(address user, address tokenIn, address tokenOut, uint256 amountIn) internal {
         address[] memory path = new address[](2);
         path[0] = tokenIn;
         path[1] = tokenOut;
 
         vm.startPrank(user);
         MockToken(tokenIn).approve(address(router), amountIn);
-        router.swapExactTokensForTokens(
-            amountIn,
-            0,
-            path,
-            user,
-            block.timestamp
-        );
+        router.swapExactTokensForTokens(amountIn, 0, path, user, block.timestamp);
         vm.stopPrank();
     }
 }
@@ -815,9 +705,8 @@ contract AMMV3Test is Test {
         assertEq(factory.getPool(address(tokenB), address(tokenA), 3000), pool);
 
         AMMV3Pool poolContract = AMMV3Pool(pool);
-        (address token0, address token1) = address(tokenA) < address(tokenB)
-            ? (address(tokenA), address(tokenB))
-            : (address(tokenB), address(tokenA));
+        (address token0, address token1) =
+            address(tokenA) < address(tokenB) ? (address(tokenA), address(tokenB)) : (address(tokenB), address(tokenA));
 
         assertEq(poolContract.token0(), token0);
         assertEq(poolContract.token1(), token1);
@@ -907,9 +796,8 @@ contract AMMV3Test is Test {
 
         // Mint liquidity in range
         vm.startPrank(alice);
-        (address token0, address token1) = address(tokenA) < address(tokenB)
-            ? (address(tokenA), address(tokenB))
-            : (address(tokenB), address(tokenA));
+        (address token0, address token1) =
+            address(tokenA) < address(tokenB) ? (address(tokenA), address(tokenB)) : (address(tokenB), address(tokenA));
 
         // Approve pool to pull tokens (mint now uses safeTransferFrom)
         MockToken(token0).approve(address(poolContract), 100e18);
@@ -922,7 +810,7 @@ contract AMMV3Test is Test {
         (uint256 amount0, uint256 amount1) = poolContract.mint(
             alice,
             -60, // tickLower (tick spacing = 60)
-            60,  // tickUpper
+            60, // tickUpper
             1000 // very small liquidity to avoid overflow
         );
         vm.stopPrank();
@@ -976,7 +864,7 @@ contract AMMV3Test is Test {
         // tickUpper = tickLower + 120 must be <= 887272
         // So tickLower must be <= 887152 (887272 - 120)
         // And tickLower must be >= -887272
-        // 
+        //
         // Use direct tick values that are multiples of 60 for tickLower
         int24 tickLower = int24(bound(int256(tick), -887220, 887100));
         // Round to nearest multiple of 60 (towards zero)
@@ -996,9 +884,8 @@ contract AMMV3Test is Test {
         factory.initializePool(pool, sqrtPriceX96);
 
         vm.startPrank(alice);
-        (address token0, address token1) = address(tokenA) < address(tokenB)
-            ? (address(tokenA), address(tokenB))
-            : (address(tokenB), address(tokenA));
+        (address token0, address token1) =
+            address(tokenA) < address(tokenB) ? (address(tokenA), address(tokenB)) : (address(tokenB), address(tokenA));
 
         // Approve pool to pull tokens (mint now uses safeTransferFrom)
         MockToken(token0).approve(address(poolContract), 100e18);
@@ -1042,14 +929,7 @@ contract AMMIntegrationTest is Test {
         vm.startPrank(alice);
         tokenA.approve(address(routerV2), 100e18);
         tokenB.approve(address(routerV2), 200e18);
-        routerV2.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            100e18,
-            200e18,
-            0, 0, alice,
-            block.timestamp
-        );
+        routerV2.addLiquidity(address(tokenA), address(tokenB), 100e18, 200e18, 0, 0, alice, block.timestamp);
 
         // Create V3 pool with different price
         address poolV3 = factoryV3.createPool(address(tokenA), address(tokenB), 3000);

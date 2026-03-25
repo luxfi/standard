@@ -3,11 +3,11 @@
 // Copyright (C) 2019-2025, Lux Industries Inc. All rights reserved.
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 /**
  * @title ComputeMarket
@@ -40,65 +40,65 @@ contract ComputeMarket is Ownable, ReentrancyGuard {
 
     /// @notice Pricing model for compute services
     enum PricingModel {
-        PerToken,      // 0: Price per input/output token
-        PerInference,  // 1: Fixed price per inference call
-        PerMinute,     // 2: Time-based pricing
-        Hybrid         // 3: Combination pricing
+        PerToken, // 0: Price per input/output token
+        PerInference, // 1: Fixed price per inference call
+        PerMinute, // 2: Time-based pricing
+        Hybrid // 3: Combination pricing
     }
 
     /// @notice Request status
     enum RequestStatus {
-        Pending,    // 0: Awaiting provider
-        Active,     // 1: Provider assigned, in progress
-        Completed,  // 2: Result submitted
-        Verified,   // 3: Result verified, payment released
-        Disputed,   // 4: Under dispute
-        Cancelled,  // 5: Cancelled by requester
-        Slashed     // 6: Provider slashed for failure
+        Pending, // 0: Awaiting provider
+        Active, // 1: Provider assigned, in progress
+        Completed, // 2: Result submitted
+        Verified, // 3: Result verified, payment released
+        Disputed, // 4: Under dispute
+        Cancelled, // 5: Cancelled by requester
+        Slashed // 6: Provider slashed for failure
     }
 
     /// @notice Provider information
     struct Provider {
         bool registered;
         bool active;
-        uint256 stake;                    // Collateral stake
-        uint256 totalEarnings;            // Lifetime earnings
-        uint256 completedJobs;            // Successfully completed jobs
-        uint256 slashedCount;             // Number of slashing events
-        uint256 reputation;               // Reputation score (0-10000)
-        PricingModel model;               // Primary pricing model
-        uint256 pricePerToken;            // Price per token (in payment token)
-        uint256 pricePerInference;        // Price per inference
-        uint256 pricePerMinute;           // Price per minute
-        uint256 maxConcurrentJobs;        // Maximum concurrent requests
-        uint256 currentJobs;              // Current active jobs
-        string modelId;                   // Supported model identifier
-        bytes32 gpuId;                    // Attested GPU identifier
+        uint256 stake; // Collateral stake
+        uint256 totalEarnings; // Lifetime earnings
+        uint256 completedJobs; // Successfully completed jobs
+        uint256 slashedCount; // Number of slashing events
+        uint256 reputation; // Reputation score (0-10000)
+        PricingModel model; // Primary pricing model
+        uint256 pricePerToken; // Price per token (in payment token)
+        uint256 pricePerInference; // Price per inference
+        uint256 pricePerMinute; // Price per minute
+        uint256 maxConcurrentJobs; // Maximum concurrent requests
+        uint256 currentJobs; // Current active jobs
+        string modelId; // Supported model identifier
+        bytes32 gpuId; // Attested GPU identifier
     }
 
     /// @notice Compute request
     struct ComputeRequest {
-        bytes32 requestId;                // Unique request identifier
-        address requester;                // User who made request
-        address provider;                 // Assigned provider
-        uint256 escrowAmount;             // Escrowed payment
-        uint256 estimatedTokens;          // Estimated token count
-        uint256 createdAt;                // Request creation time
-        uint256 deadline;                 // Completion deadline
-        RequestStatus status;             // Current status
-        bytes32 inputHash;                // Hash of input data
-        bytes32 resultHash;               // Hash of result (when completed)
-        string modelId;                   // Requested model
+        bytes32 requestId; // Unique request identifier
+        address requester; // User who made request
+        address provider; // Assigned provider
+        uint256 escrowAmount; // Escrowed payment
+        uint256 estimatedTokens; // Estimated token count
+        uint256 createdAt; // Request creation time
+        uint256 deadline; // Completion deadline
+        RequestStatus status; // Current status
+        bytes32 inputHash; // Hash of input data
+        bytes32 resultHash; // Hash of result (when completed)
+        string modelId; // Requested model
     }
 
     /// @notice Market state for Hamiltonian dynamics
     struct MarketState {
-        uint256 totalSupply;              // Total provider capacity
-        uint256 totalDemand;              // Total pending requests
-        uint256 equilibriumPrice;         // Current equilibrium price
-        uint256 priceVelocity;            // Price change rate
-        uint256 lastUpdateBlock;          // Last state update
-        uint256 utilizationRate;          // Current utilization (bps)
+        uint256 totalSupply; // Total provider capacity
+        uint256 totalDemand; // Total pending requests
+        uint256 equilibriumPrice; // Current equilibrium price
+        uint256 priceVelocity; // Price change rate
+        uint256 lastUpdateBlock; // Last state update
+        uint256 utilizationRate; // Current utilization (bps)
     }
 
     // ============ Constants ============
@@ -340,12 +340,7 @@ contract ComputeMarket is Ownable, ReentrancyGuard {
         require(duration > 0 && duration <= MAX_DURATION, "Invalid duration");
 
         // Generate request ID
-        requestId = keccak256(abi.encode(
-            msg.sender,
-            userNonce[msg.sender]++,
-            block.timestamp,
-            inputHash
-        ));
+        requestId = keccak256(abi.encode(msg.sender, userNonce[msg.sender]++, block.timestamp, inputHash));
 
         // Calculate escrow based on market price
         uint256 escrowAmount = _calculateEscrow(estimatedTokens, maxPayment);
@@ -581,17 +576,13 @@ contract ComputeMarket is Ownable, ReentrancyGuard {
      * @return price Current equilibrium price
      * @return utilization Current utilization rate (bps)
      */
-    function getMarketStats() external view returns (
-        uint256 supply,
-        uint256 demand,
-        uint256 price,
-        uint256 utilization
-    ) {
+    function getMarketStats()
+        external
+        view
+        returns (uint256 supply, uint256 demand, uint256 price, uint256 utilization)
+    {
         return (
-            marketState.totalSupply,
-            marketState.totalDemand,
-            marketState.equilibriumPrice,
-            marketState.utilizationRate
+            marketState.totalSupply, marketState.totalDemand, marketState.equilibriumPrice, marketState.utilizationRate
         );
     }
 
@@ -676,10 +667,7 @@ contract ComputeMarket is Ownable, ReentrancyGuard {
      * @param maxPayment Maximum payment
      * @return escrow Required escrow amount
      */
-    function _calculateEscrow(
-        uint256 estimatedTokens,
-        uint256 maxPayment
-    ) internal view returns (uint256 escrow) {
+    function _calculateEscrow(uint256 estimatedTokens, uint256 maxPayment) internal view returns (uint256 escrow) {
         // Base cost from market price
         escrow = (marketState.equilibriumPrice * estimatedTokens) / 1e18;
 
@@ -755,10 +743,7 @@ contract ComputeMarket is Ownable, ReentrancyGuard {
      * @param positive True for positive update, false for negative
      * @return newRep Updated reputation
      */
-    function _updateReputation(
-        uint256 currentRep,
-        bool positive
-    ) internal pure returns (uint256 newRep) {
+    function _updateReputation(uint256 currentRep, bool positive) internal pure returns (uint256 newRep) {
         if (positive) {
             // Increase by 2%, cap at 10000
             newRep = currentRep + 200;

@@ -28,10 +28,10 @@ pragma solidity ^0.8.24;
  * - Slashing protection during unbonding
  */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // EIGENLAYER INTERFACES
@@ -43,11 +43,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
  */
 interface IStrategyManager {
     /// @notice Deposit tokens into a strategy
-    function depositIntoStrategy(
-        address strategy,
-        address token,
-        uint256 amount
-    ) external returns (uint256 shares);
+    function depositIntoStrategy(address strategy, address token, uint256 amount) external returns (uint256 shares);
 
     /// @notice Deposit with signature (gasless deposits)
     function depositIntoStrategyWithSignature(
@@ -88,19 +84,15 @@ interface IDelegationManager {
     }
 
     /// @notice Delegate stake to an operator
-    function delegateTo(
-        address operator,
-        bytes memory approverSignatureAndExpiry,
-        bytes32 approverSalt
-    ) external;
+    function delegateTo(address operator, bytes memory approverSignatureAndExpiry, bytes32 approverSalt) external;
 
     /// @notice Undelegate from current operator
     function undelegate(address staker) external returns (bytes32[] memory withdrawalRoots);
 
     /// @notice Queue withdrawals
-    function queueWithdrawals(
-        QueuedWithdrawalParams[] calldata queuedWithdrawalParams
-    ) external returns (bytes32[] memory);
+    function queueWithdrawals(QueuedWithdrawalParams[] calldata queuedWithdrawalParams)
+        external
+        returns (bytes32[] memory);
 
     /// @notice Complete a queued withdrawal
     function completeQueuedWithdrawal(
@@ -143,11 +135,7 @@ interface IEigenPodManager {
     function createPod() external returns (address);
 
     /// @notice Stake ETH to beacon chain via EigenPod
-    function stake(
-        bytes calldata pubkey,
-        bytes calldata signature,
-        bytes32 depositDataRoot
-    ) external payable;
+    function stake(bytes calldata pubkey, bytes calldata signature, bytes32 depositDataRoot) external payable;
 
     /// @notice Get EigenPod address for owner
     function ownerToPod(address owner) external view returns (address);
@@ -184,10 +172,7 @@ interface IEigenPod {
     ) external;
 
     /// @notice Withdraw non-beacon chain ETH
-    function withdrawNonBeaconChainETHBalanceWei(
-        address recipient,
-        uint256 amountToWithdraw
-    ) external;
+    function withdrawNonBeaconChainETHBalanceWei(address recipient, uint256 amountToWithdraw) external;
 
     /// @notice Get withdrawable restaked execution layer ETH
     function withdrawableRestakedExecutionLayerGwei() external view returns (uint64);
@@ -249,16 +234,10 @@ interface IStrategy {
  */
 interface IAVSDirectory {
     /// @notice Register operator to AVS
-    function registerOperatorToAVS(
-        address operator,
-        bytes calldata signature
-    ) external;
+    function registerOperatorToAVS(address operator, bytes calldata signature) external;
 
     /// @notice Check if operator is registered to AVS
-    function isOperatorRegisteredToAVS(
-        address operator,
-        address avs
-    ) external view returns (bool);
+    function isOperatorRegisteredToAVS(address operator, address avs) external view returns (bool);
 }
 
 /**
@@ -287,10 +266,7 @@ interface IRewardsCoordinator {
     }
 
     /// @notice Claim rewards for earner
-    function processClaim(
-        RewardsMerkleClaim calldata claim,
-        address recipient
-    ) external;
+    function processClaim(RewardsMerkleClaim calldata claim, address recipient) external;
 
     /// @notice Check cumulative claimed for earner and token
     function cumulativeClaimed(address earner, IERC20 token) external view returns (uint256);
@@ -354,19 +330,12 @@ event Undelegated(address indexed staker, address indexed operator);
 
 /// @notice Emitted when withdrawal is queued
 event WithdrawalQueued(
-    bytes32 indexed withdrawalRoot,
-    address indexed staker,
-    address indexed strategy,
-    uint256 shares,
-    uint32 startBlock
+    bytes32 indexed withdrawalRoot, address indexed staker, address indexed strategy, uint256 shares, uint32 startBlock
 );
 
 /// @notice Emitted when withdrawal is completed
 event WithdrawalCompleted(
-    bytes32 indexed withdrawalRoot,
-    address indexed staker,
-    address indexed recipient,
-    uint256 amount
+    bytes32 indexed withdrawalRoot, address indexed staker, address indexed recipient, uint256 amount
 );
 
 /// @notice Emitted when AVS rewards are claimed
@@ -526,11 +495,7 @@ contract EigenLayerLSTStrategy is Ownable, ReentrancyGuard {
         underlyingToken.safeTransferFrom(msg.sender, address(this), amount);
 
         // Deposit into EigenLayer strategy
-        shares = strategyManager.depositIntoStrategy(
-            address(eigenStrategy),
-            address(underlyingToken),
-            amount
-        );
+        shares = strategyManager.depositIntoStrategy(address(eigenStrategy), address(underlyingToken), amount);
 
         // Track user shares
         userShares[msg.sender] += shares;
@@ -571,12 +536,9 @@ contract EigenLayerLSTStrategy is Ownable, ReentrancyGuard {
         uint256[] memory sharesToWithdraw = new uint256[](1);
         sharesToWithdraw[0] = shares;
 
-        IDelegationManager.QueuedWithdrawalParams[] memory params = 
-            new IDelegationManager.QueuedWithdrawalParams[](1);
+        IDelegationManager.QueuedWithdrawalParams[] memory params = new IDelegationManager.QueuedWithdrawalParams[](1);
         params[0] = IDelegationManager.QueuedWithdrawalParams({
-            strategies: strategies,
-            shares: sharesToWithdraw,
-            withdrawer: msg.sender
+            strategies: strategies, shares: sharesToWithdraw, withdrawer: msg.sender
         });
 
         bytes32[] memory roots = delegationManager.queueWithdrawals(params);
@@ -590,13 +552,7 @@ contract EigenLayerLSTStrategy is Ownable, ReentrancyGuard {
             completed: false
         });
 
-        emit WithdrawalQueued(
-            roots[0],
-            msg.sender,
-            address(eigenStrategy),
-            shares,
-            uint32(block.number)
-        );
+        emit WithdrawalQueued(roots[0], msg.sender, address(eigenStrategy), shares, uint32(block.number));
     }
 
     /**
@@ -646,10 +602,7 @@ contract EigenLayerLSTStrategy is Ownable, ReentrancyGuard {
      * @return Total assets managed by strategy
      */
     function totalAssets() external view returns (uint256) {
-        uint256 strategyShares = strategyManager.stakerStrategyShares(
-            address(this),
-            address(eigenStrategy)
-        );
+        uint256 strategyShares = strategyManager.stakerStrategyShares(address(this), address(eigenStrategy));
         return eigenStrategy.sharesToUnderlyingView(strategyShares);
     }
 
@@ -688,27 +641,21 @@ contract EigenLayerLSTStrategy is Ownable, ReentrancyGuard {
      * @notice Claim AVS rewards with merkle proof
      * @param claim Merkle claim data
      */
-    function claimRewards(
-        IRewardsCoordinator.RewardsMerkleClaim calldata claim,
-        address recipient
-    ) external nonReentrant {
+    function claimRewards(IRewardsCoordinator.RewardsMerkleClaim calldata claim, address recipient)
+        external
+        nonReentrant
+    {
         rewardsCoordinator.processClaim(claim, recipient);
 
         // Calculate claimed amount
         for (uint256 i = 0; i < claim.tokenLeaves.length; i++) {
-            uint256 previousClaimed = rewardsCoordinator.cumulativeClaimed(
-                claim.earnerLeaf.earner,
-                claim.tokenLeaves[i].token
-            );
+            uint256 previousClaimed =
+                rewardsCoordinator.cumulativeClaimed(claim.earnerLeaf.earner, claim.tokenLeaves[i].token);
             uint256 claimed = claim.tokenLeaves[i].cumulativeEarnings - previousClaimed;
-            
+
             if (claimed > 0) {
                 totalRewardsClaimed += claimed;
-                emit RewardsClaimed(
-                    claim.earnerLeaf.earner,
-                    address(claim.tokenLeaves[i].token),
-                    claimed
-                );
+                emit RewardsClaimed(claim.earnerLeaf.earner, address(claim.tokenLeaves[i].token), claimed);
             }
         }
     }
@@ -739,11 +686,7 @@ contract EigenLayerLSTStrategy is Ownable, ReentrancyGuard {
      * @param approverSignature Operator's approver signature (if required)
      * @param approverSalt Salt for approver signature
      */
-    function delegateTo(
-        address operator,
-        bytes calldata approverSignature,
-        bytes32 approverSalt
-    ) external onlyOwner {
+    function delegateTo(address operator, bytes calldata approverSignature, bytes32 approverSalt) external onlyOwner {
         if (operator == address(0)) revert InvalidOperator();
         if (delegationManager.isDelegated(address(this))) {
             revert AlreadyDelegated(delegationManager.delegatedTo(address(this)));
@@ -821,11 +764,7 @@ contract EigenLayerLSTStrategy is Ownable, ReentrancyGuard {
      * @param to Recipient
      * @param amount Amount to withdraw
      */
-    function emergencyWithdraw(
-        address token,
-        address to,
-        uint256 amount
-    ) external onlyOwner {
+    function emergencyWithdraw(address token, address to, uint256 amount) external onlyOwner {
         IERC20(token).safeTransfer(to, amount);
     }
 }
@@ -851,7 +790,7 @@ contract EigenLayerLSTStrategy is Ownable, ReentrancyGuard {
  * - Execution layer tips/MEV
  * - AVS rewards from validated services
  */
-contract EigenPodStrategy is Ownable, ReentrancyGuard{
+contract EigenPodStrategy is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -929,12 +868,9 @@ contract EigenPodStrategy is Ownable, ReentrancyGuard{
      * @param _rewardsCoordinator RewardsCoordinator address
      * @param _owner Strategy owner
      */
-    constructor(
-        address _eigenPodManager,
-        address _delegationManager,
-        address _rewardsCoordinator,
-        address _owner
-    ) Ownable(_owner) {
+    constructor(address _eigenPodManager, address _delegationManager, address _rewardsCoordinator, address _owner)
+        Ownable(_owner)
+    {
         eigenPodManager = IEigenPodManager(_eigenPodManager);
         delegationManager = IDelegationManager(_delegationManager);
         rewardsCoordinator = IRewardsCoordinator(_rewardsCoordinator);
@@ -966,11 +902,12 @@ contract EigenPodStrategy is Ownable, ReentrancyGuard{
      * @param signature Deposit signature
      * @param depositDataRoot Deposit data root
      */
-    function stakeValidator(
-        bytes calldata pubkey,
-        bytes calldata signature,
-        bytes32 depositDataRoot
-    ) external payable onlyOwner nonReentrant {
+    function stakeValidator(bytes calldata pubkey, bytes calldata signature, bytes32 depositDataRoot)
+        external
+        payable
+        onlyOwner
+        nonReentrant
+    {
         if (!eigenPodManager.hasPod(address(this))) {
             revert PodNotCreated();
         }
@@ -979,8 +916,8 @@ contract EigenPodStrategy is Ownable, ReentrancyGuard{
             revert InsufficientETH(VALIDATOR_STAKE, msg.value);
         }
 
-        eigenPodManager.stake{value: msg.value}(pubkey, signature, depositDataRoot);
-        
+        eigenPodManager.stake{ value: msg.value }(pubkey, signature, depositDataRoot);
+
         validatorPubkeys.push(pubkey);
         totalStaked += msg.value;
 
@@ -1005,11 +942,7 @@ contract EigenPodStrategy is Ownable, ReentrancyGuard{
         if (address(eigenPod) == address(0)) revert PodNotCreated();
 
         eigenPod.verifyWithdrawalCredentials(
-            oracleTimestamp,
-            stateRootProof,
-            validatorIndices,
-            validatorFieldsProofs,
-            validatorFields
+            oracleTimestamp, stateRootProof, validatorIndices, validatorFieldsProofs, validatorFields
         );
 
         // Mark validators as verified
@@ -1053,7 +986,7 @@ contract EigenPodStrategy is Ownable, ReentrancyGuard{
         // 3. Verify withdrawal via EigenPod
         // 4. Queue withdrawal through DelegationManager
         // 5. Complete after 7-day delay
-        
+
         // For simplicity, this handles non-beacon chain ETH only
         if (address(eigenPod) == address(0)) revert PodNotCreated();
 
@@ -1079,10 +1012,8 @@ contract EigenPodStrategy is Ownable, ReentrancyGuard{
      */
     function totalAssets() external view returns (uint256) {
         int256 podShares = eigenPodManager.podOwnerShares(address(this));
-        uint256 podBalance = address(eigenPod) != address(0) 
-            ? eigenPod.nonBeaconChainETHBalanceWei() 
-            : 0;
-        
+        uint256 podBalance = address(eigenPod) != address(0) ? eigenPod.nonBeaconChainETHBalanceWei() : 0;
+
         // forge-lint: disable-next-line(unsafe-typecast)
         return totalStaked + podBalance + (podShares > 0 ? uint256(podShares) : 0);
     }
@@ -1144,11 +1075,7 @@ contract EigenPodStrategy is Ownable, ReentrancyGuard{
      * @param approverSignature Approver signature
      * @param approverSalt Salt for signature
      */
-    function delegateTo(
-        address operator,
-        bytes calldata approverSignature,
-        bytes32 approverSalt
-    ) external onlyOwner {
+    function delegateTo(address operator, bytes calldata approverSignature, bytes32 approverSalt) external onlyOwner {
         if (operator == address(0)) revert InvalidOperator();
         if (delegationManager.isDelegated(address(this))) {
             revert AlreadyDelegated(delegatedOperator);
@@ -1220,7 +1147,7 @@ contract EigenPodStrategy is Ownable, ReentrancyGuard{
     }
 
     /// @notice Receive ETH
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1234,10 +1161,7 @@ contract EigenPodStrategy is Ownable, ReentrancyGuard{
 contract EigenLayerLSTStrategyFactory {
     /// @notice Emitted when strategy deployed
     event StrategyDeployed(
-        address indexed strategy,
-        address indexed underlyingToken,
-        address indexed eigenStrategy,
-        string name
+        address indexed strategy, address indexed underlyingToken, address indexed eigenStrategy, string name
     );
 
     /// @notice EigenLayer StrategyManager
@@ -1249,11 +1173,7 @@ contract EigenLayerLSTStrategyFactory {
     /// @notice EigenLayer RewardsCoordinator
     address public immutable rewardsCoordinator;
 
-    constructor(
-        address _strategyManager,
-        address _delegationManager,
-        address _rewardsCoordinator
-    ) {
+    constructor(address _strategyManager, address _delegationManager, address _rewardsCoordinator) {
         strategyManager = _strategyManager;
         delegationManager = _delegationManager;
         rewardsCoordinator = _rewardsCoordinator;
@@ -1267,21 +1187,15 @@ contract EigenLayerLSTStrategyFactory {
      * @param owner Strategy owner
      * @return strategy Deployed strategy address
      */
-    function deploy(
-        address eigenStrategy,
-        address underlyingToken,
-        string calldata name,
-        address owner
-    ) external returns (address strategy) {
-        strategy = address(new EigenLayerLSTStrategy(
-            strategyManager,
-            delegationManager,
-            rewardsCoordinator,
-            eigenStrategy,
-            underlyingToken,
-            name,
-            owner
-        ));
+    function deploy(address eigenStrategy, address underlyingToken, string calldata name, address owner)
+        external
+        returns (address strategy)
+    {
+        strategy = address(
+            new EigenLayerLSTStrategy(
+                strategyManager, delegationManager, rewardsCoordinator, eigenStrategy, underlyingToken, name, owner
+            )
+        );
 
         emit StrategyDeployed(strategy, underlyingToken, eigenStrategy, name);
     }
@@ -1304,11 +1218,7 @@ contract EigenPodStrategyFactory {
     /// @notice RewardsCoordinator
     address public immutable rewardsCoordinator;
 
-    constructor(
-        address _eigenPodManager,
-        address _delegationManager,
-        address _rewardsCoordinator
-    ) {
+    constructor(address _eigenPodManager, address _delegationManager, address _rewardsCoordinator) {
         eigenPodManager = _eigenPodManager;
         delegationManager = _delegationManager;
         rewardsCoordinator = _rewardsCoordinator;
@@ -1320,12 +1230,7 @@ contract EigenPodStrategyFactory {
      * @return strategy Deployed strategy address
      */
     function deploy(address owner) external returns (address strategy) {
-        strategy = address(new EigenPodStrategy(
-            eigenPodManager,
-            delegationManager,
-            rewardsCoordinator,
-            owner
-        ));
+        strategy = address(new EigenPodStrategy(eigenPodManager, delegationManager, rewardsCoordinator, owner));
 
         emit StrategyDeployed(strategy, owner);
     }

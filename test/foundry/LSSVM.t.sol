@@ -4,14 +4,14 @@ pragma solidity ^0.8.31;
 import "forge-std/Test.sol";
 
 // LSSVM Contracts
-import {LSSVMPairFactory} from "../../contracts/lssvm/LSSVMPairFactory.sol";
-import {LSSVMPair} from "../../contracts/lssvm/LSSVMPair.sol";
-import {LSSVMRouter} from "../../contracts/lssvm/LSSVMRouter.sol";
-import {LinearCurve} from "../../contracts/lssvm/LinearCurve.sol";
-import {ExponentialCurve} from "../../contracts/lssvm/ExponentialCurve.sol";
+import { LSSVMPairFactory } from "../../contracts/lssvm/LSSVMPairFactory.sol";
+import { LSSVMPair } from "../../contracts/lssvm/LSSVMPair.sol";
+import { LSSVMRouter } from "../../contracts/lssvm/LSSVMRouter.sol";
+import { LinearCurve } from "../../contracts/lssvm/LinearCurve.sol";
+import { ExponentialCurve } from "../../contracts/lssvm/ExponentialCurve.sol";
 
 // Shared mocks
-import {MockNFTWithId as MockNFT, MockERC20Simple as MockERC20} from "./TestMocks.sol";
+import { MockNFTWithId as MockNFT, MockERC20Simple as MockERC20 } from "./TestMocks.sol";
 
 /// @title LSSVM Test Suite
 /// @notice Comprehensive tests for Sudoswap-style NFT AMM
@@ -104,7 +104,7 @@ contract LSSVMTest is Test {
         }
 
         // Create TOKEN pool (buys NFTs)
-        address pair = factory.createPair{value: 10 ether}(
+        address pair = factory.createPair{ value: 10 ether }(
             address(nft),
             address(linearCurve),
             address(0), // ETH pool
@@ -172,7 +172,7 @@ contract LSSVMTest is Test {
             nft.approve(address(factory), i + 1);
         }
 
-        address pair = factory.createPair{value: 5 ether}(
+        address pair = factory.createPair{ value: 5 ether }(
             address(nft),
             address(linearCurve),
             address(0),
@@ -221,7 +221,7 @@ contract LSSVMTest is Test {
             nft.approve(address(factory), i + 1);
         }
 
-        address pair = factory.createPair{value: 20 ether}(
+        address pair = factory.createPair{ value: 20 ether }(
             address(nft),
             address(linearCurve),
             address(0),
@@ -248,7 +248,7 @@ contract LSSVMTest is Test {
 
         // Execute buy
         uint256 bobBalanceBefore = bob.balance;
-        pairContract.swapTokenForNFTs{value: cost}(buyIds, cost, bob);
+        pairContract.swapTokenForNFTs{ value: cost }(buyIds, cost, bob);
 
         // Verify results
         assertEq(nft.ownerOf(1), bob);
@@ -273,8 +273,7 @@ contract LSSVMTest is Test {
 
         // Calculate expected input: (1.1 + 1.2 + 1.3) ETH + fees
         // = 3.6 ETH base + 5.5% fees = 3.798 ETH
-        uint256 expectedBase = uint256(INITIAL_SPOT_PRICE + LINEAR_DELTA) * 3
-            + (LINEAR_DELTA * 3 * 2) / 2; // Geometric sum
+        uint256 expectedBase = uint256(INITIAL_SPOT_PRICE + LINEAR_DELTA) * 3 + (LINEAR_DELTA * 3 * 2) / 2; // Geometric sum
         uint256 expectedFees = (expectedBase * (POOL_FEE + PROTOCOL_FEE)) / 10000;
         assertEq(inputValue, expectedBase + expectedFees);
     }
@@ -288,7 +287,7 @@ contract LSSVMTest is Test {
             nft.approve(address(factory), i + 1);
         }
 
-        address pair = factory.createPair{value: 50 ether}(
+        address pair = factory.createPair{ value: 50 ether }(
             address(nft),
             address(linearCurve),
             address(0),
@@ -310,7 +309,7 @@ contract LSSVMTest is Test {
         buy1[0] = 1;
         buy1[1] = 2;
         (,, uint256 cost1,,) = pairContract.getBuyNFTQuote(2);
-        pairContract.swapTokenForNFTs{value: cost1}(buy1, cost1, bob);
+        pairContract.swapTokenForNFTs{ value: cost1 }(buy1, cost1, bob);
 
         uint128 spotPriceAfter1 = pairContract.spotPrice();
         assertEq(spotPriceAfter1, spotPriceBefore + 2 * LINEAR_DELTA);
@@ -320,7 +319,7 @@ contract LSSVMTest is Test {
         buy2[0] = 3;
         buy2[1] = 4;
         (,, uint256 cost2,,) = pairContract.getBuyNFTQuote(2);
-        pairContract.swapTokenForNFTs{value: cost2}(buy2, cost2, bob);
+        pairContract.swapTokenForNFTs{ value: cost2 }(buy2, cost2, bob);
 
         uint128 spotPriceAfter2 = pairContract.spotPrice();
         assertEq(spotPriceAfter2, spotPriceAfter1 + 2 * LINEAR_DELTA);
@@ -404,7 +403,7 @@ contract LSSVMTest is Test {
             nft.approve(address(factory), i + 1);
         }
 
-        address pair = factory.createPair{value: 50 ether}(
+        address pair = factory.createPair{ value: 50 ether }(
             address(nft),
             address(exponentialCurve),
             address(0),
@@ -427,7 +426,7 @@ contract LSSVMTest is Test {
         buyIds[2] = 3;
 
         (,, uint256 cost,,) = pairContract.getBuyNFTQuote(3);
-        pairContract.swapTokenForNFTs{value: cost}(buyIds, cost, bob);
+        pairContract.swapTokenForNFTs{ value: cost }(buyIds, cost, bob);
 
         // Verify exponential growth (each NFT is 10% more expensive)
         // New spot should be INITIAL_SPOT_PRICE * 1.1^3
@@ -446,8 +445,7 @@ contract LSSVMTest is Test {
         assertApproxEqRel(newSpot, expectedSpot, 0.01e18);
 
         // Cost should be geometric series: p*1.1 + p*1.1^2 + p*1.1^3 + fees
-        uint256 expectedBase =
-            (uint256(INITIAL_SPOT_PRICE) * (1100 + 1210 + 1331)) / 1000;
+        uint256 expectedBase = (uint256(INITIAL_SPOT_PRICE) * (1100 + 1210 + 1331)) / 1000;
         assertLt(inputValue, expectedBase * 12 / 10); // Should be < base + 20% fees
     }
 
@@ -464,7 +462,7 @@ contract LSSVMTest is Test {
             nft.approve(address(factory), i + 1);
         }
 
-        address pair = factory.createPair{value: 20 ether}(
+        address pair = factory.createPair{ value: 20 ether }(
             address(nft),
             address(linearCurve),
             address(0),
@@ -487,7 +485,7 @@ contract LSSVMTest is Test {
         (,, uint256 buyCost, uint256 buyFee,) = pairContract.getBuyNFTQuote(2);
 
         uint256 carolBalanceBefore = carol.balance;
-        pairContract.swapTokenForNFTs{value: buyCost}(buyIds, buyCost, bob);
+        pairContract.swapTokenForNFTs{ value: buyCost }(buyIds, buyCost, bob);
 
         // Verify carol received trade fee
         assertEq(carol.balance, carolBalanceBefore + buyFee);
@@ -522,7 +520,7 @@ contract LSSVMTest is Test {
             nfts1[i] = i + 1;
             nft.approve(address(factory), i + 1);
         }
-        address pair1 = factory.createPair{value: 10 ether}(
+        address pair1 = factory.createPair{ value: 10 ether }(
             address(nft),
             address(linearCurve),
             address(0),
@@ -540,7 +538,7 @@ contract LSSVMTest is Test {
             nfts2[i] = i + 6;
             nft.approve(address(factory), i + 6);
         }
-        address pair2 = factory.createPair{value: 10 ether}(
+        address pair2 = factory.createPair{ value: 10 ether }(
             address(nft),
             address(linearCurve),
             address(0),
@@ -568,9 +566,8 @@ contract LSSVMTest is Test {
         swaps[1].nftIds = new uint256[](1);
         swaps[1].nftIds[0] = 6;
 
-        uint256 totalCost = router.swapTokenForSpecificNFTs{value: 10 ether}(
-            swaps, 10 ether, bob, block.timestamp + 100
-        );
+        uint256 totalCost =
+            router.swapTokenForSpecificNFTs{ value: 10 ether }(swaps, 10 ether, bob, block.timestamp + 100);
 
         // Verify Bob owns both NFTs
         assertEq(nft.ownerOf(1), bob);
@@ -585,7 +582,7 @@ contract LSSVMTest is Test {
         vm.startPrank(alice);
         uint256[] memory emptyIds = new uint256[](0);
 
-        address pair1 = factory.createPair{value: 10 ether}(
+        address pair1 = factory.createPair{ value: 10 ether }(
             address(nft),
             address(linearCurve),
             address(0),
@@ -597,7 +594,7 @@ contract LSSVMTest is Test {
             emptyIds
         );
 
-        address pair2 = factory.createPair{value: 10 ether}(
+        address pair2 = factory.createPair{ value: 10 ether }(
             address(nft),
             address(linearCurve),
             address(0),
@@ -649,7 +646,7 @@ contract LSSVMTest is Test {
         vm.startPrank(alice);
         uint256[] memory nftIds = new uint256[](0);
 
-        address pair = factory.createPair{value: 5 ether}(
+        address pair = factory.createPair{ value: 5 ether }(
             address(nft),
             address(linearCurve),
             address(0),
@@ -664,7 +661,7 @@ contract LSSVMTest is Test {
         LSSVMPair pairContract = LSSVMPair(payable(pair));
 
         // Deposit more ETH
-        pairContract.depositTokens{value: 3 ether}(3 ether);
+        pairContract.depositTokens{ value: 3 ether }(3 ether);
         assertEq(address(pair).balance, 8 ether);
 
         // Withdraw ETH
@@ -832,7 +829,7 @@ contract LSSVMTest is Test {
         vm.startPrank(alice);
         uint256[] memory nftIds = new uint256[](0);
 
-        address pair = factory.createPair{value: 10 ether}(
+        address pair = factory.createPair{ value: 10 ether }(
             address(nft),
             address(linearCurve),
             address(0),
@@ -852,7 +849,7 @@ contract LSSVMTest is Test {
         buyIds[0] = 999; // NFT not in pool
 
         vm.expectRevert(); // Should revert on NFT transfer
-        pairContract.swapTokenForNFTs{value: 10 ether}(buyIds, 10 ether, bob);
+        pairContract.swapTokenForNFTs{ value: 10 ether }(buyIds, 10 ether, bob);
         vm.stopPrank();
     }
 
@@ -862,7 +859,7 @@ contract LSSVMTest is Test {
 
         // Pool with only 0.5 ETH - not enough to pay for 1 NFT at spotPrice 1 ETH
         // Selling 1 NFT: outputAmount = 0.995 ETH + protocolFee 0.005 ETH = 1 ETH needed
-        address pair = factory.createPair{value: 0.5 ether}(
+        address pair = factory.createPair{ value: 0.5 ether }(
             address(nft),
             address(linearCurve),
             address(0),
@@ -897,7 +894,7 @@ contract LSSVMTest is Test {
             nft.approve(address(factory), i + 1);
         }
 
-        address pair = factory.createPair{value: 10 ether}(
+        address pair = factory.createPair{ value: 10 ether }(
             address(nft),
             address(linearCurve),
             address(0),
@@ -918,7 +915,7 @@ contract LSSVMTest is Test {
 
         // Set maxInput too low
         vm.expectRevert(LSSVMPair.SlippageExceeded.selector);
-        pairContract.swapTokenForNFTs{value: 10 ether}(buyIds, 0.1 ether, bob);
+        pairContract.swapTokenForNFTs{ value: 10 ether }(buyIds, 0.1 ether, bob);
 
         vm.stopPrank();
     }
@@ -931,7 +928,7 @@ contract LSSVMTest is Test {
             nft.approve(address(factory), i + 1);
         }
 
-        address pair = factory.createPair{value: 10 ether}(
+        address pair = factory.createPair{ value: 10 ether }(
             address(nft),
             address(linearCurve),
             address(0),
@@ -953,7 +950,7 @@ contract LSSVMTest is Test {
         (,, uint256 cost,, uint256 protocolFee) = pairContract.getBuyNFTQuote(1);
 
         uint256 recipientBalanceBefore = protocolFeeRecipient.balance;
-        pairContract.swapTokenForNFTs{value: cost}(buyIds, cost, bob);
+        pairContract.swapTokenForNFTs{ value: cost }(buyIds, cost, bob);
 
         // Verify protocol fee was sent
         assertEq(protocolFeeRecipient.balance, recipientBalanceBefore + protocolFee);
@@ -975,7 +972,7 @@ contract LSSVMTest is Test {
             nft.approve(address(factory), i + 1);
         }
 
-        address pair = factory.createPair{value: 50 ether}(
+        address pair = factory.createPair{ value: 50 ether }(
             address(nft),
             address(linearCurve),
             address(0),
@@ -997,7 +994,7 @@ contract LSSVMTest is Test {
         }
 
         (,, uint256 cost,,) = pairContract.getBuyNFTQuote(numItems);
-        pairContract.swapTokenForNFTs{value: cost}(buyIds, cost, bob);
+        pairContract.swapTokenForNFTs{ value: cost }(buyIds, cost, bob);
 
         // Verify bob owns all NFTs
         for (uint256 i = 0; i < numItems; i++) {
@@ -1010,8 +1007,7 @@ contract LSSVMTest is Test {
     function testFuzz_ExponentialSpotPrice(uint128 spotPrice) public {
         vm.assume(spotPrice >= 1 gwei && spotPrice <= 1000 ether);
 
-        (uint128 newSpot,,,,) =
-            exponentialCurve.getBuyInfo(spotPrice, EXPONENTIAL_DELTA, 1, POOL_FEE, PROTOCOL_FEE);
+        (uint128 newSpot,,,,) = exponentialCurve.getBuyInfo(spotPrice, EXPONENTIAL_DELTA, 1, POOL_FEE, PROTOCOL_FEE);
 
         // Verify exponential growth
         uint256 expectedSpot = (uint256(spotPrice) * EXPONENTIAL_DELTA) / 1e18;
@@ -1034,7 +1030,7 @@ contract LSSVMTest is Test {
         vm.startPrank(alice);
         uint256[] memory nftIds = new uint256[](0);
 
-        address pair = factory.createPair{value: 10 ether}(
+        address pair = factory.createPair{ value: 10 ether }(
             address(nft),
             address(linearCurve),
             address(0),
@@ -1092,7 +1088,7 @@ contract LSSVMTest is Test {
         vm.startPrank(alice);
         uint256[] memory nftIds = new uint256[](0);
 
-        address pair = factory.createPair{value: 10 ether}(
+        address pair = factory.createPair{ value: 10 ether }(
             address(nft),
             address(linearCurve),
             address(0),

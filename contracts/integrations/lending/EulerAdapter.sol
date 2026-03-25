@@ -6,4 +6,5 @@ pragma solidity ^0.8.31;
 /// @dev TODO: Implement EVC and vault interactions
 abstract contract EulerAdapter {
     // Euler-specific implementation pending
-}
+
+    }

@@ -2,11 +2,11 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-import {TeleportVault} from "./TeleportVault.sol";
-import {IYieldStrategy} from "../../yield/IYieldStrategy.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { TeleportVault } from "./TeleportVault.sol";
+import { IYieldStrategy } from "../../yield/IYieldStrategy.sol";
 
 /**
  * @title LiquidVault
@@ -40,17 +40,17 @@ contract LiquidVault is TeleportVault, Pausable {
     // ═══════════════════════════════════════════════════════════════════════
 
     struct Strategy {
-        address adapter;           // Strategy adapter address
-        uint256 allocated;         // Amount allocated to this strategy
-        uint256 lastHarvest;       // Last harvest timestamp
-        bool active;               // Is strategy active
+        address adapter; // Strategy adapter address
+        uint256 allocated; // Amount allocated to this strategy
+        uint256 lastHarvest; // Last harvest timestamp
+        bool active; // Is strategy active
     }
 
     // ═══════════════════════════════════════════════════════════════════════
     // CONSTANTS
     // ═══════════════════════════════════════════════════════════════════════
 
-    uint256 public constant MIN_BUFFER_BPS = 1000;       // 10% minimum buffer
+    uint256 public constant MIN_BUFFER_BPS = 1000; // 10% minimum buffer
     uint256 public constant MAX_STRATEGIES = 10;
 
     /// @notice Maximum withdrawal per address per period (H-03 fix)
@@ -86,29 +86,16 @@ contract LiquidVault is TeleportVault, Pausable {
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice Emitted when funds allocated to strategy
-    event StrategyAllocated(
-        uint256 indexed strategyIndex,
-        uint256 amount
-    );
+    event StrategyAllocated(uint256 indexed strategyIndex, uint256 amount);
 
     /// @notice Emitted when funds deallocated from strategy
-    event StrategyDeallocated(
-        uint256 indexed strategyIndex,
-        uint256 amount
-    );
+    event StrategyDeallocated(uint256 indexed strategyIndex, uint256 amount);
 
     /// @notice Emitted when yield harvested
-    event YieldHarvested(
-        uint256 indexed yieldNonce,
-        uint256 totalYield,
-        uint256 timestamp
-    );
+    event YieldHarvested(uint256 indexed yieldNonce, uint256 totalYield, uint256 timestamp);
 
     /// @notice Emitted when strategy added
-    event StrategyAdded(
-        uint256 indexed index,
-        address adapter
-    );
+    event StrategyAdded(uint256 indexed index, address adapter);
 
     /// @notice Emitted when strategy removed
     event StrategyRemoved(uint256 indexed index);
@@ -132,7 +119,7 @@ contract LiquidVault is TeleportVault, Pausable {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(address _mpcOracle) TeleportVault(_mpcOracle) {}
+    constructor(address _mpcOracle) TeleportVault(_mpcOracle) { }
 
     // ═══════════════════════════════════════════════════════════════════════
     // DEPOSIT (PUBLIC)
@@ -167,12 +154,11 @@ contract LiquidVault is TeleportVault, Pausable {
      * @param signature MPC signature authorizing release
      * @dev H-03 fix: Added rate limiting, pause capability, and operation nonce
      */
-    function releaseETH(
-        address recipient,
-        uint256 amount,
-        uint256 _withdrawNonce,
-        bytes calldata signature
-    ) external nonReentrant whenNotPaused {
+    function releaseETH(address recipient, uint256 amount, uint256 _withdrawNonce, bytes calldata signature)
+        external
+        nonReentrant
+        whenNotPaused
+    {
         if (recipient == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAmount();
 
@@ -180,14 +166,8 @@ contract LiquidVault is TeleportVault, Pausable {
         _validateWithdrawal(recipient, amount);
 
         // H-03 fix: Include operationNonce in signature hash for replay protection
-        bytes32 messageHash = keccak256(abi.encode(
-            "RELEASE",
-            recipient,
-            amount,
-            _withdrawNonce,
-            operationNonce,
-            block.chainid
-        ));
+        bytes32 messageHash =
+            keccak256(abi.encode("RELEASE", recipient, amount, _withdrawNonce, operationNonce, block.chainid));
         _verifyMPCSignature(messageHash, signature);
 
         // H-03 fix: Increment operation nonce after verification
@@ -202,7 +182,7 @@ contract LiquidVault is TeleportVault, Pausable {
         _recordRelease(recipient, amount, _withdrawNonce);
 
         // Transfer ETH
-        (bool success, ) = recipient.call{value: amount}("");
+        (bool success,) = recipient.call{ value: amount }("");
         if (!success) revert TransferFailed();
     }
 
@@ -217,22 +197,17 @@ contract LiquidVault is TeleportVault, Pausable {
      * @param signature MPC signature
      * @dev Follows Checks-Effects-Interactions pattern to prevent reentrancy
      */
-    function allocateToStrategy(
-        uint256 strategyIndex,
-        uint256 amount,
-        bytes calldata signature
-    ) external nonReentrant onlyRole(MPC_ROLE) {
+    function allocateToStrategy(uint256 strategyIndex, uint256 amount, bytes calldata signature)
+        external
+        nonReentrant
+        onlyRole(MPC_ROLE)
+    {
         Strategy storage strategy = strategies[strategyIndex];
         if (!strategy.active) revert StrategyNotActive();
         if (amount == 0) revert ZeroAmount();
 
         // Verify MPC signature (uses abi.encode to prevent hash collision)
-        bytes32 messageHash = keccak256(abi.encode(
-            "ALLOCATE",
-            strategyIndex,
-            amount,
-            block.timestamp
-        ));
+        bytes32 messageHash = keccak256(abi.encode("ALLOCATE", strategyIndex, amount, block.timestamp));
         _verifyMPCSignature(messageHash, signature);
 
         // Ensure minimum buffer
@@ -243,7 +218,7 @@ contract LiquidVault is TeleportVault, Pausable {
         strategy.allocated += amount;
 
         // INTERACTIONS: External call after state update
-        IYieldStrategy(strategy.adapter).deposit{value: amount}(amount);
+        IYieldStrategy(strategy.adapter).deposit{ value: amount }(amount);
 
         emit StrategyAllocated(strategyIndex, amount);
     }
@@ -255,22 +230,17 @@ contract LiquidVault is TeleportVault, Pausable {
      * @param signature MPC signature
      * @dev Follows Checks-Effects-Interactions pattern to prevent reentrancy
      */
-    function deallocateFromStrategy(
-        uint256 strategyIndex,
-        uint256 amount,
-        bytes calldata signature
-    ) external nonReentrant onlyRole(MPC_ROLE) {
+    function deallocateFromStrategy(uint256 strategyIndex, uint256 amount, bytes calldata signature)
+        external
+        nonReentrant
+        onlyRole(MPC_ROLE)
+    {
         Strategy storage strategy = strategies[strategyIndex];
         if (!strategy.active) revert StrategyNotActive();
         if (amount == 0) revert ZeroAmount();
 
         // Verify MPC signature (uses abi.encode to prevent hash collision)
-        bytes32 messageHash = keccak256(abi.encode(
-            "DEALLOCATE",
-            strategyIndex,
-            amount,
-            block.timestamp
-        ));
+        bytes32 messageHash = keccak256(abi.encode("DEALLOCATE", strategyIndex, amount, block.timestamp));
         _verifyMPCSignature(messageHash, signature);
 
         // EFFECTS: Update state BEFORE external call (Checks-Effects-Interactions)
@@ -296,12 +266,14 @@ contract LiquidVault is TeleportVault, Pausable {
      * @return totalYield Total yield harvested
      * @dev Uses abi.encode for hash collision prevention
      */
-    function harvestYield(bytes calldata signature) external nonReentrant onlyRole(MPC_ROLE) returns (uint256 totalYield) {
+    function harvestYield(bytes calldata signature)
+        external
+        nonReentrant
+        onlyRole(MPC_ROLE)
+        returns (uint256 totalYield)
+    {
         // Verify MPC signature (uses abi.encode to prevent hash collision)
-        bytes32 messageHash = keccak256(abi.encode(
-            "HARVEST",
-            block.timestamp
-        ));
+        bytes32 messageHash = keccak256(abi.encode("HARVEST", block.timestamp));
         _verifyMPCSignature(messageHash, signature);
 
         // EFFECTS: Increment yield nonce BEFORE external calls
@@ -334,12 +306,7 @@ contract LiquidVault is TeleportVault, Pausable {
         if (strategies.length >= MAX_STRATEGIES) revert ExceedsMaxStrategies();
         if (adapter == address(0)) revert ZeroAddress();
 
-        strategies.push(Strategy({
-            adapter: adapter,
-            allocated: 0,
-            lastHarvest: block.timestamp,
-            active: true
-        }));
+        strategies.push(Strategy({ adapter: adapter, allocated: 0, lastHarvest: block.timestamp, active: true }));
 
         emit StrategyAdded(strategies.length - 1, adapter);
     }
@@ -500,9 +467,7 @@ contract LiquidVault is TeleportVault, Pausable {
             Strategy storage strategy = strategies[i];
             if (!strategy.active || strategy.allocated == 0) continue;
 
-            uint256 withdrawAmount = remaining > strategy.allocated
-                ? strategy.allocated
-                : remaining;
+            uint256 withdrawAmount = remaining > strategy.allocated ? strategy.allocated : remaining;
 
             uint256 withdrawn = IYieldStrategy(strategy.adapter).withdraw(withdrawAmount);
             strategy.allocated -= withdrawn;
@@ -515,7 +480,7 @@ contract LiquidVault is TeleportVault, Pausable {
     /**
      * @notice Receive ETH
      */
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // IYieldStrategy interface imported from contracts/yield/IYieldStrategy.sol

@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/interfaces/IERC2981.sol";
-import {ERC20 as SolmateERC20} from "solmate/tokens/ERC20.sol";
-import {MarketParams, Market} from "../../contracts/markets/interfaces/IMarkets.sol";
+import { ERC20 as SolmateERC20 } from "solmate/tokens/ERC20.sol";
+import { MarketParams, Market } from "../../contracts/markets/interfaces/IMarkets.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SHARED TEST MOCKS - Import these instead of defining inline
@@ -41,7 +41,7 @@ contract MockERC20 is ERC20 {
  * @notice Mock ERC20 without decimals in constructor (18 decimals default)
  */
 contract MockERC20Simple is ERC20 {
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) { }
 
     function mint(address to, uint256 amount) external {
         _mint(to, amount);
@@ -57,7 +57,7 @@ contract MockERC20Simple is ERC20 {
  * @notice Solmate-based mock ERC20
  */
 contract MockERC20Solmate is SolmateERC20 {
-    constructor(string memory name, string memory symbol, uint8 decimals_) SolmateERC20(name, symbol, decimals_) {}
+    constructor(string memory name, string memory symbol, uint8 decimals_) SolmateERC20(name, symbol, decimals_) { }
 
     function mint(address to, uint256 amount) external {
         _mint(to, amount);
@@ -73,7 +73,7 @@ contract MockERC20Solmate is SolmateERC20 {
  * @notice Mock WLUX (wrapped native token)
  */
 contract MockWLUX is MockERC20 {
-    constructor() MockERC20("Wrapped LUX", "WLUX", 18) {}
+    constructor() MockERC20("Wrapped LUX", "WLUX", 18) { }
 
     function deposit() external payable {
         _mint(msg.sender, msg.value);
@@ -106,7 +106,7 @@ contract MockWETH is MockWLUX {
 contract MockNFT is ERC721 {
     uint256 public tokenIdCounter;
 
-    constructor() ERC721("Test NFT", "TNFT") {}
+    constructor() ERC721("Test NFT", "TNFT") { }
 
     function mint(address to) external returns (uint256) {
         uint256 tokenId = tokenIdCounter++;
@@ -129,7 +129,7 @@ contract MockNFT is ERC721 {
  * @notice ERC721 with explicit tokenId minting (for LSSVM tests)
  */
 contract MockNFTWithId is ERC721 {
-    constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
+    constructor(string memory name, string memory symbol) ERC721(name, symbol) { }
 
     function mint(address to, uint256 tokenId) external {
         _mint(to, tokenId);
@@ -284,10 +284,10 @@ contract MockGaugeController {
  * @notice Mock GMX/LPX reward router
  */
 contract MockRewardRouter {
-    function stakeGmx(uint256) external {}
-    function unstakeGmx(uint256) external {}
-    function claimFees() external {}
-    function compound() external {}
+    function stakeGmx(uint256) external { }
+    function unstakeGmx(uint256) external { }
+    function claimFees() external { }
+    function compound() external { }
 }
 
 /**
@@ -330,11 +330,7 @@ contract MockYieldToken is SolmateERC20 {
     address public underlying;
     uint256 public pricePerShare = 1e18;
 
-    constructor(
-        string memory name,
-        string memory symbol,
-        address underlying_
-    ) SolmateERC20(name, symbol, 18) {
+    constructor(string memory name, string memory symbol, address underlying_) SolmateERC20(name, symbol, 18) {
         underlying = underlying_;
     }
 
@@ -392,23 +388,19 @@ contract MockPriceFeedFull {
         return 1;
     }
 
-    function getRoundData(uint80) external view returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    ) {
+    function getRoundData(uint80)
+        external
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+    {
         return (1, _answer, block.timestamp, block.timestamp, 1);
     }
 
-    function latestRoundData() external view returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    ) {
+    function latestRoundData()
+        external
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+    {
         return (1, _answer, block.timestamp, block.timestamp, 1);
     }
 }
@@ -528,7 +520,7 @@ contract MocksLUX is ERC20 {
  * @notice Mock reward token with Solmate ERC20 (for staking tests)
  */
 contract MockRewardToken is SolmateERC20 {
-    constructor() SolmateERC20("Mock Reward", "REWARD", 18) {}
+    constructor() SolmateERC20("Mock Reward", "REWARD", 18) { }
 
     function mint(address to, uint256 amount) external {
         _mint(to, amount);
@@ -566,11 +558,7 @@ contract MockGaugeControllerFull {
         gauges.push(Gauge(address(0), "INVALID", 0, false));
     }
 
-    function addGauge(
-        address recipient,
-        string memory name,
-        uint256 gaugeType
-    ) external returns (uint256) {
+    function addGauge(address recipient, string memory name, uint256 gaugeType) external returns (uint256) {
         uint256 id = gauges.length;
         gauges.push(Gauge(recipient, name, gaugeType, true));
         gaugeIds[recipient] = id;
@@ -594,13 +582,11 @@ contract MockGaugeControllerFull {
         return gauges.length;
     }
 
-    function getGauge(uint256 gaugeId) external view returns (
-        address recipient,
-        string memory name,
-        uint256 gaugeType,
-        bool active,
-        uint256 weight
-    ) {
+    function getGauge(uint256 gaugeId)
+        external
+        view
+        returns (address recipient, string memory name, uint256 gaugeType, bool active, uint256 weight)
+    {
         Gauge memory g = gauges[gaugeId];
         return (g.recipient, g.name, g.gaugeType, g.active, weights[g.recipient]);
     }
@@ -646,7 +632,7 @@ contract MockSLUXRewards {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// NFT MARKETPLACE MOCKS  
+// NFT MARKETPLACE MOCKS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
@@ -759,9 +745,8 @@ contract MockERC721FullWithRoyalty is MockERC721Full, IERC2981 {
     }
 
     function supportsInterface(bytes4 interfaceId) external pure override(MockERC721Full, IERC165) returns (bool) {
-        return interfaceId == type(IERC721).interfaceId ||
-               interfaceId == type(IERC2981).interfaceId ||
-               interfaceId == type(IERC165).interfaceId;
+        return interfaceId == type(IERC721).interfaceId || interfaceId == type(IERC2981).interfaceId
+            || interfaceId == type(IERC165).interfaceId;
     }
 }
 

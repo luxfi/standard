@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {IRateModel} from "../interfaces/IRateModel.sol";
-import {MarketParams, Market} from "../interfaces/IMarkets.sol";
-import {MathLib} from "../libraries/MathLib.sol";
+import { IRateModel } from "../interfaces/IRateModel.sol";
+import { MarketParams, Market } from "../interfaces/IMarkets.sol";
+import { MathLib } from "../libraries/MathLib.sol";
 
 /// @title AdaptiveCurveRateModel
 /// @notice Adaptive interest rate model with curved utilization response
@@ -115,7 +115,8 @@ contract AdaptiveCurveRateModel is IRateModel {
             uint256 utilizationRatio = excessUtilization.mulDivUp(1e18, remainingCapacity);
 
             // rate = rateAtTarget * (1 + steepness * utilizationRatio^2)
-            uint256 multiplier = 1e18 + CURVE_STEEPNESS.mulDivDown(utilizationRatio.mulDivDown(utilizationRatio, 1e18), 1e18);
+            uint256 multiplier =
+                1e18 + CURVE_STEEPNESS.mulDivDown(utilizationRatio.mulDivDown(utilizationRatio, 1e18), 1e18);
             return rateAtTargetUtil.mulDivDown(multiplier, 1e18);
         }
     }

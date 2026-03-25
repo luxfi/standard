@@ -3,8 +3,8 @@ pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
 
-import {DIDRegistry} from "../../contracts/identity/DIDRegistry.sol";
-import {DIDResolver} from "../../contracts/identity/DIDResolver.sol";
+import { DIDRegistry } from "../../contracts/identity/DIDRegistry.sol";
+import { DIDResolver } from "../../contracts/identity/DIDResolver.sol";
 
 /**
  * @title IdentityMinimalTest

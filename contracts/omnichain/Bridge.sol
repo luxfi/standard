@@ -28,14 +28,10 @@ abstract contract Bridge {
 
     /// @notice Emit when tokens are bridged
     event Bridged(address indexed token, uint256 amount, uint256 indexed destChainId);
-    
+
     /// @notice Emit when a swap is initiated
     event SwapInitiated(
-        address indexed fromToken,
-        address indexed toToken,
-        address indexed recipient,
-        uint256 amount,
-        uint256 timestamp
+        address indexed fromToken, address indexed toToken, address indexed recipient, uint256 amount, uint256 timestamp
     );
 
     /// @notice Bridge tokens to another chain
@@ -45,13 +41,9 @@ abstract contract Bridge {
     function _estimateFee(uint256 destChainId) internal view virtual returns (uint256);
 
     /// @notice Swap tokens across chains
-    function swap(
-        Token memory fromToken,
-        Token memory toToken,
-        address recipient,
-        uint256 amount,
-        uint256 deadline
-    ) external virtual;
+    function swap(Token memory fromToken, Token memory toToken, address recipient, uint256 amount, uint256 deadline)
+        external
+        virtual;
 
     /// @notice Register a token for bridging
     function setToken(Token memory token) external virtual;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IVotingTypes} from "./IVotingTypes.sol";
+import { IVotingTypes } from "./IVotingTypes.sol";
 
 /**
  * @title IFreezeVotingStandaloneV1
@@ -28,22 +28,34 @@ import {IVotingTypes} from "./IVotingTypes.sol";
 interface IFreezeVotingStandaloneV1 {
     // --- Errors ---
 
-    /** @notice Thrown when attempting to use a voting config that is not configured */
+    /**
+     * @notice Thrown when attempting to use a voting config that is not configured
+     */
     error InvalidVotingConfig(uint256 configIndex);
 
-    /** @notice Thrown when an address has already voted on the current proposal */
+    /**
+     * @notice Thrown when an address has already voted on the current proposal
+     */
     error AlreadyVoted();
 
-    /** @notice Thrown when trying to vote on an expired proposal */
+    /**
+     * @notice Thrown when trying to vote on an expired proposal
+     */
     error ProposalExpired();
 
-    /** @notice Thrown when unfreeze votes haven't reached the required threshold */
+    /**
+     * @notice Thrown when unfreeze votes haven't reached the required threshold
+     */
     error InsufficientVotes();
 
-    /** @notice Thrown when trying to freeze an already frozen DAO */
+    /**
+     * @notice Thrown when trying to freeze an already frozen DAO
+     */
     error AlreadyFrozen();
 
-    /** @notice Thrown when trying to unfreeze a DAO that isn't frozen */
+    /**
+     * @notice Thrown when trying to unfreeze a DAO that isn't frozen
+     */
     error NotFrozen();
 
     // --- Events ---
@@ -53,20 +65,14 @@ interface IFreezeVotingStandaloneV1 {
      * @param createdAt Timestamp when the proposal was created
      * @param creator Address that triggered the proposal creation
      */
-    event FreezeProposalCreated(
-        uint48 indexed createdAt,
-        address indexed creator
-    );
+    event FreezeProposalCreated(uint48 indexed createdAt, address indexed creator);
 
     /**
      * @notice Emitted when a new unfreeze proposal is created
      * @param createdAt Timestamp when the proposal was created
      * @param creator Address that triggered the proposal creation
      */
-    event UnfreezeProposalCreated(
-        uint48 indexed createdAt,
-        address indexed creator
-    );
+    event UnfreezeProposalCreated(uint48 indexed createdAt, address indexed creator);
 
     /**
      * @notice Emitted when an unfreeze vote is cast
@@ -106,9 +112,7 @@ interface IFreezeVotingStandaloneV1 {
      * Can only be called once when votingConfigs is empty.
      * @param votingConfigs_ Array of voting configs (weightStrategy + voteTracker pairs)
      */
-    function initialize2(
-        IVotingTypes.VotingConfig[] calldata votingConfigs_
-    ) external;
+    function initialize2(IVotingTypes.VotingConfig[] calldata votingConfigs_) external;
 
     // --- View Functions ---
 
@@ -116,19 +120,14 @@ interface IFreezeVotingStandaloneV1 {
      * @notice Get all configured voting configs
      * @return configs Array of voting configurations
      */
-    function getVotingConfigs()
-        external
-        view
-        returns (IVotingTypes.VotingConfig[] memory configs);
+    function getVotingConfigs() external view returns (IVotingTypes.VotingConfig[] memory configs);
 
     /**
      * @notice Get a specific voting config by index
      * @param index The index of the voting config
      * @return config The voting configuration
      */
-    function votingConfig(
-        uint256 index
-    ) external view returns (IVotingTypes.VotingConfig memory config);
+    function votingConfig(uint256 index) external view returns (IVotingTypes.VotingConfig memory config);
 
     /**
      * @notice Get the voting weight threshold required to unfreeze
@@ -146,10 +145,7 @@ interface IFreezeVotingStandaloneV1 {
      * @notice Get current unfreeze proposal vote count
      * @return voteCount Current vote count for unfreezing
      */
-    function getUnfreezeProposalVotes()
-        external
-        view
-        returns (uint256 voteCount);
+    function getUnfreezeProposalVotes() external view returns (uint256 voteCount);
 
     // --- State-Changing Functions ---
 

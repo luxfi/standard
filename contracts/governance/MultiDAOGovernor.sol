@@ -2,9 +2,9 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.24;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
 /**
  * @title MultiDAOGovernor
@@ -21,7 +21,6 @@ import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Vo
  * - Community DAO registration
  */
 contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
-
     // ═══════════════════════════════════════════════════════════════════════
     // ROLES
     // ═══════════════════════════════════════════════════════════════════════
@@ -39,8 +38,8 @@ contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
         bytes32 id;
         string name;
         string symbol;
-        uint16 quorumBasisPoints;      // e.g., 2000 = 20%
-        uint16 thresholdBasisPoints;   // e.g., 6700 = 67%
+        uint16 quorumBasisPoints; // e.g., 2000 = 20%
+        uint16 thresholdBasisPoints; // e.g., 6700 = 67%
     }
 
     struct DAO {
@@ -98,10 +97,10 @@ contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     uint256 public constant BASIS_POINTS = 10_000;
-    uint256 public constant VOTING_PERIOD = 50400;      // ~7 days at 12s blocks
-    uint256 public constant VOTING_DELAY = 1;           // 1 block
-    uint256 public constant TIMELOCK_STANDARD = 17280;  // ~48 hours
-    uint256 public constant TIMELOCK_TREASURY = 25920;  // ~72 hours
+    uint256 public constant VOTING_PERIOD = 50400; // ~7 days at 12s blocks
+    uint256 public constant VOTING_DELAY = 1; // 1 block
+    uint256 public constant TIMELOCK_STANDARD = 17280; // ~48 hours
+    uint256 public constant TIMELOCK_TREASURY = 25920; // ~72 hours
     uint256 public constant TIMELOCK_CONSTITUTIONAL = 50400; // ~7 days
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -162,11 +161,7 @@ contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
     event ProposalCanceled(bytes32 indexed proposalId);
     event ProposalExecuted(bytes32 indexed proposalId);
     event VoteCast(
-        bytes32 indexed proposalId,
-        bytes32 indexed dao,
-        address indexed voter,
-        uint8 support,
-        uint256 weight
+        bytes32 indexed proposalId, bytes32 indexed dao, address indexed voter, uint8 support, uint256 weight
     );
     event DelegationSet(address indexed delegator, bytes32 indexed dao, address indexed delegate);
     event TallyReceived(bytes32 indexed proposalId, bytes32 indexed dao, bool passed);
@@ -279,13 +274,10 @@ contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
      * @param quorum Quorum in basis points
      * @param threshold Threshold in basis points
      */
-    function registerDAO(
-        bytes32 id,
-        string calldata name,
-        string calldata symbol,
-        uint16 quorum,
-        uint16 threshold
-    ) external onlyRole(DAO_REGISTRY_ROLE) {
+    function registerDAO(bytes32 id, string calldata name, string calldata symbol, uint16 quorum, uint16 threshold)
+        external
+        onlyRole(DAO_REGISTRY_ROLE)
+    {
         if (daos[id].active) revert DAOAlreadyExists();
         _createDAO(id, name, symbol, quorum, threshold, false);
     }
@@ -316,16 +308,10 @@ contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
     /**
      * @notice Delegate with weight split across multiple DAOs
      */
-    function delegateMultiple(
-        bytes32[] calldata daoIdList,
-        address[] calldata delegates,
-        uint256[] calldata weights
-    ) external {
-        require(
-            daoIdList.length == delegates.length &&
-            delegates.length == weights.length,
-            "Length mismatch"
-        );
+    function delegateMultiple(bytes32[] calldata daoIdList, address[] calldata delegates, uint256[] calldata weights)
+        external
+    {
+        require(daoIdList.length == delegates.length && delegates.length == weights.length, "Length mismatch");
 
         uint256 totalWeight;
         for (uint256 i = 0; i < daoIdList.length; i++) {
@@ -381,11 +367,7 @@ contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
             require(targetDAOs.length >= constitutionalApprovalCount, "Need more DAOs");
         }
 
-        proposalId = keccak256(abi.encodePacked(
-            msg.sender,
-            block.number,
-            proposalCount++
-        ));
+        proposalId = keccak256(abi.encodePacked(msg.sender, block.number, proposalCount++));
 
         Proposal storage proposal = _proposals[proposalId];
         proposal.id = proposalId;
@@ -432,11 +414,7 @@ contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
      * @dev C-03 fix: Votes are weight-split across DAOs to prevent vote amplification
      * A voter's total token balance is their maximum cumulative vote weight across all DAOs
      */
-    function castVote(
-        bytes32 proposalId,
-        bytes32 daoId,
-        uint8 support
-    ) external nonReentrant {
+    function castVote(bytes32 proposalId, bytes32 daoId, uint8 support) external nonReentrant {
         if (paused) revert Paused();
 
         Proposal storage proposal = _proposals[proposalId];
@@ -523,14 +501,8 @@ contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
         // Attestation must be a signed hash of (proposalId, daoId, forVotes, againstVotes, abstainVotes, block.chainid)
         if (attestation.length < 65) revert InvalidAttestation();
 
-        bytes32 tallyHash = keccak256(abi.encodePacked(
-            proposalId,
-            daoId,
-            forVotes,
-            againstVotes,
-            abstainVotes,
-            block.chainid
-        ));
+        bytes32 tallyHash =
+            keccak256(abi.encodePacked(proposalId, daoId, forVotes, againstVotes, abstainVotes, block.chainid));
 
         // H-05 fix: Verify the bridge signer signed this tally
         // The attestation contains the signature from the bridge operator
@@ -645,11 +617,7 @@ contract MultiDAOGovernor is AccessControl, ReentrancyGuard {
     // ADMIN FUNCTIONS
     // ═══════════════════════════════════════════════════════════════════════
 
-    function updateDAO(
-        bytes32 id,
-        uint16 quorum,
-        uint16 threshold
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updateDAO(bytes32 id, uint16 quorum, uint16 threshold) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (!daos[id].active) revert DAONotFound();
         daos[id].quorumBasisPoints = quorum;
         daos[id].thresholdBasisPoints = threshold;

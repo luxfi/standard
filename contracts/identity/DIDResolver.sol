@@ -1,13 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
-import {
-    IDIDResolver,
-    IDIDRegistry,
-    DIDDocument
-} from "./interfaces/IDID.sol";
+import { IDIDResolver, IDIDRegistry, DIDDocument } from "./interfaces/IDID.sol";
 
 /**
  * @title DIDResolver - Universal DID Resolution for Lux Network
@@ -99,21 +95,19 @@ contract DIDResolver is IDIDResolver, AccessControl {
      * @return document The resolved DID Document
      * @return registry The registry that resolved the DID
      */
-    function resolve(
-        string calldata did
-    ) external view returns (DIDDocument memory document, address registry) {
+    function resolve(string calldata did) external view returns (DIDDocument memory document, address registry) {
         // Parse DID method
         string memory method = _parseMethod(did);
         bytes32 methodHash = keccak256(bytes(method));
 
         // Get registry for method
         registry = _registries[methodHash];
-        
+
         // Fall back to default registry if method not found
         if (registry == address(0)) {
             registry = defaultRegistry;
         }
-        
+
         if (registry == address(0)) revert MethodNotRegistered();
 
         // Resolve through registry
@@ -132,14 +126,11 @@ contract DIDResolver is IDIDResolver, AccessControl {
      * @return method The DID method
      * @return resolutionTime Block timestamp of resolution
      */
-    function resolveWithMetadata(
-        string calldata did
-    ) external view returns (
-        DIDDocument memory document,
-        address registry,
-        string memory method,
-        uint256 resolutionTime
-    ) {
+    function resolveWithMetadata(string calldata did)
+        external
+        view
+        returns (DIDDocument memory document, address registry, string memory method, uint256 resolutionTime)
+    {
         method = _parseMethod(did);
         bytes32 methodHash = keccak256(bytes(method));
 
@@ -157,9 +148,7 @@ contract DIDResolver is IDIDResolver, AccessControl {
      * @return resolvable Whether the DID can be resolved
      * @return registry The registry that would handle resolution
      */
-    function canResolve(
-        string calldata did
-    ) external view returns (bool resolvable, address registry) {
+    function canResolve(string calldata did) external view returns (bool resolvable, address registry) {
         string memory method = _parseMethod(did);
         bytes32 methodHash = keccak256(bytes(method));
 
@@ -184,15 +173,12 @@ contract DIDResolver is IDIDResolver, AccessControl {
      * @param method The DID method (e.g., "lux", "ai")
      * @param registry The registry contract for this method
      */
-    function registerMethod(
-        string calldata method,
-        address registry
-    ) external onlyRole(REGISTRAR_ROLE) {
+    function registerMethod(string calldata method, address registry) external onlyRole(REGISTRAR_ROLE) {
         if (bytes(method).length == 0) revert EmptyMethod();
         if (registry == address(0)) revert ZeroAddress();
 
         bytes32 methodHash = keccak256(bytes(method));
-        
+
         if (_registries[methodHash] != address(0)) {
             revert RegistryAlreadyExists();
         }
@@ -209,14 +195,11 @@ contract DIDResolver is IDIDResolver, AccessControl {
      * @param method The DID method to update
      * @param newRegistry The new registry contract
      */
-    function updateMethodRegistry(
-        string calldata method,
-        address newRegistry
-    ) external onlyRole(REGISTRAR_ROLE) {
+    function updateMethodRegistry(string calldata method, address newRegistry) external onlyRole(REGISTRAR_ROLE) {
         if (newRegistry == address(0)) revert ZeroAddress();
 
         bytes32 methodHash = keccak256(bytes(method));
-        
+
         if (_registries[methodHash] == address(0)) {
             revert MethodNotRegistered();
         }
@@ -230,12 +213,10 @@ contract DIDResolver is IDIDResolver, AccessControl {
      * @notice Unregister a DID method
      * @param method The DID method to unregister
      */
-    function unregisterMethod(
-        string calldata method
-    ) external onlyRole(REGISTRAR_ROLE) {
+    function unregisterMethod(string calldata method) external onlyRole(REGISTRAR_ROLE) {
         bytes32 methodHash = keccak256(bytes(method));
         address registry = _registries[methodHash];
-        
+
         if (registry == address(0)) revert MethodNotRegistered();
 
         delete _registries[methodHash];
@@ -280,9 +261,7 @@ contract DIDResolver is IDIDResolver, AccessControl {
     /**
      * @notice Set the default registry for fallback resolution
      */
-    function setDefaultRegistry(
-        address newDefaultRegistry
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setDefaultRegistry(address newDefaultRegistry) external onlyRole(DEFAULT_ADMIN_ROLE) {
         address old = defaultRegistry;
         defaultRegistry = newDefaultRegistry;
         emit DefaultRegistryChanged(old, newDefaultRegistry);
@@ -297,24 +276,19 @@ contract DIDResolver is IDIDResolver, AccessControl {
      */
     function _parseMethod(string calldata did) internal pure returns (string memory method) {
         bytes memory didBytes = bytes(did);
-        
+
         // Minimum DID: "did:x:y" = 7 characters
         if (didBytes.length < 7) revert InvalidDID();
-        
+
         // Check "did:" prefix
-        if (
-            didBytes[0] != 'd' ||
-            didBytes[1] != 'i' ||
-            didBytes[2] != 'd' ||
-            didBytes[3] != ':'
-        ) {
+        if (didBytes[0] != "d" || didBytes[1] != "i" || didBytes[2] != "d" || didBytes[3] != ":") {
             revert InvalidDID();
         }
 
         // Find second colon (end of method)
         uint256 methodEnd = 0;
         for (uint256 i = 4; i < didBytes.length; i++) {
-            if (didBytes[i] == ':') {
+            if (didBytes[i] == ":") {
                 methodEnd = i;
                 break;
             }
@@ -337,27 +311,20 @@ contract DIDResolver is IDIDResolver, AccessControl {
      * @return method The DID method
      * @return identifier The method-specific identifier
      */
-    function parseDID(
-        string calldata did
-    ) external pure returns (string memory method, string memory identifier) {
+    function parseDID(string calldata did) external pure returns (string memory method, string memory identifier) {
         bytes memory didBytes = bytes(did);
-        
+
         if (didBytes.length < 7) revert InvalidDID();
-        
+
         // Verify "did:" prefix
-        if (
-            didBytes[0] != 'd' ||
-            didBytes[1] != 'i' ||
-            didBytes[2] != 'd' ||
-            didBytes[3] != ':'
-        ) {
+        if (didBytes[0] != "d" || didBytes[1] != "i" || didBytes[2] != "d" || didBytes[3] != ":") {
             revert InvalidDID();
         }
 
         // Find method end (second colon)
         uint256 methodEnd = 0;
         for (uint256 i = 4; i < didBytes.length; i++) {
-            if (didBytes[i] == ':') {
+            if (didBytes[i] == ":") {
                 methodEnd = i;
                 break;
             }
@@ -409,10 +376,7 @@ contract OmnichainDIDResolver is DIDResolver {
 
     // ============ Constructor ============
 
-    constructor(
-        address admin,
-        address _defaultRegistry
-    ) DIDResolver(admin, _defaultRegistry) {}
+    constructor(address admin, address _defaultRegistry) DIDResolver(admin, _defaultRegistry) { }
 
     // ============ Cross-Chain Resolution ============
 
@@ -421,10 +385,7 @@ contract OmnichainDIDResolver is DIDResolver {
      * @param chainId The chain ID
      * @param resolver The resolver address on that chain
      */
-    function registerChainResolver(
-        uint256 chainId,
-        address resolver
-    ) external onlyRole(REGISTRAR_ROLE) {
+    function registerChainResolver(uint256 chainId, address resolver) external onlyRole(REGISTRAR_ROLE) {
         chainResolvers[chainId] = resolver;
         emit ChainResolverRegistered(chainId, resolver);
     }
@@ -434,9 +395,7 @@ contract OmnichainDIDResolver is DIDResolver {
      * @param did The base DID
      * @return variants Array of equivalent DIDs across chains
      */
-    function getOmnichainVariants(
-        string calldata did
-    ) external view returns (string[] memory variants) {
+    function getOmnichainVariants(string calldata did) external view returns (string[] memory variants) {
         // This would be extended to generate cross-chain DID variants
         // e.g., did:lux:alice -> [did:ai:alice, did:ethr:0x...]
         variants = new string[](1);
@@ -449,10 +408,7 @@ contract OmnichainDIDResolver is DIDResolver {
      * @param did2 Second DID
      * @return isSame Whether they represent the same entity
      */
-    function isSameEntity(
-        string calldata did1,
-        string calldata did2
-    ) external view returns (bool isSame) {
+    function isSameEntity(string calldata did1, string calldata did2) external view returns (bool isSame) {
         // Check if DIDs are directly equal
         if (keccak256(bytes(did1)) == keccak256(bytes(did2))) {
             return true;

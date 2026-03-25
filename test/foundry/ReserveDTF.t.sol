@@ -4,7 +4,7 @@ pragma solidity ^0.8.31;
 import "forge-std/Test.sol";
 
 import "../../contracts/dtf/ReserveDTF.sol";
-import {MockERC20} from "./TestMocks.sol";
+import { MockERC20 } from "./TestMocks.sol";
 
 contract ReserveDTFTest is Test {
     MockERC20 internal usdc;
@@ -36,13 +36,7 @@ contract ReserveDTFTest is Test {
 
     function test_StableDTF_MintAndRedeemAgainstBasket() public {
         ReserveDTF stable = new ReserveDTF(
-            "Stable DTF",
-            "sDTF",
-            ReserveDTF.Category.STABLE,
-            address(this),
-            feeRecipient,
-            keccak256("USD"),
-            11_000
+            "Stable DTF", "sDTF", ReserveDTF.Category.STABLE, address(this), feeRecipient, keccak256("USD"), 11_000
         );
 
         stable.addComponent(address(usdc), 6_000, false);
@@ -75,13 +69,7 @@ contract ReserveDTFTest is Test {
 
     function test_YieldDTF_HarvestAccruesToAllHolders() public {
         ReserveDTF yieldDTF = new ReserveDTF(
-            "Yield DTF",
-            "yDTF",
-            ReserveDTF.Category.YIELD,
-            address(this),
-            feeRecipient,
-            bytes32(0),
-            0
+            "Yield DTF", "yDTF", ReserveDTF.Category.YIELD, address(this), feeRecipient, bytes32(0), 0
         );
 
         yieldDTF.addComponent(address(stEth), 7_000, true);
@@ -117,13 +105,7 @@ contract ReserveDTFTest is Test {
 
     function test_IndexDTF_ManagementAndMintFeesWithDutchAuctionRebalance() public {
         ReserveDTF indexDTF = new ReserveDTF(
-            "Index DTF",
-            "iDTF",
-            ReserveDTF.Category.INDEX,
-            address(this),
-            feeRecipient,
-            bytes32(0),
-            0
+            "Index DTF", "iDTF", ReserveDTF.Category.INDEX, address(this), feeRecipient, bytes32(0), 0
         );
 
         indexDTF.addComponent(address(weth), 5_000, false);
@@ -157,13 +139,7 @@ contract ReserveDTFTest is Test {
 
     function test_CategoryGuards() public {
         ReserveDTF stable = new ReserveDTF(
-            "Stable DTF",
-            "sDTF",
-            ReserveDTF.Category.STABLE,
-            address(this),
-            feeRecipient,
-            keccak256("USD"),
-            11_000
+            "Stable DTF", "sDTF", ReserveDTF.Category.STABLE, address(this), feeRecipient, keccak256("USD"), 11_000
         );
         stable.addComponent(address(usdc), 6_000, false);
         stable.addComponent(address(dai), 4_000, false);

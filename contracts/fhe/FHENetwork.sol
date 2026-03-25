@@ -2,9 +2,9 @@
 // FHENetwork.sol - Interface to the Lux T-Chain FHE Network
 pragma solidity >=0.8.19 <0.9.0;
 
-import {T_CHAIN_FHE_ADDRESS} from "./FHETypes.sol";
-import {FHECommon} from "./FHECommon.sol";
-import {FunctionId, IFHENetwork, EncryptedInput} from "./IFHE.sol";
+import { T_CHAIN_FHE_ADDRESS } from "./FHETypes.sol";
+import { FHECommon } from "./FHECommon.sol";
+import { FunctionId, IFHENetwork, EncryptedInput } from "./IFHE.sol";
 
 /// @title FHENetwork
 /// @notice Library for FHE operations on the Lux T-Chain (Threshold Chain)
@@ -16,12 +16,13 @@ library FHENetwork {
     /// @param securityZone The security zone for the ciphertext
     /// @return The ciphertext hash
     function trivialEncrypt(uint256 value, uint8 toType, int32 securityZone) internal returns (uint256) {
-        return IFHENetwork(T_CHAIN_FHE_ADDRESS).createTask(
-            toType,
-            FunctionId.trivialEncrypt,
-            new uint256[](0),
-            FHECommon.createUint256Inputs(value, toType, FHECommon.convertInt32ToUint256(securityZone))
-        );
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS)
+            .createTask(
+                toType,
+                FunctionId.trivialEncrypt,
+                new uint256[](0),
+                FHECommon.createUint256Inputs(value, toType, FHECommon.convertInt32ToUint256(securityZone))
+            );
     }
 
     /// @notice Cast an encrypted value to a different type
@@ -29,12 +30,10 @@ library FHENetwork {
     /// @param toType The target encrypted type
     /// @return The new ciphertext hash
     function cast(uint256 key, uint8 toType) internal returns (uint256) {
-        return IFHENetwork(T_CHAIN_FHE_ADDRESS).createTask(
-            toType,
-            FunctionId.cast,
-            FHECommon.createUint256Inputs(key),
-            FHECommon.createUint256Inputs(toType)
-        );
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS)
+            .createTask(
+                toType, FunctionId.cast, FHECommon.createUint256Inputs(key), FHECommon.createUint256Inputs(toType)
+            );
     }
 
     /// @notice Conditional select between two encrypted values
@@ -44,12 +43,10 @@ library FHENetwork {
     /// @param ifFalse Value to return if condition is false
     /// @return The selected ciphertext hash
     function select(uint8 returnType, uint256 control, uint256 ifTrue, uint256 ifFalse) internal returns (uint256) {
-        return IFHENetwork(T_CHAIN_FHE_ADDRESS).createTask(
-            returnType,
-            FunctionId.select,
-            FHECommon.createUint256Inputs(control, ifTrue, ifFalse),
-            new uint256[](0)
-        );
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS)
+            .createTask(
+                returnType, FunctionId.select, FHECommon.createUint256Inputs(control, ifTrue, ifFalse), new uint256[](0)
+            );
     }
 
     /// @notice Perform a binary math operation on two encrypted values
@@ -59,12 +56,8 @@ library FHENetwork {
     /// @param functionId The operation to perform
     /// @return The result ciphertext hash
     function mathOp(uint8 returnType, uint256 lhs, uint256 rhs, FunctionId functionId) internal returns (uint256) {
-        return IFHENetwork(T_CHAIN_FHE_ADDRESS).createTask(
-            returnType,
-            functionId,
-            FHECommon.createUint256Inputs(lhs, rhs),
-            new uint256[](0)
-        );
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS)
+            .createTask(returnType, functionId, FHECommon.createUint256Inputs(lhs, rhs), new uint256[](0));
     }
 
     /// @notice Request decryption of an encrypted value
@@ -95,12 +88,8 @@ library FHENetwork {
     /// @param input The ciphertext hash
     /// @return The result ciphertext hash
     function not(uint8 returnType, uint256 input) internal returns (uint256) {
-        return IFHENetwork(T_CHAIN_FHE_ADDRESS).createTask(
-            returnType,
-            FunctionId.not,
-            FHECommon.createUint256Inputs(input),
-            new uint256[](0)
-        );
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS)
+            .createTask(returnType, FunctionId.not, FHECommon.createUint256Inputs(input), new uint256[](0));
     }
 
     /// @notice Square an encrypted value
@@ -108,12 +97,8 @@ library FHENetwork {
     /// @param input The ciphertext hash
     /// @return The result ciphertext hash
     function square(uint8 returnType, uint256 input) internal returns (uint256) {
-        return IFHENetwork(T_CHAIN_FHE_ADDRESS).createTask(
-            returnType,
-            FunctionId.square,
-            FHECommon.createUint256Inputs(input),
-            new uint256[](0)
-        );
+        return IFHENetwork(T_CHAIN_FHE_ADDRESS)
+            .createTask(returnType, FunctionId.square, FHECommon.createUint256Inputs(input), new uint256[](0));
     }
 
     /// @notice Verify an encrypted input from a user
@@ -130,12 +115,8 @@ library FHENetwork {
     /// @return The verified ciphertext hash
     function verifyInput(uint256 handle, bytes memory proof, uint8 utype) internal returns (uint256) {
         require(proof.length >= 34, "Invalid proof length");
-        EncryptedInput memory input = EncryptedInput({
-            ctHash: handle,
-            securityZone: 0,
-            utype: utype,
-            signature: proof
-        });
+        EncryptedInput memory input =
+            EncryptedInput({ ctHash: handle, securityZone: 0, utype: utype, signature: proof });
         return IFHENetwork(T_CHAIN_FHE_ADDRESS).verifyInput(input, msg.sender);
     }
 

@@ -27,7 +27,9 @@ pragma solidity ^0.8.30;
 interface IFreezeVotingBase {
     // --- Errors ---
 
-    /** @notice Thrown when attempting to cast a freeze vote with zero voting weight */
+    /**
+     * @notice Thrown when attempting to cast a freeze vote with zero voting weight
+     */
     error NoVotes();
 
     // --- Events ---
@@ -52,38 +54,26 @@ interface IFreezeVotingBase {
      * @dev Returns 0 if no freeze proposal exists or it expired
      * @return freezeProposalCreated Timestamp of the current freeze proposal creation
      */
-    function freezeProposalCreated()
-        external
-        view
-        returns (uint48 freezeProposalCreated);
+    function freezeProposalCreated() external view returns (uint48 freezeProposalCreated);
 
     /**
      * @notice Returns the accumulated votes for the current freeze proposal
      * @dev Resets to 0 when a new freeze proposal is created
      * @return freezeProposalVoteCount Total voting weight cast for freezing
      */
-    function freezeProposalVoteCount()
-        external
-        view
-        returns (uint256 freezeProposalVoteCount);
+    function freezeProposalVoteCount() external view returns (uint256 freezeProposalVoteCount);
 
     /**
      * @notice Returns the duration for which freeze proposals remain active
      * @dev After this period, a new freeze proposal must be created
      * @return freezeProposalPeriod Duration in seconds
      */
-    function freezeProposalPeriod()
-        external
-        view
-        returns (uint32 freezeProposalPeriod);
+    function freezeProposalPeriod() external view returns (uint32 freezeProposalPeriod);
 
     /**
      * @notice Returns the voting weight threshold required to freeze the child DAO
      * @dev When vote count reaches this threshold, freeze is activated immediately
      * @return freezeVotesThreshold The required voting weight
      */
-    function freezeVotesThreshold()
-        external
-        view
-        returns (uint256 freezeVotesThreshold);
+    function freezeVotesThreshold() external view returns (uint256 freezeVotesThreshold);
 }

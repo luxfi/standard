@@ -17,9 +17,9 @@ enum VerificationMethodType {
     EcdsaSecp256k1RecoveryMethod2020,
     JsonWebKey2020,
     Bls12381G2Key2020,
-    MlDsa44VerificationKey2024,      // Post-quantum: FIPS 204
-    MlDsa65VerificationKey2024,      // Post-quantum: FIPS 204
-    SlhDsa128VerificationKey2024,    // Post-quantum: FIPS 205
+    MlDsa44VerificationKey2024, // Post-quantum: FIPS 204
+    MlDsa65VerificationKey2024, // Post-quantum: FIPS 204
+    SlhDsa128VerificationKey2024, // Post-quantum: FIPS 205
     Custom
 }
 
@@ -32,45 +32,45 @@ enum ServiceType {
     DIDCommMessaging,
     CredentialRegistry,
     // x402 Payment Protocol services
-    X402PaymentEndpoint,     // x402 payment verification endpoint
-    X402Facilitator,         // x402 facilitator service
-    X402Resource,            // x402 protected resource
+    X402PaymentEndpoint, // x402 payment verification endpoint
+    X402Facilitator, // x402 facilitator service
+    X402Resource, // x402 protected resource
     // Verifiable Credentials
-    CredentialIssuer,        // VC issuer service
-    CredentialVerifier,      // VC verification service
-    CredentialStatus,        // Credential status/revocation
+    CredentialIssuer, // VC issuer service
+    CredentialVerifier, // VC verification service
+    CredentialStatus, // Credential status/revocation
     // Cross-chain
-    OmnichainBridge,         // Cross-chain identity bridge
-    WarpMessenger,           // Lux Warp messaging service
+    OmnichainBridge, // Cross-chain identity bridge
+    WarpMessenger, // Lux Warp messaging service
     Custom
 }
 
 /// @notice Verification method structure
 struct VerificationMethod {
-    bytes32 id;                      // Fragment ID (e.g., "key-1")
+    bytes32 id; // Fragment ID (e.g., "key-1")
     VerificationMethodType methodType;
-    address controller;              // Controller address
-    bytes publicKeyMultibase;        // Public key in multibase format
-    bytes32 blockchainAccountId;     // Optional: blockchain account identifier
+    address controller; // Controller address
+    bytes publicKeyMultibase; // Public key in multibase format
+    bytes32 blockchainAccountId; // Optional: blockchain account identifier
 }
 
 /// @notice Service endpoint structure
 struct Service {
-    bytes32 id;                      // Fragment ID (e.g., "messaging")
+    bytes32 id; // Fragment ID (e.g., "messaging")
     ServiceType serviceType;
-    string endpoint;                 // Service endpoint URL
-    bytes data;                      // Additional service data
+    string endpoint; // Service endpoint URL
+    bytes data; // Additional service data
 }
 
 /// @notice DID Document structure (simplified for on-chain)
 struct DIDDocument {
-    string did;                      // Full DID string (e.g., "did:lux:alice")
-    address controller;              // Primary controller
+    string did; // Full DID string (e.g., "did:lux:alice")
+    address controller; // Primary controller
     address[] additionalControllers; // Additional controllers
-    string[] alsoKnownAs;            // Alternative identifiers
-    uint256 created;                 // Creation timestamp
-    uint256 updated;                 // Last update timestamp
-    bool active;                     // Whether DID is active
+    string[] alsoKnownAs; // Alternative identifiers
+    uint256 created; // Creation timestamp
+    uint256 updated; // Last update timestamp
+    bool active; // Whether DID is active
 }
 
 /**
@@ -79,63 +79,27 @@ struct DIDDocument {
  */
 interface IDIDRegistry {
     // ============ Events ============
-    
-    event DIDCreated(
-        string indexed didHash,
-        string did,
-        address indexed controller,
-        uint256 timestamp
-    );
-    
-    event DIDUpdated(
-        string indexed didHash,
-        string did,
-        address indexed controller,
-        uint256 timestamp
-    );
-    
-    event DIDDeactivated(
-        string indexed didHash,
-        string did,
-        address indexed controller,
-        uint256 timestamp
-    );
-    
-    event ControllerChanged(
-        string indexed didHash,
-        address indexed oldController,
-        address indexed newController
-    );
-    
-    event VerificationMethodAdded(
-        string indexed didHash,
-        bytes32 indexed methodId,
-        VerificationMethodType methodType
-    );
-    
-    event VerificationMethodRemoved(
-        string indexed didHash,
-        bytes32 indexed methodId
-    );
-    
-    event ServiceAdded(
-        string indexed didHash,
-        bytes32 indexed serviceId,
-        ServiceType serviceType
-    );
-    
-    event ServiceRemoved(
-        string indexed didHash,
-        bytes32 indexed serviceId
-    );
-    
-    event AlsoKnownAsAdded(
-        string indexed didHash,
-        string didAlias
-    );
-    
+
+    event DIDCreated(string indexed didHash, string did, address indexed controller, uint256 timestamp);
+
+    event DIDUpdated(string indexed didHash, string did, address indexed controller, uint256 timestamp);
+
+    event DIDDeactivated(string indexed didHash, string did, address indexed controller, uint256 timestamp);
+
+    event ControllerChanged(string indexed didHash, address indexed oldController, address indexed newController);
+
+    event VerificationMethodAdded(string indexed didHash, bytes32 indexed methodId, VerificationMethodType methodType);
+
+    event VerificationMethodRemoved(string indexed didHash, bytes32 indexed methodId);
+
+    event ServiceAdded(string indexed didHash, bytes32 indexed serviceId, ServiceType serviceType);
+
+    event ServiceRemoved(string indexed didHash, bytes32 indexed serviceId);
+
+    event AlsoKnownAsAdded(string indexed didHash, string didAlias);
+
     // ============ DID Operations ============
-    
+
     /**
      * @notice Create a new DID
      * @param method DID method (e.g., "lux", "ai")
@@ -143,112 +107,90 @@ interface IDIDRegistry {
      * @return did The full DID string
      * @dev May be payable in premium implementations
      */
-    function createDID(
-        string calldata method,
-        string calldata identifier
-    ) external payable returns (string memory did);
-    
+    function createDID(string calldata method, string calldata identifier) external payable returns (string memory did);
+
     /**
      * @notice Resolve a DID to its document
      * @param did The DID to resolve
      * @return document The DID Document
      */
     function resolve(string calldata did) external view returns (DIDDocument memory document);
-    
+
     /**
      * @notice Check if a DID exists and is active
      * @param did The DID to check
      * @return exists Whether the DID exists and is active
      */
     function didExists(string calldata did) external view returns (bool exists);
-    
+
     /**
      * @notice Deactivate a DID
      * @param did The DID to deactivate
      */
     function deactivateDID(string calldata did) external;
-    
+
     /**
      * @notice Transfer DID control to a new controller
      * @param did The DID to transfer
      * @param newController The new controller address
      */
     function changeController(string calldata did, address newController) external;
-    
+
     // ============ Verification Methods ============
-    
+
     /**
      * @notice Add a verification method to a DID
      * @param did The DID to add the method to
      * @param method The verification method to add
      */
-    function addVerificationMethod(
-        string calldata did,
-        VerificationMethod calldata method
-    ) external;
-    
+    function addVerificationMethod(string calldata did, VerificationMethod calldata method) external;
+
     /**
      * @notice Remove a verification method from a DID
      * @param did The DID to remove the method from
      * @param methodId The method ID to remove
      */
-    function removeVerificationMethod(
-        string calldata did,
-        bytes32 methodId
-    ) external;
-    
+    function removeVerificationMethod(string calldata did, bytes32 methodId) external;
+
     /**
      * @notice Get all verification methods for a DID
      * @param did The DID to query
      * @return methods Array of verification methods
      */
-    function getVerificationMethods(
-        string calldata did
-    ) external view returns (VerificationMethod[] memory methods);
-    
+    function getVerificationMethods(string calldata did) external view returns (VerificationMethod[] memory methods);
+
     // ============ Services ============
-    
+
     /**
      * @notice Add a service endpoint to a DID
      * @param did The DID to add the service to
      * @param service The service to add
      */
-    function addService(
-        string calldata did,
-        Service calldata service
-    ) external;
-    
+    function addService(string calldata did, Service calldata service) external;
+
     /**
      * @notice Remove a service from a DID
      * @param did The DID to remove the service from
      * @param serviceId The service ID to remove
      */
-    function removeService(
-        string calldata did,
-        bytes32 serviceId
-    ) external;
-    
+    function removeService(string calldata did, bytes32 serviceId) external;
+
     /**
      * @notice Get all services for a DID
      * @param did The DID to query
      * @return services Array of services
      */
-    function getServices(
-        string calldata did
-    ) external view returns (Service[] memory services);
-    
+    function getServices(string calldata did) external view returns (Service[] memory services);
+
     // ============ Also Known As ============
-    
+
     /**
      * @notice Add an alternative identifier
      * @param did The DID to add the alias to
      * @param didAlias The alternative identifier
      */
-    function addAlsoKnownAs(
-        string calldata did,
-        string calldata didAlias
-    ) external;
-    
+    function addAlsoKnownAs(string calldata did, string calldata didAlias) external;
+
     /**
      * @notice Get the controller address for a DID
      * @param did The DID to query
@@ -268,17 +210,15 @@ interface IDIDResolver {
      * @return document The resolved DID Document
      * @return registry The registry that resolved the DID
      */
-    function resolve(
-        string calldata did
-    ) external view returns (DIDDocument memory document, address registry);
-    
+    function resolve(string calldata did) external view returns (DIDDocument memory document, address registry);
+
     /**
      * @notice Register a DID method resolver
      * @param method The DID method (e.g., "lux", "ai")
      * @param registry The registry contract for this method
      */
     function registerMethod(string calldata method, address registry) external;
-    
+
     /**
      * @notice Get the registry for a DID method
      * @param method The DID method
@@ -307,19 +247,10 @@ interface IPremiumDIDRegistry is IDIDRegistry {
     // ============ Events ============
 
     event DIDRegistered(
-        string indexed didHash,
-        string did,
-        address indexed controller,
-        uint256 price,
-        uint256 expiresAt
+        string indexed didHash, string did, address indexed controller, uint256 price, uint256 expiresAt
     );
 
-    event DIDRenewed(
-        string indexed didHash,
-        string did,
-        uint256 newExpiry,
-        uint256 price
-    );
+    event DIDRenewed(string indexed didHash, string did, uint256 newExpiry, uint256 price);
 
     event DIDExpired(string indexed didHash, string did);
 
@@ -363,11 +294,7 @@ interface IPremiumDIDRegistry is IDIDRegistry {
      * @return isExpired Whether expired
      * @return inGracePeriod Whether in grace period
      */
-    function getExpiry(string calldata did) external view returns (
-        uint256 expiry,
-        bool isExpired,
-        bool inGracePeriod
-    );
+    function getExpiry(string calldata did) external view returns (uint256 expiry, bool isExpired, bool inGracePeriod);
 
     /**
      * @notice Renew a DID
@@ -419,11 +346,11 @@ interface IPremiumDIDRegistry is IDIDRegistry {
 interface IX402DIDService {
     /// @notice x402 payment endpoint configuration
     struct X402Config {
-        string endpoint;           // Payment verification endpoint
-        string[] acceptedTokens;   // Accepted payment tokens
-        string facilitatorDID;     // Facilitator DID (optional)
-        uint256 minPayment;        // Minimum payment amount
-        bytes32 resourceHash;      // Protected resource identifier
+        string endpoint; // Payment verification endpoint
+        string[] acceptedTokens; // Accepted payment tokens
+        string facilitatorDID; // Facilitator DID (optional)
+        uint256 minPayment; // Minimum payment amount
+        bytes32 resourceHash; // Protected resource identifier
     }
 
     /**

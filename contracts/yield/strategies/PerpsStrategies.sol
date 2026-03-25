@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.24;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title Perpetual DEX Yield Strategies
 /// @notice High-yield strategies from perpetual futures liquidity provision
@@ -103,22 +103,22 @@ interface IGMXDepositVault {
 interface IHyperliquidVault {
     /// @notice Deposit USDC into HLP vault
     function deposit(uint256 amount) external returns (uint256 shares);
-    
+
     /// @notice Withdraw from HLP vault
     function withdraw(uint256 shares) external returns (uint256 amount);
-    
+
     /// @notice Get total HLP supply
     function totalSupply() external view returns (uint256);
-    
+
     /// @notice Get HLP balance
     function balanceOf(address account) external view returns (uint256);
-    
+
     /// @notice Get underlying assets value
     function totalAssets() external view returns (uint256);
-    
+
     /// @notice Get pending rewards
     function pendingRewards(address account) external view returns (uint256);
-    
+
     /// @notice Claim rewards
     function claimRewards() external returns (uint256);
 }
@@ -126,7 +126,7 @@ interface IHyperliquidVault {
 interface IHyperliquidBridge {
     /// @notice Bridge USDC from L1 to Hyperliquid L1
     function deposit(address token, uint256 amount, address recipient) external;
-    
+
     /// @notice Initiate withdrawal from Hyperliquid to L1
     function initiateWithdrawal(address token, uint256 amount) external returns (bytes32);
 }
@@ -154,16 +154,16 @@ interface IVertexClearinghouse {
 interface IVertexStaking {
     /// @notice Stake VRTX tokens
     function stake(uint256 amount) external;
-    
+
     /// @notice Unstake VRTX tokens
     function unstake(uint256 amount) external;
-    
+
     /// @notice Claim staking rewards
     function claimRewards() external returns (uint256);
-    
+
     /// @notice Get pending rewards
     function pendingRewards(address account) external view returns (uint256);
-    
+
     /// @notice Get staked balance
     function stakedBalance(address account) external view returns (uint256);
 }
@@ -175,31 +175,31 @@ interface IVertexStaking {
 interface IGainsVault {
     /// @notice Deposit DAI to receive gDAI
     function deposit(uint256 assets, address receiver) external returns (uint256 shares);
-    
+
     /// @notice Redeem gDAI for DAI
     function redeem(uint256 shares, address receiver, address owner) external returns (uint256 assets);
-    
+
     /// @notice Get current share price
     function shareToAssetsPrice() external view returns (uint256);
-    
+
     /// @notice Get total assets in vault
     function totalAssets() external view returns (uint256);
-    
+
     /// @notice Get gDAI balance
     function balanceOf(address account) external view returns (uint256);
-    
+
     /// @notice Convert assets to shares
     function convertToShares(uint256 assets) external view returns (uint256);
-    
+
     /// @notice Convert shares to assets
     function convertToAssets(uint256 shares) external view returns (uint256);
-    
+
     /// @notice Get current utilization
     function currentEpochPositiveOpenPnl() external view returns (uint256);
-    
+
     /// @notice Maximum deposit amount
     function maxDeposit(address) external view returns (uint256);
-    
+
     /// @notice Get withdraw lock duration
     function withdrawLockDuration() external view returns (uint256);
 }
@@ -207,16 +207,16 @@ interface IGainsVault {
 interface IGainsStaking {
     /// @notice Stake GNS tokens
     function stake(uint256 amount) external;
-    
+
     /// @notice Unstake GNS tokens
     function unstake(uint256 amount) external;
-    
+
     /// @notice Harvest pending DAI rewards
     function harvest() external returns (uint256);
-    
+
     /// @notice Get pending rewards
     function pendingRewardsDai(address staker) external view returns (uint256);
-    
+
     /// @notice Get staked GNS balance
     function stakedGns(address staker) external view returns (uint256);
 }
@@ -227,7 +227,7 @@ interface IGainsStaking {
 
 /// @title Base Perpetuals Strategy
 /// @notice Common functionality for perps LP strategies
-abstract contract BasePerpsStrategy is Ownable, ReentrancyGuard{
+abstract contract BasePerpsStrategy is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     string public name;
@@ -252,11 +252,7 @@ abstract contract BasePerpsStrategy is Ownable, ReentrancyGuard{
         _;
     }
 
-    constructor(
-        string memory _name,
-        address _underlyingAsset,
-        address _owner
-    ) Ownable(_owner) {
+    constructor(string memory _name, address _underlyingAsset, address _owner) Ownable(_owner) {
         name = _name;
         underlyingAsset = IERC20(_underlyingAsset);
         lastHarvest = block.timestamp;
@@ -299,7 +295,7 @@ contract GMXV2Strategy is BasePerpsStrategy {
     address public constant DEPOSIT_VAULT = 0xF89e77e8Dc11691C9e8757e84aaFbCD8A67d7A55;
     address public constant READER = 0xf60becbba223EEA9495Da3f606753867eC10d139;
     address public constant DATA_STORE = 0xFD70de6b91282D8017aA4E741e9Ae325CAb992d8;
-    
+
     // Wrapped ETH on Arbitrum
     address public constant WETH = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
     address public constant USDC = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
@@ -326,25 +322,17 @@ contract GMXV2Strategy is BasePerpsStrategy {
     event WithdrawalCreated(bytes32 indexed key, uint256 shares);
     event GMReceived(uint256 amount);
 
-    constructor(
-        string memory _name,
-        address _gmToken,
-        address _underlyingAsset,
-        address _owner
-    ) BasePerpsStrategy(_name, _underlyingAsset, _owner) {
+    constructor(string memory _name, address _gmToken, address _underlyingAsset, address _owner)
+        BasePerpsStrategy(_name, _underlyingAsset, _owner)
+    {
         gmToken = _gmToken;
-        
+
         // Approve exchange router
         IERC20(_underlyingAsset).approve(EXCHANGE_ROUTER, type(uint256).max);
         IERC20(_underlyingAsset).approve(DEPOSIT_VAULT, type(uint256).max);
     }
 
-    function deposit(uint256 amount)
-        external
-        nonReentrant
-        whenNotPaused
-        returns (uint256 shares)
-    {
+    function deposit(uint256 amount) external nonReentrant whenNotPaused returns (uint256 shares) {
         underlyingAsset.safeTransferFrom(msg.sender, address(this), amount);
 
         // Send tokens to deposit vault
@@ -368,8 +356,8 @@ contract GMXV2Strategy is BasePerpsStrategy {
         });
 
         // Create deposit (async - GM tokens arrive via callback)
-        bytes32 key = IGMXExchangeRouter(EXCHANGE_ROUTER).createDeposit{value: minExecutionFee}(params);
-        
+        bytes32 key = IGMXExchangeRouter(EXCHANGE_ROUTER).createDeposit{ value: minExecutionFee }(params);
+
         pendingDeposits[key] = amount;
         totalDeposited += amount;
         shares = amount; // 1:1 initially, actual shares arrive async
@@ -378,11 +366,7 @@ contract GMXV2Strategy is BasePerpsStrategy {
         emit Deposited(msg.sender, amount, shares);
     }
 
-    function withdraw(uint256 shares)
-        external
-        nonReentrant
-        returns (uint256 assets)
-    {
+    function withdraw(uint256 shares) external nonReentrant returns (uint256 assets) {
         require(gmBalance >= shares, "Insufficient GM balance");
 
         // Create withdrawal params
@@ -404,11 +388,11 @@ contract GMXV2Strategy is BasePerpsStrategy {
         // Send GM tokens to exchange router
         IERC20(gmToken).safeTransfer(EXCHANGE_ROUTER, shares);
 
-        bytes32 key = IGMXExchangeRouter(EXCHANGE_ROUTER).createWithdrawal{value: minExecutionFee}(params);
-        
+        bytes32 key = IGMXExchangeRouter(EXCHANGE_ROUTER).createWithdrawal{ value: minExecutionFee }(params);
+
         pendingWithdrawals[key] = shares;
         gmBalance -= shares;
-        
+
         // Estimate assets based on current GM price
         assets = _estimateGMValue(shares);
         if (assets <= totalDeposited) {
@@ -424,12 +408,12 @@ contract GMXV2Strategy is BasePerpsStrategy {
     function harvest() external nonReentrant returns (uint256 yield) {
         // GM tokens automatically compound - yield is embedded in token price
         uint256 currentValue = _estimateGMValue(gmBalance);
-        
+
         if (currentValue > totalDeposited) {
             yield = currentValue - totalDeposited;
             accumulatedYield += yield;
         }
-        
+
         lastHarvest = block.timestamp;
         emit Harvested(yield);
     }
@@ -453,11 +437,11 @@ contract GMXV2Strategy is BasePerpsStrategy {
     /// @notice Estimate GM token value in underlying
     function _estimateGMValue(uint256 gmAmount) internal view returns (uint256) {
         if (gmAmount == 0) return 0;
-        
+
         // Simplified - in production use Reader.getMarketTokenPrice()
         uint256 gmTotalSupply = IERC20(gmToken).totalSupply();
         if (gmTotalSupply == 0) return gmAmount;
-        
+
         // Approximate based on deposited ratio
         return (gmAmount * totalDeposited) / gmTotalSupply;
     }
@@ -471,14 +455,14 @@ contract GMXV2Strategy is BasePerpsStrategy {
         if (balance > 0) {
             IERC20(gmToken).safeTransfer(msg.sender, balance);
         }
-        
+
         uint256 underlyingBalance = underlyingAsset.balanceOf(address(this));
         if (underlyingBalance > 0) {
             underlyingAsset.safeTransfer(msg.sender, underlyingBalance);
         }
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -516,25 +500,18 @@ contract HyperliquidHLPStrategy is BasePerpsStrategy {
     event HLPDeposited(uint256 amount, uint256 shares);
     event HLPWithdrawn(uint256 shares, uint256 amount);
 
-    constructor(
-        address _hlpVault,
-        address _hlpBridge,
-        address _owner
-    ) BasePerpsStrategy("Hyperliquid HLP", USDC, _owner) {
+    constructor(address _hlpVault, address _hlpBridge, address _owner)
+        BasePerpsStrategy("Hyperliquid HLP", USDC, _owner)
+    {
         hlpVault = _hlpVault;
         hlpBridge = _hlpBridge;
-        
+
         IERC20(USDC).approve(_hlpBridge, type(uint256).max);
     }
 
-    function deposit(uint256 amount)
-        external
-        nonReentrant
-        whenNotPaused
-        returns (uint256 shares)
-    {
+    function deposit(uint256 amount) external nonReentrant whenNotPaused returns (uint256 shares) {
         require(amount >= minBridgeAmount, "Below minimum");
-        
+
         underlyingAsset.safeTransferFrom(msg.sender, address(this), amount);
 
         // Bridge USDC to Hyperliquid L1
@@ -549,11 +526,7 @@ contract HyperliquidHLPStrategy is BasePerpsStrategy {
         emit Deposited(msg.sender, amount, shares);
     }
 
-    function withdraw(uint256 shares)
-        external
-        nonReentrant
-        returns (uint256 assets)
-    {
+    function withdraw(uint256 shares) external nonReentrant returns (uint256 assets) {
         require(hlpShares >= shares, "Insufficient HLP");
 
         // Initiate withdrawal from HLP vault (L1)
@@ -575,24 +548,24 @@ contract HyperliquidHLPStrategy is BasePerpsStrategy {
     function harvest() external nonReentrant returns (uint256 yield) {
         // Claim rewards from HLP vault
         yield = IHyperliquidVault(hlpVault).claimRewards();
-        
+
         if (yield > 0) {
             accumulatedYield += yield;
         }
-        
+
         lastHarvest = block.timestamp;
         emit Harvested(yield);
     }
 
     function totalAssets() external view returns (uint256) {
         if (hlpShares == 0) return totalDeposited;
-        
+
         // Get current HLP share value
         uint256 totalHLPAssets = IHyperliquidVault(hlpVault).totalAssets();
         uint256 totalHLPSupply = IHyperliquidVault(hlpVault).totalSupply();
-        
+
         if (totalHLPSupply == 0) return totalDeposited;
-        
+
         return (hlpShares * totalHLPAssets) / totalHLPSupply + accumulatedYield;
     }
 
@@ -661,22 +634,14 @@ contract VertexStrategy is BasePerpsStrategy {
     event VRTXStaked(uint256 amount);
     event VRTXRewardsClaimed(uint256 amount);
 
-    constructor(
-        bytes32 _subaccount,
-        address _owner
-    ) BasePerpsStrategy("Vertex Protocol", USDC, _owner) {
+    constructor(bytes32 _subaccount, address _owner) BasePerpsStrategy("Vertex Protocol", USDC, _owner) {
         subaccount = _subaccount;
-        
+
         IERC20(USDC).approve(ENDPOINT, type(uint256).max);
         IERC20(VRTX_TOKEN).approve(VRTX_STAKING, type(uint256).max);
     }
 
-    function deposit(uint256 amount)
-        external
-        nonReentrant
-        whenNotPaused
-        returns (uint256 shares)
-    {
+    function deposit(uint256 amount) external nonReentrant whenNotPaused returns (uint256 shares) {
         underlyingAsset.safeTransferFrom(msg.sender, address(this), amount);
 
         // Deposit collateral to Vertex
@@ -698,21 +663,18 @@ contract VertexStrategy is BasePerpsStrategy {
         emit Deposited(msg.sender, amount, shares);
     }
 
-    function withdraw(uint256 amount)
-        external
-        nonReentrant
-        returns (uint256 assets)
-    {
+    function withdraw(uint256 amount) external nonReentrant returns (uint256 assets) {
         require(depositedCollateral >= amount, "Insufficient collateral");
 
         // Withdraw from Vertex
-        IVertexEndpoint(ENDPOINT).withdrawCollateral(
-            subaccount,
-            USDC_PRODUCT_ID,
-            // forge-lint: disable-next-line(unsafe-typecast)
-            uint128(amount),
-            uint64(block.timestamp)
-        );
+        IVertexEndpoint(ENDPOINT)
+            .withdrawCollateral(
+                subaccount,
+                USDC_PRODUCT_ID,
+                // forge-lint: disable-next-line(unsafe-typecast)
+                uint128(amount),
+                uint64(block.timestamp)
+            );
 
         underlyingAsset.safeTransfer(msg.sender, amount);
 
@@ -731,7 +693,7 @@ contract VertexStrategy is BasePerpsStrategy {
             accumulatedYield += yield;
             emit VRTXRewardsClaimed(yield);
         }
-        
+
         lastHarvest = block.timestamp;
         emit Harvested(yield);
     }
@@ -772,7 +734,7 @@ contract VertexStrategy is BasePerpsStrategy {
         if (balance > 0) {
             underlyingAsset.safeTransfer(msg.sender, balance);
         }
-        
+
         uint256 vrtxBalance = IERC20(VRTX_TOKEN).balanceOf(address(this));
         if (vrtxBalance > 0) {
             IERC20(VRTX_TOKEN).safeTransfer(msg.sender, vrtxBalance);
@@ -818,13 +780,9 @@ contract GainsNetworkStrategy is BasePerpsStrategy {
     event GNSStaked(uint256 amount);
     event GNSRewardsClaimed(uint256 amount);
 
-    constructor(
-        address _gDaiVault,
-        address _gnsStaking,
-        address _dai,
-        address _gnsToken,
-        address _owner
-    ) BasePerpsStrategy("Gains Network gDAI", _dai, _owner) {
+    constructor(address _gDaiVault, address _gnsStaking, address _dai, address _gnsToken, address _owner)
+        BasePerpsStrategy("Gains Network gDAI", _dai, _owner)
+    {
         gDaiVault = IGainsVault(_gDaiVault);
         gnsStaking = IGainsStaking(_gnsStaking);
         dai = _dai;
@@ -834,12 +792,7 @@ contract GainsNetworkStrategy is BasePerpsStrategy {
         IERC20(_gnsToken).approve(_gnsStaking, type(uint256).max);
     }
 
-    function deposit(uint256 amount)
-        external
-        nonReentrant
-        whenNotPaused
-        returns (uint256 shares)
-    {
+    function deposit(uint256 amount) external nonReentrant whenNotPaused returns (uint256 shares) {
         // Check max deposit
         uint256 maxDeposit = gDaiVault.maxDeposit(address(this));
         require(amount <= maxDeposit, "Exceeds max deposit");
@@ -861,11 +814,7 @@ contract GainsNetworkStrategy is BasePerpsStrategy {
         emit Deposited(msg.sender, amount, shares);
     }
 
-    function withdraw(uint256 shares)
-        external
-        nonReentrant
-        returns (uint256 assets)
-    {
+    function withdraw(uint256 shares) external nonReentrant returns (uint256 assets) {
         require(block.timestamp >= withdrawLockEnd, "Withdrawal locked");
         require(gDaiShares >= shares, "Insufficient gDAI");
 
@@ -886,7 +835,7 @@ contract GainsNetworkStrategy is BasePerpsStrategy {
     function harvest() external nonReentrant returns (uint256 yield) {
         // gDAI is auto-compounding, but we can track yield
         uint256 currentValue = gDaiVault.convertToAssets(gDaiShares);
-        
+
         if (currentValue > totalDeposited) {
             yield = currentValue - totalDeposited;
         }
@@ -897,7 +846,7 @@ contract GainsNetworkStrategy is BasePerpsStrategy {
             accumulatedYield += gnsRewards;
             emit GNSRewardsClaimed(gnsRewards);
         }
-        
+
         lastHarvest = block.timestamp;
         emit Harvested(yield);
     }
@@ -982,7 +931,7 @@ contract GMXV2ETHUSDStrategy is GMXV2Strategy {
             0x82aF49447D8a07e3bd95BD0d56f35241523fBab1, // WETH from parent
             _owner
         )
-    {}
+    { }
 }
 
 /// @title GMX V2 BTC-USD Market Strategy
@@ -992,14 +941,7 @@ contract GMXV2BTCUSDStrategy is GMXV2Strategy {
     address public constant GM_BTC_USD = 0x47c031236e19d024b42f8AE6780E44A573170703;
     address public constant WBTC = 0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f;
 
-    constructor(address _owner)
-        GMXV2Strategy(
-            "GMX V2 BTC-USD",
-            GM_BTC_USD,
-            WBTC,
-            _owner
-        )
-    {}
+    constructor(address _owner) GMXV2Strategy("GMX V2 BTC-USD", GM_BTC_USD, WBTC, _owner) { }
 }
 
 /// @title Gains Network Polygon Strategy
@@ -1011,15 +953,7 @@ contract GainsPolygonStrategy is GainsNetworkStrategy {
     address public constant POLYGON_DAI = 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063;
     address public constant POLYGON_GNS = 0xE5417Af564e4bFDA1c483642db72007871397896;
 
-    constructor(address _owner)
-        GainsNetworkStrategy(
-            GDAI_VAULT,
-            GNS_STAKING,
-            POLYGON_DAI,
-            POLYGON_GNS,
-            _owner
-        )
-    {}
+    constructor(address _owner) GainsNetworkStrategy(GDAI_VAULT, GNS_STAKING, POLYGON_DAI, POLYGON_GNS, _owner) { }
 }
 
 /// @title Gains Network Arbitrum Strategy
@@ -1031,15 +965,7 @@ contract GainsArbitrumStrategy is GainsNetworkStrategy {
     address public constant ARBITRUM_DAI = 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1;
     address public constant ARBITRUM_GNS = 0x18c11FD286C5EC11c3b683Caa813B77f5163A122;
 
-    constructor(address _owner)
-        GainsNetworkStrategy(
-            GDAI_VAULT,
-            GNS_STAKING,
-            ARBITRUM_DAI,
-            ARBITRUM_GNS,
-            _owner
-        )
-    {}
+    constructor(address _owner) GainsNetworkStrategy(GDAI_VAULT, GNS_STAKING, ARBITRUM_DAI, ARBITRUM_GNS, _owner) { }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1049,7 +975,6 @@ contract GainsArbitrumStrategy is GainsNetworkStrategy {
 /// @title Perpetual DEX Strategy Factory
 /// @notice Deploys perps yield strategies
 contract PerpsStrategyFactory is Ownable {
-    
     enum StrategyType {
         GMX_V2_ETH_USD,
         GMX_V2_BTC_USD,
@@ -1061,7 +986,7 @@ contract PerpsStrategyFactory is Ownable {
 
     event StrategyDeployed(StrategyType indexed strategyType, address strategy);
 
-    constructor(address _owner) Ownable(_owner) {}
+    constructor(address _owner) Ownable(_owner) { }
 
     /// @notice Deploy a perps strategy
     function deploy(StrategyType strategyType) external onlyOwner returns (address strategy) {
@@ -1081,10 +1006,7 @@ contract PerpsStrategyFactory is Ownable {
     }
 
     /// @notice Deploy Hyperliquid HLP strategy with custom addresses
-    function deployHyperliquid(
-        address hlpVault,
-        address hlpBridge
-    ) external onlyOwner returns (address strategy) {
+    function deployHyperliquid(address hlpVault, address hlpBridge) external onlyOwner returns (address strategy) {
         strategy = address(new HyperliquidHLPStrategy(hlpVault, hlpBridge, owner()));
         emit StrategyDeployed(StrategyType.HYPERLIQUID_HLP, strategy);
     }

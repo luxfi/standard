@@ -2,11 +2,11 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IDEX, DEXLib} from "@luxfi/contracts/precompile/interfaces/dex/IDEX.sol";
-import {IOracle, OracleLib} from "@luxfi/contracts/precompile/interfaces/IOracle.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IDEX, DEXLib } from "@luxfi/contracts/precompile/interfaces/dex/IDEX.sol";
+import { IOracle, OracleLib } from "@luxfi/contracts/precompile/interfaces/IOracle.sol";
 
 /// @title IQuantumSwap
 /// @notice High-frequency trading interface for Lux native DEX
@@ -21,12 +21,12 @@ interface IQuantumSwap {
 
     /// @notice HFT execution strategy
     enum Strategy {
-        TWAP,           // Time-weighted average price
-        VWAP,           // Volume-weighted average price
-        ICEBERG,        // Hidden size orders
-        SNIPER,         // Fill at specific price
-        ARBITRAGE,      // Cross-venue arbitrage
-        MARKET_MAKE     // Provide liquidity both sides
+        TWAP, // Time-weighted average price
+        VWAP, // Volume-weighted average price
+        ICEBERG, // Hidden size orders
+        SNIPER, // Fill at specific price
+        ARBITRAGE, // Cross-venue arbitrage
+        MARKET_MAKE // Provide liquidity both sides
     }
 
     /// @notice Advanced order with strategy
@@ -38,7 +38,7 @@ interface IQuantumSwap {
         Strategy strategy;
         uint256 startTime;
         uint256 endTime;
-        uint256 slices;         // Number of execution slices
+        uint256 slices; // Number of execution slices
         uint256 minSliceSize;
         bytes strategyParams;
     }
@@ -47,10 +47,10 @@ interface IQuantumSwap {
     struct MarketMakingParams {
         address token0;
         address token1;
-        uint256 spread;         // Basis points
-        uint256 depth;          // Order depth per side
-        uint256 refreshRate;    // Milliseconds between requotes
-        uint256 maxPosition;    // Maximum inventory
+        uint256 spread; // Basis points
+        uint256 depth; // Order depth per side
+        uint256 refreshRate; // Milliseconds between requotes
+        uint256 maxPosition; // Maximum inventory
         bool autoRebalance;
     }
 
@@ -59,9 +59,9 @@ interface IQuantumSwap {
         uint64[] orderIds;
         uint256 totalFilled;
         uint256 avgPrice;
-        uint256 slippage;       // Actual vs expected
+        uint256 slippage; // Actual vs expected
         uint256 gasUsed;
-        uint256 executionTime;  // Nanoseconds
+        uint256 executionTime; // Nanoseconds
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -78,27 +78,14 @@ interface IQuantumSwap {
     );
 
     event StrategyOrderExecuted(
-        bytes32 indexed strategyId,
-        uint256 sliceFilled,
-        uint256 slicePrice,
-        uint256 remainingAmount
+        bytes32 indexed strategyId, uint256 sliceFilled, uint256 slicePrice, uint256 remainingAmount
     );
 
     event MarketMakingStarted(
-        bytes32 indexed mmId,
-        address indexed maker,
-        address token0,
-        address token1,
-        uint256 spread
+        bytes32 indexed mmId, address indexed maker, address token0, address token1, uint256 spread
     );
 
-    event MarketMakingQuote(
-        bytes32 indexed mmId,
-        uint256 bidPrice,
-        uint256 bidSize,
-        uint256 askPrice,
-        uint256 askSize
-    );
+    event MarketMakingQuote(bytes32 indexed mmId, uint256 bidPrice, uint256 bidSize, uint256 askPrice, uint256 askSize);
 
     /*//////////////////////////////////////////////////////////////
                           STRATEGY FUNCTIONS
@@ -120,12 +107,10 @@ interface IQuantumSwap {
     function cancelStrategy(bytes32 strategyId) external returns (uint256 refundedAmount);
 
     /// @notice Get strategy execution status
-    function getStrategyStatus(bytes32 strategyId) external view returns (
-        uint256 filled,
-        uint256 remaining,
-        uint256 avgPrice,
-        bool isActive
-    );
+    function getStrategyStatus(bytes32 strategyId)
+        external
+        view
+        returns (uint256 filled, uint256 remaining, uint256 avgPrice, bool isActive);
 
     /*//////////////////////////////////////////////////////////////
                       MARKET MAKING FUNCTIONS
@@ -141,11 +126,10 @@ interface IQuantumSwap {
     function updateSpread(bytes32 mmId, uint256 newSpread) external;
 
     /// @notice Get current inventory
-    function getInventory(bytes32 mmId) external view returns (
-        int256 token0Position,
-        int256 token1Position,
-        uint256 unrealizedPnL
-    );
+    function getInventory(bytes32 mmId)
+        external
+        view
+        returns (int256 token0Position, int256 token1Position, uint256 unrealizedPnL);
 }
 
 /// @title QuantumSwap
@@ -220,7 +204,7 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
                               CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
-    constructor() {}
+    constructor() { }
 
     /*//////////////////////////////////////////////////////////////
                            SWAP FUNCTIONS
@@ -232,21 +216,15 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
     /// @param amountIn Input amount
     /// @param minAmountOut Minimum output
     /// @return amountOut Actual output
-    function swap(
-        address tokenIn,
-        address tokenOut,
-        uint256 amountIn,
-        uint256 minAmountOut
-    ) external nonReentrant returns (uint256 amountOut) {
+    function swap(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut)
+        external
+        nonReentrant
+        returns (uint256 amountOut)
+    {
         IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
         IERC20(tokenIn).forceApprove(address(DEX), amountIn);
 
-        IDEX.TradeResult memory result = DEX.marketOrder(
-            tokenIn,
-            tokenOut,
-            amountIn,
-            minAmountOut
-        );
+        IDEX.TradeResult memory result = DEX.marketOrder(tokenIn, tokenOut, amountIn, minAmountOut);
 
         IERC20(tokenOut).safeTransfer(msg.sender, result.amountOut);
         return result.amountOut;
@@ -257,11 +235,11 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
     /// @param tokenOut Output token
     /// @param amountIn Input amount
     /// @return quote DEX quote with price impact
-    function getQuote(
-        address tokenIn,
-        address tokenOut,
-        uint256 amountIn
-    ) external view returns (IDEX.Quote memory quote) {
+    function getQuote(address tokenIn, address tokenOut, uint256 amountIn)
+        external
+        view
+        returns (IDEX.Quote memory quote)
+    {
         return DEX.getQuote(tokenIn, tokenOut, amountIn);
     }
 
@@ -270,9 +248,7 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Submit TWAP order
-    function submitTWAP(
-        StrategyOrder calldata order
-    ) external nonReentrant returns (bytes32 strategyId) {
+    function submitTWAP(StrategyOrder calldata order) external nonReentrant returns (bytes32 strategyId) {
         require(order.strategy == Strategy.TWAP, "Not TWAP");
         require(order.slices >= MIN_SLICES && order.slices <= MAX_SLICES, "Invalid slices");
         require(order.endTime > order.startTime, "Invalid time range");
@@ -283,21 +259,14 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
         IERC20(order.tokenIn).safeTransferFrom(msg.sender, address(this), order.totalAmount);
 
         emit StrategyOrderCreated(
-            strategyId,
-            msg.sender,
-            Strategy.TWAP,
-            order.tokenIn,
-            order.tokenOut,
-            order.totalAmount
+            strategyId, msg.sender, Strategy.TWAP, order.tokenIn, order.tokenOut, order.totalAmount
         );
 
         return strategyId;
     }
 
     /// @notice Submit VWAP order
-    function submitVWAP(
-        StrategyOrder calldata order
-    ) external nonReentrant returns (bytes32 strategyId) {
+    function submitVWAP(StrategyOrder calldata order) external nonReentrant returns (bytes32 strategyId) {
         require(order.strategy == Strategy.VWAP, "Not VWAP");
         require(order.slices >= MIN_SLICES && order.slices <= MAX_SLICES, "Invalid slices");
 
@@ -306,21 +275,14 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
         IERC20(order.tokenIn).safeTransferFrom(msg.sender, address(this), order.totalAmount);
 
         emit StrategyOrderCreated(
-            strategyId,
-            msg.sender,
-            Strategy.VWAP,
-            order.tokenIn,
-            order.tokenOut,
-            order.totalAmount
+            strategyId, msg.sender, Strategy.VWAP, order.tokenIn, order.tokenOut, order.totalAmount
         );
 
         return strategyId;
     }
 
     /// @notice Submit iceberg order
-    function submitIceberg(
-        StrategyOrder calldata order
-    ) external nonReentrant returns (bytes32 strategyId) {
+    function submitIceberg(StrategyOrder calldata order) external nonReentrant returns (bytes32 strategyId) {
         require(order.strategy == Strategy.ICEBERG, "Not ICEBERG");
         require(order.minSliceSize > 0, "Invalid slice size");
 
@@ -333,32 +295,20 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
         IERC20(order.tokenIn).forceApprove(address(DEX), visibleSize);
 
         uint64 orderId = DEX.limitOrder(
-            order.tokenIn,
-            order.tokenOut,
-            visibleSize,
-            order.limitPrice,
-            IDEX.OrderType.GTC,
-            order.endTime
+            order.tokenIn, order.tokenOut, visibleSize, order.limitPrice, IDEX.OrderType.GTC, order.endTime
         );
 
         strategies[strategyId].orderIds.push(orderId);
 
         emit StrategyOrderCreated(
-            strategyId,
-            msg.sender,
-            Strategy.ICEBERG,
-            order.tokenIn,
-            order.tokenOut,
-            order.totalAmount
+            strategyId, msg.sender, Strategy.ICEBERG, order.tokenIn, order.tokenOut, order.totalAmount
         );
 
         return strategyId;
     }
 
     /// @notice Submit sniper order (triggers at price)
-    function submitSniper(
-        StrategyOrder calldata order
-    ) external nonReentrant returns (bytes32 strategyId) {
+    function submitSniper(StrategyOrder calldata order) external nonReentrant returns (bytes32 strategyId) {
         require(order.strategy == Strategy.SNIPER, "Not SNIPER");
         require(order.limitPrice > 0, "Invalid target price");
 
@@ -396,28 +346,21 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
         strategies[strategyId].orderIds.push(orderId);
 
         emit StrategyOrderCreated(
-            strategyId,
-            msg.sender,
-            Strategy.SNIPER,
-            order.tokenIn,
-            order.tokenOut,
-            order.totalAmount
+            strategyId, msg.sender, Strategy.SNIPER, order.tokenIn, order.tokenOut, order.totalAmount
         );
 
         return strategyId;
     }
 
     /// @notice Cancel strategy order
-    function cancelStrategy(
-        bytes32 strategyId
-    ) external nonReentrant returns (uint256 refundedAmount) {
+    function cancelStrategy(bytes32 strategyId) external nonReentrant returns (uint256 refundedAmount) {
         StrategyOrderState storage state = strategies[strategyId];
         require(state.owner == msg.sender, "Not owner");
         require(state.isActive, "Not active");
 
         // Cancel all pending orders
         for (uint256 i = 0; i < state.orderIds.length; i++) {
-            try DEX.cancelOrder(state.orderIds[i]) {} catch {}
+            try DEX.cancelOrder(state.orderIds[i]) { } catch { }
         }
 
         state.isActive = false;
@@ -433,14 +376,11 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
     }
 
     /// @notice Get strategy execution status
-    function getStrategyStatus(
-        bytes32 strategyId
-    ) external view returns (
-        uint256 filled,
-        uint256 remaining,
-        uint256 avgPrice,
-        bool isActive
-    ) {
+    function getStrategyStatus(bytes32 strategyId)
+        external
+        view
+        returns (uint256 filled, uint256 remaining, uint256 avgPrice, bool isActive)
+    {
         StrategyOrderState storage state = strategies[strategyId];
         filled = state.filled;
         remaining = state.order.totalAmount - state.filled;
@@ -453,18 +393,11 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Start market making
-    function startMarketMaking(
-        MarketMakingParams calldata params
-    ) external nonReentrant returns (bytes32 mmId) {
+    function startMarketMaking(MarketMakingParams calldata params) external nonReentrant returns (bytes32 mmId) {
         require(params.spread > 0 && params.spread < 10000, "Invalid spread");
         require(params.depth > 0, "Invalid depth");
 
-        mmId = keccak256(abi.encode(
-            msg.sender,
-            params.token0,
-            params.token1,
-            block.timestamp
-        ));
+        mmId = keccak256(abi.encode(msg.sender, params.token0, params.token1, block.timestamp));
 
         marketMakers[mmId] = MarketMakingState({
             params: params,
@@ -482,38 +415,28 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
         // Place initial quotes
         _refreshQuotes(mmId);
 
-        emit MarketMakingStarted(
-            mmId,
-            msg.sender,
-            params.token0,
-            params.token1,
-            params.spread
-        );
+        emit MarketMakingStarted(mmId, msg.sender, params.token0, params.token1, params.spread);
 
         return mmId;
     }
 
     /// @notice Stop market making
-    function stopMarketMaking(
-        bytes32 mmId
-    ) external nonReentrant returns (ExecutionReport memory report) {
+    function stopMarketMaking(bytes32 mmId) external nonReentrant returns (ExecutionReport memory report) {
         MarketMakingState storage state = marketMakers[mmId];
         require(state.owner == msg.sender, "Not owner");
         require(state.isActive, "Not active");
 
         // Cancel all outstanding orders
-        uint64[] memory allOrderIds = new uint64[](
-            state.bidOrderIds.length + state.askOrderIds.length
-        );
+        uint64[] memory allOrderIds = new uint64[](state.bidOrderIds.length + state.askOrderIds.length);
 
         uint256 idx = 0;
         for (uint256 i = 0; i < state.bidOrderIds.length; i++) {
             allOrderIds[idx++] = state.bidOrderIds[i];
-            try DEX.cancelOrder(state.bidOrderIds[i]) {} catch {}
+            try DEX.cancelOrder(state.bidOrderIds[i]) { } catch { }
         }
         for (uint256 i = 0; i < state.askOrderIds.length; i++) {
             allOrderIds[idx++] = state.askOrderIds[i];
-            try DEX.cancelOrder(state.askOrderIds[i]) {} catch {}
+            try DEX.cancelOrder(state.askOrderIds[i]) { } catch { }
         }
 
         state.isActive = false;
@@ -542,22 +465,17 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
     }
 
     /// @notice Get current inventory
-    function getInventory(
-        bytes32 mmId
-    ) external view returns (
-        int256 token0Position,
-        int256 token1Position,
-        uint256 unrealizedPnL
-    ) {
+    function getInventory(bytes32 mmId)
+        external
+        view
+        returns (int256 token0Position, int256 token1Position, uint256 unrealizedPnL)
+    {
         MarketMakingState storage state = marketMakers[mmId];
         token0Position = state.token0Position;
         token1Position = state.token1Position;
 
         // Calculate unrealized PnL based on current mid price
-        (uint256 bid, uint256 ask,) = DEX.getBestPrices(
-            state.params.token0,
-            state.params.token1
-        );
+        (uint256 bid, uint256 ask,) = DEX.getBestPrices(state.params.token0, state.params.token1);
         uint256 midPrice = (bid + ask) / 2;
 
         // Simplified PnL calculation
@@ -575,27 +493,21 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Get orderbook depth
-    function getOrderbook(
-        address token0,
-        address token1,
-        uint256 depth
-    ) external view returns (IDEX.Orderbook memory) {
+    function getOrderbook(address token0, address token1, uint256 depth) external view returns (IDEX.Orderbook memory) {
         return DEX.getOrderbook(token0, token1, depth);
     }
 
     /// @notice Get best prices
-    function getBestPrices(
-        address token0,
-        address token1
-    ) external view returns (uint256 bid, uint256 ask, uint256 mid) {
+    function getBestPrices(address token0, address token1)
+        external
+        view
+        returns (uint256 bid, uint256 ask, uint256 mid)
+    {
         (bid, ask, mid) = DEX.getBestPrices(token0, token1);
     }
 
     /// @notice Get 24h volume
-    function getVolume24h(
-        address token0,
-        address token1
-    ) external view returns (uint256) {
+    function getVolume24h(address token0, address token1) external view returns (uint256) {
         return DEX.getVolume24h(token0, token1);
     }
 
@@ -604,17 +516,10 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Create new strategy
-    function _createStrategy(
-        StrategyOrder calldata order
-    ) internal returns (bytes32 strategyId) {
-        strategyId = keccak256(abi.encode(
-            msg.sender,
-            order.tokenIn,
-            order.tokenOut,
-            order.totalAmount,
-            order.strategy,
-            block.timestamp
-        ));
+    function _createStrategy(StrategyOrder calldata order) internal returns (bytes32 strategyId) {
+        strategyId = keccak256(
+            abi.encode(msg.sender, order.tokenIn, order.tokenOut, order.totalAmount, order.strategy, block.timestamp)
+        );
 
         strategies[strategyId] = StrategyOrderState({
             order: order,
@@ -637,20 +542,17 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
 
         // Cancel existing orders
         for (uint256 i = 0; i < state.bidOrderIds.length; i++) {
-            try DEX.cancelOrder(state.bidOrderIds[i]) {} catch {}
+            try DEX.cancelOrder(state.bidOrderIds[i]) { } catch { }
         }
         for (uint256 i = 0; i < state.askOrderIds.length; i++) {
-            try DEX.cancelOrder(state.askOrderIds[i]) {} catch {}
+            try DEX.cancelOrder(state.askOrderIds[i]) { } catch { }
         }
 
         delete state.bidOrderIds;
         delete state.askOrderIds;
 
         // Get current mid price from oracle
-        IOracle.Price memory price = ORACLE.getPrice(
-            state.params.token0,
-            state.params.token1
-        );
+        IOracle.Price memory price = ORACLE.getPrice(state.params.token0, state.params.token1);
 
         if (!price.isValid) return;
 
@@ -698,27 +600,23 @@ contract QuantumSwap is IQuantumSwap, ReentrancyGuard {
     }
 
     /// @notice Check if pair is supported
-    function isPairSupported(
-        address token0,
-        address token1
-    ) external view returns (bool) {
+    function isPairSupported(address token0, address token1) external view returns (bool) {
         return DEX.isPairSupported(token0, token1);
     }
 
     /// @notice Get protocol info
-    function getProtocolInfo() external pure returns (
-        string memory name,
-        string memory version,
-        uint256 maxOrdersPerSec,
-        uint256 latencyNs
-    ) {
+    function getProtocolInfo()
+        external
+        pure
+        returns (string memory name, string memory version, uint256 maxOrdersPerSec, uint256 latencyNs)
+    {
         return (
             NAME,
             VERSION,
-            434_000_000,    // 434M orders/sec (GPU)
-            2               // 2ns latency (GPU)
+            434_000_000, // 434M orders/sec (GPU)
+            2 // 2ns latency (GPU)
         );
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

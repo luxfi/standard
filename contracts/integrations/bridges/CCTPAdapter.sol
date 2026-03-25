@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IBridgeAdapter, BridgeParams, BridgeRoute, BridgeStatus} from "../../interfaces/adapters/IBridgeAdapter.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IBridgeAdapter, BridgeParams, BridgeRoute, BridgeStatus } from "../../interfaces/adapters/IBridgeAdapter.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CIRCLE CCTP INTERFACES
@@ -19,12 +19,9 @@ interface ITokenMessenger {
     /// @param mintRecipient Recipient address on destination (as bytes32)
     /// @param burnToken Address of the token to burn (USDC)
     /// @return nonce The nonce of the burn message
-    function depositForBurn(
-        uint256 amount,
-        uint32 destinationDomain,
-        bytes32 mintRecipient,
-        address burnToken
-    ) external returns (uint64 nonce);
+    function depositForBurn(uint256 amount, uint32 destinationDomain, bytes32 mintRecipient, address burnToken)
+        external
+        returns (uint64 nonce);
 
     /// @notice Deposit USDC for burn with a caller restriction on destination
     /// @param amount Amount of USDC to burn
@@ -51,10 +48,7 @@ interface IMessageTransmitter {
     /// @param message The message bytes from the source domain
     /// @param attestation Circle attestation for the message
     /// @return success Whether the message was received successfully
-    function receiveMessage(
-        bytes calldata message,
-        bytes calldata attestation
-    ) external returns (bool success);
+    function receiveMessage(bytes calldata message, bytes calldata attestation) external returns (bool success);
 
     /// @notice Get the next available nonce for a domain
     function nextAvailableNonce() external view returns (uint64);
@@ -135,7 +129,10 @@ contract CCTPAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     // ──────────────────────────────────────────────────────────────────────────
 
     constructor(address _tokenMessenger, address _messageTransmitter, address _usdc, address admin) {
-        if (_tokenMessenger == address(0) || _messageTransmitter == address(0) || _usdc == address(0) || admin == address(0)) {
+        if (
+            _tokenMessenger == address(0) || _messageTransmitter == address(0) || _usdc == address(0)
+                || admin == address(0)
+        ) {
             revert ZeroAddress();
         }
         tokenMessenger = ITokenMessenger(_tokenMessenger);
@@ -166,11 +163,25 @@ contract CCTPAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     // IBridgeAdapter: metadata
     // ──────────────────────────────────────────────────────────────────────────
 
-    function version() external pure override returns (string memory) { return "1.0.0"; }
-    function protocol() external pure override returns (string memory) { return "Circle CCTP"; }
-    function chainId() external view override returns (uint256) { return srcChainId; }
-    function endpoint() external view override returns (address) { return address(tokenMessenger); }
-    function supportedChains() external view override returns (uint256[] memory) { return _supportedChains; }
+    function version() external pure override returns (string memory) {
+        return "1.0.0";
+    }
+
+    function protocol() external pure override returns (string memory) {
+        return "Circle CCTP";
+    }
+
+    function chainId() external view override returns (uint256) {
+        return srcChainId;
+    }
+
+    function endpoint() external view override returns (address) {
+        return address(tokenMessenger);
+    }
+
+    function supportedChains() external view override returns (uint256[] memory) {
+        return _supportedChains;
+    }
 
     function isRouteSupported(uint256 dstChainId, address token) external view override returns (bool) {
         // CCTP only supports USDC
@@ -216,12 +227,7 @@ contract CCTPAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
         bytes32 mintRecipient = bytes32(uint256(uint160(params.recipient)));
 
         // Burn USDC via TokenMessenger
-        uint64 burnNonce = tokenMessenger.depositForBurn(
-            params.amount,
-            destDomain,
-            mintRecipient,
-            usdc
-        );
+        uint64 burnNonce = tokenMessenger.depositForBurn(params.amount, destDomain, mintRecipient, usdc);
 
         // Track bridge status
         bridgeId = keccak256(abi.encodePacked(burnNonce, _nonce++, block.timestamp));
@@ -249,7 +255,10 @@ contract CCTPAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     // ──────────────────────────────────────────────────────────────────────────
 
     function estimateFees(uint256 dstChainId, address token, uint256)
-        external view override returns (uint256 bridgeFee, uint256 protocolFee)
+        external
+        view
+        override
+        returns (uint256 bridgeFee, uint256 protocolFee)
     {
         if (token != usdc) revert UnsupportedToken(token);
         if (chainIdToDomain[dstChainId] == 0) revert UnsupportedChain(dstChainId);
@@ -274,15 +283,16 @@ contract CCTPAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     /// @param message The burn message from the source chain
     /// @param attestation Circle attestation for the burn message
     /// @return success Whether the message was received successfully
-    function receiveMessage(
-        bytes calldata message,
-        bytes calldata attestation
-    ) external nonReentrant returns (bool success) {
+    function receiveMessage(bytes calldata message, bytes calldata attestation)
+        external
+        nonReentrant
+        returns (bool success)
+    {
         success = messageTransmitter.receiveMessage(message, attestation);
         if (!success) revert ReceiveFailed();
         emit MessageReceived(keccak256(message));
     }
 
     /// @notice Allow contract to receive native tokens (for gas refunds)
-    receive() external payable {}
+    receive() external payable { }
 }

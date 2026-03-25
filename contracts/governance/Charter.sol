@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.31;
 
-import {ICharter} from "./interfaces/ICharter.sol";
-import {IVotingTypes} from "./interfaces/IVotingTypes.sol";
-import {IVotingWeight} from "./interfaces/IVotingWeight.sol";
-import {IVoteTracker} from "./interfaces/IVoteTracker.sol";
-import {IProposerAdapter} from "./interfaces/IProposerAdapter.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { ICharter } from "./interfaces/ICharter.sol";
+import { IVotingTypes } from "./interfaces/IVotingTypes.sol";
+import { IVotingWeight } from "./interfaces/IVotingWeight.sol";
+import { IVoteTracker } from "./interfaces/IVoteTracker.sol";
+import { IProposerAdapter } from "./interfaces/IProposerAdapter.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @title Charter
@@ -165,7 +165,9 @@ contract Charter is ICharter, ERC165, Initializable {
 
         for (uint256 i = 0; i < proposerAdapters_.length;) {
             $.isProposerAdapter[proposerAdapters_[i]] = true;
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -175,10 +177,11 @@ contract Charter is ICharter, ERC165, Initializable {
      * @param admin_ Address that manages this charter (typically Council)
      * @param votingConfigs_ Array of voting configurations
      */
-    function initialize2(
-        address admin_,
-        IVotingTypes.VotingConfig[] calldata votingConfigs_
-    ) public virtual reinitializer(2) {
+    function initialize2(address admin_, IVotingTypes.VotingConfig[] calldata votingConfigs_)
+        public
+        virtual
+        reinitializer(2)
+    {
         if (votingConfigs_.length == 0) revert NoVotingConfigs();
 
         CharterStorage storage $ = _getStorage();
@@ -186,7 +189,9 @@ contract Charter is ICharter, ERC165, Initializable {
 
         for (uint256 i = 0; i < votingConfigs_.length;) {
             $.votingConfigs.push(votingConfigs_[i]);
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -271,8 +276,7 @@ contract Charter is ICharter, ERC165, Initializable {
 
         if (proposal.votingEndTimestamp == 0) revert ProposalNotInitialized();
 
-        return (proposal.yesVotes * BASIS_DENOMINATOR) >
-            ((proposal.yesVotes + proposal.noVotes) * $.basisNumerator);
+        return (proposal.yesVotes * BASIS_DENOMINATOR) > ((proposal.yesVotes + proposal.noVotes) * $.basisNumerator);
     }
 
     /**
@@ -292,11 +296,12 @@ contract Charter is ICharter, ERC165, Initializable {
     /**
      * @notice Check if address can propose via adapter
      */
-    function isProposer(
-        address proposer,
-        address adapter,
-        bytes calldata adapterData
-    ) public view virtual returns (bool) {
+    function isProposer(address proposer, address adapter, bytes calldata adapterData)
+        public
+        view
+        virtual
+        returns (bool)
+    {
         CharterStorage storage $ = _getStorage();
         if (!$.isProposerAdapter[adapter]) revert InvalidProposerAdapter();
 
@@ -351,11 +356,8 @@ contract Charter is ICharter, ERC165, Initializable {
 
             IVotingTypes.VotingConfig memory config = $.votingConfigs[configData.configIndex];
 
-            uint256 weight = IVotingWeight(config.votingWeight).getVotingWeightForPaymaster(
-                voter,
-                details.votingStartTimestamp,
-                configData.voteData
-            );
+            uint256 weight = IVotingWeight(config.votingWeight)
+                .getVotingWeightForPaymaster(voter, details.votingStartTimestamp, configData.voteData);
 
             if (weight == 0) return false;
 
@@ -365,7 +367,9 @@ contract Charter is ICharter, ERC165, Initializable {
 
             totalWeight += weight;
 
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
 
         return totalWeight > 0;
@@ -396,10 +400,7 @@ contract Charter is ICharter, ERC165, Initializable {
         proposal.abstainVotes = 0;
 
         emit ProposalInitialized(
-            proposalId,
-            proposal.votingStartTimestamp,
-            proposal.votingEndTimestamp,
-            proposal.votingStartBlock
+            proposalId, proposal.votingStartTimestamp, proposal.votingEndTimestamp, proposal.votingStartBlock
         );
     }
 
@@ -416,7 +417,9 @@ contract Charter is ICharter, ERC165, Initializable {
         IVotingTypes.VotingConfigVoteData[] calldata votingConfigsData,
         uint256 lightAccountIndex
     ) public virtual {
-        if (votingConfigsData.length == 0) revert NoVotingConfigs();
+        if (votingConfigsData.length == 0) {
+            revert NoVotingConfigs();
+        }
 
         // Resolve actual voter (support for Light Accounts / EIP-4337)
         address voter = _resolveVoter(msg.sender, lightAccountIndex);
@@ -461,7 +464,9 @@ contract Charter is ICharter, ERC165, Initializable {
 
             totalWeight += weight;
 
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
 
         // Update vote tallies
@@ -510,7 +515,9 @@ contract Charter is ICharter, ERC165, Initializable {
                     $.vetoVotersList.pop();
                     break;
                 }
-                unchecked { ++i; }
+                unchecked {
+                    ++i;
+                }
             }
         }
 
@@ -539,17 +546,14 @@ contract Charter is ICharter, ERC165, Initializable {
         // Then return that owner as the actual voter
 
         // Try to get the owner of the light account (sender)
-        (bool ownerSuccess, bytes memory ownerData) = sender.staticcall(
-            abi.encodeWithSignature("owner()")
-        );
+        (bool ownerSuccess, bytes memory ownerData) = sender.staticcall(abi.encodeWithSignature("owner()"));
 
         if (ownerSuccess && ownerData.length == 32) {
             address owner = abi.decode(ownerData, (address));
 
             // Verify: factory.getAddress(owner, index) == sender
-            (bool factorySuccess, bytes memory factoryData) = $.lightAccountFactory.staticcall(
-                abi.encodeWithSignature("getAddress(address,uint256)", owner, lightAccountIndex)
-            );
+            (bool factorySuccess, bytes memory factoryData) = $.lightAccountFactory
+                .staticcall(abi.encodeWithSignature("getAddress(address,uint256)", owner, lightAccountIndex));
 
             if (factorySuccess && factoryData.length == 32) {
                 address expectedLightAccount = abi.decode(factoryData, (address));
@@ -579,7 +583,12 @@ contract Charter is ICharter, ERC165, Initializable {
      * @notice Get proposal voting details (alias for proposalVoting())
      * @dev Required by ICharter interface
      */
-    function proposalVotingDetails(uint32 proposalId) public view virtual returns (ICharter.ProposalVotingDetails memory) {
+    function proposalVotingDetails(uint32 proposalId)
+        public
+        view
+        virtual
+        returns (ICharter.ProposalVotingDetails memory)
+    {
         ProposalVoting memory pv = proposalVoting(proposalId);
         return ICharter.ProposalVotingDetails({
             votingStartTimestamp: pv.votingStartTimestamp,
@@ -641,8 +650,6 @@ contract Charter is ICharter, ERC165, Initializable {
     // ======================================================================
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return
-            interfaceId == type(ICharter).interfaceId ||
-            super.supportsInterface(interfaceId);
+        return interfaceId == type(ICharter).interfaceId || super.supportsInterface(interfaceId);
     }
 }

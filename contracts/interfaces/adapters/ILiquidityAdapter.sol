@@ -6,49 +6,49 @@ pragma solidity ^0.8.31;
 /// @title Pool Info
 /// @notice Liquidity pool metadata
 struct PoolInfo {
-    address pool;             // Pool address
-    address[] tokens;         // Tokens in the pool
-    uint256[] reserves;       // Current reserves
-    uint256 totalSupply;      // Total LP token supply
-    uint256 fee;              // Trading fee (1e6 = 100%)
-    uint8 poolType;           // 0=AMM, 1=Stable, 2=Concentrated, 3=Lending
-    bool isActive;            // Pool is active
+    address pool; // Pool address
+    address[] tokens; // Tokens in the pool
+    uint256[] reserves; // Current reserves
+    uint256 totalSupply; // Total LP token supply
+    uint256 fee; // Trading fee (1e6 = 100%)
+    uint8 poolType; // 0=AMM, 1=Stable, 2=Concentrated, 3=Lending
+    bool isActive; // Pool is active
 }
 
 /// @title Add Liquidity Parameters
 struct AddLiquidityParams {
-    address pool;             // Target pool
-    address[] tokens;         // Tokens to deposit
-    uint256[] amounts;        // Amounts to deposit
-    uint256 minLpAmount;      // Minimum LP tokens to receive
-    address recipient;        // LP token recipient
+    address pool; // Target pool
+    address[] tokens; // Tokens to deposit
+    uint256[] amounts; // Amounts to deposit
+    uint256 minLpAmount; // Minimum LP tokens to receive
+    address recipient; // LP token recipient
 }
 
 /// @title Remove Liquidity Parameters
 struct RemoveLiquidityParams {
-    address pool;             // Target pool
-    uint256 lpAmount;         // LP tokens to burn
-    uint256[] minAmounts;     // Minimum tokens to receive
-    address recipient;        // Token recipient
+    address pool; // Target pool
+    uint256 lpAmount; // LP tokens to burn
+    uint256[] minAmounts; // Minimum tokens to receive
+    address recipient; // Token recipient
 }
 
 /// @title Single Asset Parameters
 struct SingleAssetParams {
-    address pool;             // Target pool
-    address tokenIn;          // Token to deposit
-    uint256 amountIn;         // Amount to deposit
-    uint256 minLpAmount;      // Minimum LP tokens to receive
-    address recipient;        // LP token recipient
+    address pool; // Target pool
+    address tokenIn; // Token to deposit
+    uint256 amountIn; // Amount to deposit
+    uint256 minLpAmount; // Minimum LP tokens to receive
+    address recipient; // LP token recipient
 }
 
 /// @title Swap Parameters
 struct SwapParams {
-    address pool;             // Pool to swap through
-    address tokenIn;          // Input token
-    address tokenOut;         // Output token
-    uint256 amountIn;         // Input amount
-    uint256 minAmountOut;     // Minimum output (slippage protection)
-    address recipient;        // Output recipient
+    address pool; // Pool to swap through
+    address tokenIn; // Input token
+    address tokenOut; // Output token
+    uint256 amountIn; // Input amount
+    uint256 minAmountOut; // Minimum output (slippage protection)
+    address recipient; // Output recipient
 }
 
 /// @title ILiquidityAdapter
@@ -60,19 +60,9 @@ interface ILiquidityAdapter {
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
 
-    event LiquidityAdded(
-        address indexed pool,
-        address indexed provider,
-        uint256[] amounts,
-        uint256 lpMinted
-    );
+    event LiquidityAdded(address indexed pool, address indexed provider, uint256[] amounts, uint256 lpMinted);
 
-    event LiquidityRemoved(
-        address indexed pool,
-        address indexed provider,
-        uint256 lpBurned,
-        uint256[] amounts
-    );
+    event LiquidityRemoved(address indexed pool, address indexed provider, uint256 lpBurned, uint256[] amounts);
 
     event Swapped(
         address indexed pool,
@@ -130,25 +120,17 @@ interface ILiquidityAdapter {
     /// @notice Add liquidity to a pool (balanced)
     /// @param params Add liquidity parameters
     /// @return lpAmount LP tokens minted
-    function addLiquidity(AddLiquidityParams calldata params)
-        external
-        payable
-        returns (uint256 lpAmount);
+    function addLiquidity(AddLiquidityParams calldata params) external payable returns (uint256 lpAmount);
 
     /// @notice Add liquidity with a single asset
     /// @param params Single asset parameters
     /// @return lpAmount LP tokens minted
-    function addLiquiditySingleAsset(SingleAssetParams calldata params)
-        external
-        payable
-        returns (uint256 lpAmount);
+    function addLiquiditySingleAsset(SingleAssetParams calldata params) external payable returns (uint256 lpAmount);
 
     /// @notice Remove liquidity from a pool
     /// @param params Remove liquidity parameters
     /// @return amounts Tokens received
-    function removeLiquidity(RemoveLiquidityParams calldata params)
-        external
-        returns (uint256[] memory amounts);
+    function removeLiquidity(RemoveLiquidityParams calldata params) external returns (uint256[] memory amounts);
 
     /// @notice Remove liquidity to a single asset
     /// @param pool Target pool
@@ -172,10 +154,7 @@ interface ILiquidityAdapter {
     /// @notice Swap tokens through a pool
     /// @param params Swap parameters
     /// @return amountOut Tokens received
-    function swap(SwapParams calldata params)
-        external
-        payable
-        returns (uint256 amountOut);
+    function swap(SwapParams calldata params) external payable returns (uint256 amountOut);
 
     /// @notice Get swap quote
     /// @param pool Pool address
@@ -184,26 +163,18 @@ interface ILiquidityAdapter {
     /// @param amountIn Input amount
     /// @return amountOut Expected output amount
     /// @return fee Trading fee amount
-    function getSwapQuote(
-        address pool,
-        address tokenIn,
-        address tokenOut,
-        uint256 amountIn
-    ) external view returns (uint256 amountOut, uint256 fee);
+    function getSwapQuote(address pool, address tokenIn, address tokenOut, uint256 amountIn)
+        external
+        view
+        returns (uint256 amountOut, uint256 fee);
 
     /*//////////////////////////////////////////////////////////////
                              ESTIMATION
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Estimate LP tokens for adding liquidity
-    function estimateLpTokens(
-        address pool,
-        uint256[] calldata amounts
-    ) external view returns (uint256 lpAmount);
+    function estimateLpTokens(address pool, uint256[] calldata amounts) external view returns (uint256 lpAmount);
 
     /// @notice Estimate tokens for removing liquidity
-    function estimateRemoval(
-        address pool,
-        uint256 lpAmount
-    ) external view returns (uint256[] memory amounts);
+    function estimateRemoval(address pool, uint256 lpAmount) external view returns (uint256[] memory amounts);
 }

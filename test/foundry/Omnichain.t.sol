@@ -2,11 +2,11 @@
 pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
-import {OmnichainLP} from "../../contracts/omnichain/OmnichainLP.sol";
-import {OmnichainLPFactory} from "../../contracts/omnichain/OmnichainLPFactory.sol";
-import {OmnichainLPRouter} from "../../contracts/omnichain/OmnichainLPRouter.sol";
-import {Bridge} from "../../contracts/omnichain/Bridge.sol";
-import {MockERC20Simple as MockERC20, MockWLUX} from "./TestMocks.sol";
+import { OmnichainLP } from "../../contracts/omnichain/OmnichainLP.sol";
+import { OmnichainLPFactory } from "../../contracts/omnichain/OmnichainLPFactory.sol";
+import { OmnichainLPRouter } from "../../contracts/omnichain/OmnichainLPRouter.sol";
+import { Bridge } from "../../contracts/omnichain/Bridge.sol";
+import { MockERC20Simple as MockERC20, MockWLUX } from "./TestMocks.sol";
 
 /// @notice Mock Bridge implementation for testing
 contract MockBridge is Bridge {
@@ -48,23 +48,12 @@ contract MockBridge is Bridge {
         supportedChains[2] = true; // Test chain 2
     }
 
-    function _bridge(
-        address token,
-        uint256 amount,
-        uint256 destChainId,
-        bytes calldata extraData
-    ) internal override {
+    function _bridge(address token, uint256 amount, uint256 destChainId, bytes calldata extraData) internal override {
         require(supportedChains[destChainId], "MockBridge: Unsupported chain");
         require(amount > 0, "MockBridge: Zero amount");
 
-        bytes32 messageId = keccak256(abi.encodePacked(
-            token,
-            amount,
-            destChainId,
-            block.chainid,
-            messageNonce++,
-            block.timestamp
-        ));
+        bytes32 messageId =
+            keccak256(abi.encodePacked(token, amount, destChainId, block.chainid, messageNonce++, block.timestamp));
 
         address recipient = extraData.length >= 20 ? abi.decode(extraData, (address)) : msg.sender;
 
@@ -91,25 +80,19 @@ contract MockBridge is Bridge {
         return _estimateFee(destChainId);
     }
 
-    function swap(
-        Token memory fromToken,
-        Token memory toToken,
-        address recipient,
-        uint256 amount,
-        uint256 deadline
-    ) external override {
+    function swap(Token memory fromToken, Token memory toToken, address recipient, uint256 amount, uint256 deadline)
+        external
+        override
+    {
         require(deadline >= block.timestamp, "MockBridge: Expired");
         require(amount > 0, "MockBridge: Zero amount");
         require(recipient != address(0), "MockBridge: Invalid recipient");
 
-        bytes32 messageId = keccak256(abi.encodePacked(
-            fromToken.tokenAddress,
-            toToken.tokenAddress,
-            amount,
-            toToken.chainId,
-            messageNonce++,
-            block.timestamp
-        ));
+        bytes32 messageId = keccak256(
+            abi.encodePacked(
+                fromToken.tokenAddress, toToken.tokenAddress, amount, toToken.chainId, messageNonce++, block.timestamp
+            )
+        );
 
         messages[messageId] = BridgeMessage({
             token: toToken.tokenAddress,
@@ -129,12 +112,7 @@ contract MockBridge is Bridge {
     }
 
     /// @notice Simulate receiving a cross-chain message
-    function receiveMessage(
-        bytes32 messageId,
-        address token,
-        address recipient,
-        uint256 amount
-    ) external {
+    function receiveMessage(bytes32 messageId, address token, address recipient, uint256 amount) external {
         require(!processedMessages[messageId], "MockBridge: Replay attack");
         require(!failedDeliveries[messageId], "MockBridge: Delivery failed");
 
@@ -186,12 +164,7 @@ contract MockBridge is Bridge {
     }
 
     /// @notice Create a test message for retry testing
-    function createTestMessage(
-        bytes32 messageId,
-        address token,
-        address recipient,
-        uint256 amount
-    ) external {
+    function createTestMessage(bytes32 messageId, address token, address recipient, uint256 amount) external {
         messages[messageId] = BridgeMessage({
             token: token,
             amount: amount,
@@ -304,9 +277,8 @@ contract OmnichainTest is Test {
         MockERC20 tokenC = new MockERC20("Token C", "TKC");
         MockERC20 tokenD = new MockERC20("Token D", "TKD");
 
-        (address token0, address token1) = address(tokenC) < address(tokenD)
-            ? (address(tokenC), address(tokenD))
-            : (address(tokenD), address(tokenC));
+        (address token0, address token1) =
+            address(tokenC) < address(tokenD) ? (address(tokenC), address(tokenD)) : (address(tokenD), address(tokenC));
 
         address predicted = factory.calculatePairAddress(token0, token1);
         address actual = factory.createPair(address(tokenC), address(tokenD));
@@ -325,14 +297,7 @@ contract OmnichainTest is Test {
         uint256 amount1 = 1000 ether;
 
         (uint256 amountA, uint256 amountB, uint256 liquidity) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            amount0,
-            amount1,
-            amount0,
-            amount1,
-            alice,
-            block.timestamp + 1
+            address(tokenA), address(tokenB), amount0, amount1, amount0, amount1, alice, block.timestamp + 1
         );
 
         assertEq(amountA, amount0, "Amount A mismatch");
@@ -349,13 +314,8 @@ contract OmnichainTest is Test {
         uint256 tokenAmount = 1000 ether;
         uint256 luxAmount = 10 ether;
 
-        (uint256 amountToken, uint256 amountLUX, uint256 liquidity) = router.addLiquidityLUX{value: luxAmount}(
-            address(tokenA),
-            tokenAmount,
-            tokenAmount,
-            luxAmount,
-            alice,
-            block.timestamp + 1
+        (uint256 amountToken, uint256 amountLUX, uint256 liquidity) = router.addLiquidityLUX{ value: luxAmount }(
+            address(tokenA), tokenAmount, tokenAmount, luxAmount, alice, block.timestamp + 1
         );
 
         assertEq(amountToken, tokenAmount, "Token amount mismatch");
@@ -369,15 +329,8 @@ contract OmnichainTest is Test {
         // First add liquidity
         vm.startPrank(alice);
 
-        (, , uint256 liquidity) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            alice,
-            block.timestamp + 1
+        (,, uint256 liquidity) = router.addLiquidity(
+            address(tokenA), address(tokenB), 1000 ether, 1000 ether, 1000 ether, 1000 ether, alice, block.timestamp + 1
         );
 
         uint256 balanceBefore0 = tokenA.balanceOf(alice);
@@ -387,15 +340,8 @@ contract OmnichainTest is Test {
         pair.approve(address(router), liquidity);
 
         // Remove liquidity
-        (uint256 amount0, uint256 amount1) = router.removeLiquidity(
-            address(tokenA),
-            address(tokenB),
-            liquidity,
-            0,
-            0,
-            alice,
-            block.timestamp + 1
-        );
+        (uint256 amount0, uint256 amount1) =
+            router.removeLiquidity(address(tokenA), address(tokenB), liquidity, 0, 0, alice, block.timestamp + 1);
 
         assertGt(amount0, 0, "No token A returned");
         assertGt(amount1, 0, "No token B returned");
@@ -434,13 +380,7 @@ contract OmnichainTest is Test {
 
         uint256 balanceBefore = tokenB.balanceOf(bob);
 
-        uint256[] memory amounts = router.swapExactTokensForTokens(
-            amountIn,
-            0,
-            path,
-            bob,
-            block.timestamp + 1
-        );
+        uint256[] memory amounts = router.swapExactTokensForTokens(amountIn, 0, path, bob, block.timestamp + 1);
 
         assertEq(amounts[0], amountIn, "Input amount mismatch");
         assertGt(amounts[1], 0, "No output received");
@@ -488,15 +428,8 @@ contract OmnichainTest is Test {
         // Add liquidity
         vm.startPrank(alice);
 
-        (, , uint256 liquidity) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            alice,
-            block.timestamp + 1
+        (,, uint256 liquidity) = router.addLiquidity(
+            address(tokenA), address(tokenB), 1000 ether, 1000 ether, 1000 ether, 1000 ether, alice, block.timestamp + 1
         );
 
         uint256 bridgeAmount = liquidity / 2;
@@ -519,15 +452,8 @@ contract OmnichainTest is Test {
     function testBridgeLPTokensRevertsOnSameChain() public {
         vm.startPrank(alice);
 
-        (, , uint256 liquidity) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            alice,
-            block.timestamp + 1
+        (,, uint256 liquidity) = router.addLiquidity(
+            address(tokenA), address(tokenB), 1000 ether, 1000 ether, 1000 ether, 1000 ether, alice, block.timestamp + 1
         );
 
         pair.approve(address(pair), liquidity);
@@ -554,15 +480,8 @@ contract OmnichainTest is Test {
         // Add liquidity
         vm.startPrank(alice);
 
-        (, , uint256 liquidity) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            alice,
-            block.timestamp + 1
+        (,, uint256 liquidity) = router.addLiquidity(
+            address(tokenA), address(tokenB), 1000 ether, 1000 ether, 1000 ether, 1000 ether, alice, block.timestamp + 1
         );
 
         uint256 initialChainLiquidity = pair.chainLiquidity(block.chainid);
@@ -587,15 +506,8 @@ contract OmnichainTest is Test {
     function testCrossChainMessageSending() public {
         vm.startPrank(alice);
 
-        (, , uint256 liquidity) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            alice,
-            block.timestamp + 1
+        (,, uint256 liquidity) = router.addLiquidity(
+            address(tokenA), address(tokenB), 1000 ether, 1000 ether, 1000 ether, 1000 ether, alice, block.timestamp + 1
         );
 
         pair.approve(address(pair), liquidity);
@@ -612,15 +524,8 @@ contract OmnichainTest is Test {
         // Setup: Add liquidity and bridge
         vm.startPrank(alice);
 
-        (, , uint256 liquidity) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            alice,
-            block.timestamp + 1
+        (,, uint256 liquidity) = router.addLiquidity(
+            address(tokenA), address(tokenB), 1000 ether, 1000 ether, 1000 ether, 1000 ether, alice, block.timestamp + 1
         );
 
         uint256 bridgeAmount = liquidity / 2;
@@ -672,14 +577,7 @@ contract OmnichainTest is Test {
         vm.startPrank(alice);
 
         router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            alice,
-            block.timestamp + 1
+            address(tokenA), address(tokenB), 1000 ether, 1000 ether, 1000 ether, 1000 ether, alice, block.timestamp + 1
         );
 
         vm.stopPrank();
@@ -689,7 +587,7 @@ contract OmnichainTest is Test {
 
         // Create the test message with proper data
         bridge.createTestMessage(messageId, address(pair), bob, amount);
-        
+
         // Simulate failed delivery
         bridge.simulateFailure(messageId);
 
@@ -698,7 +596,7 @@ contract OmnichainTest is Test {
         emit MessageRetried(messageId);
 
         bridge.retryMessage(messageId);
-        
+
         // Verify bob received the minted tokens
         assertEq(pair.balanceOf(bob), amount, "Bob should have received minted tokens");
     }
@@ -715,15 +613,8 @@ contract OmnichainTest is Test {
     function testBridgeFeeDeduction() public {
         vm.startPrank(alice);
 
-        (, , uint256 liquidity) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            alice,
-            block.timestamp + 1
+        (,, uint256 liquidity) = router.addLiquidity(
+            address(tokenA), address(tokenB), 1000 ether, 1000 ether, 1000 ether, 1000 ether, alice, block.timestamp + 1
         );
 
         uint256 bridgeAmount = 100 ether;
@@ -764,15 +655,8 @@ contract OmnichainTest is Test {
     function testMinimumLiquidity() public {
         vm.startPrank(alice);
 
-        (, , uint256 liquidity) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            alice,
-            block.timestamp + 1
+        (,, uint256 liquidity) = router.addLiquidity(
+            address(tokenA), address(tokenB), 1000 ether, 1000 ether, 1000 ether, 1000 ether, alice, block.timestamp + 1
         );
 
         // First liquidity locks MINIMUM_LIQUIDITY
@@ -840,16 +724,8 @@ contract OmnichainTest is Test {
         tokenA.approve(address(router), amount0);
         tokenB.approve(address(router), amount1);
 
-        (uint256 amountA, uint256 amountB, uint256 liquidity) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            amount0,
-            amount1,
-            0,
-            0,
-            alice,
-            block.timestamp + 1
-        );
+        (uint256 amountA, uint256 amountB, uint256 liquidity) =
+            router.addLiquidity(address(tokenA), address(tokenB), amount0, amount1, 0, 0, alice, block.timestamp + 1);
 
         assertGt(liquidity, 0, "No liquidity minted");
         assertLe(amountA, amount0, "Amount A exceeds desired");
@@ -884,13 +760,7 @@ contract OmnichainTest is Test {
         path[0] = address(tokenA);
         path[1] = address(tokenB);
 
-        uint256[] memory amounts = router.swapExactTokensForTokens(
-            amountIn,
-            0,
-            path,
-            bob,
-            block.timestamp + 1
-        );
+        uint256[] memory amounts = router.swapExactTokensForTokens(amountIn, 0, path, bob, block.timestamp + 1);
 
         assertEq(amounts[0], amountIn, "Input amount mismatch");
         assertGt(amounts[1], 0, "No output");
@@ -902,15 +772,8 @@ contract OmnichainTest is Test {
         // Add liquidity
         vm.startPrank(alice);
 
-        (, , uint256 liquidity) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            alice,
-            block.timestamp + 1
+        (,, uint256 liquidity) = router.addLiquidity(
+            address(tokenA), address(tokenB), 1000 ether, 1000 ether, 1000 ether, 1000 ether, alice, block.timestamp + 1
         );
 
         bridgeAmount = bound(bridgeAmount, 1, liquidity);
@@ -933,15 +796,8 @@ contract OmnichainTest is Test {
     function testChainLiquidityTracking() public {
         vm.startPrank(alice);
 
-        (, , uint256 liquidity) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            alice,
-            block.timestamp + 1
+        (,, uint256 liquidity) = router.addLiquidity(
+            address(tokenA), address(tokenB), 1000 ether, 1000 ether, 1000 ether, 1000 ether, alice, block.timestamp + 1
         );
 
         assertEq(pair.chainLiquidity(block.chainid), liquidity, "Chain liquidity incorrect");
@@ -952,22 +808,11 @@ contract OmnichainTest is Test {
     function testUserChainBalances() public {
         vm.startPrank(alice);
 
-        (, , uint256 liquidity) = router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            alice,
-            block.timestamp + 1
+        (,, uint256 liquidity) = router.addLiquidity(
+            address(tokenA), address(tokenB), 1000 ether, 1000 ether, 1000 ether, 1000 ether, alice, block.timestamp + 1
         );
 
-        assertEq(
-            pair.userChainBalances(alice, block.chainid),
-            liquidity,
-            "User chain balance incorrect"
-        );
+        assertEq(pair.userChainBalances(alice, block.chainid), liquidity, "User chain balance incorrect");
 
         vm.stopPrank();
     }
@@ -976,14 +821,7 @@ contract OmnichainTest is Test {
         vm.startPrank(alice);
 
         router.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            1000 ether,
-            alice,
-            block.timestamp + 1
+            address(tokenA), address(tokenB), 1000 ether, 1000 ether, 1000 ether, 1000 ether, alice, block.timestamp + 1
         );
 
         (uint112 reserve0, uint112 reserve1,) = pair.getReserves();
@@ -1007,7 +845,7 @@ contract OmnichainTest is Test {
         // 1. Alice adds liquidity on Chain A
         vm.startPrank(alice);
 
-        (, , uint256 liquidity) = router.addLiquidity(
+        (,, uint256 liquidity) = router.addLiquidity(
             address(tokenA),
             address(tokenB),
             10_000 ether,
@@ -1039,15 +877,7 @@ contract OmnichainTest is Test {
         vm.startPrank(bob);
         pair.approve(address(router), bridgeAmount);
 
-        router.removeLiquidity(
-            address(tokenA),
-            address(tokenB),
-            bridgeAmount,
-            0,
-            0,
-            bob,
-            block.timestamp + 1
-        );
+        router.removeLiquidity(address(tokenA), address(tokenB), bridgeAmount, 0, 0, bob, block.timestamp + 1);
 
         assertEq(pair.balanceOf(bob), 0, "Bob still has LP tokens");
 
@@ -1081,14 +911,7 @@ contract OmnichainTest is Test {
 
         tokenA.approve(address(router), amountIn);
 
-        uint256 amountOut = router.crossChainSwap(
-            amountIn,
-            0,
-            path,
-            chainIds,
-            bob,
-            block.timestamp + 1
-        );
+        uint256 amountOut = router.crossChainSwap(amountIn, 0, path, chainIds, bob, block.timestamp + 1);
 
         assertGt(amountOut, 0, "No output from cross-chain swap");
 

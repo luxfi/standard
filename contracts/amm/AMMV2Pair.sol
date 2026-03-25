@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title AMMV2Pair - Uniswap V2 Compatible LP Token
 /// @notice Liquidity pair for token swaps with constant product AMM
@@ -118,7 +118,9 @@ contract AMMV2Pair is ERC20, ReentrancyGuard {
         {
             uint256 balance0Adjusted = (balance0 * 1000) - (amount0In * 3);
             uint256 balance1Adjusted = (balance1 * 1000) - (amount1In * 3);
-            require(balance0Adjusted * balance1Adjusted >= uint256(_reserve0) * uint256(_reserve1) * (1000**2), "AMMV2: K");
+            require(
+                balance0Adjusted * balance1Adjusted >= uint256(_reserve0) * uint256(_reserve1) * (1000 ** 2), "AMMV2: K"
+            );
         }
 
         _update(balance0, balance1, _reserve0, _reserve1);
@@ -138,7 +140,7 @@ contract AMMV2Pair is ERC20, ReentrancyGuard {
 
     function _update(uint256 balance0, uint256 balance1, uint112, uint112) private {
         require(balance0 <= type(uint112).max && balance1 <= type(uint112).max, "AMMV2: OVERFLOW");
-        uint32 blockTimestamp = uint32(block.timestamp % 2**32);
+        uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
         // forge-lint: disable-next-line(unsafe-typecast)
         reserve0 = uint112(balance0);
         // forge-lint: disable-next-line(unsafe-typecast)

@@ -8,7 +8,7 @@
 // Copyright (c) 2019 Arca Labs Inc — https://arca.digital
 pragma solidity ^0.8.24;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title TransferRestriction
@@ -110,7 +110,12 @@ contract TransferRestriction is AccessControl {
      * @return allowed         True if permitted
      * @return restrictionCode 0 = allowed, 32 = max holders, 33 = amount exceeded
      */
-    function checkRestriction(address /* from */, address to, uint256 amount)
+    function checkRestriction(
+        address,
+        /* from */
+        address to,
+        uint256 amount
+    )
         external
         view
         returns (bool allowed, uint8 restrictionCode)

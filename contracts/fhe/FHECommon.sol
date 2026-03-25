@@ -43,7 +43,11 @@ library FHECommon {
     }
 
     /// @notice Create a uint256 array with three elements
-    function createUint256Inputs(uint256 input1, uint256 input2, uint256 input3) internal pure returns (uint256[] memory) {
+    function createUint256Inputs(uint256 input1, uint256 input2, uint256 input3)
+        internal
+        pure
+        returns (uint256[] memory)
+    {
         uint256[] memory inputs = new uint256[](3);
         inputs[0] = input1;
         inputs[1] = input2;

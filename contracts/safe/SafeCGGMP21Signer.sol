@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {IERC1271, ILegacyERC1271} from "./interfaces/IERC1271.sol";
+import { IERC1271, ILegacyERC1271 } from "./interfaces/IERC1271.sol";
 
 /// @title ICGGMP21
 /// @dev Interface for the CGGMP21 threshold ECDSA precompile at 0x020000000000000000000000000000000000000D
@@ -112,13 +112,7 @@ contract SafeCGGMP21Signer is IERC1271, ILegacyERC1271 {
         }
 
         // Call the CGGMP21 precompile to verify the threshold signature
-        return ICGGMP21(CGGMP21_PRECOMPILE).verify(
-            threshold,
-            totalSigners,
-            _PUBLIC_KEY,
-            messageHash,
-            signature
-        );
+        return ICGGMP21(CGGMP21_PRECOMPILE).verify(threshold, totalSigners, _PUBLIC_KEY, messageHash, signature);
     }
 
     /// @inheritdoc IERC1271
@@ -191,13 +185,7 @@ contract SafeCGGMP21CoSigner is IERC1271 {
         if (msg.sender != safe) revert OnlySafe();
         if (coSignature.length != SIGNATURE_SIZE) revert InvalidCoSignature();
 
-        bool valid = ICGGMP21(CGGMP21_PRECOMPILE).verify(
-            threshold,
-            totalSigners,
-            _PUBLIC_KEY,
-            safeTxHash,
-            coSignature
-        );
+        bool valid = ICGGMP21(CGGMP21_PRECOMPILE).verify(threshold, totalSigners, _PUBLIC_KEY, safeTxHash, coSignature);
 
         if (!valid) revert InvalidCoSignature();
 
@@ -208,13 +196,7 @@ contract SafeCGGMP21CoSigner is IERC1271 {
     function isValidSignature(bytes32 message, bytes calldata signature) external view returns (bytes4 magicValue) {
         if (signature.length != SIGNATURE_SIZE) return bytes4(0);
 
-        bool valid = ICGGMP21(CGGMP21_PRECOMPILE).verify(
-            threshold,
-            totalSigners,
-            _PUBLIC_KEY,
-            message,
-            signature
-        );
+        bool valid = ICGGMP21(CGGMP21_PRECOMPILE).verify(threshold, totalSigners, _PUBLIC_KEY, message, signature);
 
         if (valid) magicValue = IERC1271.isValidSignature.selector;
     }

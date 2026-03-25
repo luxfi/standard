@@ -4,9 +4,9 @@ pragma solidity ^0.8.31;
 import "forge-std/Test.sol";
 
 // Core tokens - Lux native
-import {WLUX} from "../../contracts/tokens/WLUX.sol";
-import {LuxUSD} from "../../contracts/liquid/tokens/LUSD.sol";
-import {ILRC20} from "../../contracts/tokens/interfaces/ILRC20.sol";
+import { WLUX } from "../../contracts/tokens/WLUX.sol";
+import { LuxUSD } from "../../contracts/liquid/tokens/LUSD.sol";
+import { ILRC20 } from "../../contracts/tokens/interfaces/ILRC20.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MOCK AMM (Uniswap V2-style for 0.8.x compatibility)
@@ -23,7 +23,7 @@ contract MockV2Factory {
         require(getPair[token0][token1] == address(0), "PAIR_EXISTS");
 
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
-        pair = address(new MockV2Pair{salt: salt}(token0, token1));
+        pair = address(new MockV2Pair{ salt: salt }(token0, token1));
 
         getPair[token0][token1] = pair;
         getPair[token1][token0] = pair;
@@ -68,10 +68,7 @@ contract MockV2Pair {
             totalSupply = MINIMUM_LIQUIDITY;
             balanceOf[address(0)] = MINIMUM_LIQUIDITY;
         } else {
-            liquidity = min(
-                (amount0 * totalSupply) / reserve0,
-                (amount1 * totalSupply) / reserve1
-            );
+            liquidity = min((amount0 * totalSupply) / reserve0, (amount1 * totalSupply) / reserve1);
         }
 
         require(liquidity > 0, "INSUFFICIENT_LIQUIDITY_MINTED");
@@ -109,8 +106,11 @@ contract MockV2Pair {
         if (y > 3) {
             z = y;
             uint256 x = y / 2 + 1;
-            while (x < z) { z = x; x = (y / x + x) / 2; }
-        } else if (y != 0) { z = 1; }
+            while (x < z) z = x;
+            x = (y / x + x) / 2;
+        } else if (y != 0) {
+            z = 1;
+        }
     }
 
     function min(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -137,7 +137,10 @@ contract MockAlUSD {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
-    constructor() { owner = msg.sender; minters[msg.sender] = true; }
+    constructor() {
+        owner = msg.sender;
+        minters[msg.sender] = true;
+    }
 
     function setMinter(address minter, bool status) external {
         require(msg.sender == owner, "NOT_OWNER");
@@ -179,7 +182,7 @@ contract MockAlUSD {
  * @title LuxFullStackIntegration
  * @notice End-to-end integration test for the Lux DeFi stack
  * @dev Tests: Tokens → AMM (V2 LPs, Swaps) → Synth swaps
- * 
+ *
  * Native Lux tokens used:
  * - WLUX: Wrapped LUX (native gas token wrapper)
  * - LUSD: Lux Dollar (native stablecoin)
@@ -245,7 +248,7 @@ contract LuxFullStackIntegration is Test {
         // WLUX: wrap native LUX
         vm.deal(treasury, 1_000_000 ether);
         vm.prank(treasury);
-        wlux.deposit{value: 1_000_000 ether}();
+        wlux.deposit{ value: 1_000_000 ether }();
 
         // LUSD: mint stablecoin (1 LUSD = $1, 18 decimals)
         lusd.mint(treasury, 1_000_000_000e18); // 1B LUSD
@@ -304,7 +307,7 @@ contract LuxFullStackIntegration is Test {
         // Give alice some WLUX
         vm.deal(alice, 1000 ether);
         vm.prank(alice);
-        wlux.deposit{value: 1000 ether}();
+        wlux.deposit{ value: 1000 ether }();
 
         uint256 amountIn = 100e18; // 100 WLUX
 
@@ -380,7 +383,7 @@ contract LuxFullStackIntegration is Test {
         vm.startPrank(alice);
 
         // Step 1: Wrap LUX -> WLUX
-        wlux.deposit{value: 500 ether}();
+        wlux.deposit{ value: 500 ether }();
         console.log("1. Wrapped 500 LUX -> 500 WLUX");
 
         // Step 2: Swap WLUX -> LUSD
@@ -392,12 +395,7 @@ contract LuxFullStackIntegration is Test {
         (uint112 wluxR, uint112 lusdR) = token0 == address(wlux) ? (r0, r1) : (r1, r0);
         uint256 lusdOut = (wluxToSwap * 997 * lusdR) / (wluxR * 1000 + wluxToSwap * 997);
 
-        wluxLusdPair.swap(
-            token0 == address(wlux) ? 0 : lusdOut,
-            token0 == address(wlux) ? lusdOut : 0,
-            alice,
-            ""
-        );
+        wluxLusdPair.swap(token0 == address(wlux) ? 0 : lusdOut, token0 == address(wlux) ? lusdOut : 0, alice, "");
         console.log("2. Swapped 100 WLUX ->", lusdOut, "LUSD");
 
         // Step 3: Swap LUSD -> alUSD
@@ -412,12 +410,7 @@ contract LuxFullStackIntegration is Test {
         (uint112 alR, uint112 luR) = token0 == address(alUSD) ? (r0, r1) : (r1, r0);
         uint256 alUsdOut = (lusdToSwap * 997 * alR) / (luR * 1000 + lusdToSwap * 997);
 
-        alUsdLusdPair.swap(
-            token0 == address(alUSD) ? alUsdOut : 0,
-            token0 == address(alUSD) ? 0 : alUsdOut,
-            alice,
-            ""
-        );
+        alUsdLusdPair.swap(token0 == address(alUSD) ? alUsdOut : 0, token0 == address(alUSD) ? 0 : alUsdOut, alice, "");
         console.log("3. Swapped 50000 LUSD ->", alUsdOut, "alUSD");
 
         vm.stopPrank();
@@ -443,12 +436,12 @@ contract LuxFullStackIntegration is Test {
 
         // Calculate price impact for different trade sizes
         uint256[] memory tradeSizes = new uint256[](4);
-        tradeSizes[0] = 100e18;    // 100 WLUX
-        tradeSizes[1] = 1000e18;   // 1,000 WLUX
-        tradeSizes[2] = 10000e18;  // 10,000 WLUX
+        tradeSizes[0] = 100e18; // 100 WLUX
+        tradeSizes[1] = 1000e18; // 1,000 WLUX
+        tradeSizes[2] = 10000e18; // 10,000 WLUX
         tradeSizes[3] = 100000e18; // 100,000 WLUX
 
-        for (uint i = 0; i < tradeSizes.length; i++) {
+        for (uint256 i = 0; i < tradeSizes.length; i++) {
             uint256 amountIn = tradeSizes[i];
             uint256 expectedOut = (amountIn * 997 * lusdReserve) / (wluxReserve * 1000 + amountIn * 997);
             uint256 effectivePrice = (expectedOut * 1e18) / amountIn;

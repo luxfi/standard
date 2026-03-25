@@ -1,49 +1,49 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {Script, console} from "forge-std/Script.sol";
+import { Script, console } from "forge-std/Script.sol";
 
 // Core native token
-import {WLUX} from "@luxfi/contracts/tokens/WLUX.sol";
+import { WLUX } from "@luxfi/contracts/tokens/WLUX.sol";
 
 // Bridged Collateral Tokens
-import {BridgedETH} from "@luxfi/contracts/bridge/collateral/ETH.sol";
-import {BridgedBTC} from "@luxfi/contracts/bridge/collateral/BTC.sol";
-import {BridgedUSDC} from "@luxfi/contracts/bridge/collateral/USDC.sol";
+import { BridgedETH } from "@luxfi/contracts/bridge/collateral/ETH.sol";
+import { BridgedBTC } from "@luxfi/contracts/bridge/collateral/BTC.sol";
+import { BridgedUSDC } from "@luxfi/contracts/bridge/collateral/USDC.sol";
 
 // Staking
-import {sLUX as StakedLUX} from "@luxfi/contracts/staking/sLUX.sol";
+import { sLUX as StakedLUX } from "@luxfi/contracts/staking/sLUX.sol";
 
 // AMM
-import {AMMV2Factory} from "@luxfi/contracts/amm/AMMV2Factory.sol";
-import {AMMV2Router} from "@luxfi/contracts/amm/AMMV2Router.sol";
+import { AMMV2Factory } from "@luxfi/contracts/amm/AMMV2Factory.sol";
+import { AMMV2Router } from "@luxfi/contracts/amm/AMMV2Router.sol";
 
 // Governance
-import {Timelock} from "@luxfi/contracts/governance/Timelock.sol";
-import {vLUX} from "@luxfi/contracts/governance/vLUX.sol";
-import {GaugeController} from "@luxfi/contracts/governance/GaugeController.sol";
-import {Karma} from "@luxfi/contracts/governance/Karma.sol";
-import {DLUX} from "@luxfi/contracts/governance/DLUX.sol";
+import { Timelock } from "@luxfi/contracts/governance/Timelock.sol";
+import { vLUX } from "@luxfi/contracts/governance/vLUX.sol";
+import { GaugeController } from "@luxfi/contracts/governance/GaugeController.sol";
+import { Karma } from "@luxfi/contracts/governance/Karma.sol";
+import { DLUX } from "@luxfi/contracts/governance/DLUX.sol";
 
 // Identity/DID
-import {DIDRegistry} from "@luxfi/contracts/identity/DIDRegistry.sol";
+import { DIDRegistry } from "@luxfi/contracts/identity/DIDRegistry.sol";
 
 // Treasury
-import {FeeGov} from "@luxfi/contracts/treasury/FeeGov.sol";
-import {ValidatorVault} from "@luxfi/contracts/treasury/ValidatorVault.sol";
+import { FeeGov } from "@luxfi/contracts/treasury/FeeGov.sol";
+import { ValidatorVault } from "@luxfi/contracts/treasury/ValidatorVault.sol";
 
 // LSSVM (NFT AMM)
-import {LSSVMPairFactory} from "@luxfi/contracts/lssvm/LSSVMPairFactory.sol";
-import {LinearCurve} from "@luxfi/contracts/lssvm/LinearCurve.sol";
-import {ExponentialCurve} from "@luxfi/contracts/lssvm/ExponentialCurve.sol";
+import { LSSVMPairFactory } from "@luxfi/contracts/lssvm/LSSVMPairFactory.sol";
+import { LinearCurve } from "@luxfi/contracts/lssvm/LinearCurve.sol";
+import { ExponentialCurve } from "@luxfi/contracts/lssvm/ExponentialCurve.sol";
 
 // Markets (Lending)
-import {Markets} from "@luxfi/contracts/markets/Markets.sol";
+import { Markets } from "@luxfi/contracts/markets/Markets.sol";
 
 // Perps
-import {Perp} from "@luxfi/contracts/perps/Perp.sol";
+import { Perp } from "@luxfi/contracts/perps/Perp.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title DeployMultiNetwork
@@ -180,7 +180,7 @@ contract DeployMultiNetwork is Script {
         console.log("WLUX:", address(wlux));
 
         // Wrap some LUX
-        wlux.deposit{value: INITIAL_LUX}();
+        wlux.deposit{ value: INITIAL_LUX }();
         console.log("Wrapped", INITIAL_LUX / 1e18, "LUX");
 
         leth = new BridgedETH();
@@ -320,13 +320,7 @@ contract DeployMultiNetwork is Script {
         IERC20(tokenA).approve(address(router), amountA);
         IERC20(tokenB).approve(address(router), amountB);
 
-        router.addLiquidity(
-            tokenA, tokenB,
-            amountA, amountB,
-            0, 0,
-            deployer,
-            block.timestamp + 1 hours
-        );
+        router.addLiquidity(tokenA, tokenB, amountA, amountB, 0, 0, deployer, block.timestamp + 1 hours);
     }
 
     function _printSummary() internal view {

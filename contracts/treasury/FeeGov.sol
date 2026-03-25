@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {Ownable} from "@luxfi/standard/access/Access.sol";
+import { Ownable } from "@luxfi/standard/access/Access.sol";
 
 /**
  * @title FeeGov
@@ -46,12 +46,7 @@ contract FeeGov is Ownable {
 
     // ============ Constructor ============
 
-    constructor(
-        uint16 _rate,
-        uint16 _floor,
-        uint16 _cap,
-        address _owner
-    ) Ownable(_owner) {
+    constructor(uint16 _rate, uint16 _floor, uint16 _cap, address _owner) Ownable(_owner) {
         floor = _floor;
         cap = _cap;
         rate = _rate;
@@ -66,7 +61,9 @@ contract FeeGov is Ownable {
         if (_rate > cap) revert TooHigh();
 
         rate = _rate;
-        unchecked { version++; }
+        unchecked {
+            version++;
+        }
 
         emit Rate(_rate, version);
     }
@@ -106,9 +103,13 @@ contract FeeGov is Ownable {
         for (uint256 i = 0; i < list.length;) {
             if (chains[list[i]]) {
                 // WarpLib.send(list[i], payload);
-                unchecked { sent++; }
+                unchecked {
+                    sent++;
+                }
             }
-            unchecked { i++; }
+            unchecked {
+                i++;
+            }
         }
 
         emit Broadcast(version, sent);

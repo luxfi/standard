@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {BlendedConfidentialStrategy} from "../../governance/BlendedConfidentialStrategy.sol";
+import { BlendedConfidentialStrategy } from "../../governance/BlendedConfidentialStrategy.sol";
 
 /**
  * @title TestBlendedConfidentialStrategy
@@ -10,4 +10,5 @@ import {BlendedConfidentialStrategy} from "../../governance/BlendedConfidentialS
 contract TestBlendedConfidentialStrategy is BlendedConfidentialStrategy {
     // Inherits all functionality from BlendedConfidentialStrategy
     // Can add test-specific functions here
-}
+
+    }

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {FROST} from "./FROST.sol";
-import {ISafe} from "./interfaces/ISafe.sol";
-import {IERC165, ISafeTransactionGuard} from "./interfaces/ISafeTransactionGuard.sol";
+import { FROST } from "./FROST.sol";
+import { ISafe } from "./interfaces/ISafe.sol";
+import { IERC165, ISafeTransactionGuard } from "./interfaces/ISafeTransactionGuard.sol";
 
 contract SafeFROSTCoSigner is ISafeTransactionGuard {
     /// @notice The x-coordinate of the signer's public key.
@@ -48,9 +48,10 @@ contract SafeFROSTCoSigner is ISafeTransactionGuard {
         bytes32 safeTxHash;
         unchecked {
             uint256 nonce = ISafe(msg.sender).nonce() - 1;
-            safeTxHash = ISafe(msg.sender).getTransactionHash(
-                to, value, data, operation, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver, nonce
-            );
+            safeTxHash = ISafe(msg.sender)
+                .getTransactionHash(
+                    to, value, data, operation, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver, nonce
+                );
         }
 
         bytes calldata signature = signatures[signatures.length - 96:];
@@ -68,5 +69,5 @@ contract SafeFROSTCoSigner is ISafeTransactionGuard {
     }
 
     /// @inheritdoc ISafeTransactionGuard
-    function checkAfterExecution(bytes32, bool) external pure {}
+    function checkAfterExecution(bytes32, bool) external pure { }
 }

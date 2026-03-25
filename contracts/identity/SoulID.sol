@@ -2,8 +2,8 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 /**
  * @title SoulID - Soulbound Identity Token (Native Identity Layer)
@@ -47,23 +47,23 @@ contract SoulID is ERC721, AccessControl {
 
     /// @notice On-chain reputation fields
     struct ReputationFields {
-        uint256 karma;                    // Karma balance snapshot
-        uint256 humanityScore;            // 0-100: Proof of humanity
-        uint256 governanceParticipation;  // 0-100: Governance activity
-        uint256 communityContribution;    // 0-100: Community contributions
-        uint256 protocolUsage;            // 0-100: Protocol interaction
-        uint256 trustLevel;               // 0-100: Composite trust rating
-        uint256 lastUpdated;              // Last update timestamp
+        uint256 karma; // Karma balance snapshot
+        uint256 humanityScore; // 0-100: Proof of humanity
+        uint256 governanceParticipation; // 0-100: Governance activity
+        uint256 communityContribution; // 0-100: Community contributions
+        uint256 protocolUsage; // 0-100: Protocol interaction
+        uint256 trustLevel; // 0-100: Composite trust rating
+        uint256 lastUpdated; // Last update timestamp
     }
 
     /// @notice Badge/attestation structure
     struct Badge {
-        bytes32 badgeType;        // Type identifier
-        address issuer;           // Who issued the badge
-        uint256 issuedAt;         // Issue timestamp
-        uint256 expiresAt;        // Expiration (0 = never)
-        bytes32 metadata;         // Additional metadata hash
-        bool revoked;             // Whether badge is revoked
+        bytes32 badgeType; // Type identifier
+        address issuer; // Who issued the badge
+        uint256 issuedAt; // Issue timestamp
+        uint256 expiresAt; // Expiration (0 = never)
+        bytes32 metadata; // Additional metadata hash
+        bool revoked; // Whether badge is revoked
     }
 
     // ============ State ============
@@ -307,9 +307,10 @@ contract SoulID is ERC721, AccessControl {
     function updateAllReputation(uint256 tokenId, ReputationFields calldata fields) external {
         if (!hasRole(ATTESTOR_ROLE, msg.sender)) revert NotAttestor();
         if (ownerOfSoul[tokenId] == address(0)) revert SoulDoesNotExist();
-        if (fields.humanityScore > 100 || fields.governanceParticipation > 100 ||
-            fields.communityContribution > 100 || fields.protocolUsage > 100 ||
-            fields.trustLevel > 100) revert InvalidScore();
+        if (
+            fields.humanityScore > 100 || fields.governanceParticipation > 100 || fields.communityContribution > 100
+                || fields.protocolUsage > 100 || fields.trustLevel > 100
+        ) revert InvalidScore();
 
         reputation[tokenId] = ReputationFields({
             karma: fields.karma,
@@ -361,12 +362,10 @@ contract SoulID is ERC721, AccessControl {
      * @param metadata Additional metadata hash
      * @return badgeIndex Index of the issued badge
      */
-    function issueBadge(
-        uint256 tokenId,
-        bytes32 badgeType,
-        uint256 expiresAt,
-        bytes32 metadata
-    ) external returns (uint256 badgeIndex) {
+    function issueBadge(uint256 tokenId, bytes32 badgeType, uint256 expiresAt, bytes32 metadata)
+        external
+        returns (uint256 badgeIndex)
+    {
         if (!hasRole(BADGE_ISSUER_ROLE, msg.sender)) revert NotBadgeIssuer();
         if (ownerOfSoul[tokenId] == address(0)) revert SoulDoesNotExist();
 
@@ -553,12 +552,7 @@ contract SoulID is ERC721, AccessControl {
     /**
      * @notice Required override for AccessControl + ERC721
      */
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721, AccessControl)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }

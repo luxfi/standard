@@ -4,8 +4,8 @@ pragma solidity ^0.8.31;
 import "forge-std/Test.sol";
 import "forge-std/StdInvariant.sol";
 
-import {Perp, IPriceFeed} from "../../../contracts/perps/Perp.sol";
-import {MockERC20} from "../TestMocks.sol";
+import { Perp, IPriceFeed } from "../../../contracts/perps/Perp.sol";
+import { MockERC20 } from "../TestMocks.sol";
 
 /// @title MockPerpPriceFeed
 /// @notice Deterministic price feed for Perp invariant testing
@@ -39,12 +39,7 @@ contract PerpsHandler is Test {
     uint256 public ghost_totalLongSize;
     uint256 public ghost_totalShortSize;
 
-    constructor(
-        Perp _perp,
-        MockERC20 _indexToken,
-        MockERC20 _collateralToken,
-        MockPerpPriceFeed _priceFeed
-    ) {
+    constructor(Perp _perp, MockERC20 _indexToken, MockERC20 _collateralToken, MockPerpPriceFeed _priceFeed) {
         perp = _perp;
         indexToken = _indexToken;
         collateralToken = _collateralToken;
@@ -75,7 +70,7 @@ contract PerpsHandler is Test {
 
         // Check if position already exists
         bytes32 key = longKey;
-        (uint256 existingSize, , , , , , ) = perp.positions(actor, key);
+        (uint256 existingSize,,,,,,) = perp.positions(actor, key);
         if (existingSize > 0) return; // Skip if already has position
 
         collateralToken.mint(actor, collateralAmount);
@@ -83,7 +78,7 @@ contract PerpsHandler is Test {
         collateralToken.approve(address(perp), collateralAmount);
         try perp.open(address(indexToken), address(collateralToken), collateralAmount, sizeDelta, true) {
             ghost_totalLongSize += sizeDelta;
-        } catch {}
+        } catch { }
         vm.stopPrank();
     }
 
@@ -98,7 +93,7 @@ contract PerpsHandler is Test {
         uint256 sizeDelta = collateralUsd * leverage;
 
         bytes32 key = shortKey;
-        (uint256 existingSize, , , , , , ) = perp.positions(actor, key);
+        (uint256 existingSize,,,,,,) = perp.positions(actor, key);
         if (existingSize > 0) return;
 
         collateralToken.mint(actor, collateralAmount);
@@ -106,7 +101,7 @@ contract PerpsHandler is Test {
         collateralToken.approve(address(perp), collateralAmount);
         try perp.open(address(indexToken), address(collateralToken), collateralAmount, sizeDelta, false) {
             ghost_totalShortSize += sizeDelta;
-        } catch {}
+        } catch { }
         vm.stopPrank();
     }
 
@@ -114,7 +109,7 @@ contract PerpsHandler is Test {
         address actor = _getActor(actorSeed);
         bytes32 key = longKey;
 
-        (uint256 posSize, , , , , , ) = perp.positions(actor, key);
+        (uint256 posSize,,,,,,) = perp.positions(actor, key);
         if (posSize == 0) return;
 
         sizeFraction = bound(sizeFraction, 1, 100);
@@ -127,7 +122,7 @@ contract PerpsHandler is Test {
         vm.startPrank(actor);
         try perp.close(address(indexToken), address(collateralToken), sizeDelta, true) {
             ghost_totalLongSize -= sizeDelta > posSize ? posSize : sizeDelta;
-        } catch {}
+        } catch { }
         vm.stopPrank();
     }
 
@@ -135,7 +130,7 @@ contract PerpsHandler is Test {
         address actor = _getActor(actorSeed);
         bytes32 key = shortKey;
 
-        (uint256 posSize, , , , , , ) = perp.positions(actor, key);
+        (uint256 posSize,,,,,,) = perp.positions(actor, key);
         if (posSize == 0) return;
 
         sizeFraction = bound(sizeFraction, 1, 100);
@@ -147,7 +142,7 @@ contract PerpsHandler is Test {
         vm.startPrank(actor);
         try perp.close(address(indexToken), address(collateralToken), sizeDelta, false) {
             ghost_totalShortSize -= sizeDelta > posSize ? posSize : sizeDelta;
-        } catch {}
+        } catch { }
         vm.stopPrank();
     }
 
@@ -155,7 +150,7 @@ contract PerpsHandler is Test {
         address actor = _getActor(actorSeed);
         bytes32 key = isLong ? longKey : shortKey;
 
-        (uint256 posSize, , , , , , ) = perp.positions(actor, key);
+        (uint256 posSize,,,,,,) = perp.positions(actor, key);
         if (posSize == 0) return;
 
         amount = bound(amount, 1e15, 1e18);
@@ -163,7 +158,7 @@ contract PerpsHandler is Test {
         collateralToken.mint(actor, amount);
         vm.startPrank(actor);
         collateralToken.approve(address(perp), amount);
-        try perp.addCollateral(address(indexToken), address(collateralToken), amount, isLong) {} catch {}
+        try perp.addCollateral(address(indexToken), address(collateralToken), amount, isLong) { } catch { }
         vm.stopPrank();
     }
 
@@ -226,9 +221,9 @@ contract InvariantPerpsTest is StdInvariant, Test {
 
         for (uint256 i = 0; i < actors.length; i++) {
             // Check long positions
-            (, uint256 longColl, , , , , ) = perp.positions(actors[i], longKey);
+            (, uint256 longColl,,,,,) = perp.positions(actors[i], longKey);
             // Check short positions
-            (, uint256 shortColl, , , , , ) = perp.positions(actors[i], shortKey);
+            (, uint256 shortColl,,,,,) = perp.positions(actors[i], shortKey);
 
             // Collateral is in USD (30 decimals), contract balance is in tokens (18 decimals)
             // Convert USD collateral to tokens: collateral / price * 10^decimals
@@ -250,17 +245,17 @@ contract InvariantPerpsTest is StdInvariant, Test {
 
         for (uint256 i = 0; i < actors.length; i++) {
             // Check long positions
-            (uint256 longSize, uint256 longColl, , , , , ) = perp.positions(actors[i], longKey);
+            (uint256 longSize, uint256 longColl,,,,,) = perp.positions(actors[i], longKey);
             if (longSize > 0 && longColl > 0) {
-                (, , , uint256 maxLev, , ) = perp.markets(longKey);
+                (,,, uint256 maxLev,,) = perp.markets(longKey);
                 uint256 leverage = longSize * 1e30 / longColl;
                 assertLe(leverage, maxLev, "LEVERAGE: long position exceeds maxLeverage");
             }
 
             // Check short positions
-            (uint256 shortSize, uint256 shortColl, , , , , ) = perp.positions(actors[i], shortKey);
+            (uint256 shortSize, uint256 shortColl,,,,,) = perp.positions(actors[i], shortKey);
             if (shortSize > 0 && shortColl > 0) {
-                (, , , uint256 maxLev, , ) = perp.markets(shortKey);
+                (,,, uint256 maxLev,,) = perp.markets(shortKey);
                 uint256 leverage = shortSize * 1e30 / shortColl;
                 assertLe(leverage, maxLev, "LEVERAGE: short position exceeds maxLeverage");
             }
@@ -275,8 +270,8 @@ contract InvariantPerpsTest is StdInvariant, Test {
         uint256 sumShort = 0;
 
         for (uint256 i = 0; i < actors.length; i++) {
-            (uint256 longSize, , , , , , ) = perp.positions(actors[i], longKey);
-            (uint256 shortSize, , , , , , ) = perp.positions(actors[i], shortKey);
+            (uint256 longSize,,,,,,) = perp.positions(actors[i], longKey);
+            (uint256 shortSize,,,,,,) = perp.positions(actors[i], shortKey);
             sumLong += longSize;
             sumShort += shortSize;
         }

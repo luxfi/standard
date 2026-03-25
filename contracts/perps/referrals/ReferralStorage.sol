@@ -2,14 +2,11 @@
 
 pragma solidity ^0.8.31;
 
+import { Governable } from "../access/Governable.sol";
 
-import {Governable} from "../access/Governable.sol";
-
-import {IReferralStorage} from "./interfaces/IReferralStorage.sol";
+import { IReferralStorage } from "./interfaces/IReferralStorage.sol";
 
 contract ReferralStorage is Governable, IReferralStorage {
-    
-
     struct Tier {
         uint256 totalRebate; // e.g. 2400 for 24%
         uint256 discountShare; // 5000 for 50%/50%, 7000 for 30% rebates/70% discount
@@ -17,14 +14,14 @@ contract ReferralStorage is Governable, IReferralStorage {
 
     uint256 public constant BASIS_POINTS = 10000;
 
-    mapping (address => uint256) public override referrerDiscountShares; // to override default value in tier
-    mapping (address => uint256) public override referrerTiers; // link between user <> tier
-    mapping (uint256 => Tier) public tiers;
+    mapping(address => uint256) public override referrerDiscountShares; // to override default value in tier
+    mapping(address => uint256) public override referrerTiers; // link between user <> tier
+    mapping(uint256 => Tier) public tiers;
 
-    mapping (address => bool) public isHandler;
+    mapping(address => bool) public isHandler;
 
-    mapping (bytes32 => address) public override codeOwners;
-    mapping (address => bytes32) public override traderReferralCodes;
+    mapping(bytes32 => address) public override codeOwners;
+    mapping(address => bytes32) public override traderReferralCodes;
 
     event SetHandler(address handler, bool isActive);
     event SetTraderReferralCode(address account, bytes32 code);
@@ -101,7 +98,7 @@ contract ReferralStorage is Governable, IReferralStorage {
         emit GovSetCodeOwner(_code, _newAccount);
     }
 
-    function getTraderReferralInfo(address _account) external override view returns (bytes32, address) {
+    function getTraderReferralInfo(address _account) external view override returns (bytes32, address) {
         bytes32 code = traderReferralCodes[_account];
         address referrer;
         if (code != bytes32(0)) {

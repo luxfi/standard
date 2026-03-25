@@ -49,12 +49,10 @@ interface IRingtailThreshold {
      *      - 5 parties: 200,000 gas
      *      - 10 parties: 250,000 gas
      */
-    function verifyThreshold(
-        uint32 threshold,
-        uint32 totalParties,
-        bytes32 messageHash,
-        bytes calldata signature
-    ) external view returns (bool valid);
+    function verifyThreshold(uint32 threshold, uint32 totalParties, bytes32 messageHash, bytes calldata signature)
+        external
+        view
+        returns (bool valid);
 
     /**
      * @notice Estimate gas for threshold verification
@@ -93,12 +91,10 @@ library RingtailThresholdLib {
      * @param messageHash Hash of the signed message
      * @param signature Threshold signature bytes
      */
-    function verifyOrRevert(
-        uint32 threshold,
-        uint32 totalParties,
-        bytes32 messageHash,
-        bytes calldata signature
-    ) internal view {
+    function verifyOrRevert(uint32 threshold, uint32 totalParties, bytes32 messageHash, bytes calldata signature)
+        internal
+        view
+    {
         if (threshold == 0 || threshold > totalParties) {
             revert InvalidThreshold();
         }
@@ -107,12 +103,8 @@ library RingtailThresholdLib {
             revert InvalidSignatureSize();
         }
 
-        bool valid = IRingtailThreshold(RINGTAIL_THRESHOLD).verifyThreshold(
-            threshold,
-            totalParties,
-            messageHash,
-            signature
-        );
+        bool valid =
+            IRingtailThreshold(RINGTAIL_THRESHOLD).verifyThreshold(threshold, totalParties, messageHash, signature);
 
         if (!valid) {
             revert SignatureVerificationFailed();
@@ -155,10 +147,7 @@ library RingtailThresholdLib {
 abstract contract RingtailThresholdVerifier {
     /// @notice Emitted when a threshold signature is verified
     event RingtailSignatureVerified(
-        uint32 indexed threshold,
-        uint32 indexed totalParties,
-        bytes32 messageHash,
-        bool valid
+        uint32 indexed threshold, uint32 indexed totalParties, bytes32 messageHash, bool valid
     );
 
     /**
@@ -175,12 +164,8 @@ abstract contract RingtailThresholdVerifier {
         bytes32 messageHash,
         bytes calldata signature
     ) internal view returns (bool) {
-        return IRingtailThreshold(RingtailThresholdLib.RINGTAIL_THRESHOLD).verifyThreshold(
-            threshold,
-            totalParties,
-            messageHash,
-            signature
-        );
+        return IRingtailThreshold(RingtailThresholdLib.RINGTAIL_THRESHOLD)
+            .verifyThreshold(threshold, totalParties, messageHash, signature);
     }
 
     /**

@@ -1,18 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IVoteTrackerV1
-} from "../../../interfaces/deployables/IVoteTrackerV1.sol";
-import {IVersion} from "../../../interfaces/deployables/IVersion.sol";
-import {
-    IDeploymentBlock
-} from "../../../interfaces/IDeploymentBlock.sol";
-import {
-    DeploymentBlockInitializable
-} from "../../../DeploymentBlockInitializable.sol";
-import {InitializerEventEmitter} from "../../../InitializerEventEmitter.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { IVoteTrackerV1 } from "../../../interfaces/deployables/IVoteTrackerV1.sol";
+import { IVersion } from "../../../interfaces/deployables/IVersion.sol";
+import { IDeploymentBlock } from "../../../interfaces/IDeploymentBlock.sol";
+import { DeploymentBlockInitializable } from "../../../DeploymentBlockInitializable.sol";
+import { InitializerEventEmitter } from "../../../InitializerEventEmitter.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
  * @title VoteTrackerERC721V1
@@ -46,9 +40,13 @@ contract VoteTrackerERC721V1 is
      * @custom:storage-location erc7201:DAO.VoteTrackerERC721.main
      */
     struct VoteTrackerERC721Storage {
-        /** @notice Tracks whether a token ID has been used in a specific context */
+        /**
+         * @notice Tracks whether a token ID has been used in a specific context
+         */
         mapping(uint256 contextId => mapping(uint256 tokenId => bool hasBeenUsed)) usedTokens;
-        /** @notice Mapping of authorized caller contracts that can record votes */
+        /**
+         * @notice Mapping of authorized caller contracts that can record votes
+         */
         mapping(address caller => bool isAuthorized) authorizedCallers;
     }
 
@@ -64,11 +62,7 @@ contract VoteTrackerERC721V1 is
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      * @return $ The storage struct for VoteTrackerERC721V1
      */
-    function _getVoteTrackerERC721Storage()
-        internal
-        pure
-        returns (VoteTrackerERC721Storage storage $)
-    {
+    function _getVoteTrackerERC721Storage() internal pure returns (VoteTrackerERC721Storage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := VOTE_TRACKER_ERC721_STORAGE_LOCATION
@@ -101,14 +95,12 @@ contract VoteTrackerERC721V1 is
     /**
      * @inheritdoc IVoteTrackerV1
      */
-    function initialize(
-        address[] memory authorizedCallers_
-    ) public virtual override initializer {
+    function initialize(address[] memory authorizedCallers_) public virtual override initializer {
         __InitializerEventEmitter_init(abi.encode(authorizedCallers_));
         __DeploymentBlockInitializable_init();
 
         VoteTrackerERC721Storage storage $ = _getVoteTrackerERC721Storage();
-        for (uint256 i = 0; i < authorizedCallers_.length; ) {
+        for (uint256 i = 0; i < authorizedCallers_.length;) {
             $.authorizedCallers[authorizedCallers_[i]] = true;
             unchecked {
                 ++i;
@@ -131,16 +123,23 @@ contract VoteTrackerERC721V1 is
      */
     function hasVoted(
         uint256 contextId_,
-        address /* voter_ */,
+        address,
+        /* voter_ */
         bytes calldata voteData_
-    ) external view virtual override returns (bool) {
+    )
+        external
+        view
+        virtual
+        override
+        returns (bool)
+    {
         VoteTrackerERC721Storage storage $ = _getVoteTrackerERC721Storage();
 
         // Decode token IDs from vote data
         uint256[] memory tokenIds = decodeVoteData(voteData_);
 
         // Check if any token has been used
-        for (uint256 i = 0; i < tokenIds.length; ) {
+        for (uint256 i = 0; i < tokenIds.length;) {
             if ($.usedTokens[contextId_][tokenIds[i]]) {
                 return true;
             }
@@ -162,18 +161,19 @@ contract VoteTrackerERC721V1 is
      * - Reverts if any token has already been used
      * @custom:throws AlreadyVoted if any token ID has been used
      */
-    function recordVote(
-        uint256 contextId_,
-        address voter_,
-        bytes calldata voteData_
-    ) external virtual override onlyAuthorizedCaller {
+    function recordVote(uint256 contextId_, address voter_, bytes calldata voteData_)
+        external
+        virtual
+        override
+        onlyAuthorizedCaller
+    {
         VoteTrackerERC721Storage storage $ = _getVoteTrackerERC721Storage();
 
         // Decode token IDs from vote data
         uint256[] memory tokenIds = decodeVoteData(voteData_);
 
         // Check and mark each token ID
-        for (uint256 i = 0; i < tokenIds.length; ) {
+        for (uint256 i = 0; i < tokenIds.length;) {
             uint256 tokenId = tokenIds[i];
 
             if ($.usedTokens[contextId_][tokenId]) {
@@ -211,14 +211,9 @@ contract VoteTrackerERC721V1 is
      * @inheritdoc ERC165
      * @dev Supports IVoteTrackerV1, IVersion, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(IVoteTrackerV1).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(IVoteTrackerV1).interfaceId || interfaceId_ == type(IVersion).interfaceId
+            || interfaceId_ == type(IDeploymentBlock).interfaceId || super.supportsInterface(interfaceId_);
     }
 
     // ======================================================================
@@ -231,9 +226,7 @@ contract VoteTrackerERC721V1 is
      * @param voteData_ The encoded token ID array
      * @return tokenIds The decoded array of token IDs
      */
-    function decodeVoteData(
-        bytes calldata voteData_
-    ) internal pure virtual returns (uint256[] memory) {
+    function decodeVoteData(bytes calldata voteData_) internal pure virtual returns (uint256[] memory) {
         return abi.decode(voteData_, (uint256[]));
     }
 

@@ -102,9 +102,9 @@ library AIDeployConfig {
         uint256 chainId;
         string name;
         string symbol;
-        bool isLuxNative;      // Part of Lux network
-        bool hasNativeWarp;    // Has Warp precompile
-        uint256 treasuryBps;   // Treasury allocation (default 200 = 2%)
+        bool isLuxNative; // Part of Lux network
+        bool hasNativeWarp; // Has Warp precompile
+        uint256 treasuryBps; // Treasury allocation (default 200 = 2%)
     }
 
     /// @notice Get configuration for a chain
@@ -261,10 +261,11 @@ library InitialLPConfig {
 
     /// @notice Calculate native token needed for balanced LP
     /// @dev For balanced pool: 50M AI ($5M) + native token ($5M) = $10M depth
-    function calculateLPSetup(
-        uint256 aiAmount,
-        uint256 nativeTokenPriceUsd
-    ) internal pure returns (uint256 nativeTokenAmount) {
+    function calculateLPSetup(uint256 aiAmount, uint256 nativeTokenPriceUsd)
+        internal
+        pure
+        returns (uint256 nativeTokenAmount)
+    {
         // AI at $0.10, calculate native token needed
         uint256 aiValueUsd = (aiAmount * TARGET_PRICE_USD) / 1 ether;
         nativeTokenAmount = (aiValueUsd * 1 ether) / nativeTokenPriceUsd;
@@ -272,11 +273,11 @@ library InitialLPConfig {
 
     /// @notice Calculate initial price from pool reserves
     /// @dev Constant product AMM: k = AI * Native
-    function calculatePrice(
-        uint256 aiReserve,
-        uint256 nativeReserve,
-        uint256 nativeTokenPriceUsd
-    ) internal pure returns (uint256 aiPriceUsd) {
+    function calculatePrice(uint256 aiReserve, uint256 nativeReserve, uint256 nativeTokenPriceUsd)
+        internal
+        pure
+        returns (uint256 aiPriceUsd)
+    {
         // Price = (Native reserve / AI reserve) * Native USD price
         aiPriceUsd = (nativeReserve * nativeTokenPriceUsd) / aiReserve;
     }

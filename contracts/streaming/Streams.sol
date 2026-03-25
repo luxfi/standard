@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title Streams
@@ -31,24 +31,24 @@ contract Streams is ERC721, ReentrancyGuard, Pausable, AccessControl {
     // ═══════════════════════════════════════════════════════════════════════
 
     enum StreamType {
-        LINEAR,           // Constant rate
-        LINEAR_CLIFF,     // Cliff then linear
-        EXPONENTIAL,      // Accelerating release
-        UNLOCK_LINEAR     // Discrete unlocks + linear between
+        LINEAR, // Constant rate
+        LINEAR_CLIFF, // Cliff then linear
+        EXPONENTIAL, // Accelerating release
+        UNLOCK_LINEAR // Discrete unlocks + linear between
     }
 
     struct Stream {
-        address sender;           // Who funded the stream
-        address token;            // Token being streamed
-        uint256 depositAmount;    // Total deposited
-        uint256 withdrawnAmount;  // Amount already withdrawn
-        uint256 startTime;        // Stream start timestamp
-        uint256 endTime;          // Stream end timestamp
-        uint256 cliffTime;        // Cliff timestamp (0 if no cliff)
-        uint256 cliffAmount;      // Amount unlocked at cliff
-        StreamType streamType;    // Type of stream curve
-        bool cancelable;          // Can sender cancel?
-        bool canceled;            // Has been canceled?
+        address sender; // Who funded the stream
+        address token; // Token being streamed
+        uint256 depositAmount; // Total deposited
+        uint256 withdrawnAmount; // Amount already withdrawn
+        uint256 startTime; // Stream start timestamp
+        uint256 endTime; // Stream end timestamp
+        uint256 cliffTime; // Cliff timestamp (0 if no cliff)
+        uint256 cliffAmount; // Amount unlocked at cliff
+        StreamType streamType; // Type of stream curve
+        bool cancelable; // Can sender cancel?
+        bool canceled; // Has been canceled?
     }
 
     struct CreateParams {
@@ -106,30 +106,15 @@ contract Streams is ERC721, ReentrancyGuard, Pausable, AccessControl {
         StreamType streamType
     );
 
-    event Withdrawn(
-        uint256 indexed streamId,
-        address indexed recipient,
-        uint256 amount
-    );
+    event Withdrawn(uint256 indexed streamId, address indexed recipient, uint256 amount);
 
     event StreamCanceled(
-        uint256 indexed streamId,
-        address indexed sender,
-        uint256 recipientAmount,
-        uint256 senderAmount
+        uint256 indexed streamId, address indexed sender, uint256 recipientAmount, uint256 senderAmount
     );
 
-    event StreamTransferred(
-        uint256 indexed streamId,
-        address indexed from,
-        address indexed to
-    );
+    event StreamTransferred(uint256 indexed streamId, address indexed from, address indexed to);
 
-    event FeesCollected(
-        address indexed token,
-        address indexed receiver,
-        uint256 amount
-    );
+    event FeesCollected(address indexed token, address indexed receiver, uint256 amount);
 
     // ═══════════════════════════════════════════════════════════════════════
     // ERRORS
@@ -151,10 +136,7 @@ contract Streams is ERC721, ReentrancyGuard, Pausable, AccessControl {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(
-        address _feeReceiver,
-        address _admin
-    ) ERC721("Lux Streams", "STREAM") {
+    constructor(address _feeReceiver, address _admin) ERC721("Lux Streams", "STREAM") {
         feeReceiver = _feeReceiver;
 
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
@@ -170,9 +152,7 @@ contract Streams is ERC721, ReentrancyGuard, Pausable, AccessControl {
      * @param params Stream creation parameters
      * @return streamId ID of created stream
      */
-    function createStream(
-        CreateParams calldata params
-    ) external nonReentrant whenNotPaused returns (uint256 streamId) {
+    function createStream(CreateParams calldata params) external nonReentrant whenNotPaused returns (uint256 streamId) {
         return _createStream(params);
     }
 
@@ -181,9 +161,12 @@ contract Streams is ERC721, ReentrancyGuard, Pausable, AccessControl {
      * @param params Array of creation parameters
      * @return streamIds Array of created stream IDs
      */
-    function createStreamBatch(
-        CreateParams[] calldata params
-    ) external nonReentrant whenNotPaused returns (uint256[] memory streamIds) {
+    function createStreamBatch(CreateParams[] calldata params)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (uint256[] memory streamIds)
+    {
         streamIds = new uint256[](params.length);
         for (uint256 i = 0; i < params.length; i++) {
             streamIds[i] = _createStream(params[i]);
@@ -197,23 +180,25 @@ contract Streams is ERC721, ReentrancyGuard, Pausable, AccessControl {
      * @param amount Total amount to stream
      * @param duration Stream duration in seconds
      */
-    function createLinearStream(
-        address recipient,
-        address token,
-        uint256 amount,
-        uint256 duration
-    ) external nonReentrant whenNotPaused returns (uint256 streamId) {
-        return _createStream(CreateParams({
-            recipient: recipient,
-            token: token,
-            amount: amount,
-            startTime: block.timestamp,
-            endTime: block.timestamp + duration,
-            cliffTime: 0,
-            cliffAmount: 0,
-            streamType: StreamType.LINEAR,
-            cancelable: true
-        }));
+    function createLinearStream(address recipient, address token, uint256 amount, uint256 duration)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (uint256 streamId)
+    {
+        return _createStream(
+            CreateParams({
+                recipient: recipient,
+                token: token,
+                amount: amount,
+                startTime: block.timestamp,
+                endTime: block.timestamp + duration,
+                cliffTime: 0,
+                cliffAmount: 0,
+                streamType: StreamType.LINEAR,
+                cancelable: true
+            })
+        );
     }
 
     /**
@@ -235,17 +220,19 @@ contract Streams is ERC721, ReentrancyGuard, Pausable, AccessControl {
     ) external nonReentrant whenNotPaused returns (uint256 streamId) {
         uint256 cliffAmount = (amount * cliffPercent) / 10000;
 
-        return _createStream(CreateParams({
-            recipient: recipient,
-            token: token,
-            amount: amount,
-            startTime: block.timestamp,
-            endTime: block.timestamp + totalDuration,
-            cliffTime: block.timestamp + cliffDuration,
-            cliffAmount: cliffAmount,
-            streamType: StreamType.LINEAR_CLIFF,
-            cancelable: true
-        }));
+        return _createStream(
+            CreateParams({
+                recipient: recipient,
+                token: token,
+                amount: amount,
+                startTime: block.timestamp,
+                endTime: block.timestamp + totalDuration,
+                cliffTime: block.timestamp + cliffDuration,
+                cliffAmount: cliffAmount,
+                streamType: StreamType.LINEAR_CLIFF,
+                cancelable: true
+            })
+        );
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -280,9 +267,7 @@ contract Streams is ERC721, ReentrancyGuard, Pausable, AccessControl {
      * @param streamIds Array of stream IDs
      * @return amounts Array of amounts withdrawn
      */
-    function withdrawBatch(
-        uint256[] calldata streamIds
-    ) external nonReentrant returns (uint256[] memory amounts) {
+    function withdrawBatch(uint256[] calldata streamIds) external nonReentrant returns (uint256[] memory amounts) {
         amounts = new uint256[](streamIds.length);
 
         for (uint256 i = 0; i < streamIds.length; i++) {
@@ -311,10 +296,7 @@ contract Streams is ERC721, ReentrancyGuard, Pausable, AccessControl {
      * @param streamId Stream ID
      * @param recipient Where to send tokens
      */
-    function withdrawMax(
-        uint256 streamId,
-        address recipient
-    ) external nonReentrant returns (uint256 amount) {
+    function withdrawMax(uint256 streamId, address recipient) external nonReentrant returns (uint256 amount) {
         Stream storage stream = streams[streamId];
         if (stream.depositAmount == 0) revert StreamNotFound();
         if (stream.canceled) revert StreamAlreadyCanceled();
@@ -341,9 +323,7 @@ contract Streams is ERC721, ReentrancyGuard, Pausable, AccessControl {
      * @return recipientAmount Amount sent to recipient
      * @return senderAmount Amount refunded to sender
      */
-    function cancel(
-        uint256 streamId
-    ) external nonReentrant returns (uint256 recipientAmount, uint256 senderAmount) {
+    function cancel(uint256 streamId) external nonReentrant returns (uint256 recipientAmount, uint256 senderAmount) {
         Stream storage stream = streams[streamId];
         if (stream.depositAmount == 0) revert StreamNotFound();
         if (stream.canceled) revert StreamAlreadyCanceled();
@@ -400,9 +380,7 @@ contract Streams is ERC721, ReentrancyGuard, Pausable, AccessControl {
     /// @notice Check if stream is active
     function isActive(uint256 streamId) external view returns (bool) {
         Stream storage stream = streams[streamId];
-        return !stream.canceled &&
-               block.timestamp >= stream.startTime &&
-               block.timestamp < stream.endTime;
+        return !stream.canceled && block.timestamp >= stream.startTime && block.timestamp < stream.endTime;
     }
 
     /// @notice Check if stream has ended
@@ -465,8 +443,9 @@ contract Streams is ERC721, ReentrancyGuard, Pausable, AccessControl {
         if (params.endTime - params.startTime > MAX_DURATION) revert InvalidDuration();
 
         if (params.streamType == StreamType.LINEAR_CLIFF) {
-            if (params.cliffTime <= params.startTime || params.cliffTime >= params.endTime)
+            if (params.cliffTime <= params.startTime || params.cliffTime >= params.endTime) {
                 revert InvalidCliff();
+            }
             if (params.cliffAmount > params.amount) revert InvalidCliff();
         }
 
@@ -560,11 +539,7 @@ contract Streams is ERC721, ReentrancyGuard, Pausable, AccessControl {
     }
 
     // Override ERC721 for transfers
-    function _update(
-        address to,
-        uint256 tokenId,
-        address auth
-    ) internal override returns (address) {
+    function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
         address from = _ownerOf(tokenId);
 
         if (from != address(0) && to != address(0)) {
@@ -575,12 +550,7 @@ contract Streams is ERC721, ReentrancyGuard, Pausable, AccessControl {
     }
 
     // Required overrides
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721, AccessControl)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }

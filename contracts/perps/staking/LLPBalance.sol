@@ -2,25 +2,21 @@
 
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ILLPManager} from "../core/interfaces/ILLPManager.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ILLPManager } from "../core/interfaces/ILLPManager.sol";
 
 contract LLPBalance {
     using SafeERC20 for IERC20;
 
-
     ILLPManager public llpManager;
     address public stakedLlpTracker;
 
-    mapping (address => mapping (address => uint256)) public allowances;
+    mapping(address => mapping(address => uint256)) public allowances;
 
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
-    constructor(
-        ILLPManager _llpManager,
-        address _stakedLlpTracker
-    ) public {
+    constructor(ILLPManager _llpManager, address _stakedLlpTracker) public {
         llpManager = _llpManager;
         stakedLlpTracker = _stakedLlpTracker;
     }

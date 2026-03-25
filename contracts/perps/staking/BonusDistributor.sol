@@ -2,16 +2,15 @@
 
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import {IRewardDistributor} from "./interfaces/IRewardDistributor.sol";
-import {IRewardTracker} from "./interfaces/IRewardTracker.sol";
-import {Governable} from "../access/Governable.sol";
+import { IRewardDistributor } from "./interfaces/IRewardDistributor.sol";
+import { IRewardTracker } from "./interfaces/IRewardTracker.sol";
+import { Governable } from "../access/Governable.sol";
 
 contract BonusDistributor is IRewardDistributor, ReentrancyGuard, Governable {
-    
     using SafeERC20 for IERC20;
 
     uint256 public constant BASIS_POINTS_DIVISOR = 10000;
@@ -78,12 +77,12 @@ contract BonusDistributor is IRewardDistributor, ReentrancyGuard, Governable {
     function distribute() external override returns (uint256) {
         require(msg.sender == rewardTracker, "BonusDistributor: invalid msg.sender");
         uint256 amount = pendingRewards();
-        if (amount == 0) { return 0; }
+        if (amount == 0) return 0;
 
         lastDistributionTime = block.timestamp;
 
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
-        if (amount > balance) { amount = balance; }
+        if (amount > balance) amount = balance;
 
         IERC20(rewardToken).safeTransfer(msg.sender, amount);
 

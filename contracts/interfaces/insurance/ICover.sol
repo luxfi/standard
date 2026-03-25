@@ -22,10 +22,10 @@ interface ICover {
 
     /// @notice Cover type
     enum CoverType {
-        PROTOCOL,     // Smart contract risk
-        CUSTODY,      // Custodial risk (bridges, CEX)
-        DEFI,         // DeFi composability risk
-        STABLECOIN    // Depeg protection
+        PROTOCOL, // Smart contract risk
+        CUSTODY, // Custodial risk (bridges, CEX)
+        DEFI, // DeFi composability risk
+        STABLECOIN // Depeg protection
     }
 
     /**
@@ -176,11 +176,7 @@ interface ICover {
      * @param basePremiumBps Base annual premium
      */
     event PoolCreated(
-        bytes32 indexed poolId,
-        string name,
-        address indexed protocol,
-        CoverType coverType,
-        uint256 basePremiumBps
+        bytes32 indexed poolId, string name, address indexed protocol, CoverType coverType, uint256 basePremiumBps
     );
 
     /**
@@ -207,11 +203,7 @@ interface ICover {
      * @param poolId Pool identifier
      * @param amount Amount staked
      */
-    event Staked(
-        address indexed underwriter,
-        bytes32 indexed poolId,
-        uint256 amount
-    );
+    event Staked(address indexed underwriter, bytes32 indexed poolId, uint256 amount);
 
     /**
      * @notice Emitted when underwriter unstakes
@@ -219,11 +211,7 @@ interface ICover {
      * @param poolId Pool identifier
      * @param amount Amount unstaked
      */
-    event Unstaked(
-        address indexed underwriter,
-        bytes32 indexed poolId,
-        uint256 amount
-    );
+    event Unstaked(address indexed underwriter, bytes32 indexed poolId, uint256 amount);
 
     /**
      * @notice Emitted when a claim is submitted
@@ -232,12 +220,7 @@ interface ICover {
      * @param claimant Who filed the claim
      * @param amount Claim amount
      */
-    event ClaimSubmitted(
-        uint256 indexed claimId,
-        uint256 indexed policyId,
-        address indexed claimant,
-        uint256 amount
-    );
+    event ClaimSubmitted(uint256 indexed claimId, uint256 indexed policyId, address indexed claimant, uint256 amount);
 
     /**
      * @notice Emitted when a claim vote is cast
@@ -246,12 +229,7 @@ interface ICover {
      * @param approve Whether vote is to approve
      * @param weight Vote weight
      */
-    event ClaimVoted(
-        uint256 indexed claimId,
-        address indexed voter,
-        bool approve,
-        uint256 weight
-    );
+    event ClaimVoted(uint256 indexed claimId, address indexed voter, bool approve, uint256 weight);
 
     /**
      * @notice Emitted when a claim is resolved
@@ -259,11 +237,7 @@ interface ICover {
      * @param status Final status
      * @param payout Payout amount (0 if denied)
      */
-    event ClaimResolved(
-        uint256 indexed claimId,
-        ClaimStatus status,
-        uint256 payout
-    );
+    event ClaimResolved(uint256 indexed claimId, ClaimStatus status, uint256 payout);
 
     /**
      * @notice Emitted when staking rewards are claimed
@@ -271,11 +245,7 @@ interface ICover {
      * @param poolId Pool identifier
      * @param amount Reward amount
      */
-    event RewardsClaimed(
-        address indexed underwriter,
-        bytes32 indexed poolId,
-        uint256 amount
-    );
+    event RewardsClaimed(address indexed underwriter, bytes32 indexed poolId, uint256 amount);
 
     // ═══════════════════════════════════════════════════════════════════════
     // POOL MANAGEMENT
@@ -328,11 +298,7 @@ interface ICover {
      * @param duration Duration in seconds
      * @return policyId New policy NFT ID
      */
-    function buyCover(
-        bytes32 poolId,
-        uint256 coverAmount,
-        uint256 duration
-    ) external returns (uint256 policyId);
+    function buyCover(bytes32 poolId, uint256 coverAmount, uint256 duration) external returns (uint256 policyId);
 
     /**
      * @notice Renew an existing cover policy
@@ -353,11 +319,7 @@ interface ICover {
      * @param evidence IPFS hash or evidence description
      * @return claimId New claim identifier
      */
-    function fileClaim(
-        uint256 policyId,
-        uint256 amount,
-        string calldata evidence
-    ) external returns (uint256 claimId);
+    function fileClaim(uint256 policyId, uint256 amount, string calldata evidence) external returns (uint256 claimId);
 
     /**
      * @notice Vote on a pending claim
@@ -413,11 +375,7 @@ interface ICover {
      * @param duration Duration in seconds
      * @return Premium amount
      */
-    function getCoverPrice(
-        bytes32 poolId,
-        uint256 coverAmount,
-        uint256 duration
-    ) external view returns (uint256);
+    function getCoverPrice(bytes32 poolId, uint256 coverAmount, uint256 duration) external view returns (uint256);
 
     /**
      * @notice Get pool utilization percentage

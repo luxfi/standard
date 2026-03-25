@@ -1,44 +1,23 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IPaymasterV1
-} from "../../interfaces/deployables/IPaymasterV1.sol";
-import {
-    IFunctionValidator
-} from "../../interfaces/services/IFunctionValidator.sol";
-import {
-    ILightAccountValidator
-} from "../../interfaces/deployables/ILightAccountValidator.sol";
-import {IVersion} from "../../interfaces/deployables/IVersion.sol";
-import {IDeploymentBlock} from "../../interfaces/IDeploymentBlock.sol";
-import {
-    IBasePaymaster
-} from "../../interfaces/deployables/IBasePaymaster.sol";
-import {BasePaymaster} from "./BasePaymaster.sol";
-import {LightAccountValidator} from "./LightAccountValidator.sol";
-import {
-    DeploymentBlockInitializable
-} from "../../DeploymentBlockInitializable.sol";
-import {InitializerEventEmitter} from "../../InitializerEventEmitter.sol";
-import {
-    IEntryPoint
-} from "@account-abstraction/interfaces/IEntryPoint.sol";
-import {
-    PackedUserOperation,
-    IPaymaster
-} from "@account-abstraction/interfaces/IPaymaster.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {
-    UUPSUpgradeable
-} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {
-    Ownable2StepUpgradeable
-} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {
-    OwnableUpgradeable
-} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { IPaymasterV1 } from "../../interfaces/deployables/IPaymasterV1.sol";
+import { IFunctionValidator } from "../../interfaces/services/IFunctionValidator.sol";
+import { ILightAccountValidator } from "../../interfaces/deployables/ILightAccountValidator.sol";
+import { IVersion } from "../../interfaces/deployables/IVersion.sol";
+import { IDeploymentBlock } from "../../interfaces/IDeploymentBlock.sol";
+import { IBasePaymaster } from "../../interfaces/deployables/IBasePaymaster.sol";
+import { BasePaymaster } from "./BasePaymaster.sol";
+import { LightAccountValidator } from "./LightAccountValidator.sol";
+import { DeploymentBlockInitializable } from "../../DeploymentBlockInitializable.sol";
+import { InitializerEventEmitter } from "../../InitializerEventEmitter.sol";
+import { IEntryPoint } from "@account-abstraction/interfaces/IEntryPoint.sol";
+import { PackedUserOperation, IPaymaster } from "@account-abstraction/interfaces/IPaymaster.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**
  * @title PaymasterV1
@@ -89,7 +68,9 @@ contract PaymasterV1 is
      * @custom:storage-location erc7201:DAO.DAOPaymaster.main
      */
     struct DAOPaymasterStorage {
-        /** @notice Maps target contract and function selector to validator address */
+        /**
+         * @notice Maps target contract and function selector to validator address
+         */
         mapping(address target => mapping(bytes4 selector => address validator)) functionValidators;
     }
 
@@ -105,11 +86,7 @@ contract PaymasterV1 is
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      * @return $ The storage struct for DAOPaymasterV1
      */
-    function _getDAOPaymasterStorage()
-        internal
-        pure
-        returns (DAOPaymasterStorage storage $)
-    {
+    function _getDAOPaymasterStorage() internal pure returns (DAOPaymasterStorage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := DAO_PAYMASTER_STORAGE_LOCATION
@@ -129,14 +106,13 @@ contract PaymasterV1 is
      * @dev Initializes all inherited contracts and sets up the paymaster
      * for ERC-4337 operations with Light Account support.
      */
-    function initialize(
-        address owner_,
-        address entryPoint_,
-        address lightAccountFactory_
-    ) public virtual override initializer {
-        __InitializerEventEmitter_init(
-            abi.encode(owner_, entryPoint_, lightAccountFactory_)
-        );
+    function initialize(address owner_, address entryPoint_, address lightAccountFactory_)
+        public
+        virtual
+        override
+        initializer
+    {
+        __InitializerEventEmitter_init(abi.encode(owner_, entryPoint_, lightAccountFactory_));
         __BasePaymaster_init(owner_, IEntryPoint(entryPoint_));
         __LightAccountValidator_init(lightAccountFactory_);
         __DeploymentBlockInitializable_init();
@@ -152,9 +128,7 @@ contract PaymasterV1 is
      * @inheritdoc UUPSUpgradeable
      * @dev Restricts upgrades to the owner
      */
-    function _authorizeUpgrade(
-        address newImplementation_
-    ) internal virtual override onlyOwner {
+    function _authorizeUpgrade(address newImplementation_) internal virtual override onlyOwner {
         // solhint-disable-previous-line no-empty-blocks
         // Intentionally empty - authorization logic handled by onlyOwner modifier
     }
@@ -168,10 +142,7 @@ contract PaymasterV1 is
     /**
      * @inheritdoc IPaymasterV1
      */
-    function getFunctionValidator(
-        address target_,
-        bytes4 selector_
-    ) public view virtual override returns (address) {
+    function getFunctionValidator(address target_, bytes4 selector_) public view virtual override returns (address) {
         DAOPaymasterStorage storage $ = _getDAOPaymasterStorage();
         return $.functionValidators[target_][selector_];
     }
@@ -183,20 +154,17 @@ contract PaymasterV1 is
      * @dev Validates that the validator implements IFunctionValidator interface
      * before setting. This ensures only compatible validators can be configured.
      */
-    function setFunctionValidator(
-        address target_,
-        bytes4 selector_,
-        address validator_
-    ) public virtual override onlyOwner {
+    function setFunctionValidator(address target_, bytes4 selector_, address validator_)
+        public
+        virtual
+        override
+        onlyOwner
+    {
         // Check 1: Validator cannot be zero address
         if (validator_ == address(0)) revert InvalidValidator();
 
         // Check 2: Validator must implement IFunctionValidator interface
-        if (
-            !IERC165(validator_).supportsInterface(
-                type(IFunctionValidator).interfaceId
-            )
-        ) {
+        if (!IERC165(validator_).supportsInterface(type(IFunctionValidator).interfaceId)) {
             revert InvalidValidator();
         }
 
@@ -211,10 +179,7 @@ contract PaymasterV1 is
     /**
      * @inheritdoc IPaymasterV1
      */
-    function removeFunctionValidator(
-        address target_,
-        bytes4 selector_
-    ) public virtual override onlyOwner {
+    function removeFunctionValidator(address target_, bytes4 selector_) public virtual override onlyOwner {
         DAOPaymasterStorage storage $ = _getDAOPaymasterStorage();
         $.functionValidators[target_][selector_] = address(0);
 
@@ -233,17 +198,15 @@ contract PaymasterV1 is
      * Extracts the target contract and function selector from the user operation,
      * then delegates validation to the appropriate validator contract.
      */
-    function _validatePaymasterUserOp(
-        PackedUserOperation calldata userOp_,
-        bytes32,
-        uint256
-    ) internal view virtual override returns (bytes memory, uint256) {
+    function _validatePaymasterUserOp(PackedUserOperation calldata userOp_, bytes32, uint256)
+        internal
+        view
+        virtual
+        override
+        returns (bytes memory, uint256)
+    {
         // Step 1: Extract operation details from the user operation
-        (
-            address lightAccountOwner,
-            address target,
-            bytes memory innerCallData
-        ) = _validateUserOp(userOp_);
+        (address lightAccountOwner, address target, bytes memory innerCallData) = _validateUserOp(userOp_);
 
         // Step 2: Extract function selector from calldata
         // forge-lint: disable-next-line(unsafe-typecast)
@@ -258,12 +221,8 @@ contract PaymasterV1 is
         }
 
         // Step 4: Delegate validation to the configured validator
-        bool isValid = IFunctionValidator(validator).validateOperation(
-            userOp_.sender,
-            lightAccountOwner,
-            target,
-            innerCallData
-        );
+        bool isValid =
+            IFunctionValidator(validator).validateOperation(userOp_.sender, lightAccountOwner, target, innerCallData);
 
         // Step 5: Revert if validation fails
         if (!isValid) {
@@ -285,9 +244,7 @@ contract PaymasterV1 is
      * @dev Overrides both Ownable2StepUpgradeable and OwnableUpgradeable to use
      * the two-step ownership transfer process
      */
-    function transferOwnership(
-        address newOwner_
-    )
+    function transferOwnership(address newOwner_)
         public
         virtual
         override(Ownable2StepUpgradeable, OwnableUpgradeable)
@@ -303,9 +260,11 @@ contract PaymasterV1 is
      * @dev Overrides both Ownable2StepUpgradeable and OwnableUpgradeable to use
      * the two-step ownership transfer process
      */
-    function _transferOwnership(
-        address newOwner_
-    ) internal virtual override(Ownable2StepUpgradeable, OwnableUpgradeable) {
+    function _transferOwnership(address newOwner_)
+        internal
+        virtual
+        override(Ownable2StepUpgradeable, OwnableUpgradeable)
+    {
         Ownable2StepUpgradeable._transferOwnership(newOwner_);
     }
 
@@ -332,16 +291,10 @@ contract PaymasterV1 is
      * @inheritdoc ERC165
      * @dev Supports IDAOPaymasterV1, IBasePaymaster, ILightAccountValidator, IPaymaster, IVersion, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(IPaymasterV1).interfaceId ||
-            interfaceId_ == type(IBasePaymaster).interfaceId ||
-            interfaceId_ == type(ILightAccountValidator).interfaceId ||
-            interfaceId_ == type(IPaymaster).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(IPaymasterV1).interfaceId || interfaceId_ == type(IBasePaymaster).interfaceId
+            || interfaceId_ == type(ILightAccountValidator).interfaceId || interfaceId_ == type(IPaymaster).interfaceId
+            || interfaceId_ == type(IVersion).interfaceId || interfaceId_ == type(IDeploymentBlock).interfaceId
+            || super.supportsInterface(interfaceId_);
     }
 }

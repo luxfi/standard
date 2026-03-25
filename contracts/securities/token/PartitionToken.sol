@@ -8,8 +8,8 @@
 // Copyright (c) 2019 Arca Labs Inc — https://arca.digital
 pragma solidity ^0.8.24;
 
-import {SecurityToken} from "./SecurityToken.sol";
-import {ComplianceRegistry} from "../compliance/ComplianceRegistry.sol";
+import { SecurityToken } from "./SecurityToken.sol";
+import { ComplianceRegistry } from "../compliance/ComplianceRegistry.sol";
 
 /**
  * @title PartitionToken
@@ -43,9 +43,7 @@ contract PartitionToken is SecurityToken {
     // Events
     // ──────────────────────────────────────────────────────────────────────────
 
-    event TransferByPartition(
-        bytes32 indexed partition, address indexed from, address indexed to, uint256 value
-    );
+    event TransferByPartition(bytes32 indexed partition, address indexed from, address indexed to, uint256 value);
     event IssueByPartition(bytes32 indexed partition, address indexed to, uint256 value);
     event RedeemByPartition(bytes32 indexed partition, address indexed from, uint256 value);
     event PartitionCreated(bytes32 indexed partition);

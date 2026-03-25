@@ -32,7 +32,7 @@ library Decimal {
     // ============ Constants ============
 
     uint256 constant BASE_POW = 18;
-    uint256 constant BASE = 10**BASE_POW;
+    uint256 constant BASE = 10 ** BASE_POW;
 
     // ============ Structs ============
 
@@ -43,26 +43,18 @@ library Decimal {
     // ============ Functions ============
 
     function one() internal pure returns (D256 memory) {
-        return D256({value: BASE});
+        return D256({ value: BASE });
     }
 
     function onePlus(D256 memory d) internal pure returns (D256 memory) {
-        return D256({value: d.value + BASE});
+        return D256({ value: d.value + BASE });
     }
 
-    function mul(uint256 target, D256 memory d)
-        internal
-        pure
-        returns (uint256)
-    {
+    function mul(uint256 target, D256 memory d) internal pure returns (uint256) {
         return Math.getPartial(target, d.value, BASE);
     }
 
-    function div(uint256 target, D256 memory d)
-        internal
-        pure
-        returns (uint256)
-    {
+    function div(uint256 target, D256 memory d) internal pure returns (uint256) {
         return Math.getPartial(target, BASE, d.value);
     }
 }

@@ -17,52 +17,27 @@
 pragma solidity >=0.8.13;
 
 interface IHatsIdUtilities {
-    function buildHatId(
-        uint256 _admin,
-        uint16 _newHat
-    ) external pure returns (uint256 id);
+    function buildHatId(uint256 _admin, uint16 _newHat) external pure returns (uint256 id);
 
     function getHatLevel(uint256 _hatId) external view returns (uint32 level);
 
-    function getLocalHatLevel(
-        uint256 _hatId
-    ) external pure returns (uint32 level);
+    function getLocalHatLevel(uint256 _hatId) external pure returns (uint32 level);
 
     function isTopHat(uint256 _hatId) external view returns (bool _topHat);
 
-    function isLocalTopHat(
-        uint256 _hatId
-    ) external pure returns (bool _localTopHat);
+    function isLocalTopHat(uint256 _hatId) external pure returns (bool _localTopHat);
 
-    function isValidHatId(
-        uint256 _hatId
-    ) external view returns (bool validHatId);
+    function isValidHatId(uint256 _hatId) external view returns (bool validHatId);
 
-    function getAdminAtLevel(
-        uint256 _hatId,
-        uint32 _level
-    ) external view returns (uint256 admin);
+    function getAdminAtLevel(uint256 _hatId, uint32 _level) external view returns (uint256 admin);
 
-    function getAdminAtLocalLevel(
-        uint256 _hatId,
-        uint32 _level
-    ) external pure returns (uint256 admin);
+    function getAdminAtLocalLevel(uint256 _hatId, uint32 _level) external pure returns (uint256 admin);
 
-    function getTopHatDomain(
-        uint256 _hatId
-    ) external view returns (uint32 domain);
+    function getTopHatDomain(uint256 _hatId) external view returns (uint32 domain);
 
-    function getTippyTopHatDomain(
-        uint32 _topHatDomain
-    ) external view returns (uint32 domain);
+    function getTippyTopHatDomain(uint32 _topHatDomain) external view returns (uint32 domain);
 
-    function noCircularLinkage(
-        uint32 _topHatDomain,
-        uint256 _linkedAdmin
-    ) external view returns (bool notCircular);
+    function noCircularLinkage(uint32 _topHatDomain, uint256 _linkedAdmin) external view returns (bool notCircular);
 
-    function sameTippyTopHatDomain(
-        uint32 _topHatDomain,
-        uint256 _newAdminHat
-    ) external view returns (bool sameDomain);
+    function sameTippyTopHatDomain(uint32 _topHatDomain, uint256 _newAdminHat) external view returns (bool sameDomain);
 }

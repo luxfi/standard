@@ -35,8 +35,5 @@ interface IERC1404 {
      * @param restrictionCode The code returned by `detectTransferRestriction`
      * @return message Human-readable string explaining the restriction
      */
-    function messageForTransferRestriction(uint8 restrictionCode)
-        external
-        view
-        returns (string memory message);
+    function messageForTransferRestriction(uint8 restrictionCode) external view returns (string memory message);
 }

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
-import {FHE, euint256} from "../FHE.sol";
-import {TFHE} from "../threshold/TFHE.sol";
-import {TFHEApp} from "../threshold/TFHEApp.sol";
-import {ICharter} from "../../governance/interfaces/ICharter.sol";
-import {IVotingTypes} from "../../governance/interfaces/IVotingTypes.sol";
-import {IVotingWeight} from "../../governance/interfaces/IVotingWeight.sol";
-import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { FHE, euint256 } from "../FHE.sol";
+import { TFHE } from "../threshold/TFHE.sol";
+import { TFHEApp } from "../threshold/TFHEApp.sol";
+import { ICharter } from "../../governance/interfaces/ICharter.sol";
+import { IVotingTypes } from "../../governance/interfaces/IVotingTypes.sol";
+import { IVotingWeight } from "../../governance/interfaces/IVotingWeight.sol";
+import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
  * @title BlendedConfidentialStrategy
@@ -28,12 +28,7 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
  *   VotingConfig[].isConfidential → true: FHE encrypted, false: public counter
  *   Final result = blend(confidential_result, public_result)
  */
-contract BlendedConfidentialStrategy is
-    ICharter,
-    TFHEApp,
-    Ownable2StepUpgradeable,
-    UUPSUpgradeable
-{
+contract BlendedConfidentialStrategy is ICharter, TFHEApp, Ownable2StepUpgradeable, UUPSUpgradeable {
     // ============================================================
     // ERRORS
     // ============================================================
@@ -44,10 +39,7 @@ contract BlendedConfidentialStrategy is
     // EVENTS
     // ============================================================
 
-    event FreezeVoterAuthorizationChanged(
-        address indexed freezeVoterContract,
-        bool isAuthorized
-    );
+    event FreezeVoterAuthorizationChanged(address indexed freezeVoterContract, bool isAuthorized);
 
     // ============================================================
     // TYPES
@@ -55,10 +47,10 @@ contract BlendedConfidentialStrategy is
 
     /// @notice Extended voting config with privacy flag
     struct BlendedVotingConfig {
-        address votingWeight;       // IVotingWeight implementation
-        uint256 multiplier;         // Weight multiplier (1e18 = 1x)
-        bool isConfidential;        // True = encrypted, False = public
-        string description;         // Human-readable description
+        address votingWeight; // IVotingWeight implementation
+        uint256 multiplier; // Weight multiplier (1e18 = 1x)
+        bool isConfidential; // True = encrypted, False = public
+        string description; // Human-readable description
     }
 
     /// @notice Proposal voting state
@@ -91,8 +83,7 @@ contract BlendedConfidentialStrategy is
     // ============================================================
 
     /// @notice Storage slot for main storage (EIP-7201)
-    bytes32 internal constant STORAGE_LOCATION =
-        0xb4c8b1c40e0c0c5e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0200;
+    bytes32 internal constant STORAGE_LOCATION = 0xb4c8b1c40e0c0c5e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0200;
 
     struct StrategyStorage {
         uint32 votingPeriod;
@@ -137,10 +128,7 @@ contract BlendedConfidentialStrategy is
 
     /// @notice Emitted when confidential votes are decrypted
     event ConfidentialVotesDecrypted(
-        uint32 indexed proposalId,
-        uint256 yesVotes,
-        uint256 noVotes,
-        uint256 abstainVotes
+        uint32 indexed proposalId, uint256 yesVotes, uint256 noVotes, uint256 abstainVotes
     );
 
     // ============================================================
@@ -185,10 +173,11 @@ contract BlendedConfidentialStrategy is
     }
 
     /// @notice See IStrategy for documentation
-    function initialize2(
-        address strategyAdmin_,
-        IVotingTypes.VotingConfig[] calldata votingConfigs_
-    ) external override reinitializer(2) {
+    function initialize2(address strategyAdmin_, IVotingTypes.VotingConfig[] calldata votingConfigs_)
+        external
+        override
+        reinitializer(2)
+    {
         if (strategyAdmin_ == address(0)) revert InvalidStrategyAdmin();
         if (votingConfigs_.length == 0) revert NoVotingConfigs();
 
@@ -198,12 +187,15 @@ contract BlendedConfidentialStrategy is
         // Note: Use addBlendedVotingConfig for extended configs
         for (uint256 i; i < votingConfigs_.length; ++i) {
             // Convert to blended config (default public)
-            $.votingConfigs.push(BlendedVotingConfig({
-                votingWeight: votingConfigs_[i].votingWeight,
-                multiplier: 1e18,
-                isConfidential: false,
-                description: ""
-            }));
+            $.votingConfigs
+                .push(
+                    BlendedVotingConfig({
+                        votingWeight: votingConfigs_[i].votingWeight,
+                        multiplier: 1e18,
+                        isConfidential: false,
+                        description: ""
+                    })
+                );
         }
     }
 
@@ -230,18 +222,18 @@ contract BlendedConfidentialStrategy is
     // UUPS
     // ============================================================
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+    function _authorizeUpgrade(address) internal override onlyOwner { }
 
     // ============================================================
     // VIEW FUNCTIONS
     // ============================================================
 
     /// @notice See IStrategy for documentation
-    function isProposer(
-        address address_,
-        address proposerAdapter_,
-        bytes calldata proposerAdapterData_
-    ) external view returns (bool) {
+    function isProposer(address address_, address proposerAdapter_, bytes calldata proposerAdapterData_)
+        external
+        view
+        returns (bool)
+    {
         StrategyStorage storage $ = _getStorage();
         if (!$.isProposerAdapter[proposerAdapter_]) return false;
         (bool success, bytes memory result) = proposerAdapter_.staticcall(
@@ -259,9 +251,7 @@ contract BlendedConfidentialStrategy is
     }
 
     /// @notice See IStrategy for documentation
-    function getVotingTimestamps(
-        uint32 proposalId_
-    ) external view override returns (uint48 startTime, uint48 endTime) {
+    function getVotingTimestamps(uint32 proposalId_) external view override returns (uint48 startTime, uint48 endTime) {
         StrategyStorage storage $ = _getStorage();
         BlendedProposalVoting storage pv = $.proposalVoting[proposalId_];
         return (pv.votingStartTimestamp, pv.votingEndTimestamp);
@@ -300,11 +290,11 @@ contract BlendedConfidentialStrategy is
      * @return noVotes Public no votes
      * @return abstainVotes Public abstain votes
      */
-    function getPublicVotes(uint32 proposalId_) external view returns (
-        uint256 yesVotes,
-        uint256 noVotes,
-        uint256 abstainVotes
-    ) {
+    function getPublicVotes(uint32 proposalId_)
+        external
+        view
+        returns (uint256 yesVotes, uint256 noVotes, uint256 abstainVotes)
+    {
         BlendedProposalVoting storage pv = _getStorage().proposalVoting[proposalId_];
         return (pv.publicYesVotes, pv.publicNoVotes, pv.publicAbstainVotes);
     }
@@ -316,11 +306,11 @@ contract BlendedConfidentialStrategy is
      * @return noVotes Total no votes
      * @return abstainVotes Total abstain votes
      */
-    function getTotalVotes(uint32 proposalId_) external view returns (
-        uint256 yesVotes,
-        uint256 noVotes,
-        uint256 abstainVotes
-    ) {
+    function getTotalVotes(uint32 proposalId_)
+        external
+        view
+        returns (uint256 yesVotes, uint256 noVotes, uint256 abstainVotes)
+    {
         BlendedProposalVoting storage pv = _getStorage().proposalVoting[proposalId_];
         if (!pv.decryptionComplete) {
             // Only return public votes before decryption
@@ -359,9 +349,7 @@ contract BlendedConfidentialStrategy is
     }
 
     /// @notice See IStrategy for documentation
-    function proposalVotingDetails(
-        uint32 proposalId_
-    ) external view override returns (ProposalVotingDetails memory) {
+    function proposalVotingDetails(uint32 proposalId_) external view override returns (ProposalVotingDetails memory) {
         StrategyStorage storage $ = _getStorage();
         BlendedProposalVoting storage pv = $.proposalVoting[proposalId_];
 
@@ -468,11 +456,7 @@ contract BlendedConfidentialStrategy is
         return _validVote(voter_, proposalId_, voteType_);
     }
 
-    function _validVote(
-        address voter_,
-        uint32 proposalId_,
-        uint8 voteType_
-    ) internal view returns (bool) {
+    function _validVote(address voter_, uint32 proposalId_, uint8 voteType_) internal view returns (bool) {
         StrategyStorage storage $ = _getStorage();
         BlendedProposalVoting storage pv = $.proposalVoting[proposalId_];
 
@@ -510,12 +494,7 @@ contract BlendedConfidentialStrategy is
 
         // Public counters start at 0 by default
 
-        emit ProposalInitialized(
-            proposalId_,
-            pv.votingStartTimestamp,
-            pv.votingEndTimestamp,
-            pv.votingStartBlock
-        );
+        emit ProposalInitialized(proposalId_, pv.votingStartTimestamp, pv.votingEndTimestamp, pv.votingStartBlock);
     }
 
     /// @notice See IStrategy for documentation
@@ -545,11 +524,8 @@ contract BlendedConfidentialStrategy is
             if (configIndex >= $.votingConfigs.length) revert InvalidVotingConfig(configIndex);
 
             BlendedVotingConfig memory config = $.votingConfigs[configIndex];
-            (uint256 weight, ) = IVotingWeight(config.votingWeight).calculateWeight(
-                msg.sender,
-                pv.votingStartBlock,
-                votingConfigsData_[i].voteData
-            );
+            (uint256 weight,) = IVotingWeight(config.votingWeight)
+                .calculateWeight(msg.sender, pv.votingStartBlock, votingConfigsData_[i].voteData);
 
             // Apply multiplier
             weight = (weight * config.multiplier) / 1e18;
@@ -593,13 +569,7 @@ contract BlendedConfidentialStrategy is
             }
         }
 
-        emit BlendedVote(
-            msg.sender,
-            proposalId_,
-            VoteType(voteType_),
-            publicWeight,
-            confidentialWeight > 0
-        );
+        emit BlendedVote(msg.sender, proposalId_, VoteType(voteType_), publicWeight, confidentialWeight > 0);
     }
 
     /**
@@ -619,13 +589,7 @@ contract BlendedConfidentialStrategy is
         cts[1] = TFHE.toUint256(pv.confidentialNoVotes);
         cts[2] = TFHE.toUint256(pv.confidentialAbstainVotes);
 
-        uint256 requestId = TFHE.decrypt(
-            cts,
-            this.callbackVoteDecryption.selector,
-            0,
-            block.timestamp + 1 days,
-            false
-        );
+        uint256 requestId = TFHE.decrypt(cts, this.callbackVoteDecryption.selector, 0, block.timestamp + 1 days, false);
 
         $.decryptionRequests[requestId] = proposalId_;
         emit VotingPeriodEnded(proposalId_);
@@ -638,12 +602,10 @@ contract BlendedConfidentialStrategy is
      * @param noVotes Decrypted NO votes
      * @param abstainVotes Decrypted ABSTAIN votes
      */
-    function callbackVoteDecryption(
-        uint256 requestId,
-        uint256 yesVotes,
-        uint256 noVotes,
-        uint256 abstainVotes
-    ) external onlyGateway {
+    function callbackVoteDecryption(uint256 requestId, uint256 yesVotes, uint256 noVotes, uint256 abstainVotes)
+        external
+        onlyGateway
+    {
         StrategyStorage storage $ = _getStorage();
         uint32 proposalId = $.decryptionRequests[requestId];
 
@@ -661,8 +623,7 @@ contract BlendedConfidentialStrategy is
         // Check quorum and basis
         bool quorumMet = (totalYes + totalAbstain) >= $.quorumThreshold;
         uint256 totalVotes = totalYes + totalNo;
-        bool basisMet = totalVotes > 0 &&
-            (totalYes * BASIS_DENOMINATOR) > (totalVotes * $.basisNumerator);
+        bool basisMet = totalVotes > 0 && (totalYes * BASIS_DENOMINATOR) > (totalVotes * $.basisNumerator);
 
         pv.passed = quorumMet && basisMet;
 

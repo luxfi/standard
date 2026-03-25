@@ -2,15 +2,17 @@
 
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {IVester} from "../staking/interfaces/IVester.sol";
-import {IRewardTracker} from "../staking/interfaces/IRewardTracker.sol";
+import { IVester } from "../staking/interfaces/IVester.sol";
+import { IRewardTracker } from "../staking/interfaces/IRewardTracker.sol";
 
 contract RewardReader {
-    
-
-    function getDepositBalances(address _account, address[] memory _depositTokens, address[] memory _rewardTrackers) public view returns (uint256[] memory) {
+    function getDepositBalances(address _account, address[] memory _depositTokens, address[] memory _rewardTrackers)
+        public
+        view
+        returns (uint256[] memory)
+    {
         uint256[] memory amounts = new uint256[](_rewardTrackers.length);
         for (uint256 i = 0; i < _rewardTrackers.length; i++) {
             IRewardTracker rewardTracker = IRewardTracker(_rewardTrackers[i]);

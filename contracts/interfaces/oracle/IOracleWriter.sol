@@ -8,17 +8,17 @@ interface IOracleWriter {
     /// @notice Price update with source metadata
     struct PriceUpdate {
         address asset;
-        uint256 price;        // 18 decimals, USD
+        uint256 price; // 18 decimals, USD
         uint256 timestamp;
-        uint256 confidence;   // 0-10000 basis points
-        bytes32 source;       // keccak256 of source name
+        uint256 confidence; // 0-10000 basis points
+        bytes32 source; // keccak256 of source name
     }
 
     /// @notice Signed price update from validator
     struct SignedPriceUpdate {
         PriceUpdate update;
-        bytes signature;      // Validator signature
-        address validator;    // Validator address
+        bytes signature; // Validator signature
+        address validator; // Validator address
     }
 
     /// @notice Write a single price (requires WRITER_ROLE)

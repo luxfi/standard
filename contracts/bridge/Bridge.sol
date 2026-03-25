@@ -3,23 +3,23 @@
 pragma solidity ^0.8.31;
 
 /**
-    ██╗     ██╗   ██╗██╗  ██╗    ██████╗ ██████╗ ██╗██████╗  ██████╗ ███████╗   
-    ██║     ██║   ██║╚██╗██╔╝    ██╔══██╗██╔══██╗██║██╔══██╗██╔════╝ ██╔════╝
-    ██║     ██║   ██║ ╚███╔╝     ██████╔╝██████╔╝██║██║  ██║██║  ███╗█████╗  
-    ██║     ██║   ██║ ██╔██╗     ██╔══██╗██╔══██╗██║██║  ██║██║   ██║██╔══╝  
-    ███████╗╚██████╔╝██╔╝ ██╗    ██████╔╝██║  ██║██║██████╔╝╚██████╔╝███████╗
-    ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝╚═════╝  ╚═════╝ ╚══════╝
+ *     ██╗     ██╗   ██╗██╗  ██╗    ██████╗ ██████╗ ██╗██████╗  ██████╗ ███████╗
+ *     ██║     ██║   ██║╚██╗██╔╝    ██╔══██╗██╔══██╗██║██╔══██╗██╔════╝ ██╔════╝
+ *     ██║     ██║   ██║ ╚███╔╝     ██████╔╝██████╔╝██║██║  ██║██║  ███╗█████╗
+ *     ██║     ██║   ██║ ██╔██╗     ██╔══██╗██╔══██╗██║██║  ██║██║   ██║██╔══╝
+ *     ███████╗╚██████╔╝██╔╝ ██╗    ██████╔╝██║  ██║██║██████╔╝╚██████╔╝███████╗
+ *     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝╚═════╝  ╚═════╝ ╚══════╝
  */
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {LRC20B} from "./LRC20B.sol";
-import {BridgeVault} from "./BridgeVault.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { LRC20B } from "./LRC20B.sol";
+import { BridgeVault } from "./BridgeVault.sol";
 
 contract Bridge is Ownable, AccessControl, ReentrancyGuard {
     // Use the library functions from OpenZeppelin
@@ -30,8 +30,10 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
     bool withdrawalEnabled = true;
     address internal payoutAddress = 0x9011E888251AB053B7bD1cdB598Db4f9DEd94714;
     BridgeVault public vault;
-    
-    /** Events */
+
+    /**
+     * Events
+     */
     event BridgeBurned(address caller, uint256 amt, address token);
     event VaultDeposit(address depositor, uint256 amt, address token);
     event VaultWithdraw(address receiver, uint256 amt, address token);
@@ -42,7 +44,9 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
     event SigMappingAdded(bytes _key);
     event NewMPCOracleSet(address MPCOracle);
     event WithdrawalEnabledUpdated(bool oldState, bool newState);
-    event PayoutSettingsUpdated(address oldPayoutAddress, address newPayoutAddress, uint256 oldFeeRate, uint256 newFeeRate);
+    event PayoutSettingsUpdated(
+        address oldPayoutAddress, address newPayoutAddress, uint256 oldFeeRate, uint256 newFeeRate
+    );
     event VaultUpdated(address oldVault, address newVault);
     event NewVaultAdded(address asset);
 
@@ -93,10 +97,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
      * @param payoutAddress_ payout address
      * @param feeRate_ fee rate for bridge fee
      */
-    function setpayoutAddressess(
-        address payoutAddress_,
-        uint256 feeRate_
-    ) public onlyAdmin {
+    function setpayoutAddressess(address payoutAddress_, uint256 feeRate_) public onlyAdmin {
         require(feeRate_ <= 500, "Fee rate exceeds 5% maximum");
         address oldPayoutAddress = payoutAddress;
         uint256 oldFeeRate = feeRate;
@@ -209,13 +210,9 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
      */
     function vaultDeposit(uint256 amount_, address tokenAddr_) public payable nonReentrant {
         if (tokenAddr_ != address(0)) {
-            IERC20(tokenAddr_).safeTransferFrom(
-                msg.sender,
-                address(vault),
-                amount_
-            );
+            IERC20(tokenAddr_).safeTransferFrom(msg.sender, address(vault), amount_);
         }
-        vault.deposit{value: msg.value}(tokenAddr_, amount_);
+        vault.deposit{ value: msg.value }(tokenAddr_, amount_);
         emit VaultDeposit(msg.sender, amount_, tokenAddr_);
     }
 
@@ -225,11 +222,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
      * @param tokenAddr_ token address to withdraw
      * @param receiver_ receiver's address
      */
-    function vaultWithdraw(
-        uint256 amount_,
-        address tokenAddr_,
-        address receiver_
-    ) private {
+    function vaultWithdraw(uint256 amount_, address tokenAddr_, address receiver_) private {
         address _shareAddress;
         if (tokenAddr_ == address(0)) {
             _shareAddress = vault.ethVaultAddress();
@@ -246,9 +239,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
      * @param tokenAddr_ token address to withdraw
      * @return amount token available amount for withdrawal
      */
-    function previewVaultWithdraw(
-        address tokenAddr_
-    ) public view returns (uint256) {
+    function previewVaultWithdraw(address tokenAddr_) public view returns (uint256) {
         return vault.previewWithdraw(tokenAddr_);
     }
 
@@ -260,10 +251,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
     function bridgeBurn(uint256 amount_, address tokenAddr_) public nonReentrant {
         TeleportStruct memory teleport;
         teleport.token = LRC20B(tokenAddr_);
-        require(
-            (teleport.token.balanceOf(msg.sender) >= amount_),
-            "Insufficient token balance"
-        );
+        require((teleport.token.balanceOf(msg.sender) >= amount_), "Insufficient token balance");
         teleport.token.bridgeBurn(msg.sender, amount_);
         emit BridgeBurned(msg.sender, amount_, tokenAddr_);
     }
@@ -292,18 +280,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
         string memory decimalStr_,
         string memory vault_
     ) internal pure returns (string memory) {
-        return
-            string(
-                abi.encode(
-                    amt_,
-                    toTargetAddrStr_,
-                    txid_,
-                    tokenAddrStrHash_,
-                    chainIdStr_,
-                    decimalStr_,
-                    vault_
-                )
-            );
+        return string(abi.encode(amt_, toTargetAddrStr_, txid_, tokenAddrStrHash_, chainIdStr_, decimalStr_, vault_));
     }
 
     /**
@@ -311,9 +288,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
      * @param sig ECDSA signature
      * @return splitted_ v,s,r
      */
-    function splitSignature(
-        bytes memory sig
-    ) internal pure returns (uint8, bytes32, bytes32) {
+    function splitSignature(bytes memory sig) internal pure returns (uint8, bytes32, bytes32) {
         require(sig.length == 65, "invalid Length");
         bytes32 r;
         bytes32 s;
@@ -337,10 +312,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
      * @param sig_ ECDSA signature
      * @return signer signer of ECDSA
      */
-    function recoverSigner(
-        bytes32 message_,
-        bytes memory sig_
-    ) internal pure returns (address) {
+    function recoverSigner(bytes32 message_, bytes memory sig_) internal pure returns (address) {
         uint8 v;
         bytes32 r;
         bytes32 s;
@@ -353,10 +325,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
      * @return prefixed prefixed msg
      */
     function prefixed(bytes32 hash) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)
-            );
+        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
     }
 
     /**
@@ -382,19 +351,13 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
     ) public view returns (address) {
         TeleportStruct memory teleport;
         // Hash calculations
-        teleport.tokenAddressHash = keccak256(
-            abi.encodePacked(toTokenAddress_)
-        );
+        teleport.tokenAddressHash = keccak256(abi.encodePacked(toTokenAddress_));
         teleport.token = LRC20B(toTokenAddress_);
         teleport.receiverAddress = receiverAddress_;
-        teleport.receiverAddressHash = keccak256(
-            abi.encodePacked(receiverAddress_)
-        );
+        teleport.receiverAddressHash = keccak256(abi.encodePacked(receiverAddress_));
         teleport.tokenAmount = Strings.toString(tokenAmount_);
         teleport.decimals = Strings.toString(fromTokenDecimals_);
-        teleport.networkIdHash = keccak256(
-            abi.encodePacked(block.chainid.toString())
-        );
+        teleport.networkIdHash = keccak256(abi.encodePacked(block.chainid.toString()));
         // Concatenate message
         string memory message = append(
             Strings.toHexString(uint256(teleport.networkIdHash), 32),
@@ -406,12 +369,10 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
             vault_
         );
 
-        address signer = recoverSigner(
-            prefixed(keccak256(abi.encodePacked(message))),
-            signedTXInfo_
-        );
+        address signer = recoverSigner(prefixed(keccak256(abi.encodePacked(message))), signedTXInfo_);
         return signer;
     }
+
     /**
      * @dev stealth mint tokens using mpc signature
      * @notice Sets the vault address. Sig can only be claimed once.
@@ -435,19 +396,13 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
     ) external nonReentrant returns (address) {
         TeleportStruct memory teleport;
         // Hash calculations
-        teleport.tokenAddressHash = keccak256(
-            abi.encodePacked(toTokenAddress_)
-        );
+        teleport.tokenAddressHash = keccak256(abi.encodePacked(toTokenAddress_));
         teleport.token = LRC20B(toTokenAddress_);
         teleport.receiverAddress = receiverAddress_;
-        teleport.receiverAddressHash = keccak256(
-            abi.encodePacked(receiverAddress_)
-        );
+        teleport.receiverAddressHash = keccak256(abi.encodePacked(receiverAddress_));
         teleport.tokenAmount = Strings.toString(tokenAmount_);
         teleport.decimals = Strings.toString(fromTokenDecimals_);
-        teleport.networkIdHash = keccak256(
-            abi.encodePacked(block.chainid.toString())
-        );
+        teleport.networkIdHash = keccak256(abi.encodePacked(block.chainid.toString()));
         // Concatenate message
         string memory message = append(
             Strings.toHexString(uint256(teleport.networkIdHash), 32),
@@ -459,31 +414,20 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
             vault_
         );
         // Check if signedTxInfo already exists
-        require(
-            !transactionMap[signedTXInfo_].exists,
-            "Duplicated Transaction Hash"
-        );
-        address signer = recoverSigner(
-            prefixed(keccak256(abi.encodePacked(message))),
-            signedTXInfo_
-        );
+        require(!transactionMap[signedTXInfo_].exists, "Duplicated Transaction Hash");
+        address signer = recoverSigner(prefixed(keccak256(abi.encodePacked(message))), signedTXInfo_);
 
         // Check if signer is MPCOracle and corresponds to the correct LRC20B
         require(MPCOracleAddrMap[signer].exists, "Unauthorized Signature");
 
         // Calculate fee and adjust amount
         uint256 _toTokenDecimals = teleport.token.decimals();
-        uint256 _amount = (tokenAmount_ * 10 ** _toTokenDecimals) /
-            (10 ** fromTokenDecimals_);
+        uint256 _amount = (tokenAmount_ * 10 ** _toTokenDecimals) / (10 ** fromTokenDecimals_);
         teleport.token.bridgeMint(teleport.receiverAddress, _amount);
         // Add new transaction ID mapping
         addMappingStealth(signedTXInfo_);
 
-        emit BridgeMinted(
-            teleport.receiverAddress,
-            toTokenAddress_,
-            _amount
-        );
+        emit BridgeMinted(teleport.receiverAddress, toTokenAddress_, _amount);
         return signer;
     }
 
@@ -512,19 +456,13 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
 
         TeleportStruct memory teleport;
         // Hash calculations
-        teleport.tokenAddressHash = keccak256(
-            abi.encodePacked(toTokenAddress_)
-        );
+        teleport.tokenAddressHash = keccak256(abi.encodePacked(toTokenAddress_));
         teleport.token = LRC20B(toTokenAddress_);
         teleport.receiverAddress = receiverAddress_;
-        teleport.receiverAddressHash = keccak256(
-            abi.encodePacked(receiverAddress_)
-        );
+        teleport.receiverAddressHash = keccak256(abi.encodePacked(receiverAddress_));
         teleport.tokenAmount = Strings.toString(tokenAmount_);
         teleport.decimals = Strings.toString(fromTokenDecimals_);
-        teleport.networkIdHash = keccak256(
-            abi.encodePacked(block.chainid.toString())
-        );
+        teleport.networkIdHash = keccak256(abi.encodePacked(block.chainid.toString()));
         // Concatenate message
         string memory message = append(
             Strings.toHexString(uint256(teleport.networkIdHash), 32),
@@ -536,14 +474,8 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
             vault_
         );
         // Check if signedTxInfo already exists
-        require(
-            !transactionMap[signedTXInfo_].exists,
-            "Duplicated Transaction Hash"
-        );
-        address signer = recoverSigner(
-            prefixed(keccak256(abi.encodePacked(message))),
-            signedTXInfo_
-        );
+        require(!transactionMap[signedTXInfo_].exists, "Duplicated Transaction Hash");
+        address signer = recoverSigner(prefixed(keccak256(abi.encodePacked(message))), signedTXInfo_);
 
         // Check if signer is MPCOracle and corresponds to the correct LRC20B
         require(MPCOracleAddrMap[signer].exists, "Unauthorized Signature");
@@ -553,27 +485,17 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
         if (toTokenAddress_ == address(0)) {
             _amount = (tokenAmount_ * 10 ** 18) / (10 ** fromTokenDecimals_);
         } else {
-            _amount =
-                (tokenAmount_ * 10 ** teleport.token.decimals()) /
-                (10 ** fromTokenDecimals_);
+            _amount = (tokenAmount_ * 10 ** teleport.token.decimals()) / (10 ** fromTokenDecimals_);
         }
         uint256 _bridgeFee = (_amount * feeRate) / 10 ** 4;
         uint256 _adjustedAmount = _amount - _bridgeFee; // Use a local variable
         // withdraw tokens
         vaultWithdraw(_bridgeFee, toTokenAddress_, payoutAddress);
-        vaultWithdraw(
-            _adjustedAmount,
-            toTokenAddress_,
-            teleport.receiverAddress
-        );
+        vaultWithdraw(_adjustedAmount, toTokenAddress_, teleport.receiverAddress);
         // Add new transaction ID mapping
         addMappingStealth(signedTXInfo_);
 
-        emit BridgeWithdrawn(
-            teleport.receiverAddress,
-            toTokenAddress_,
-            _amount
-        );
+        emit BridgeWithdrawn(teleport.receiverAddress, toTokenAddress_, _amount);
         return signer;
     }
 
@@ -583,11 +505,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
      * @param tokenAddr_ token address
      * @param receiver_ receiver address
      */
-    function pullWithdraw(
-        uint256 amount_,
-        address tokenAddr_,
-        address receiver_
-    ) external onlyOwner nonReentrant {
+    function pullWithdraw(uint256 amount_, address tokenAddr_, address receiver_) external onlyOwner nonReentrant {
         address shareAddress;
         if (tokenAddr_ == address(0)) {
             shareAddress = vault.ethVaultAddress();
@@ -599,5 +517,5 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
         emit VaultWithdraw(receiver_, amount_, tokenAddr_);
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

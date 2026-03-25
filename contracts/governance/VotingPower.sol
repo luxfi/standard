@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title VotingPower - VLUX Calculation Contract
@@ -39,13 +39,10 @@ interface IKarma {
 }
 
 interface IDLUX {
-    function stakes(address account) external view returns (
-        uint256 amount,
-        uint256 lockEnd,
-        uint256 lastRebase,
-        uint256 pendingRebase,
-        uint8 tier
-    );
+    function stakes(address account)
+        external
+        view
+        returns (uint256 amount, uint256 lockEnd, uint256 lastRebase, uint256 pendingRebase, uint8 tier);
     function totalStaked() external view returns (uint256);
 }
 
@@ -166,13 +163,17 @@ contract VotingPower is ReentrancyGuard {
     /// @return karmaMultiplier f(K) multiplier (18 decimals)
     /// @return timeMultiplier Time multiplier (18 decimals)
     /// @return vluxPower Final VLUX voting power
-    function getVotingPowerComponents(address account) external view returns (
-        uint256 dluxStaked,
-        uint256 karmaScore,
-        uint256 karmaMultiplier,
-        uint256 timeMultiplier,
-        uint256 vluxPower
-    ) {
+    function getVotingPowerComponents(address account)
+        external
+        view
+        returns (
+            uint256 dluxStaked,
+            uint256 karmaScore,
+            uint256 karmaMultiplier,
+            uint256 timeMultiplier,
+            uint256 vluxPower
+        )
+    {
         (uint256 staked, uint256 lockEnd,,,) = dlux.stakes(account);
 
         dluxStaked = staked;

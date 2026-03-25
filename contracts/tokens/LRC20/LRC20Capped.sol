@@ -2,10 +2,10 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {ERC20Capped} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20Capped } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
+import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title LRC20Capped
@@ -15,13 +15,11 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 contract LRC20Capped is ERC20, ERC20Capped, ERC20Burnable, Ownable {
     uint8 private immutable _decimals;
 
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        uint8 decimals_,
-        uint256 cap_,
-        uint256 initialSupply
-    ) ERC20(name_, symbol_) ERC20Capped(cap_) Ownable(msg.sender) {
+    constructor(string memory name_, string memory symbol_, uint8 decimals_, uint256 cap_, uint256 initialSupply)
+        ERC20(name_, symbol_)
+        ERC20Capped(cap_)
+        Ownable(msg.sender)
+    {
         _decimals = decimals_;
         require(initialSupply <= cap_, "Initial supply exceeds cap");
         if (initialSupply > 0) {
@@ -37,10 +35,7 @@ contract LRC20Capped is ERC20, ERC20Capped, ERC20Burnable, Ownable {
         _mint(to, amount);
     }
 
-    function _update(address from, address to, uint256 value)
-        internal
-        override(ERC20, ERC20Capped)
-    {
+    function _update(address from, address to, uint256 value) internal override(ERC20, ERC20Capped) {
         super._update(from, to, value);
     }
 }

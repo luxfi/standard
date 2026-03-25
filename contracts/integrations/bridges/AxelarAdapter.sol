@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IBridgeAdapter, BridgeParams, BridgeRoute, BridgeStatus} from "../../interfaces/adapters/IBridgeAdapter.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IBridgeAdapter, BridgeParams, BridgeRoute, BridgeStatus } from "../../interfaces/adapters/IBridgeAdapter.sol";
 
 // =============================================================================
 // AXELAR INTERFACES
@@ -20,11 +20,8 @@ interface IAxelarGateway {
         uint256 amount
     ) external;
 
-    function callContract(
-        string calldata destinationChain,
-        string calldata contractAddress,
-        bytes calldata payload
-    ) external;
+    function callContract(string calldata destinationChain, string calldata contractAddress, bytes calldata payload)
+        external;
 
     function callContractWithToken(
         string calldata destinationChain,
@@ -171,7 +168,10 @@ contract AxelarAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
         emit ChainAdded(_chainId, _name);
     }
 
-    function setTokenMapping(address localToken, uint256 destChainId, address destToken) external onlyRole(BRIDGE_ADMIN_ROLE) {
+    function setTokenMapping(address localToken, uint256 destChainId, address destToken)
+        external
+        onlyRole(BRIDGE_ADMIN_ROLE)
+    {
         tokenMapping[localToken][destChainId] = destToken;
         emit TokenMapped(localToken, destChainId, destToken);
     }
@@ -191,11 +191,25 @@ contract AxelarAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     // IBridgeAdapter: metadata
     // -------------------------------------------------------------------------
 
-    function version() external pure override returns (string memory) { return "1.0.0"; }
-    function protocol() external pure override returns (string memory) { return "Axelar GMP"; }
-    function chainId() external view override returns (uint256) { return srcChainId; }
-    function endpoint() external view override returns (address) { return address(gateway); }
-    function supportedChains() external view override returns (uint256[] memory) { return _supportedChains; }
+    function version() external pure override returns (string memory) {
+        return "1.0.0";
+    }
+
+    function protocol() external pure override returns (string memory) {
+        return "Axelar GMP";
+    }
+
+    function chainId() external view override returns (uint256) {
+        return srcChainId;
+    }
+
+    function endpoint() external view override returns (address) {
+        return address(gateway);
+    }
+
+    function supportedChains() external view override returns (uint256[] memory) {
+        return _supportedChains;
+    }
 
     function isRouteSupported(uint256 dstChainId, address token) external view override returns (bool) {
         return bytes(chainIdToName[dstChainId]).length > 0 && tokenMapping[token][dstChainId] != address(0);
@@ -247,14 +261,8 @@ contract AxelarAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
         string memory destAddress = trustedRemotes[params.dstChainId];
 
         // Pay gas for cross-chain execution
-        gasService.payNativeGasForContractCallWithToken{value: msg.value}(
-            address(this),
-            destChain,
-            destAddress,
-            payload,
-            symbol,
-            params.amount,
-            msg.sender
+        gasService.payNativeGasForContractCallWithToken{ value: msg.value }(
+            address(this), destChain, destAddress, payload, symbol, params.amount, msg.sender
         );
 
         // Send via Axelar gateway
@@ -286,7 +294,10 @@ contract AxelarAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     // -------------------------------------------------------------------------
 
     function estimateFees(uint256 dstChainId, address, uint256)
-        external view override returns (uint256 bridgeFee, uint256 protocolFee)
+        external
+        view
+        override
+        returns (uint256 bridgeFee, uint256 protocolFee)
     {
         if (bytes(chainIdToName[dstChainId]).length == 0) revert UnsupportedChain(dstChainId);
         bridgeFee = 0.005 ether; // Flat gas estimate for Axelar relay
@@ -327,7 +338,9 @@ contract AxelarAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
         string calldata symbol,
         uint256 amount
     ) external {
-        if (!gateway.validateContractCallAndMint(commandId, sourceChain, sourceAddress, keccak256(payload), symbol, amount)) {
+        if (!gateway.validateContractCallAndMint(
+                commandId, sourceChain, sourceAddress, keccak256(payload), symbol, amount
+            )) {
             revert InvalidCommand();
         }
 
@@ -342,5 +355,5 @@ contract AxelarAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     }
 
     /// @notice Allow contract to receive native tokens for gas payments
-    receive() external payable {}
+    receive() external payable { }
 }

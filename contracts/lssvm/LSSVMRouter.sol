@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {LSSVMPair} from "./LSSVMPair.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { LSSVMPair } from "./LSSVMPair.sol";
 
 /// @title LSSVMRouter - NFT AMM Router
 /// @notice Routes swaps through multiple LSSVM pairs
@@ -40,16 +40,8 @@ contract LSSVMRouter is ReentrancyGuard {
     // EVENTS
     // ═══════════════════════════════════════════════════════════════════════
 
-    event SwapNFTsForToken(
-        address indexed sender,
-        uint256 totalOutput,
-        uint256 numPairs
-    );
-    event SwapTokenForNFTs(
-        address indexed sender,
-        uint256 totalInput,
-        uint256 numPairs
-    );
+    event SwapNFTsForToken(address indexed sender, uint256 totalOutput, uint256 numPairs);
+    event SwapTokenForNFTs(address indexed sender, uint256 totalInput, uint256 numPairs);
 
     // ═══════════════════════════════════════════════════════════════════════
     // ERRORS
@@ -81,14 +73,10 @@ contract LSSVMRouter is ReentrancyGuard {
             LSSVMPair pair = swap.pair;
 
             // Get quote
-            (, , uint256 cost, ,) = pair.getBuyNFTQuote(swap.nftIds.length);
+            (,, uint256 cost,,) = pair.getBuyNFTQuote(swap.nftIds.length);
 
             // Execute swap
-            uint256 spent = pair.swapTokenForNFTs{value: _isETHPair(pair) ? cost : 0}(
-                swap.nftIds,
-                cost,
-                recipient
-            );
+            uint256 spent = pair.swapTokenForNFTs{ value: _isETHPair(pair) ? cost : 0 }(swap.nftIds, cost, recipient);
 
             totalCost += spent;
         }
@@ -97,7 +85,7 @@ contract LSSVMRouter is ReentrancyGuard {
 
         // Refund excess ETH
         if (msg.value > totalCost) {
-            (bool success,) = msg.sender.call{value: msg.value - totalCost}("");
+            (bool success,) = msg.sender.call{ value: msg.value - totalCost }("");
             require(success, "LSSVMRouter: REFUND_FAILED");
         }
 
@@ -110,12 +98,12 @@ contract LSSVMRouter is ReentrancyGuard {
     /// @param recipient Address to receive NFTs
     /// @param deadline Transaction deadline
     /// @return totalCost Total amount spent
-    function swapTokenForAnyNFTs(
-        PairSwapAny[] calldata swapList,
-        uint256 maxCost,
-        address recipient,
-        uint256 deadline
-    ) external payable nonReentrant returns (uint256 totalCost) {
+    function swapTokenForAnyNFTs(PairSwapAny[] calldata swapList, uint256 maxCost, address recipient, uint256 deadline)
+        external
+        payable
+        nonReentrant
+        returns (uint256 totalCost)
+    {
         if (block.timestamp > deadline) revert DeadlineExpired();
 
         for (uint256 i = 0; i < swapList.length; i++) {
@@ -135,14 +123,10 @@ contract LSSVMRouter is ReentrancyGuard {
             }
 
             // Get quote
-            (, , uint256 cost, ,) = pair.getBuyNFTQuote(numToBuy);
+            (,, uint256 cost,,) = pair.getBuyNFTQuote(numToBuy);
 
             // Execute swap
-            uint256 spent = pair.swapTokenForNFTs{value: _isETHPair(pair) ? cost : 0}(
-                selectedIds,
-                cost,
-                recipient
-            );
+            uint256 spent = pair.swapTokenForNFTs{ value: _isETHPair(pair) ? cost : 0 }(selectedIds, cost, recipient);
 
             totalCost += spent;
         }
@@ -151,7 +135,7 @@ contract LSSVMRouter is ReentrancyGuard {
 
         // Refund excess ETH
         if (msg.value > totalCost) {
-            (bool success,) = msg.sender.call{value: msg.value - totalCost}("");
+            (bool success,) = msg.sender.call{ value: msg.value - totalCost }("");
             require(success, "LSSVMRouter: REFUND_FAILED");
         }
 
@@ -188,11 +172,7 @@ contract LSSVMRouter is ReentrancyGuard {
             }
 
             // Execute swap
-            uint256 received = pair.swapNFTsForToken(
-                swap.nftIds,
-                swap.minOutput,
-                recipient
-            );
+            uint256 received = pair.swapNFTsForToken(swap.nftIds, swap.minOutput, recipient);
 
             totalOutput += received;
         }
@@ -207,25 +187,17 @@ contract LSSVMRouter is ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice Get total cost to buy specific NFTs from multiple pairs
-    function getBuyQuote(PairSwapSpecific[] calldata swapList)
-        external
-        view
-        returns (uint256 totalCost)
-    {
+    function getBuyQuote(PairSwapSpecific[] calldata swapList) external view returns (uint256 totalCost) {
         for (uint256 i = 0; i < swapList.length; i++) {
-            (, , uint256 cost, ,) = swapList[i].pair.getBuyNFTQuote(swapList[i].nftIds.length);
+            (,, uint256 cost,,) = swapList[i].pair.getBuyNFTQuote(swapList[i].nftIds.length);
             totalCost += cost;
         }
     }
 
     /// @notice Get total output for selling NFTs to multiple pairs
-    function getSellQuote(PairSwapSell[] calldata swapList)
-        external
-        view
-        returns (uint256 totalOutput)
-    {
+    function getSellQuote(PairSwapSell[] calldata swapList) external view returns (uint256 totalOutput) {
         for (uint256 i = 0; i < swapList.length; i++) {
-            (, , uint256 output, ,) = swapList[i].pair.getSellNFTQuote(swapList[i].nftIds.length);
+            (,, uint256 output,,) = swapList[i].pair.getSellNFTQuote(swapList[i].nftIds.length);
             totalOutput += output;
         }
     }
@@ -239,5 +211,5 @@ contract LSSVMRouter is ReentrancyGuard {
     }
 
     // Allow receiving ETH
-    receive() external payable {}
+    receive() external payable { }
 }

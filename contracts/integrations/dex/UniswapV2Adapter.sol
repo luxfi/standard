@@ -6,4 +6,5 @@ pragma solidity ^0.8.31;
 /// @dev TODO: Implement router and pair interactions
 abstract contract UniswapV2Adapter {
     // UniswapV2-specific implementation pending
-}
+
+    }

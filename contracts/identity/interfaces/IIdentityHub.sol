@@ -33,28 +33,28 @@ interface IIdentityHub {
     /// @notice Complete identity view
     struct Identity {
         // DID Layer
-        string did;                       // W3C DID string
-        bool hasDID;                      // Whether DID exists
+        string did; // W3C DID string
+        bool hasDID; // Whether DID exists
 
         // SoulID Layer
-        uint256 soulId;                   // SoulID token ID
-        bool hasSoul;                     // Whether soul exists
+        uint256 soulId; // SoulID token ID
+        bool hasSoul; // Whether soul exists
 
         // Karma Layer
-        uint256 karma;                    // Current karma balance
-        bool isVerified;                  // DID verified in Karma
+        uint256 karma; // Current karma balance
+        bool isVerified; // DID verified in Karma
 
         // Reputation (from SoulID)
-        uint256 humanityScore;            // 0-100
-        uint256 governanceParticipation;  // 0-100
-        uint256 communityContribution;    // 0-100
-        uint256 protocolUsage;            // 0-100
-        uint256 trustLevel;               // 0-100 composite
+        uint256 humanityScore; // 0-100
+        uint256 governanceParticipation; // 0-100
+        uint256 communityContribution; // 0-100
+        uint256 protocolUsage; // 0-100
+        uint256 trustLevel; // 0-100 composite
 
         // Governance
-        uint256 votingPower;              // Calculated voting power
-        bool canPropose;                  // Can create proposals
-        bool isHuman;                     // Passed humanity check
+        uint256 votingPower; // Calculated voting power
+        bool canPropose; // Can create proposals
+        bool isHuman; // Passed humanity check
     }
 
     // ============ Events ============

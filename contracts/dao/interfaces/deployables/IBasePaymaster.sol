@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IEntryPoint
-} from "@account-abstraction/interfaces/IEntryPoint.sol";
+import { IEntryPoint } from "@account-abstraction/interfaces/IEntryPoint.sol";
 
 /**
  * @title IBasePaymaster
@@ -25,13 +23,19 @@ import {
 interface IBasePaymaster {
     // --- Errors ---
 
-    /** @notice Thrown when the provided address does not implement IEntryPoint interface */
+    /**
+     * @notice Thrown when the provided address does not implement IEntryPoint interface
+     */
     error InvalidEntryPointInterface();
 
-    /** @notice Thrown when caller is not the configured EntryPoint */
+    /**
+     * @notice Thrown when caller is not the configured EntryPoint
+     */
     error CallerNotEntryPoint();
 
-    /** @notice Thrown when _postOp is called but not overridden by the inheriting contract */
+    /**
+     * @notice Thrown when _postOp is called but not overridden by the inheriting contract
+     */
     error PostOpNotImplemented();
 
     // --- View Functions ---
@@ -71,10 +75,7 @@ interface IBasePaymaster {
      * @custom:access Restricted to owner
      * @custom:throws May revert if insufficient balance in EntryPoint
      */
-    function withdrawTo(
-        address payable withdrawAddress_,
-        uint256 amount_
-    ) external;
+    function withdrawTo(address payable withdrawAddress_, uint256 amount_) external;
 
     /**
      * @notice Stakes ETH with the EntryPoint

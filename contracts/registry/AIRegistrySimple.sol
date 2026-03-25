@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {AIRegistry} from "./AIRegistry.sol";
+import { AIRegistry } from "./AIRegistry.sol";
 
 /**
  * @title AIRegistrySimple
@@ -9,11 +9,7 @@ import {AIRegistry} from "./AIRegistry.sol";
  * This version calls initialize in the constructor for easier local deployment
  */
 contract AIRegistrySimple is AIRegistry {
-    constructor(
-        address owner_,
-        address shinToken_,
-        address aiNft_
-    ) {
+    constructor(address owner_, address shinToken_, address aiNft_) {
         // Call parent initialize
         initialize(owner_, shinToken_, aiNft_);
     }

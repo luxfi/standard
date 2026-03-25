@@ -1,33 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IFreezeVotingStandaloneV1
-} from "../../interfaces/deployables/IFreezeVotingStandaloneV1.sol";
-import {IFreezable} from "../../interfaces/deployables/IFreezable.sol";
-import {
-    IVotingTypes
-} from "../../interfaces/deployables/IVotingTypes.sol";
-import {
-    IVotingWeightV1
-} from "../../interfaces/deployables/IVotingWeightV1.sol";
-import {
-    IVoteTrackerV1
-} from "../../interfaces/deployables/IVoteTrackerV1.sol";
-import {IVersion} from "../../interfaces/deployables/IVersion.sol";
-import {
-    ILightAccountValidator
-} from "../../interfaces/deployables/ILightAccountValidator.sol";
-import {
-    IFreezeVotingBase
-} from "../../interfaces/deployables/IFreezeVotingBase.sol";
-import {IDeploymentBlock} from "../../interfaces/IDeploymentBlock.sol";
-import {FreezeVotingBase} from "./FreezeVotingBase.sol";
-import {
-    DeploymentBlockInitializable
-} from "../../DeploymentBlockInitializable.sol";
-import {InitializerEventEmitter} from "../../InitializerEventEmitter.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { IFreezeVotingStandaloneV1 } from "../../interfaces/deployables/IFreezeVotingStandaloneV1.sol";
+import { IFreezable } from "../../interfaces/deployables/IFreezable.sol";
+import { IVotingTypes } from "../../interfaces/deployables/IVotingTypes.sol";
+import { IVotingWeightV1 } from "../../interfaces/deployables/IVotingWeightV1.sol";
+import { IVoteTrackerV1 } from "../../interfaces/deployables/IVoteTrackerV1.sol";
+import { IVersion } from "../../interfaces/deployables/IVersion.sol";
+import { ILightAccountValidator } from "../../interfaces/deployables/ILightAccountValidator.sol";
+import { IFreezeVotingBase } from "../../interfaces/deployables/IFreezeVotingBase.sol";
+import { IDeploymentBlock } from "../../interfaces/IDeploymentBlock.sol";
+import { FreezeVotingBase } from "./FreezeVotingBase.sol";
+import { DeploymentBlockInitializable } from "../../DeploymentBlockInitializable.sol";
+import { InitializerEventEmitter } from "../../InitializerEventEmitter.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
  * @title FreezeVotingStandaloneV1
@@ -74,15 +60,25 @@ contract FreezeVotingStandaloneV1 is
      * @custom:storage-location erc7201:DAO.FreezeVotingStandalone.main
      */
     struct FreezeVotingStandaloneStorage {
-        /** @notice Array of all configured voting configs */
+        /**
+         * @notice Array of all configured voting configs
+         */
         IVotingTypes.VotingConfig[] votingConfigs;
-        /** @notice Voting weight required to unfreeze the DAO */
+        /**
+         * @notice Voting weight required to unfreeze the DAO
+         */
         uint256 unfreezeVotesThreshold;
-        /** @notice Duration in seconds that unfreeze proposals remain active */
+        /**
+         * @notice Duration in seconds that unfreeze proposals remain active
+         */
         uint32 unfreezeProposalPeriod;
-        /** @notice Timestamp when the unfreeze proposal was created */
+        /**
+         * @notice Timestamp when the unfreeze proposal was created
+         */
         uint48 unfreezeProposalCreated;
-        /** @notice Accumulated votes for the unfreeze proposal */
+        /**
+         * @notice Accumulated votes for the unfreeze proposal
+         */
         uint256 unfreezeProposalVoteCount;
     }
 
@@ -98,11 +94,7 @@ contract FreezeVotingStandaloneV1 is
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      * @return $ The storage struct for FreezeVotingStandaloneV1
      */
-    function _getFreezeVotingStandaloneStorage()
-        internal
-        pure
-        returns (FreezeVotingStandaloneStorage storage $)
-    {
+    function _getFreezeVotingStandaloneStorage() internal pure returns (FreezeVotingStandaloneStorage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := FREEZE_VOTING_STANDALONE_STORAGE_LOCATION
@@ -138,15 +130,10 @@ contract FreezeVotingStandaloneV1 is
                 lightAccountFactory_
             )
         );
-        __FreezeVotingBase_init(
-            freezeProposalPeriod_,
-            freezeVotesThreshold_,
-            lightAccountFactory_
-        );
+        __FreezeVotingBase_init(freezeProposalPeriod_, freezeVotesThreshold_, lightAccountFactory_);
         __DeploymentBlockInitializable_init();
 
-        FreezeVotingStandaloneStorage
-            storage $ = _getFreezeVotingStandaloneStorage();
+        FreezeVotingStandaloneStorage storage $ = _getFreezeVotingStandaloneStorage();
         $.unfreezeVotesThreshold = unfreezeVotesThreshold_;
         $.unfreezeProposalPeriod = unfreezeProposalPeriod_;
     }
@@ -156,14 +143,11 @@ contract FreezeVotingStandaloneV1 is
      * @dev Can only be called once when votingConfigs is empty.
      * Used for circular dependency resolution during deployment.
      */
-    function initialize2(
-        IVotingTypes.VotingConfig[] calldata votingConfigs_
-    ) public virtual override reinitializer(2) {
-        FreezeVotingStandaloneStorage
-            storage $ = _getFreezeVotingStandaloneStorage();
+    function initialize2(IVotingTypes.VotingConfig[] calldata votingConfigs_) public virtual override reinitializer(2) {
+        FreezeVotingStandaloneStorage storage $ = _getFreezeVotingStandaloneStorage();
 
         // Set voting configs
-        for (uint256 i = 0; i < votingConfigs_.length; ) {
+        for (uint256 i = 0; i < votingConfigs_.length;) {
             $.votingConfigs.push(votingConfigs_[i]);
 
             unchecked {
@@ -181,26 +165,16 @@ contract FreezeVotingStandaloneV1 is
     /**
      * @inheritdoc IFreezeVotingStandaloneV1
      */
-    function getVotingConfigs()
-        public
-        view
-        virtual
-        override
-        returns (IVotingTypes.VotingConfig[] memory)
-    {
-        FreezeVotingStandaloneStorage
-            storage $ = _getFreezeVotingStandaloneStorage();
+    function getVotingConfigs() public view virtual override returns (IVotingTypes.VotingConfig[] memory) {
+        FreezeVotingStandaloneStorage storage $ = _getFreezeVotingStandaloneStorage();
         return $.votingConfigs;
     }
 
     /**
      * @inheritdoc IFreezeVotingStandaloneV1
      */
-    function votingConfig(
-        uint256 index
-    ) public view virtual override returns (IVotingTypes.VotingConfig memory) {
-        FreezeVotingStandaloneStorage
-            storage $ = _getFreezeVotingStandaloneStorage();
+    function votingConfig(uint256 index) public view virtual override returns (IVotingTypes.VotingConfig memory) {
+        FreezeVotingStandaloneStorage storage $ = _getFreezeVotingStandaloneStorage();
         if (index >= $.votingConfigs.length) {
             revert InvalidVotingConfig(index);
         }
@@ -210,45 +184,24 @@ contract FreezeVotingStandaloneV1 is
     /**
      * @inheritdoc IFreezeVotingStandaloneV1
      */
-    function unfreezeVotesThreshold()
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
-        FreezeVotingStandaloneStorage
-            storage $ = _getFreezeVotingStandaloneStorage();
+    function unfreezeVotesThreshold() public view virtual override returns (uint256) {
+        FreezeVotingStandaloneStorage storage $ = _getFreezeVotingStandaloneStorage();
         return $.unfreezeVotesThreshold;
     }
 
     /**
      * @inheritdoc IFreezeVotingStandaloneV1
      */
-    function unfreezeProposalPeriod()
-        public
-        view
-        virtual
-        override
-        returns (uint32)
-    {
-        FreezeVotingStandaloneStorage
-            storage $ = _getFreezeVotingStandaloneStorage();
+    function unfreezeProposalPeriod() public view virtual override returns (uint32) {
+        FreezeVotingStandaloneStorage storage $ = _getFreezeVotingStandaloneStorage();
         return $.unfreezeProposalPeriod;
     }
 
     /**
      * @inheritdoc IFreezeVotingStandaloneV1
      */
-    function getUnfreezeProposalVotes()
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
-        FreezeVotingStandaloneStorage
-            storage $ = _getFreezeVotingStandaloneStorage();
+    function getUnfreezeProposalVotes() public view virtual override returns (uint256) {
+        FreezeVotingStandaloneStorage storage $ = _getFreezeVotingStandaloneStorage();
         return $.unfreezeProposalVoteCount;
     }
 
@@ -265,17 +218,11 @@ contract FreezeVotingStandaloneV1 is
         if (isFrozen()) revert AlreadyFrozen();
 
         // Resolve voter address (handles light account)
-        address voter = potentialLightAccountResolvedOwner(
-            msg.sender,
-            lightAccountIndex_
-        );
+        address voter = potentialLightAccountResolvedOwner(msg.sender, lightAccountIndex_);
 
         // Check if proposal is expired and create new one if needed
         FreezeVotingBaseStorage storage $base = _getFreezeVotingBaseStorage();
-        if (
-            block.timestamp >
-            $base.freezeProposalCreated + $base.freezeProposalPeriod
-        ) {
+        if (block.timestamp > $base.freezeProposalCreated + $base.freezeProposalPeriod) {
             _initializeFreezeVote();
             emit FreezeProposalCreated(uint48(block.timestamp), voter);
         }
@@ -294,24 +241,16 @@ contract FreezeVotingStandaloneV1 is
         IVotingTypes.VotingConfigVoteData[] calldata votingConfigsToUse_,
         uint256 lightAccountIndex_
     ) public virtual override {
-        FreezeVotingStandaloneStorage
-            storage $ = _getFreezeVotingStandaloneStorage();
+        FreezeVotingStandaloneStorage storage $ = _getFreezeVotingStandaloneStorage();
 
         // Check if frozen
         if (!isFrozen()) revert NotFrozen();
 
         // Resolve voter address
-        address voter = potentialLightAccountResolvedOwner(
-            msg.sender,
-            lightAccountIndex_
-        );
+        address voter = potentialLightAccountResolvedOwner(msg.sender, lightAccountIndex_);
 
         // Check if proposal is expired and create new one if needed
-        if (
-            $.unfreezeProposalCreated != 0 &&
-            block.timestamp >
-            $.unfreezeProposalCreated + $.unfreezeProposalPeriod
-        ) {
+        if ($.unfreezeProposalCreated != 0 && block.timestamp > $.unfreezeProposalCreated + $.unfreezeProposalPeriod) {
             // Reset expired proposal
             // Use previous timestamp to ensure ERC5805 getPastVotes works
             $.unfreezeProposalCreated = uint48(block.timestamp - 1);
@@ -326,11 +265,7 @@ contract FreezeVotingStandaloneV1 is
         }
 
         // Calculate weight from configs
-        uint256 totalWeight = _getUnfreezeVotes(
-            voter,
-            $.unfreezeProposalCreated,
-            votingConfigsToUse_
-        );
+        uint256 totalWeight = _getUnfreezeVotes(voter, $.unfreezeProposalCreated, votingConfigsToUse_);
 
         // Record the vote and handle unfreeze activation if threshold is reached
         _recordUnfreezeVote(voter, totalWeight);
@@ -355,17 +290,11 @@ contract FreezeVotingStandaloneV1 is
      * @inheritdoc ERC165
      * @dev Supports IFreezeVotingStandaloneV1, IFreezeVotingBase, IFreezable, ILightAccountValidator, IVersion, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(IFreezeVotingStandaloneV1).interfaceId ||
-            interfaceId_ == type(IFreezeVotingBase).interfaceId ||
-            interfaceId_ == type(IFreezable).interfaceId ||
-            interfaceId_ == type(ILightAccountValidator).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(IFreezeVotingStandaloneV1).interfaceId
+            || interfaceId_ == type(IFreezeVotingBase).interfaceId || interfaceId_ == type(IFreezable).interfaceId
+            || interfaceId_ == type(ILightAccountValidator).interfaceId || interfaceId_ == type(IVersion).interfaceId
+            || interfaceId_ == type(IDeploymentBlock).interfaceId || super.supportsInterface(interfaceId_);
     }
 
     // ======================================================================
@@ -379,18 +308,18 @@ contract FreezeVotingStandaloneV1 is
      * @param votingConfigsToUse Array of voting configs and their data
      * @return totalWeight Total voting weight accumulated
      */
-    function _getVotes(
-        address voter,
-        IVotingTypes.VotingConfigVoteData[] calldata votingConfigsToUse
-    ) internal virtual returns (uint256) {
+    function _getVotes(address voter, IVotingTypes.VotingConfigVoteData[] calldata votingConfigsToUse)
+        internal
+        virtual
+        returns (uint256)
+    {
         FreezeVotingBaseStorage storage $base = _getFreezeVotingBaseStorage();
-        return
-            _aggregateVotes(
-                voter,
-                $base.freezeProposalCreated,
-                $base.freezeProposalCreated, // Use same timestamp as context ID for freeze votes
-                votingConfigsToUse
-            );
+        return _aggregateVotes(
+            voter,
+            $base.freezeProposalCreated,
+            $base.freezeProposalCreated, // Use same timestamp as context ID for freeze votes
+            votingConfigsToUse
+        );
     }
 
     /**
@@ -408,13 +337,7 @@ contract FreezeVotingStandaloneV1 is
     ) internal virtual returns (uint256) {
         // We add a large offset to avoid collision with freeze vote timestamps
         uint256 unfreezeContextId = uint256(proposalCreatedAt) + (1 << 128);
-        return
-            _aggregateVotes(
-                voter,
-                proposalCreatedAt,
-                unfreezeContextId,
-                votingConfigsToUse
-            );
+        return _aggregateVotes(voter, proposalCreatedAt, unfreezeContextId, votingConfigsToUse);
     }
 
     /**
@@ -433,35 +356,24 @@ contract FreezeVotingStandaloneV1 is
         IVotingTypes.VotingConfigVoteData[] calldata votingConfigsToUse
     ) private returns (uint256) {
         uint256 totalWeight = 0;
-        FreezeVotingStandaloneStorage
-            storage $ = _getFreezeVotingStandaloneStorage();
+        FreezeVotingStandaloneStorage storage $ = _getFreezeVotingStandaloneStorage();
 
-        for (uint256 i = 0; i < votingConfigsToUse.length; ) {
-            IVotingTypes.VotingConfigVoteData
-                memory configData = votingConfigsToUse[i];
+        for (uint256 i = 0; i < votingConfigsToUse.length;) {
+            IVotingTypes.VotingConfigVoteData memory configData = votingConfigsToUse[i];
 
             // Validate config index
             if (configData.configIndex >= $.votingConfigs.length) {
                 revert InvalidVotingConfig(configData.configIndex);
             }
 
-            IVotingTypes.VotingConfig memory config = $.votingConfigs[
-                configData.configIndex
-            ];
+            IVotingTypes.VotingConfig memory config = $.votingConfigs[configData.configIndex];
 
             // Calculate voting weight at the specified timestamp
-            (uint256 weight, bytes memory processedData) = IVotingWeightV1(
-                config.votingWeight
-            ).calculateWeight(voter, timestamp, configData.voteData);
+            (uint256 weight, bytes memory processedData) =
+                IVotingWeightV1(config.votingWeight).calculateWeight(voter, timestamp, configData.voteData);
 
             // Check if already voted with this config
-            if (
-                IVoteTrackerV1(config.voteTracker).hasVoted(
-                    contextId,
-                    voter,
-                    processedData
-                )
-            ) {
+            if (IVoteTrackerV1(config.voteTracker).hasVoted(contextId, voter, processedData)) {
                 // Skip if already voted with this config
                 unchecked {
                     ++i;
@@ -470,11 +382,7 @@ contract FreezeVotingStandaloneV1 is
             }
 
             // Record the vote
-            IVoteTrackerV1(config.voteTracker).recordVote(
-                contextId,
-                voter,
-                processedData
-            );
+            IVoteTrackerV1(config.voteTracker).recordVote(contextId, voter, processedData);
 
             totalWeight += weight;
 
@@ -494,15 +402,11 @@ contract FreezeVotingStandaloneV1 is
      * @param weightCasted_ The voting weight to add
      * @custom:throws NoVotes if weight is zero
      */
-    function _recordUnfreezeVote(
-        address voter_,
-        uint256 weightCasted_
-    ) internal virtual {
+    function _recordUnfreezeVote(address voter_, uint256 weightCasted_) internal virtual {
         // Validate non-zero voting weight
         if (weightCasted_ == 0) revert NoVotes();
 
-        FreezeVotingStandaloneStorage
-            storage $ = _getFreezeVotingStandaloneStorage();
+        FreezeVotingStandaloneStorage storage $ = _getFreezeVotingStandaloneStorage();
 
         // Add votes to the current proposal
         $.unfreezeProposalVoteCount += weightCasted_;
@@ -513,8 +417,7 @@ contract FreezeVotingStandaloneV1 is
         // Check if threshold is reached and activate unfreeze immediately
         if ($.unfreezeProposalVoteCount >= $.unfreezeVotesThreshold) {
             // Process the unfreeze
-            FreezeVotingBaseStorage
-                storage $base = _getFreezeVotingBaseStorage();
+            FreezeVotingBaseStorage storage $base = _getFreezeVotingBaseStorage();
             $base.isFrozen = false;
             // CRITICAL: DO NOT clear lastFreezeTimestamp - this ensures the security invariant
             // that all transactions timelocked before the most recent freeze remain invalid

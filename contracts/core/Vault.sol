@@ -2,11 +2,11 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IYieldAdapter} from "../liquid/interfaces/IYieldAdapter.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IYieldAdapter } from "../liquid/interfaces/IYieldAdapter.sol";
 
 /// @title Vault
 /// @notice Lux yield vault - deposit collateral, earn yield, mint liquid tokens
@@ -19,17 +19,17 @@ contract Vault is Ownable, ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     struct Strategy {
-        IYieldAdapter adapter;      // Yield adapter contract
-        uint256 allocation;         // Allocation weight (basis points)
-        uint256 deposited;          // Amount deposited
-        uint256 lastHarvest;        // Last harvest timestamp
-        bool active;                // Strategy active flag
+        IYieldAdapter adapter; // Yield adapter contract
+        uint256 allocation; // Allocation weight (basis points)
+        uint256 deposited; // Amount deposited
+        uint256 lastHarvest; // Last harvest timestamp
+        bool active; // Strategy active flag
     }
 
     struct UserDeposit {
-        uint256 shares;             // Vault shares
-        uint256 debt;               // Liquid debt owed
-        uint256 depositTime;        // Deposit timestamp
+        uint256 shares; // Vault shares
+        uint256 debt; // Liquid debt owed
+        uint256 depositTime; // Deposit timestamp
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -38,7 +38,7 @@ contract Vault is Ownable, ReentrancyGuard {
 
     uint256 public constant BASIS_POINTS = 10000;
     uint256 public constant MINIMUM_COLLATERAL_RATIO = 15000; // 150%
-    uint256 public constant LIQUIDATION_RATIO = 11000;        // 110%
+    uint256 public constant LIQUIDATION_RATIO = 11000; // 110%
     uint256 public constant MAX_STRATEGIES = 10;
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -105,11 +105,7 @@ contract Vault is Ownable, ReentrancyGuard {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(
-        address _underlying,
-        address _liquidToken,
-        address _treasury
-    ) Ownable(msg.sender) {
+    constructor(address _underlying, address _liquidToken, address _treasury) Ownable(msg.sender) {
         underlying = IERC20(_underlying);
         liquidToken = _liquidToken;
         treasury = _treasury;
@@ -241,7 +237,7 @@ contract Vault is Ownable, ReentrancyGuard {
     /// @param user Position owner
     function liquidate(address user) external nonReentrant {
         UserDeposit storage userDeposit = deposits[user];
-        
+
         if (userDeposit.debt == 0) revert NotLiquidatable();
 
         // Check if liquidatable
@@ -295,13 +291,15 @@ contract Vault is Ownable, ReentrancyGuard {
     function addStrategy(address adapter, uint256 allocation) external onlyOwner {
         if (strategies.length >= MAX_STRATEGIES) revert ExceedsMaxStrategies();
 
-        strategies.push(Strategy({
-            adapter: IYieldAdapter(adapter),
-            allocation: allocation,
-            deposited: 0,
-            lastHarvest: block.timestamp,
-            active: true
-        }));
+        strategies.push(
+            Strategy({
+                adapter: IYieldAdapter(adapter),
+                allocation: allocation,
+                deposited: 0,
+                lastHarvest: block.timestamp,
+                active: true
+            })
+        );
 
         // Approve adapter
         underlying.forceApprove(adapter, type(uint256).max);
@@ -313,7 +311,7 @@ contract Vault is Ownable, ReentrancyGuard {
     /// @param index Strategy index
     function removeStrategy(uint256 index) external onlyOwner {
         Strategy storage strategy = strategies[index];
-        
+
         // Withdraw all from strategy
         if (strategy.deposited > 0) {
             strategy.adapter.unwrap(strategy.deposited, address(this));
@@ -404,7 +402,7 @@ contract Vault is Ownable, ReentrancyGuard {
     /// @notice Get user's health factor (collateral ratio)
     function getHealthFactor(address user) external view returns (uint256) {
         if (deposits[user].debt == 0) return type(uint256).max;
-        
+
         uint256 collateralValue = _sharesToUnderlying(deposits[user].shares);
         return collateralValue * BASIS_POINTS / deposits[user].debt;
     }
@@ -413,7 +411,7 @@ contract Vault is Ownable, ReentrancyGuard {
     function getMaxMintable(address user) external view returns (uint256) {
         uint256 collateralValue = _sharesToUnderlying(deposits[user].shares);
         uint256 maxDebt = collateralValue * BASIS_POINTS / MINIMUM_COLLATERAL_RATIO;
-        
+
         if (maxDebt <= deposits[user].debt) return 0;
         return maxDebt - deposits[user].debt;
     }
@@ -438,15 +436,11 @@ contract Vault is Ownable, ReentrancyGuard {
     // ADMIN FUNCTIONS
     // ═══════════════════════════════════════════════════════════════════════
 
-    function setFees(
-        uint256 _depositFee,
-        uint256 _withdrawalFee,
-        uint256 _performanceFee
-    ) external onlyOwner {
+    function setFees(uint256 _depositFee, uint256 _withdrawalFee, uint256 _performanceFee) external onlyOwner {
         require(_depositFee <= 500, "Max 5%");
         require(_withdrawalFee <= 500, "Max 5%");
         require(_performanceFee <= 3000, "Max 30%");
-        
+
         depositFee = _depositFee;
         withdrawalFee = _withdrawalFee;
         performanceFee = _performanceFee;
@@ -506,7 +500,7 @@ contract Vault is Ownable, ReentrancyGuard {
 
     function _withdrawFromStrategies(uint256 amount) internal {
         uint256 idle = underlying.balanceOf(address(this));
-        
+
         if (idle >= amount) return;
 
         uint256 needed = amount - idle;

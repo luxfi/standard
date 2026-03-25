@@ -3,8 +3,8 @@ pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
 
-import {DIDRegistry} from "../../contracts/identity/DIDRegistry.sol";
-import {DIDResolver, OmnichainDIDResolver} from "../../contracts/identity/DIDResolver.sol";
+import { DIDRegistry } from "../../contracts/identity/DIDRegistry.sol";
+import { DIDResolver, OmnichainDIDResolver } from "../../contracts/identity/DIDResolver.sol";
 import {
     DIDDocument,
     VerificationMethod,
@@ -136,7 +136,11 @@ contract IdentityTest is Test {
         VerificationMethod[] memory methods = luxRegistry.getVerificationMethods(did);
         assertEq(methods.length, 1, "Should have 1 verification method");
         assertEq(methods[0].id, METHOD_KEY_1, "Method ID mismatch");
-        assertEq(uint(methods[0].methodType), uint(VerificationMethodType.Ed25519VerificationKey2020), "Method type mismatch");
+        assertEq(
+            uint256(methods[0].methodType),
+            uint256(VerificationMethodType.Ed25519VerificationKey2020),
+            "Method type mismatch"
+        );
 
         vm.stopPrank();
     }
@@ -228,12 +232,8 @@ contract IdentityTest is Test {
         luxRegistry.createDID(LUX_METHOD, "alice");
 
         // Resolve with metadata
-        (
-            DIDDocument memory doc,
-            address registry,
-            string memory method,
-            uint256 resolutionTime
-        ) = resolver.resolveWithMetadata(aliceDID);
+        (DIDDocument memory doc, address registry, string memory method, uint256 resolutionTime) =
+            resolver.resolveWithMetadata(aliceDID);
 
         assertEq(doc.did, aliceDID, "DID mismatch");
         assertEq(registry, address(luxRegistry), "Registry mismatch");
@@ -271,7 +271,7 @@ contract IdentityTest is Test {
     }
 
     function test_CanResolve_NonExistentDID() public {
-        (bool canResolve, ) = resolver.canResolve("did:lux:nonexistent");
+        (bool canResolve,) = resolver.canResolve("did:lux:nonexistent");
 
         assertFalse(canResolve, "Should not be able to resolve");
     }
@@ -560,7 +560,11 @@ contract IdentityTest is Test {
 
         VerificationMethod[] memory methods = luxRegistry.getVerificationMethods(did);
         assertEq(methods.length, 1, "Should have 1 verification method");
-        assertEq(uint(methods[0].methodType), uint(VerificationMethodType.MlDsa44VerificationKey2024), "Should be ML-DSA-44");
+        assertEq(
+            uint256(methods[0].methodType),
+            uint256(VerificationMethodType.MlDsa44VerificationKey2024),
+            "Should be ML-DSA-44"
+        );
     }
 
     function test_RevertWhen_AddVerificationMethod_MaxReached() public {
@@ -708,10 +712,7 @@ contract IdentityTest is Test {
 
         // Attempt to add one more
         Service memory extraService = Service({
-            id: keccak256("extra"),
-            serviceType: ServiceType.Custom,
-            endpoint: "https://extra.lux.network",
-            data: ""
+            id: keccak256("extra"), serviceType: ServiceType.Custom, endpoint: "https://extra.lux.network", data: ""
         });
 
         vm.expectRevert(DIDRegistry.MaxServicesReached.selector);
@@ -1011,7 +1012,8 @@ contract IdentityTest is Test {
     }
 
     function test_LongIdentifier() public {
-        string memory longId = "this-is-a-very-long-identifier-with-many-characters-to-test-gas-limits-and-storage-efficiency";
+        string memory longId =
+            "this-is-a-very-long-identifier-with-many-characters-to-test-gas-limits-and-storage-efficiency";
 
         vm.prank(alice);
         string memory did = luxRegistry.createDID(LUX_METHOD, longId);
@@ -1096,12 +1098,8 @@ contract IdentityTest is Test {
 
         string memory did = luxRegistry.createDID(LUX_METHOD, "alice");
 
-        Service memory service = Service({
-            id: serviceId,
-            serviceType: ServiceType.Custom,
-            endpoint: endpoint,
-            data: ""
-        });
+        Service memory service =
+            Service({ id: serviceId, serviceType: ServiceType.Custom, endpoint: endpoint, data: "" });
 
         try luxRegistry.addService(did, service) {
             Service[] memory services = luxRegistry.getServices(did);

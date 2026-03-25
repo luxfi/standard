@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {AMMV2Factory} from "./AMMV2Factory.sol";
-import {AMMV2Pair} from "./AMMV2Pair.sol";
-import {IWLUX} from "./interfaces/IWLUX.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { AMMV2Factory } from "./AMMV2Factory.sol";
+import { AMMV2Pair } from "./AMMV2Pair.sol";
+import { IWLUX } from "./interfaces/IWLUX.sol";
 
 /// @title AMMV2Router - Uniswap V2 Compatible Router
 /// @notice Routes trades and liquidity operations through LP pairs
@@ -56,16 +56,24 @@ contract AMMV2Router is ReentrancyGuard {
         uint256 amountLUXMin,
         address to,
         uint256 deadline
-    ) external payable ensure(deadline) nonReentrant returns (uint256 amountToken, uint256 amountLUX, uint256 liquidity) {
-        (amountToken, amountLUX) = _addLiquidity(token, WLUX, amountTokenDesired, msg.value, amountTokenMin, amountLUXMin);
+    )
+        external
+        payable
+        ensure(deadline)
+        nonReentrant
+        returns (uint256 amountToken, uint256 amountLUX, uint256 liquidity)
+    {
+        (amountToken, amountLUX) = _addLiquidity(
+            token, WLUX, amountTokenDesired, msg.value, amountTokenMin, amountLUXMin
+        );
         address pair = AMMV2Factory(factory).getPair(token, WLUX);
         IERC20(token).safeTransferFrom(msg.sender, pair, amountToken);
-        IWLUX(WLUX).deposit{value: amountLUX}();
+        IWLUX(WLUX).deposit{ value: amountLUX }();
         IERC20(WLUX).safeTransfer(pair, amountLUX);
         liquidity = AMMV2Pair(pair).mint(to);
         // Refund excess LUX
         if (msg.value > amountLUX) {
-            (bool success,) = msg.sender.call{value: msg.value - amountLUX}("");
+            (bool success,) = msg.sender.call{ value: msg.value - amountLUX }("");
             require(success, "AMMV2Router: LUX_REFUND_FAILED");
         }
     }
@@ -111,7 +119,7 @@ contract AMMV2Router is ReentrancyGuard {
         (amountToken, amountLUX) = _removeLiquidity(token, WLUX, liquidity, amountTokenMin, amountLUXMin, address(this));
         IERC20(token).safeTransfer(to, amountToken);
         IWLUX(WLUX).withdraw(amountLUX);
-        (bool success,) = to.call{value: amountLUX}("");
+        (bool success,) = to.call{ value: amountLUX }("");
         require(success, "AMMV2Router: LUX_TRANSFER_FAILED");
     }
 
@@ -142,16 +150,17 @@ contract AMMV2Router is ReentrancyGuard {
         _swap(amounts, path, to);
     }
 
-    function swapExactLUXForTokens(
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external payable ensure(deadline) nonReentrant returns (uint256[] memory amounts) {
+    function swapExactLUXForTokens(uint256 amountOutMin, address[] calldata path, address to, uint256 deadline)
+        external
+        payable
+        ensure(deadline)
+        nonReentrant
+        returns (uint256[] memory amounts)
+    {
         require(path[0] == WLUX, "AMMV2Router: INVALID_PATH");
         amounts = getAmountsOut(msg.value, path);
         require(amounts[amounts.length - 1] >= amountOutMin, "AMMV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
-        IWLUX(WLUX).deposit{value: amounts[0]}();
+        IWLUX(WLUX).deposit{ value: amounts[0] }();
         IERC20(WLUX).safeTransfer(AMMV2Factory(factory).getPair(path[0], path[1]), amounts[0]);
         _swap(amounts, path, to);
     }
@@ -169,7 +178,7 @@ contract AMMV2Router is ReentrancyGuard {
         IERC20(path[0]).safeTransferFrom(msg.sender, AMMV2Factory(factory).getPair(path[0], path[1]), amounts[0]);
         _swap(amounts, path, address(this));
         IWLUX(WLUX).withdraw(amounts[amounts.length - 1]);
-        (bool success,) = to.call{value: amounts[amounts.length - 1]}("");
+        (bool success,) = to.call{ value: amounts[amounts.length - 1] }("");
         require(success, "AMMV2Router: LUX_TRANSFER_FAILED");
     }
 
@@ -180,7 +189,11 @@ contract AMMV2Router is ReentrancyGuard {
         amountB = (amountA * reserveB) / reserveA;
     }
 
-    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) public pure returns (uint256 amountOut) {
+    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
+        public
+        pure
+        returns (uint256 amountOut)
+    {
         require(amountIn > 0, "AMMV2Router: INSUFFICIENT_INPUT_AMOUNT");
         require(reserveIn > 0 && reserveOut > 0, "AMMV2Router: INSUFFICIENT_LIQUIDITY");
         uint256 amountInWithFee = amountIn * 997;
@@ -189,7 +202,11 @@ contract AMMV2Router is ReentrancyGuard {
         amountOut = numerator / denominator;
     }
 
-    function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut) public pure returns (uint256 amountIn) {
+    function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)
+        public
+        pure
+        returns (uint256 amountIn)
+    {
         require(amountOut > 0, "AMMV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
         require(reserveIn > 0 && reserveOut > 0, "AMMV2Router: INSUFFICIENT_LIQUIDITY");
         uint256 numerator = reserveIn * amountOut * 1000;
@@ -240,7 +257,10 @@ contract AMMV2Router is ReentrancyGuard {
                 (amountA, amountB) = (amountADesired, amountBOptimal);
             } else {
                 uint256 amountAOptimal = quote(amountBDesired, reserveB, reserveA);
-                require(amountAOptimal <= amountADesired && amountAOptimal >= amountAMin, "AMMV2Router: INSUFFICIENT_A_AMOUNT");
+                require(
+                    amountAOptimal <= amountADesired && amountAOptimal >= amountAMin,
+                    "AMMV2Router: INSUFFICIENT_A_AMOUNT"
+                );
                 (amountA, amountB) = (amountAOptimal, amountBDesired);
             }
         }
@@ -251,7 +271,8 @@ contract AMMV2Router is ReentrancyGuard {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0,) = _sortTokens(input, output);
             uint256 amountOut = amounts[i + 1];
-            (uint256 amount0Out, uint256 amount1Out) = input == token0 ? (uint256(0), amountOut) : (amountOut, uint256(0));
+            (uint256 amount0Out, uint256 amount1Out) =
+                input == token0 ? (uint256(0), amountOut) : (amountOut, uint256(0));
             address to = i < path.length - 2 ? AMMV2Factory(factory).getPair(output, path[i + 2]) : _to;
             AMMV2Pair(AMMV2Factory(factory).getPair(input, output)).swap(amount0Out, amount1Out, to, new bytes(0));
         }

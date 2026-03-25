@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.31;
 
-import {AccessControl} from "@luxfi/standard/access/Access.sol";
-import {LRC20} from "@luxfi/standard/tokens/LRC20.sol";
-import {ReentrancyGuard} from "@luxfi/standard/utils/Utils.sol";
+import { AccessControl } from "@luxfi/standard/access/Access.sol";
+import { LRC20 } from "@luxfi/standard/tokens/LRC20.sol";
+import { ReentrancyGuard } from "@luxfi/standard/utils/Utils.sol";
 
-import {IllegalArgument, IllegalState, Unauthorized} from "./base/Errors.sol";
-import {IERC3156FlashBorrower} from "./interfaces/IERC3156FlashBorrower.sol";
-import {IERC3156FlashLender} from "./interfaces/IERC3156FlashLender.sol";
+import { IllegalArgument, IllegalState, Unauthorized } from "./base/Errors.sol";
+import { IERC3156FlashBorrower } from "./interfaces/IERC3156FlashBorrower.sol";
+import { IERC3156FlashLender } from "./interfaces/IERC3156FlashLender.sol";
 
 /// @title LiquidToken
 /// @author Lux Industries Inc
@@ -66,11 +66,7 @@ contract LiquidToken is AccessControl, ReentrancyGuard, LRC20, IERC3156FlashLend
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════════
 
-    constructor(
-        string memory _name,
-        string memory _symbol,
-        uint256 _flashFee
-    ) LRC20(_name, _symbol) {
+    constructor(string memory _name, string memory _symbol, uint256 _flashFee) LRC20(_name, _symbol) {
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(SENTINEL_ROLE, msg.sender);
         _setRoleAdmin(SENTINEL_ROLE, ADMIN_ROLE);
@@ -184,17 +180,17 @@ contract LiquidToken is AccessControl, ReentrancyGuard, LRC20, IERC3156FlashLend
     }
 
     /// @inheritdoc IERC3156FlashLender
-    function flashLoan(
-        IERC3156FlashBorrower receiver,
-        address token_,
-        uint256 amount,
-        bytes calldata data
-    ) external override nonReentrant returns (bool) {
+    function flashLoan(IERC3156FlashBorrower receiver, address token_, uint256 amount, bytes calldata data)
+        external
+        override
+        nonReentrant
+        returns (bool)
+    {
         if (token_ != address(this)) revert IllegalArgument();
         if (amount > maxFlashLoanAmount) revert IllegalArgument();
 
         uint256 fee = flashFee(token_, amount);
-        
+
         _mint(address(receiver), amount);
 
         if (receiver.onFlashLoan(msg.sender, token_, amount, fee, data) != CALLBACK_SUCCESS) {

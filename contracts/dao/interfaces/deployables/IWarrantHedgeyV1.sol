@@ -19,25 +19,39 @@ pragma solidity ^0.8.30;
 interface IWarrantHedgeyV1 {
     // --- Errors ---
 
-    /** @notice Thrown when attempting to execute before hedgeyStart in absolute time mode */
+    /**
+     * @notice Thrown when attempting to execute before hedgeyStart in absolute time mode
+     */
     error HedgeyStartNotElapsed();
 
-    /** @notice Thrown when amount is zero */
+    /**
+     * @notice Thrown when amount is zero
+     */
     error InvalidAmount();
 
-    /** @notice Thrown when vesting rate is zero */
+    /**
+     * @notice Thrown when vesting rate is zero
+     */
     error InvalidRate();
 
-    /** @notice Thrown when rate exceeds total amount */
+    /**
+     * @notice Thrown when rate exceeds total amount
+     */
     error RateExceedsAmount();
 
-    /** @notice Thrown when vesting period is zero */
+    /**
+     * @notice Thrown when vesting period is zero
+     */
     error InvalidPeriod();
 
-    /** @notice Thrown when token is zero address */
+    /**
+     * @notice Thrown when token is zero address
+     */
     error InvalidToken();
 
-    /** @notice Thrown when cliff exceeds vesting end time */
+    /**
+     * @notice Thrown when cliff exceeds vesting end time
+     */
     error CliffExceedsEnd(uint256 cliff, uint256 end);
 
     // --- Structs ---

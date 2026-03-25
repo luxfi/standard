@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20, SafeERC20} from "@luxfi/standard/tokens/ERC20.sol";
-import {Ownable} from "@luxfi/standard/access/Access.sol";
+import { IERC20, SafeERC20 } from "@luxfi/standard/tokens/ERC20.sol";
+import { Ownable } from "@luxfi/standard/access/Access.sol";
 
 /**
  * @title Recall
@@ -28,8 +28,8 @@ contract Recall is Ownable {
 
     /// @notice Fund source types
     enum FundSource {
-        ALLOCATED,  // From parent budget - recallable
-        BONDED      // From community bonds - NOT recallable
+        ALLOCATED, // From parent budget - recallable
+        BONDED // From community bonds - NOT recallable
     }
 
     /// @notice Child Safe this module is attached to
@@ -148,11 +148,7 @@ contract Recall is Ownable {
 
         recallId = nextRecallId++;
         recallRequests[recallId] = RecallRequest({
-            token: token,
-            amount: amount,
-            initiatedAt: block.timestamp,
-            executed: false,
-            cancelled: false
+            token: token, amount: amount, initiatedAt: block.timestamp, executed: false, cancelled: false
         });
 
         emit RecallInitiated(recallId, token, amount);
@@ -283,8 +279,6 @@ contract Recall is Ownable {
      */
     function canExecuteRecall(uint256 recallId) external view returns (bool) {
         RecallRequest storage request = recallRequests[recallId];
-        return !request.executed &&
-               !request.cancelled &&
-               block.timestamp >= request.initiatedAt + recallGracePeriod;
+        return !request.executed && !request.cancelled && block.timestamp >= request.initiatedAt + recallGracePeriod;
     }
 }

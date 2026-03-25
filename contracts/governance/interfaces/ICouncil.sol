@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.31;
 
-import {Transaction} from "../base/Transaction.sol";
+import { Transaction } from "../base/Transaction.sol";
 
 /**
  * @title ICouncil
@@ -29,25 +29,39 @@ import {Transaction} from "../base/Transaction.sol";
 interface ICouncil {
     // --- Errors ---
 
-    /** @notice Thrown when attempting to set a zero address as the charter */
+    /**
+     * @notice Thrown when attempting to set a zero address as the charter
+     */
     error InvalidCharter();
 
-    /** @notice Thrown when attempting to access a proposal that doesn't exist */
+    /**
+     * @notice Thrown when attempting to access a proposal that doesn't exist
+     */
     error InvalidProposal();
 
-    /** @notice Thrown when the proposer adapter rejects the proposal submission */
+    /**
+     * @notice Thrown when the proposer adapter rejects the proposal submission
+     */
     error InvalidProposer();
 
-    /** @notice Thrown when attempting to execute a proposal that is not EXECUTABLE */
+    /**
+     * @notice Thrown when attempting to execute a proposal that is not EXECUTABLE
+     */
     error ProposalNotExecutable();
 
-    /** @notice Thrown when transaction details don't match the stored hash */
+    /**
+     * @notice Thrown when transaction details don't match the stored hash
+     */
     error InvalidTxHash();
 
-    /** @notice Thrown when a transaction execution fails */
+    /**
+     * @notice Thrown when a transaction execution fails
+     */
     error TxFailed();
 
-    /** @notice Thrown when executing with an empty transactions array */
+    /**
+     * @notice Thrown when executing with an empty transactions array
+     */
     error InvalidTxs();
 
     // --- Structs ---
@@ -98,11 +112,7 @@ interface ICouncil {
      * @param metadata IPFS hash or other metadata
      */
     event ProposalCreated(
-        address charter,
-        uint32 proposalId,
-        address proposer,
-        Transaction[] transactions,
-        string metadata
+        address charter, uint32 proposalId, address proposer, Transaction[] transactions, string metadata
     );
 
     /**
@@ -196,10 +206,7 @@ interface ICouncil {
      * @param nonce_ A nonce value
      * @return The encoded hash data
      */
-    function generateTxHashData(
-        Transaction calldata transaction_,
-        uint256 nonce_
-    ) external view returns (bytes memory);
+    function generateTxHashData(Transaction calldata transaction_, uint256 nonce_) external view returns (bytes memory);
 
     /**
      * @notice Computes the hash for a transaction
@@ -214,10 +221,7 @@ interface ICouncil {
      * @param txIndex_ The transaction index
      * @return The transaction hash
      */
-    function getProposalTxHash(
-        uint32 proposalId_,
-        uint32 txIndex_
-    ) external view returns (bytes32);
+    function getProposalTxHash(uint32 proposalId_, uint32 txIndex_) external view returns (bytes32);
 
     /**
      * @notice Returns all transaction hashes for a proposal
@@ -235,15 +239,16 @@ interface ICouncil {
      * @return executionPeriod Execution period
      * @return executionCounter Executed transaction count
      */
-    function getProposal(
-        uint32 proposalId_
-    ) external view returns (
-        address charter,
-        bytes32[] memory txHashes,
-        uint32 timelockPeriod,
-        uint32 executionPeriod,
-        uint32 executionCounter
-    );
+    function getProposal(uint32 proposalId_)
+        external
+        view
+        returns (
+            address charter,
+            bytes32[] memory txHashes,
+            uint32 timelockPeriod,
+            uint32 executionPeriod,
+            uint32 executionCounter
+        );
 
     // --- State-Changing Functions ---
 
@@ -284,8 +289,5 @@ interface ICouncil {
      * @param proposalId_ The proposal ID
      * @param transactions_ Transactions to execute (must match stored hashes)
      */
-    function executeProposal(
-        uint32 proposalId_,
-        Transaction[] calldata transactions_
-    ) external;
+    function executeProposal(uint32 proposalId_, Transaction[] calldata transactions_) external;
 }

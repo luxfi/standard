@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IProposerAdapterBaseV1} from "./IProposerAdapterBaseV1.sol";
+import { IProposerAdapterBaseV1 } from "./IProposerAdapterBaseV1.sol";
 
 /**
  * @title IProposerAdapterHatsV1
@@ -30,10 +30,7 @@ interface IProposerAdapterHatsV1 is IProposerAdapterBaseV1 {
      * @param hatsContractAddress_ The Hats Protocol contract address
      * @param whitelistedHats_ Array of hat IDs that are allowed to create proposals
      */
-    function initialize(
-        address hatsContractAddress_,
-        uint256[] calldata whitelistedHats_
-    ) external;
+    function initialize(address hatsContractAddress_, uint256[] calldata whitelistedHats_) external;
 
     // --- View Functions ---
 
@@ -47,10 +44,7 @@ interface IProposerAdapterHatsV1 is IProposerAdapterBaseV1 {
      * @notice Returns all hat IDs that are authorized to create proposals
      * @return whitelistedHatIds Array of whitelisted hat IDs
      */
-    function whitelistedHatIds()
-        external
-        view
-        returns (uint256[] memory whitelistedHatIds);
+    function whitelistedHatIds() external view returns (uint256[] memory whitelistedHatIds);
 
     /**
      * @notice Checks if a specific hat ID is whitelisted for proposal creation

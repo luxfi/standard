@@ -3,66 +3,67 @@
 // Copyright (C) 2019-2025, Lux Industries Inc. All rights reserved.
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
-    ██╗     ██╗   ██╗██╗  ██╗     █████╗ ██╗    ████████╗ ██████╗ ██╗  ██╗███████╗███╗   ██╗
-    ██║     ██║   ██║╚██╗██╔╝    ██╔══██╗██║    ╚══██╔══╝██╔═══██╗██║ ██╔╝██╔════╝████╗  ██║
-    ██║     ██║   ██║ ╚███╔╝     ███████║██║       ██║   ██║   ██║█████╔╝ █████╗  ██╔██╗ ██║
-    ██║     ██║   ██║ ██╔██╗     ██╔══██║██║       ██║   ██║   ██║██╔═██╗ ██╔══╝  ██║╚██╗██║
-    ███████╗╚██████╔╝██╔╝ ██╗    ██║  ██║██║       ██║   ╚██████╔╝██║  ██╗███████╗██║ ╚████║
-    ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚═╝       ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝
-
-    AI Token - Hardware-attested GPU compute mining
-
-    Architecture:
-    ┌─────────────────────────────────────────────────────────────────────────────────────────┐
-    │  Q-Chain (Quantum Finality) - Shared quantum safety via Quasar (BLS/Ringtail)          │
-    │  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
-    │  │ Stores quantum-final block tips from: P-Chain | C-Chain | X-Chain | A-Chain    │   │
-    │  │ | AI | Zoo | All Subnets                                                     │   │
-    │  └─────────────────────────────────────────────────────────────────────────────────┘   │
-    └─────────────────────────────────────────────────────────────────────────────────────────┘
-                                              │
-    ┌─────────────────────────────────────────┼───────────────────────────────────────────────┐
-    │  Source Chains: C-Chain, AI EVM, Zoo EVM                                             │
-    │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐             │
-    │  │ Pay with    │ -> │ Swap to LUX │ -> │ Bridge to   │ -> │ Attestation │             │
-    │  │ AI/ETH/BTC  │    │ (DEX pools) │    │ A-Chain     │    │ Stored      │             │
-    │  │ ZOO/any     │    │             │    │ (Warp)      │    │             │             │
-    │  └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘             │
-    │                                                                                         │
-    │  AI/LUX pool enables paying attestation fees with AI tokens                            │
-    └─────────────────────────────────────────────────────────────────────────────────────────┘
-                                              │ Warp
-    ┌─────────────────────────────────────────┼───────────────────────────────────────────────┐
-    │  A-Chain (Attestation Chain) - GPU compute attestation storage                         │
-    │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐             │
-    │  │ GPU Compute │ -> │ TEE Quote   │ -> │ Attestation │ -> │  AI Mint    │             │
-    │  │ (NVIDIA)    │    │ Verified    │    │ Stored      │    │  (Native)   │             │
-    │  └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘             │
-    │                                                                  │                      │
-    │  Payment: LUX required (from bridged assets or native AI→LUX)  │                      │
-    │  Q-Chain provides quantum finality for attestation proofs       │                      │
-    └─────────────────────────────────────────────────────────────────┼──────────────────────┘
-                                                                       │ Teleport (Warp)
-    ┌─────────────────────────────────────────────────────────────────┼──────────────────────┐
-    │  Destination: C-Chain, AI, Zoo (claim minted AI)             ▼                      │
-    │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐                                 │
-    │  │ Warp Proof  │ -> │  Verify &   │ -> │  AI Mint    │                                 │
-    │  │ (from A)    │    │  Claim      │    │  (Remote)   │                                 │
-    │  └─────────────┘    └─────────────┘    └─────────────┘                                 │
-    └─────────────────────────────────────────────────────────────────────────────────────────┘
-
-    References:
-    - LP-2000: AI Mining Standard
-    - HIP-006: AI AI Mining Protocol
-    - ZIP-005: Zoo AI Mining Integration
-    - LP-1001: Q-Chain Quantum Finality
-    - LP-1002: Quasar Consensus (BLS/Ringtail Hybrid)
+ *     ██╗     ██╗   ██╗██╗  ██╗     █████╗ ██╗    ████████╗ ██████╗ ██╗  ██╗███████╗███╗   ██╗
+ *     ██║     ██║   ██║╚██╗██╔╝    ██╔══██╗██║    ╚══██╔══╝██╔═══██╗██║ ██╔╝██╔════╝████╗  ██║
+ *     ██║     ██║   ██║ ╚███╔╝     ███████║██║       ██║   ██║   ██║█████╔╝ █████╗  ██╔██╗ ██║
+ *     ██║     ██║   ██║ ██╔██╗     ██╔══██║██║       ██║   ██║   ██║██╔═██╗ ██╔══╝  ██║╚██╗██║
+ *     ███████╗╚██████╔╝██╔╝ ██╗    ██║  ██║██║       ██║   ╚██████╔╝██║  ██╗███████╗██║ ╚████║
+ *     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚═╝       ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝
+ *
+ *     AI Token - Hardware-attested GPU compute mining
+ *
+ *     Architecture:
+ *     ┌─────────────────────────────────────────────────────────────────────────────────────────┐
+ *     │  Q-Chain (Quantum Finality) - Shared quantum safety via Quasar (BLS/Ringtail)          │
+ *     │  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+ *     │  │ Stores quantum-final block tips from: P-Chain | C-Chain | X-Chain | A-Chain    │   │
+ *     │  │ | AI | Zoo | All Subnets                                                     │   │
+ *     │  └─────────────────────────────────────────────────────────────────────────────────┘   │
+ *     └─────────────────────────────────────────────────────────────────────────────────────────┘
+ *                                               │
+ *     ┌─────────────────────────────────────────┼───────────────────────────────────────────────┐
+ *     │  Source Chains: C-Chain, AI EVM, Zoo EVM                                             │
+ *     │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐             │
+ *     │  │ Pay with    │ -> │ Swap to LUX │ -> │ Bridge to   │ -> │ Attestation │             │
+ *     │  │ AI/ETH/BTC  │    │ (DEX pools) │    │ A-Chain     │    │ Stored      │             │
+ *     │  │ ZOO/any     │    │             │    │ (Warp)      │    │             │             │
+ *     │  └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘             │
+ *     │                                                                                         │
+ *     │  AI/LUX pool enables paying attestation fees with AI tokens                            │
+ *     └─────────────────────────────────────────────────────────────────────────────────────────┘
+ *                                               │ Warp
+ *     ┌─────────────────────────────────────────┼───────────────────────────────────────────────┐
+ *     │  A-Chain (Attestation Chain) - GPU compute attestation storage                         │
+ *     │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐             │
+ *     │  │ GPU Compute │ -> │ TEE Quote   │ -> │ Attestation │ -> │  AI Mint    │             │
+ *     │  │ (NVIDIA)    │    │ Verified    │    │ Stored      │    │  (Native)   │             │
+ *     │  └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘             │
+ *     │                                                                  │                      │
+ *     │  Payment: LUX required (from bridged assets or native AI→LUX)  │                      │
+ *     │  Q-Chain provides quantum finality for attestation proofs       │                      │
+ *     └─────────────────────────────────────────────────────────────────┼──────────────────────┘
+ *                                                                        │ Teleport (Warp)
+ *     ┌─────────────────────────────────────────────────────────────────┼──────────────────────┐
+ *     │  Destination: C-Chain, AI, Zoo (claim minted AI)             ▼                      │
+ *     │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐                                 │
+ *     │  │ Warp Proof  │ -> │  Verify &   │ -> │  AI Mint    │                                 │
+ *     │  │ (from A)    │    │  Claim      │    │  (Remote)   │                                 │
+ *     │  └─────────────┘    └─────────────┘    └─────────────┘                                 │
+ *     └─────────────────────────────────────────────────────────────────────────────────────────┘
+ *
+ *     References:
+ *     - LP-2000: AI Mining Standard
+ *     - HIP-006: AI AI Mining Protocol
+ *     - ZIP-005: Zoo AI Mining Integration
+ *     - LP-1001: Q-Chain Quantum Finality
+ *     - LP-1002: Quasar Consensus (BLS/Ringtail Hybrid)
  */
 
-import {LRC20B} from "./LRC20B.sol";
+import { LRC20B } from "./LRC20B.sol";
+
 // IERC20 is already defined in ERC20B.sol (flattened)
 
 // ============ Precompile Interfaces ============
@@ -103,12 +104,10 @@ interface IDEXRouter {
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
-    function swapExactETHForTokens(
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external payable returns (uint256[] memory amounts);
+    function swapExactETHForTokens(uint256 amountOutMin, address[] calldata path, address to, uint256 deadline)
+        external
+        payable
+        returns (uint256[] memory amounts);
 
     function getAmountsOut(uint256 amountIn, address[] calldata path) external view returns (uint256[] memory amounts);
     function getAmountsIn(uint256 amountOut, address[] calldata path) external view returns (uint256[] memory amounts);
@@ -122,34 +121,34 @@ interface IDEXRouter {
  * @notice Privacy level enum matching TEE hardware capability
  */
 enum PrivacyLevel {
-    Unknown,      // 0: Not attested
-    Public,       // 1: Consumer GPU (stake-based soft attestation)
-    Private,      // 2: Intel SGX or NVIDIA A100
+    Unknown, // 0: Not attested
+    Public, // 1: Consumer GPU (stake-based soft attestation)
+    Private, // 2: Intel SGX or NVIDIA A100
     Confidential, // 3: NVIDIA H100 with TDX/SEV
-    Sovereign     // 4: NVIDIA Blackwell full TEE
+    Sovereign // 4: NVIDIA Blackwell full TEE
 }
 
 /**
  * @notice Attestation types for compute sessions
  */
 enum AttestationType {
-    Start,      // 0: Compute session started
-    Heartbeat,  // 1: Per-minute heartbeat
-    Complete    // 2: Compute session completed
+    Start, // 0: Compute session started
+    Heartbeat, // 1: Per-minute heartbeat
+    Complete // 2: Compute session completed
 }
 
 /**
  * @notice Attestation data structure (ABI-encoded for Warp messages)
  */
 struct Attestation {
-    bytes32 sessionId;      // Unique session identifier
-    bytes32 gpuId;          // GPU device identifier (hash of TEE quote)
-    address miner;          // Miner address to receive credits
-    AttestationType aType;  // Type of attestation
-    PrivacyLevel privacy;   // Privacy/trust level
-    uint64 timestamp;       // Unix timestamp
-    uint64 computeMinutes;  // Minutes of compute (for Complete type)
-    bytes32 prevHash;       // Hash chain link (for integrity)
+    bytes32 sessionId; // Unique session identifier
+    bytes32 gpuId; // GPU device identifier (hash of TEE quote)
+    address miner; // Miner address to receive credits
+    AttestationType aType; // Type of attestation
+    PrivacyLevel privacy; // Privacy/trust level
+    uint64 timestamp; // Unix timestamp
+    uint64 computeMinutes; // Minutes of compute (for Complete type)
+    bytes32 prevHash; // Hash chain link (for integrity)
 }
 
 // ============================================================================
@@ -216,7 +215,9 @@ contract AIPaymentRouter {
 
     // ============ Events ============
 
-    event PaymentReceived(address indexed payer, address indexed token, uint256 amountIn, uint256 luxOut, bytes32 indexed requestId);
+    event PaymentReceived(
+        address indexed payer, address indexed token, uint256 amountIn, uint256 luxOut, bytes32 indexed requestId
+    );
     event AttestationBridged(bytes32 indexed requestId, bytes32 indexed warpMessageId, uint256 luxAmount);
     event TokenAdded(address indexed token);
     event TokenRemoved(address indexed token);
@@ -249,8 +250,8 @@ contract AIPaymentRouter {
         admin = msg.sender;
 
         // Default supported tokens
-        supportedTokens[_wlux] = true;      // LUX (direct)
-        supportedTokens[_aiToken] = true;   // AI (via AI/LUX pool)
+        supportedTokens[_wlux] = true; // LUX (direct)
+        supportedTokens[_aiToken] = true; // AI (via AI/LUX pool)
         supportedTokens[address(0)] = true; // Native ETH
     }
 
@@ -264,12 +265,11 @@ contract AIPaymentRouter {
      * @param sessionId Compute session ID
      * @return requestId The attestation request ID
      */
-    function payForAttestation(
-        address token,
-        uint256 amount,
-        uint256 minLuxOut,
-        bytes32 sessionId
-    ) external payable returns (bytes32 requestId) {
+    function payForAttestation(address token, uint256 amount, uint256 minLuxOut, bytes32 sessionId)
+        external
+        payable
+        returns (bytes32 requestId)
+    {
         if (!supportedTokens[token]) revert UnsupportedToken();
 
         uint256 luxReceived;
@@ -322,7 +322,7 @@ contract AIPaymentRouter {
      * @notice Pay with native ETH (convenience function)
      */
     function payWithETH(uint256 minLuxOut, bytes32 sessionId) external payable returns (bytes32) {
-        return this.payForAttestation{value: msg.value}(address(0), msg.value, minLuxOut, sessionId);
+        return this.payForAttestation{ value: msg.value }(address(0), msg.value, minLuxOut, sessionId);
     }
 
     /**
@@ -350,11 +350,8 @@ contract AIPaymentRouter {
         path[0] = WETH;
         path[1] = WLUX;
 
-        uint256[] memory amounts = IDEXRouter(DEX_ROUTER).swapExactETHForTokens{value: ethAmount}(
-            minLuxOut,
-            path,
-            address(this),
-            block.timestamp + 300
+        uint256[] memory amounts = IDEXRouter(DEX_ROUTER).swapExactETHForTokens{ value: ethAmount }(
+            minLuxOut, path, address(this), block.timestamp + 300
         );
 
         return amounts[1];
@@ -367,13 +364,8 @@ contract AIPaymentRouter {
         path[0] = token;
         path[1] = WLUX;
 
-        uint256[] memory amounts = IDEXRouter(DEX_ROUTER).swapExactTokensForTokens(
-            amountIn,
-            minLuxOut,
-            path,
-            address(this),
-            block.timestamp + 300
-        );
+        uint256[] memory amounts = IDEXRouter(DEX_ROUTER)
+            .swapExactTokensForTokens(amountIn, minLuxOut, path, address(this), block.timestamp + 300);
 
         return amounts[1];
     }
@@ -411,7 +403,7 @@ contract AIPaymentRouter {
         admin = newAdmin;
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // ============================================================================
@@ -486,7 +478,9 @@ contract AINative is LRC20B {
     event HeartbeatReceived(bytes32 indexed sessionId, address indexed miner, uint64 timestamp, uint256 reward);
     event SessionCompleted(bytes32 indexed sessionId, address indexed miner, uint64 totalMinutes, uint256 totalReward);
     event InitialLiquidityMinted(address indexed recipient, uint256 amount);
-    event Teleported(bytes32 indexed teleportId, bytes32 indexed destChainId, address indexed recipient, uint256 amount);
+    event Teleported(
+        bytes32 indexed teleportId, bytes32 indexed destChainId, address indexed recipient, uint256 amount
+    );
     event PaymentReceived(bytes32 indexed requestId, address indexed payer, uint256 luxAmount);
 
     // ============ Errors ============
@@ -512,10 +506,10 @@ contract AINative is LRC20B {
         require(_liquidityRecipient != address(0), "Invalid liquidity recipient");
 
         // Set tier multipliers (basis points: 10000 = 1x)
-        tierMultiplier[PrivacyLevel.Public] = 2500;       // 0.25x (stake-required)
-        tierMultiplier[PrivacyLevel.Private] = 5000;      // 0.5x (SGX/A100)
+        tierMultiplier[PrivacyLevel.Public] = 2500; // 0.25x (stake-required)
+        tierMultiplier[PrivacyLevel.Private] = 5000; // 0.5x (SGX/A100)
         tierMultiplier[PrivacyLevel.Confidential] = 10000; // 1.0x (H100/TDX)
-        tierMultiplier[PrivacyLevel.Sovereign] = 15000;   // 1.5x (Blackwell)
+        tierMultiplier[PrivacyLevel.Sovereign] = 15000; // 1.5x (Blackwell)
 
         // Mint initial liquidity allocation (10% = 100M AI)
         liquidityPool = _liquidityRecipient;
@@ -556,9 +550,8 @@ contract AINative is LRC20B {
         }
 
         // Verify TEE quote via precompile
-        (bool success, bytes memory result) = ATTESTATION_PRECOMPILE.staticcall(
-            abi.encodeWithSelector(IAttestation.verifyTEEQuote.selector, teeQuote)
-        );
+        (bool success, bytes memory result) =
+            ATTESTATION_PRECOMPILE.staticcall(abi.encodeWithSelector(IAttestation.verifyTEEQuote.selector, teeQuote));
         require(success, "TEE verification failed");
 
         (bool teeValid, bytes32 gpuId, uint8 privacyLevel) = abi.decode(result, (bool, bytes32, uint8));
@@ -773,13 +766,15 @@ contract AIRemote is LRC20B {
      */
     function batchClaimTeleports(uint32[] calldata warpIndices) external returns (uint256 totalAmount) {
         for (uint256 i = 0; i < warpIndices.length; i++) {
-            (IWarp.WarpMessage memory message, bool valid) = IWarp(WARP_PRECOMPILE).getVerifiedWarpMessage(warpIndices[i]);
+            (IWarp.WarpMessage memory message, bool valid) =
+                IWarp(WARP_PRECOMPILE).getVerifiedWarpMessage(warpIndices[i]);
 
             if (!valid) continue;
             if (message.sourceChainID != A_CHAIN_ID) continue;
             if (message.originSenderAddress != A_CHAIN_TOKEN && !trustedSources[message.originSenderAddress]) continue;
 
-            bytes32 teleportId = keccak256(abi.encode(message.sourceChainID, message.originSenderAddress, message.payload));
+            bytes32 teleportId =
+                keccak256(abi.encode(message.sourceChainID, message.originSenderAddress, message.payload));
             if (claimed[teleportId]) continue;
 
             claimed[teleportId] = true;
@@ -831,7 +826,9 @@ contract AINativeFactory {
 }
 
 contract AIRemoteFactory {
-    event AIRemoteDeployed(address indexed token, bytes32 indexed aChainId, address indexed aChainToken, uint256 chainId);
+    event AIRemoteDeployed(
+        address indexed token, bytes32 indexed aChainId, address indexed aChainToken, uint256 chainId
+    );
 
     function deploy(bytes32 aChainId, address aChainToken) external returns (address token) {
         token = address(new AIRemote(aChainId, aChainToken));

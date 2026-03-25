@@ -2,11 +2,11 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
-import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC4626 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title LRC4626
@@ -23,16 +23,12 @@ contract LRC4626 is ERC4626, ERC20Permit, Ownable {
      * @param name_ Vault token name
      * @param symbol_ Vault token symbol
      */
-    constructor(
-        IERC20 asset_,
-        string memory name_,
-        string memory symbol_
-    )
+    constructor(IERC20 asset_, string memory name_, string memory symbol_)
         ERC4626(asset_)
         ERC20(name_, symbol_)
         ERC20Permit(name_)
         Ownable(msg.sender)
-    {}
+    { }
 
     /**
      * @notice Returns the total assets managed by the vault
@@ -75,12 +71,7 @@ contract LRC4626 is ERC4626, ERC20Permit, Ownable {
         return super.decimals();
     }
 
-    function nonces(address owner)
-        public
-        view
-        override(ERC20Permit)
-        returns (uint256)
-    {
+    function nonces(address owner) public view override(ERC20Permit) returns (uint256) {
         return super.nonces(owner);
     }
 }

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IOracleSource} from "../interfaces/IOracleSource.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IOracleSource } from "../interfaces/IOracleSource.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /// @notice Minimal Uniswap V2 pair interface for TWAP
 interface IUniswapV2Pair {
@@ -175,21 +175,17 @@ contract TWAPSource is IOracleSource, AccessControl {
         address pair = pairs[asset];
         if (pair == address(0)) return;
 
-        (, , uint32 blockTimestampLast) = IUniswapV2Pair(pair).getReserves();
+        (,, uint32 blockTimestampLast) = IUniswapV2Pair(pair).getReserves();
 
-        uint256 priceCumulative = isToken0[asset]
-            ? IUniswapV2Pair(pair).price0CumulativeLast()
-            : IUniswapV2Pair(pair).price1CumulativeLast();
+        uint256 priceCumulative =
+            isToken0[asset] ? IUniswapV2Pair(pair).price0CumulativeLast() : IUniswapV2Pair(pair).price1CumulativeLast();
 
-        observations[asset] = Observation({
-            timestamp: blockTimestampLast,
-            priceCumulative: priceCumulative
-        });
+        observations[asset] = Observation({ timestamp: blockTimestampLast, priceCumulative: priceCumulative });
 
         lastHeartbeat[asset] = block.timestamp;
 
         // Emit spot price for monitoring
-        (uint112 r0, uint112 r1, ) = IUniswapV2Pair(pair).getReserves();
+        (uint112 r0, uint112 r1,) = IUniswapV2Pair(pair).getReserves();
         emit ObservationUpdated(asset, _getSpotPrice(asset, r0, r1), block.timestamp);
     }
 
@@ -208,9 +204,9 @@ contract TWAPSource is IOracleSource, AccessControl {
 
     function _normalizeToUsd(uint256 amount, uint8 decimals) internal pure returns (uint256) {
         if (decimals < 18) {
-            return amount * 10**(18 - decimals);
+            return amount * 10 ** (18 - decimals);
         } else if (decimals > 18) {
-            return amount / 10**(decimals - 18);
+            return amount / 10 ** (decimals - 18);
         }
         return amount;
     }

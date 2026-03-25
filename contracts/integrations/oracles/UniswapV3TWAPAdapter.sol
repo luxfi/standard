@@ -6,4 +6,5 @@ pragma solidity ^0.8.31;
 /// @dev TODO: Implement observation-based TWAP calculation
 abstract contract UniswapV3TWAPAdapter {
     // UniswapV3 TWAP-specific implementation pending
-}
+
+    }

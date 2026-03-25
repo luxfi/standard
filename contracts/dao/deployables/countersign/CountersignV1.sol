@@ -1,23 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IKYCVerifierV1
-} from "../../interfaces/services/IKYCVerifierV1.sol";
-import {IVersion} from "../../interfaces/deployables/IVersion.sol";
-import {
-    ICountersignV1
-} from "../../interfaces/deployables/ICountersignV1.sol";
-import {IDeploymentBlock} from "../../interfaces/IDeploymentBlock.sol";
-import {IMultisend} from "../../interfaces/safe/IMultiSend.sol";
-import {
-    DeploymentBlockInitializable
-} from "../../DeploymentBlockInitializable.sol";
-import {InitializerEventEmitter} from "../../InitializerEventEmitter.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {
-    Ownable2StepUpgradeable
-} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import { IKYCVerifierV1 } from "../../interfaces/services/IKYCVerifierV1.sol";
+import { IVersion } from "../../interfaces/deployables/IVersion.sol";
+import { ICountersignV1 } from "../../interfaces/deployables/ICountersignV1.sol";
+import { IDeploymentBlock } from "../../interfaces/IDeploymentBlock.sol";
+import { IMultisend } from "../../interfaces/safe/IMultiSend.sol";
+import { DeploymentBlockInitializable } from "../../DeploymentBlockInitializable.sol";
+import { InitializerEventEmitter } from "../../InitializerEventEmitter.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 /**
  * @title CountersignV1
@@ -68,25 +60,45 @@ contract CountersignV1 is
      * @custom:storage-location erc7201:DAO.Countersign.main
      */
     struct CountersignStorage {
-        /** @notice Whether the initial execution has been completed */
+        /**
+         * @notice Whether the initial execution has been completed
+         */
         bool initialExecutionComplete;
-        /** @notice URI pointing to the agreement document (e.g., IPFS hash) */
+        /**
+         * @notice URI pointing to the agreement document (e.g., IPFS hash)
+         */
         string agreementUri;
-        /** @notice Address of the KYC verifier contract for signature validation */
+        /**
+         * @notice Address of the KYC verifier contract for signature validation
+         */
         address kycVerifier;
-        /** @notice Timestamp after which no more signatures are accepted */
+        /**
+         * @notice Timestamp after which no more signatures are accepted
+         */
         uint48 signingDeadline;
-        /** @notice Timestamp after which execution is no longer allowed */
+        /**
+         * @notice Timestamp after which execution is no longer allowed
+         */
         uint48 executionDeadline;
-        /** @notice Address of the MultiSend contract for batch transaction execution */
+        /**
+         * @notice Address of the MultiSend contract for batch transaction execution
+         */
         address multisend;
-        /** @notice Minimum total weight required from signers for valid execution */
+        /**
+         * @notice Minimum total weight required from signers for valid execution
+         */
         uint256 minWeight;
-        /** @notice Array of all signer addresses (both required and optional) */
+        /**
+         * @notice Array of all signer addresses (both required and optional)
+         */
         address[] signerAddresses;
-        /** @notice Maps signer addresses to their complete data including status and transactions */
+        /**
+         * @notice Maps signer addresses to their complete data including status and transactions
+         */
         mapping(address signer => Signer signerData) signerData;
-        /** @notice Encoded transactions to execute before any signer transactions */
+        /**
+         * @notice Encoded transactions to execute before any signer transactions
+         */
         bytes preExecutionTransactions;
     }
 
@@ -102,11 +114,7 @@ contract CountersignV1 is
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      * @return $ The storage struct for CountersignV1
      */
-    function _getCountersignStorage()
-        internal
-        pure
-        returns (CountersignStorage storage $)
-    {
+    function _getCountersignStorage() internal pure returns (CountersignStorage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := COUNTERSIGN_STORAGE_LOCATION
@@ -167,7 +175,7 @@ contract CountersignV1 is
         $.preExecutionTransactions = preExecutionTransactions_;
 
         // Initialize all signers with their configuration
-        for (uint256 i = 0; i < signerInitializations_.length; ) {
+        for (uint256 i = 0; i < signerInitializations_.length;) {
             SignerInitialization memory signerInit = signerInitializations_[i];
 
             // Add to signers array for iteration
@@ -195,13 +203,7 @@ contract CountersignV1 is
     /**
      * @inheritdoc ICountersignV1
      */
-    function initialExecutionComplete()
-        public
-        view
-        virtual
-        override
-        returns (bool)
-    {
+    function initialExecutionComplete() public view virtual override returns (bool) {
         CountersignStorage storage $ = _getCountersignStorage();
         return $.initialExecutionComplete;
     }
@@ -209,13 +211,7 @@ contract CountersignV1 is
     /**
      * @inheritdoc ICountersignV1
      */
-    function agreementUri()
-        public
-        view
-        virtual
-        override
-        returns (string memory)
-    {
+    function agreementUri() public view virtual override returns (string memory) {
         CountersignStorage storage $ = _getCountersignStorage();
         return $.agreementUri;
     }
@@ -263,13 +259,7 @@ contract CountersignV1 is
     /**
      * @inheritdoc ICountersignV1
      */
-    function signerAddresses()
-        public
-        view
-        virtual
-        override
-        returns (address[] memory)
-    {
+    function signerAddresses() public view virtual override returns (address[] memory) {
         CountersignStorage storage $ = _getCountersignStorage();
         return $.signerAddresses;
     }
@@ -277,9 +267,7 @@ contract CountersignV1 is
     /**
      * @inheritdoc ICountersignV1
      */
-    function signerData(
-        address signer_
-    )
+    function signerData(address signer_)
         public
         view
         override
@@ -302,13 +290,7 @@ contract CountersignV1 is
     /**
      * @inheritdoc ICountersignV1
      */
-    function preExecutionTransactions()
-        public
-        view
-        virtual
-        override
-        returns (bytes memory)
-    {
+    function preExecutionTransactions() public view virtual override returns (bytes memory) {
         CountersignStorage storage $ = _getCountersignStorage();
         return $.preExecutionTransactions;
     }
@@ -320,10 +302,7 @@ contract CountersignV1 is
      * @dev Validates signer eligibility and KYC status before recording signature.
      * Updates signer state and timestamp upon successful signature.
      */
-    function sign(
-        bytes calldata verifyingSignature_,
-        uint48 signatureExpiration_
-    ) public virtual override {
+    function sign(bytes calldata verifyingSignature_, uint48 signatureExpiration_) public virtual override {
         CountersignStorage storage $ = _getCountersignStorage();
 
         // Check 1: Ensure we're within the signing period
@@ -344,11 +323,7 @@ contract CountersignV1 is
         }
 
         // Check 4: Verify KYC status through external verifier
-        IKYCVerifierV1($.kycVerifier).verify(
-            msg.sender,
-            signatureExpiration_,
-            verifyingSignature_
-        );
+        IKYCVerifierV1($.kycVerifier).verify(msg.sender, signatureExpiration_, verifyingSignature_);
 
         // Record signature
         signer.signed = true;
@@ -411,14 +386,9 @@ contract CountersignV1 is
      * @inheritdoc ERC165
      * @dev Supports ICountersignV1, IVersion, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(ICountersignV1).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(ICountersignV1).interfaceId || interfaceId_ == type(IVersion).interfaceId
+            || interfaceId_ == type(IDeploymentBlock).interfaceId || super.supportsInterface(interfaceId_);
     }
 
     // ======================================================================
@@ -439,9 +409,7 @@ contract CountersignV1 is
         // Step 1: Execute pre-execution transactions if any
         if ($.preExecutionTransactions.length > 0) {
             // solhint-disable-next-line avoid-low-level-calls
-            (bool success, ) = $.multisend.delegatecall(
-                abi.encodeCall(IMultisend.multiSend, $.preExecutionTransactions)
-            );
+            (bool success,) = $.multisend.delegatecall(abi.encodeCall(IMultisend.multiSend, $.preExecutionTransactions));
 
             if (!success) {
                 revert PreExecutionTxFailed();
@@ -451,15 +419,16 @@ contract CountersignV1 is
         uint256 executedWeight;
 
         // Step 2: Process all signers
-        for (uint256 i = 0; i < $.signerAddresses.length; ) {
+        for (uint256 i = 0; i < $.signerAddresses.length;) {
             address signerAddress = $.signerAddresses[i];
             Signer storage signer = $.signerData[signerAddress];
 
             // Check if signer has signed
             if (!signer.signed) {
                 // Required signers must sign
-                if (signer.required)
+                if (signer.required) {
                     revert RequiredSignerNotSigned(signerAddress);
+                }
 
                 unchecked {
                     ++i;
@@ -470,9 +439,7 @@ contract CountersignV1 is
             // Execute signer's transactions if any
             if (signer.transactions.length > 0) {
                 // solhint-disable-next-line avoid-low-level-calls
-                (bool success, ) = $.multisend.delegatecall(
-                    abi.encodeCall(IMultisend.multiSend, signer.transactions)
-                );
+                (bool success,) = $.multisend.delegatecall(abi.encodeCall(IMultisend.multiSend, signer.transactions));
 
                 if (success) {
                     // Mark as executed and accumulate weight
@@ -513,7 +480,7 @@ contract CountersignV1 is
      */
     function _followUpExecutions(CountersignStorage storage $) internal {
         // Process all signers looking for unexecuted transactions
-        for (uint256 i = 0; i < $.signerAddresses.length; ) {
+        for (uint256 i = 0; i < $.signerAddresses.length;) {
             address signerAddress = $.signerAddresses[i];
             Signer storage signer = $.signerData[signerAddress];
 
@@ -521,11 +488,7 @@ contract CountersignV1 is
             // - Signer didn't sign
             // - Already executed successfully
             // - No transactions to execute
-            if (
-                !signer.signed ||
-                signer.executed ||
-                signer.transactions.length == 0
-            ) {
+            if (!signer.signed || signer.executed || signer.transactions.length == 0) {
                 unchecked {
                     ++i;
                 }
@@ -534,9 +497,7 @@ contract CountersignV1 is
 
             // Attempt to execute signer's transactions
             // solhint-disable-next-line avoid-low-level-calls
-            (bool success, ) = $.multisend.delegatecall(
-                abi.encodeCall(IMultisend.multiSend, signer.transactions)
-            );
+            (bool success,) = $.multisend.delegatecall(abi.encodeCall(IMultisend.multiSend, signer.transactions));
 
             if (success) {
                 // Mark as executed on success

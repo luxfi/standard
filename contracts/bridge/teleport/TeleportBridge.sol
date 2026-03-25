@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IBridgeToken} from "./IBridgeToken.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IBridgeToken } from "./IBridgeToken.sol";
 
 /**
  * @title Bridge
@@ -83,11 +83,7 @@ contract Bridge is AccessControl, ReentrancyGuard, Pausable, EIP712 {
     );
 
     event BridgeMinted(
-        bytes32 indexed claimId,
-        address indexed token,
-        address indexed recipient,
-        uint256 amount,
-        uint256 fee
+        bytes32 indexed claimId, address indexed token, address indexed recipient, uint256 amount, uint256 fee
     );
 
     event TokenAllowlistUpdated(address indexed token, bool allowed);
@@ -110,13 +106,9 @@ contract Bridge is AccessControl, ReentrancyGuard, Pausable, EIP712 {
     error TransferFailed();
 
     // ============ Constructor ============
-    constructor(
-        string memory name,
-        string memory version,
-        address admin,
-        address _feeRecipient,
-        uint256 _feeRate
-    ) EIP712(name, version) {
+    constructor(string memory name, string memory version, address admin, address _feeRecipient, uint256 _feeRate)
+        EIP712(name, version)
+    {
         if (admin == address(0)) revert InvalidRecipient();
         if (_feeRecipient == address(0)) revert InvalidFeeRecipient();
         if (_feeRate > MAX_FEE_RATE) revert InvalidFeeRate();
@@ -141,13 +133,12 @@ contract Bridge is AccessControl, ReentrancyGuard, Pausable, EIP712 {
      * @param recipient Recipient address on destination chain
      * @param vault Whether to vault (lock) or burn tokens
      */
-    function bridgeBurn(
-        address token,
-        uint256 amount,
-        uint256 toChainId,
-        address recipient,
-        bool vault
-    ) external nonReentrant whenNotPaused returns (bytes32 burnId) {
+    function bridgeBurn(address token, uint256 amount, uint256 toChainId, address recipient, bool vault)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (bytes32 burnId)
+    {
         if (!allowedTokens[token]) revert TokenNotAllowed(token);
         if (amount == 0) revert InvalidAmount();
         if (recipient == address(0)) revert InvalidRecipient();
@@ -157,17 +148,11 @@ contract Bridge is AccessControl, ReentrancyGuard, Pausable, EIP712 {
         uint256 currentNonce = burnNonce++;
 
         // Calculate burnId for canonical reference
-        burnId = keccak256(abi.encode(
-            block.chainid,
-            address(this),
-            token,
-            msg.sender,
-            amount,
-            toChainId,
-            recipient,
-            vault,
-            currentNonce
-        ));
+        burnId = keccak256(
+            abi.encode(
+                block.chainid, address(this), token, msg.sender, amount, toChainId, recipient, vault, currentNonce
+            )
+        );
 
         // Burn or transfer tokens
         IBridgeToken bridgeToken = IBridgeToken(token);
@@ -179,16 +164,7 @@ contract Bridge is AccessControl, ReentrancyGuard, Pausable, EIP712 {
             bridgeToken.bridgeBurn(msg.sender, amount);
         }
 
-        emit BridgeBurned(
-            burnId,
-            token,
-            msg.sender,
-            amount,
-            toChainId,
-            recipient,
-            vault,
-            currentNonce
-        );
+        emit BridgeBurned(burnId, token, msg.sender, amount, toChainId, recipient, vault, currentNonce);
     }
 
     /**
@@ -196,10 +172,12 @@ contract Bridge is AccessControl, ReentrancyGuard, Pausable, EIP712 {
      * @param claim Claim data from source chain burn
      * @param signature MPC oracle signature
      */
-    function bridgeMint(
-        ClaimData calldata claim,
-        bytes calldata signature
-    ) external nonReentrant whenNotPaused returns (bytes32 claimId) {
+    function bridgeMint(ClaimData calldata claim, bytes calldata signature)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (bytes32 claimId)
+    {
         // Validate deadline
         if (block.timestamp > claim.deadline) revert ClaimExpired();
 
@@ -211,34 +189,38 @@ contract Bridge is AccessControl, ReentrancyGuard, Pausable, EIP712 {
         if (claim.recipient == address(0)) revert InvalidRecipient();
 
         // Calculate claimId for replay protection
-        claimId = keccak256(abi.encode(
-            claim.burnTxHash,
-            claim.logIndex,
-            claim.token,
-            claim.amount,
-            claim.toChainId,
-            claim.recipient,
-            claim.vault,
-            claim.nonce,
-            claim.deadline
-        ));
+        claimId = keccak256(
+            abi.encode(
+                claim.burnTxHash,
+                claim.logIndex,
+                claim.token,
+                claim.amount,
+                claim.toChainId,
+                claim.recipient,
+                claim.vault,
+                claim.nonce,
+                claim.deadline
+            )
+        );
 
         // Check replay protection
         if (usedClaims[claimId]) revert ClaimAlreadyUsed(claimId);
 
         // Verify EIP-712 signature
-        bytes32 structHash = keccak256(abi.encode(
-            CLAIM_TYPEHASH,
-            claim.burnTxHash,
-            claim.logIndex,
-            claim.token,
-            claim.amount,
-            claim.toChainId,
-            claim.recipient,
-            claim.vault,
-            claim.nonce,
-            claim.deadline
-        ));
+        bytes32 structHash = keccak256(
+            abi.encode(
+                CLAIM_TYPEHASH,
+                claim.burnTxHash,
+                claim.logIndex,
+                claim.token,
+                claim.amount,
+                claim.toChainId,
+                claim.recipient,
+                claim.vault,
+                claim.nonce,
+                claim.deadline
+            )
+        );
 
         bytes32 digest = _hashTypedDataV4(structHash);
         address signer = ECDSA.recover(digest, signature);
@@ -285,35 +267,39 @@ contract Bridge is AccessControl, ReentrancyGuard, Pausable, EIP712 {
      * @notice Calculate claimId for a given claim
      */
     function calculateClaimId(ClaimData calldata claim) external pure returns (bytes32) {
-        return keccak256(abi.encode(
-            claim.burnTxHash,
-            claim.logIndex,
-            claim.token,
-            claim.amount,
-            claim.toChainId,
-            claim.recipient,
-            claim.vault,
-            claim.nonce,
-            claim.deadline
-        ));
+        return keccak256(
+            abi.encode(
+                claim.burnTxHash,
+                claim.logIndex,
+                claim.token,
+                claim.amount,
+                claim.toChainId,
+                claim.recipient,
+                claim.vault,
+                claim.nonce,
+                claim.deadline
+            )
+        );
     }
 
     /**
      * @notice Get the digest to sign for a claim
      */
     function getClaimDigest(ClaimData calldata claim) external view returns (bytes32) {
-        bytes32 structHash = keccak256(abi.encode(
-            CLAIM_TYPEHASH,
-            claim.burnTxHash,
-            claim.logIndex,
-            claim.token,
-            claim.amount,
-            claim.toChainId,
-            claim.recipient,
-            claim.vault,
-            claim.nonce,
-            claim.deadline
-        ));
+        bytes32 structHash = keccak256(
+            abi.encode(
+                CLAIM_TYPEHASH,
+                claim.burnTxHash,
+                claim.logIndex,
+                claim.token,
+                claim.amount,
+                claim.toChainId,
+                claim.recipient,
+                claim.vault,
+                claim.nonce,
+                claim.deadline
+            )
+        );
         return _hashTypedDataV4(structHash);
     }
 
@@ -332,13 +318,13 @@ contract Bridge is AccessControl, ReentrancyGuard, Pausable, EIP712 {
      */
     function setOracle(address oracle, bool active) external onlyRole(ADMIN_ROLE) {
         if (oracle == address(0)) revert InvalidOracle();
-        
+
         if (active) {
             _grantRole(ORACLE_ROLE, oracle);
         } else {
             _revokeRole(ORACLE_ROLE, oracle);
         }
-        
+
         oracleActive[oracle] = active;
         emit OracleUpdated(oracle, active);
     }
@@ -373,11 +359,7 @@ contract Bridge is AccessControl, ReentrancyGuard, Pausable, EIP712 {
     /**
      * @notice Emergency withdraw stuck tokens (admin only)
      */
-    function emergencyWithdraw(
-        address token,
-        address to,
-        uint256 amount
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function emergencyWithdraw(address token, address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (to == address(0)) revert InvalidRecipient();
         IERC20(token).safeTransfer(to, amount);
         emit EmergencyWithdraw(token, to, amount);

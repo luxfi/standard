@@ -41,7 +41,9 @@ interface IOracle {
     /// @return prices Array of prices (18 decimals USD)
     /// @return timestamps Array of update timestamps
     function getPrices(address[] calldata assets)
-        external view returns (uint256[] memory prices, uint256[] memory timestamps);
+        external
+        view
+        returns (uint256[] memory prices, uint256[] memory timestamps);
 
     // =========================================================================
     // Perps-Specific Functions

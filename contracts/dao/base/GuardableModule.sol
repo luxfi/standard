@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {Enum} from "@gnosis.pm/safe-contracts/interfaces/Enum.sol";
-import {IAvatar} from "../interfaces/IAvatar.sol";
-import {IGuard} from "../interfaces/IGuard.sol";
+import { Enum } from "@gnosis.pm/safe-contracts/interfaces/Enum.sol";
+import { IAvatar } from "../interfaces/IAvatar.sol";
+import { IGuard } from "../interfaces/IGuard.sol";
 
 /**
  * @title GuardableModule
@@ -11,7 +11,7 @@ import {IGuard} from "../interfaces/IGuard.sol";
  * @notice Base contract for modules that can execute transactions through a Safe (avatar)
  * @dev This is a local implementation that removes dependency on gnosis.pm/safe-contracts
  * and gnosis-guild/zodiac packages while maintaining the same functionality.
- * 
+ *
  * The module pattern allows for flexible execution of transactions through a Safe,
  * with optional guard functionality for pre/post transaction checks.
  */
@@ -30,11 +30,11 @@ abstract contract GuardableModule {
 
     /// @notice Address of the avatar (Safe) that this module is attached to
     address public avatar;
-    
+
     /// @notice Address of the target that transactions will be executed on
     /// @dev In most cases, target == avatar, but they can be different for complex setups
     address public target;
-    
+
     /// @notice Optional guard contract that can implement pre/post transaction checks
     address public guard;
 
@@ -111,37 +111,32 @@ abstract contract GuardableModule {
      * @return success True if the transaction succeeded
      * @dev This function handles guard checks and transaction execution
      */
-    function exec(
-        address to,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation
-    ) internal virtual returns (bool success) {
+    function exec(address to, uint256 value, bytes memory data, Enum.Operation operation)
+        internal
+        virtual
+        returns (bool success)
+    {
         // Pre-transaction guard check
         if (guard != address(0)) {
-            IGuard(guard).checkTransaction(
-                to,
-                value,
-                data,
-                operation,
-                // Additional parameters for guard interface
-                0, // safeTxGas
-                0, // baseGas
-                0, // gasPrice
-                address(0), // gasToken
-                payable(address(0)), // refundReceiver
-                "", // signatures
-                msg.sender
-            );
+            IGuard(guard)
+                .checkTransaction(
+                    to,
+                    value,
+                    data,
+                    operation,
+                    // Additional parameters for guard interface
+                    0, // safeTxGas
+                    0, // baseGas
+                    0, // gasPrice
+                    address(0), // gasToken
+                    payable(address(0)), // refundReceiver
+                    "", // signatures
+                    msg.sender
+                );
         }
 
         // Execute transaction through avatar
-        success = IAvatar(target).execTransactionFromModule(
-            to,
-            value,
-            data,
-            operation
-        );
+        success = IAvatar(target).execTransactionFromModule(to, value, data, operation);
 
         // Post-transaction guard check
         if (guard != address(0)) {

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {IERC20, SafeERC20} from "@luxfi/standard/tokens/ERC20.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IERC20, SafeERC20 } from "@luxfi/standard/tokens/ERC20.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title Vault
@@ -35,15 +35,15 @@ contract Vault is AccessControl {
     address public router;
 
     /// @notice Per-chain accounting
-    mapping(bytes32 => uint256) public total;    // All-time received
-    mapping(bytes32 => uint256) public pending;  // Awaiting distribution
+    mapping(bytes32 => uint256) public total; // All-time received
+    mapping(bytes32 => uint256) public pending; // Awaiting distribution
 
     /// @notice Processed Warp message IDs (replay protection)
     mapping(bytes32 => bool) public processed;
 
     /// @notice Global totals
-    uint256 public sum;      // All-time total
-    uint256 public balance;  // Current pending
+    uint256 public sum; // All-time total
+    uint256 public balance; // Current pending
 
     // ============ Events ============
 
@@ -136,7 +136,9 @@ contract Vault is AccessControl {
                 totalFlushed += amount;
                 emit Flush(chains[i], amount);
             }
-            unchecked { i++; }
+            unchecked {
+                i++;
+            }
         }
 
         if (totalFlushed > 0) {

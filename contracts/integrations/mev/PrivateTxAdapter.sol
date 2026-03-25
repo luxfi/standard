@@ -6,4 +6,5 @@ pragma solidity ^0.8.31;
 /// @dev TODO: Implement MEV-protected transaction routing
 abstract contract PrivateTxAdapter {
     // Private transaction-specific implementation pending
-}
+
+    }

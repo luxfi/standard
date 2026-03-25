@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IBridgeAdapter, BridgeParams, BridgeRoute, BridgeStatus} from "../../interfaces/adapters/IBridgeAdapter.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IBridgeAdapter, BridgeParams, BridgeRoute, BridgeStatus } from "../../interfaces/adapters/IBridgeAdapter.sol";
 
 // =============================================================================
 // LAYERZERO V2 INTERFACES
@@ -42,15 +42,12 @@ struct Origin {
 
 /// @notice LayerZero V2 endpoint interface
 interface ILayerZeroEndpointV2 {
-    function send(
-        MessagingParams calldata _params,
-        address _refundAddress
-    ) external payable returns (MessagingReceipt memory);
+    function send(MessagingParams calldata _params, address _refundAddress)
+        external
+        payable
+        returns (MessagingReceipt memory);
 
-    function quote(
-        MessagingParams calldata _params,
-        address _sender
-    ) external view returns (MessagingFee memory);
+    function quote(MessagingParams calldata _params, address _sender) external view returns (MessagingFee memory);
 
     function setDelegate(address _delegate) external;
 }
@@ -149,7 +146,10 @@ contract LayerZeroAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
         emit ChainAdded(_chainId, _eid);
     }
 
-    function setTokenMapping(address localToken, uint256 destChainId, address destToken) external onlyRole(BRIDGE_ADMIN_ROLE) {
+    function setTokenMapping(address localToken, uint256 destChainId, address destToken)
+        external
+        onlyRole(BRIDGE_ADMIN_ROLE)
+    {
         tokenMapping[localToken][destChainId] = destToken;
         emit TokenMapped(localToken, destChainId, destToken);
     }
@@ -168,11 +168,25 @@ contract LayerZeroAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     // IBridgeAdapter: metadata
     // -------------------------------------------------------------------------
 
-    function version() external pure override returns (string memory) { return "1.0.0"; }
-    function protocol() external pure override returns (string memory) { return "LayerZero V2"; }
-    function chainId() external view override returns (uint256) { return srcChainId; }
-    function endpoint() external view override returns (address) { return address(lzEndpoint); }
-    function supportedChains() external view override returns (uint256[] memory) { return _supportedChains; }
+    function version() external pure override returns (string memory) {
+        return "1.0.0";
+    }
+
+    function protocol() external pure override returns (string memory) {
+        return "LayerZero V2";
+    }
+
+    function chainId() external view override returns (uint256) {
+        return srcChainId;
+    }
+
+    function endpoint() external view override returns (address) {
+        return address(lzEndpoint);
+    }
+
+    function supportedChains() external view override returns (uint256[] memory) {
+        return _supportedChains;
+    }
 
     function isRouteSupported(uint256 dstChainId, address token) external view override returns (bool) {
         return chainIdToEid[dstChainId] != 0 && tokenMapping[token][dstChainId] != address(0);
@@ -224,7 +238,7 @@ contract LayerZeroAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
         });
 
         // Send via LayerZero endpoint
-        MessagingReceipt memory receipt = lzEndpoint.send{value: msg.value}(msgParams, msg.sender);
+        MessagingReceipt memory receipt = lzEndpoint.send{ value: msg.value }(msgParams, msg.sender);
 
         // Track bridge status
         bridgeId = keccak256(abi.encodePacked(receipt.guid, _nonce++));
@@ -252,18 +266,17 @@ contract LayerZeroAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     // -------------------------------------------------------------------------
 
     function estimateFees(uint256 dstChainId, address token, uint256 amount)
-        external view override returns (uint256 bridgeFee, uint256 protocolFee)
+        external
+        view
+        override
+        returns (uint256 bridgeFee, uint256 protocolFee)
     {
         uint32 destEid = chainIdToEid[dstChainId];
         if (destEid == 0) revert UnsupportedChain(dstChainId);
 
         bytes memory payload = abi.encode(address(0), token, amount, bytes(""));
         MessagingParams memory msgParams = MessagingParams({
-            dstEid: destEid,
-            receiver: trustedRemotes[dstChainId],
-            message: payload,
-            options: "",
-            payInLzToken: false
+            dstEid: destEid, receiver: trustedRemotes[dstChainId], message: payload, options: "", payInLzToken: false
         });
 
         MessagingFee memory fee = lzEndpoint.quote(msgParams, address(this));
@@ -284,13 +297,9 @@ contract LayerZeroAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     // -------------------------------------------------------------------------
 
     /// @notice Called by the LayerZero endpoint when a message arrives
-    function lzReceive(
-        Origin calldata _origin,
-        bytes32 _guid,
-        bytes calldata _message,
-        address,
-        bytes calldata
-    ) external {
+    function lzReceive(Origin calldata _origin, bytes32 _guid, bytes calldata _message, address, bytes calldata)
+        external
+    {
         if (msg.sender != address(lzEndpoint)) revert OnlyEndpoint();
 
         // Verify trusted remote
@@ -304,11 +313,12 @@ contract LayerZeroAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
 
         // Decode and release tokens to recipient
         if (_message.length > 0) {
-            (address recipient, address token, uint256 amount,) = abi.decode(_message, (address, address, uint256, bytes));
+            (address recipient, address token, uint256 amount,) =
+                abi.decode(_message, (address, address, uint256, bytes));
             IERC20(token).safeTransfer(recipient, amount);
         }
     }
 
     /// @notice Allow contract to receive native tokens for LZ fees
-    receive() external payable {}
+    receive() external payable { }
 }

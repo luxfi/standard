@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 interface IDLUX {
     function mint(address to, uint256 amount, bytes32 reason) external;
@@ -77,22 +77,22 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
 
     /// @notice Configuration for each emission type
     struct EmissionConfig {
-        uint256 baseAmount;       // Base DLUX amount per emission
-        uint256 maxAmount;        // Max DLUX per single emission
-        uint256 cooldown;         // Cooldown between emissions for same recipient
-        uint256 dailyLimit;       // Max DLUX per day for this emission type
-        uint256 dailyEmitted;     // DLUX emitted today
-        uint256 lastResetDay;     // Last day dailyEmitted was reset
-        uint256 multiplierBps;    // Emission multiplier in basis points (10000 = 1x)
-        bool enabled;             // Whether this emission type is active
-        bool requiresCollateral;  // Whether collateral is required for this emission
+        uint256 baseAmount; // Base DLUX amount per emission
+        uint256 maxAmount; // Max DLUX per single emission
+        uint256 cooldown; // Cooldown between emissions for same recipient
+        uint256 dailyLimit; // Max DLUX per day for this emission type
+        uint256 dailyEmitted; // DLUX emitted today
+        uint256 lastResetDay; // Last day dailyEmitted was reset
+        uint256 multiplierBps; // Emission multiplier in basis points (10000 = 1x)
+        bool enabled; // Whether this emission type is active
+        bool requiresCollateral; // Whether collateral is required for this emission
     }
 
     /// @notice User collateral deposit info
     struct CollateralInfo {
-        uint256 amount;           // Amount of LUX deposited as collateral
-        uint256 dluxMinted;       // DLUX minted against this collateral
-        uint256 depositTime;      // When collateral was deposited
+        uint256 amount; // Amount of LUX deposited as collateral
+        uint256 dluxMinted; // DLUX minted against this collateral
+        uint256 depositTime; // When collateral was deposited
     }
 
     // ============ State ============
@@ -138,12 +138,7 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
 
     // ============ Events ============
 
-    event DLUXEmitted(
-        address indexed recipient,
-        bytes32 indexed emissionType,
-        uint256 amount,
-        bytes32 reason
-    );
+    event DLUXEmitted(address indexed recipient, bytes32 indexed emissionType, uint256 amount, bytes32 reason);
     event EmissionConfigUpdated(bytes32 indexed emissionType, EmissionConfig config);
     event EmitterAdded(address indexed emitter, string description);
     event EmitterRemoved(address indexed emitter);
@@ -168,15 +163,11 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
 
     // ============ Constructor ============
 
-    constructor(
-        address _dlux,
-        address _lux,
-        address _treasury,
-        address admin,
-        address dao
-    ) {
-        if (_dlux == address(0) || _lux == address(0) || _treasury == address(0) ||
-            admin == address(0) || dao == address(0)) {
+    constructor(address _dlux, address _lux, address _treasury, address admin, address dao) {
+        if (
+            _dlux == address(0) || _lux == address(0) || _treasury == address(0) || admin == address(0)
+                || dao == address(0)
+        ) {
             revert ZeroAddress();
         }
 
@@ -188,8 +179,8 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
         _grantRole(GOVERNOR_ROLE, dao);
         _grantRole(EMITTER_ROLE, admin); // Admin can initially trigger emissions
 
-        globalDailyLimit = 100_000e18;     // 100K DLUX per day global limit
-        minBackingRatioBps = 0;            // 0% minimum backing (can be increased by DAO)
+        globalDailyLimit = 100_000e18; // 100K DLUX per day global limit
+        minBackingRatioBps = 0; // 0% minimum backing (can be increased by DAO)
 
         // Initialize default configs
         _initializeDefaultConfigs();
@@ -258,12 +249,11 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
     /// @param emissionType Type of emission
     /// @param amount Amount of DLUX to emit (0 = use baseAmount)
     /// @param reason Additional context (activity hash, tx ID, etc.)
-    function emitDLUX(
-        address recipient,
-        bytes32 emissionType,
-        uint256 amount,
-        bytes32 reason
-    ) external onlyRole(EMITTER_ROLE) whenNotPaused {
+    function emitDLUX(address recipient, bytes32 emissionType, uint256 amount, bytes32 reason)
+        external
+        onlyRole(EMITTER_ROLE)
+        whenNotPaused
+    {
         EmissionConfig storage config = emissionConfigs[emissionType];
 
         if (!config.enabled) revert EmissionNotEnabled();
@@ -387,10 +377,7 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
     /// @notice Update emission config for an emission type
     /// @param emissionType Emission type to configure
     /// @param config New configuration
-    function setEmissionConfig(
-        bytes32 emissionType,
-        EmissionConfig calldata config
-    ) external onlyRole(GOVERNOR_ROLE) {
+    function setEmissionConfig(bytes32 emissionType, EmissionConfig calldata config) external onlyRole(GOVERNOR_ROLE) {
         emissionConfigs[emissionType] = config;
         emit EmissionConfigUpdated(emissionType, config);
     }
@@ -398,10 +385,7 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
     /// @notice Enable/disable an emission type
     /// @param emissionType Emission type to toggle
     /// @param enabled Whether to enable
-    function setEmissionEnabled(
-        bytes32 emissionType,
-        bool enabled
-    ) external onlyRole(GOVERNOR_ROLE) {
+    function setEmissionEnabled(bytes32 emissionType, bool enabled) external onlyRole(GOVERNOR_ROLE) {
         emissionConfigs[emissionType].enabled = enabled;
         emit EmissionConfigUpdated(emissionType, emissionConfigs[emissionType]);
     }
@@ -409,10 +393,7 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
     /// @notice Update base amount for an emission type
     /// @param emissionType Emission type to update
     /// @param baseAmount New base amount
-    function setBaseAmount(
-        bytes32 emissionType,
-        uint256 baseAmount
-    ) external onlyRole(GOVERNOR_ROLE) {
+    function setBaseAmount(bytes32 emissionType, uint256 baseAmount) external onlyRole(GOVERNOR_ROLE) {
         emissionConfigs[emissionType].baseAmount = baseAmount;
         emit EmissionConfigUpdated(emissionType, emissionConfigs[emissionType]);
     }
@@ -420,10 +401,7 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
     /// @notice Update emission multiplier
     /// @param emissionType Emission type to update
     /// @param multiplierBps New multiplier in basis points
-    function setMultiplier(
-        bytes32 emissionType,
-        uint256 multiplierBps
-    ) external onlyRole(GOVERNOR_ROLE) {
+    function setMultiplier(bytes32 emissionType, uint256 multiplierBps) external onlyRole(GOVERNOR_ROLE) {
         emissionConfigs[emissionType].multiplierBps = multiplierBps;
         emit EmissionConfigUpdated(emissionType, emissionConfigs[emissionType]);
     }
@@ -477,11 +455,7 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
     /// @dev Called by ChainFeeRegistry after fee distribution
     /// @param chainId The chain that generated the fees (0-10)
     /// @param feeAmount Amount of LUX fees distributed
-    function recordFeeEmission(uint8 chainId, uint256 feeAmount) 
-        external 
-        onlyRole(EMITTER_ROLE) 
-        whenNotPaused 
-    {
+    function recordFeeEmission(uint8 chainId, uint256 feeAmount) external onlyRole(EMITTER_ROLE) whenNotPaused {
         if (feeAmount == 0) return;
 
         // Calculate DLUX to emit based on fee amount and chain multiplier
@@ -505,12 +479,7 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
         bytes32 reason = bytes32(uint256(chainId));
         dlux.mint(treasury, dluxAmount, reason);
 
-        emit DLUXEmitted(
-            treasury,
-            keccak256("FEE_EMISSION"),
-            dluxAmount,
-            reason
-        );
+        emit DLUXEmitted(treasury, keccak256("FEE_EMISSION"), dluxAmount, reason);
     }
 
     /// @notice Set fee emission rate (BPS)
@@ -543,10 +512,11 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
     }
 
     /// @notice Check if recipient can receive emission
-    function canReceiveEmission(
-        address recipient,
-        bytes32 emissionType
-    ) external view returns (bool canReceive, string memory reason) {
+    function canReceiveEmission(address recipient, bytes32 emissionType)
+        external
+        view
+        returns (bool canReceive, string memory reason)
+    {
         EmissionConfig memory config = emissionConfigs[emissionType];
 
         if (!config.enabled) {
@@ -588,11 +558,11 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
     }
 
     /// @notice Get collateral info for user
-    function getCollateralInfo(address user) external view returns (
-        uint256 luxDeposited,
-        uint256 dluxMinted,
-        uint256 depositTime
-    ) {
+    function getCollateralInfo(address user)
+        external
+        view
+        returns (uint256 luxDeposited, uint256 dluxMinted, uint256 depositTime)
+    {
         CollateralInfo memory info = collateral[user];
         return (info.amount, info.dluxMinted, info.depositTime);
     }
@@ -619,21 +589,21 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
     function _initializeDefaultConfigs() internal {
         // Protocol Emissions (continuous, activity-based)
         emissionConfigs[EMISSION_VALIDATOR] = EmissionConfig({
-            baseAmount: 100e18,        // 100 DLUX base
-            maxAmount: 1000e18,        // Max 1000 DLUX per emission
-            cooldown: 1 days,          // Daily validator rewards
-            dailyLimit: 50_000e18,     // 50K DLUX per day
+            baseAmount: 100e18, // 100 DLUX base
+            maxAmount: 1000e18, // Max 1000 DLUX per emission
+            cooldown: 1 days, // Daily validator rewards
+            dailyLimit: 50_000e18, // 50K DLUX per day
             dailyEmitted: 0,
             lastResetDay: 0,
-            multiplierBps: 10000,      // 1x
+            multiplierBps: 10000, // 1x
             enabled: true,
             requiresCollateral: false
         });
 
         emissionConfigs[EMISSION_BRIDGE] = EmissionConfig({
-            baseAmount: 10e18,         // 10 DLUX per bridge tx
+            baseAmount: 10e18, // 10 DLUX per bridge tx
             maxAmount: 100e18,
-            cooldown: 0,               // No cooldown (per tx)
+            cooldown: 0, // No cooldown (per tx)
             dailyLimit: 20_000e18,
             dailyEmitted: 0,
             lastResetDay: 0,
@@ -643,7 +613,7 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
         });
 
         emissionConfigs[EMISSION_LP] = EmissionConfig({
-            baseAmount: 50e18,         // 50 DLUX for LP provision
+            baseAmount: 50e18, // 50 DLUX for LP provision
             maxAmount: 500e18,
             cooldown: 1 days,
             dailyLimit: 30_000e18,
@@ -655,9 +625,9 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
         });
 
         emissionConfigs[EMISSION_STAKING] = EmissionConfig({
-            baseAmount: 25e18,         // 25 DLUX staking bonus
+            baseAmount: 25e18, // 25 DLUX staking bonus
             maxAmount: 250e18,
-            cooldown: 7 days,          // Weekly staking bonus
+            cooldown: 7 days, // Weekly staking bonus
             dailyLimit: 25_000e18,
             dailyEmitted: 0,
             lastResetDay: 0,
@@ -680,9 +650,9 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
 
         // Community Emissions
         emissionConfigs[EMISSION_REFERRAL] = EmissionConfig({
-            baseAmount: 50e18,         // 50 DLUX per referral
+            baseAmount: 50e18, // 50 DLUX per referral
             maxAmount: 50e18,
-            cooldown: 0,               // Per referral
+            cooldown: 0, // Per referral
             dailyLimit: 10_000e18,
             dailyEmitted: 0,
             lastResetDay: 0,
@@ -692,8 +662,8 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
         });
 
         emissionConfigs[EMISSION_GRANT] = EmissionConfig({
-            baseAmount: 500e18,        // 500 DLUX grant base
-            maxAmount: 10_000e18,      // Up to 10K for major contributions
+            baseAmount: 500e18, // 500 DLUX grant base
+            maxAmount: 10_000e18, // Up to 10K for major contributions
             cooldown: 30 days,
             dailyLimit: 20_000e18,
             dailyEmitted: 0,
@@ -705,7 +675,7 @@ contract DLUXMinter is AccessControl, Pausable, ReentrancyGuard {
 
         emissionConfigs[EMISSION_TREASURY] = EmissionConfig({
             baseAmount: 1000e18,
-            maxAmount: 100_000e18,     // Large treasury allocations
+            maxAmount: 100_000e18, // Large treasury allocations
             cooldown: 0,
             dailyLimit: 100_000e18,
             dailyEmitted: 0,

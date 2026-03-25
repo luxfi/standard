@@ -2,11 +2,11 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /**
  * @title TeleportVault
@@ -27,7 +27,6 @@ import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/Messa
  *     └── SimpleTeleportVault (basic custody, no strategies)
  */
 abstract contract TeleportVault is Ownable, AccessControl, ReentrancyGuard {
-
     // ═══════════════════════════════════════════════════════════════════════
     // ROLES
     // ═══════════════════════════════════════════════════════════════════════
@@ -43,7 +42,7 @@ abstract contract TeleportVault is Ownable, AccessControl, ReentrancyGuard {
         address luxRecipient;
         uint256 amount;
         uint256 timestamp;
-        bool bridged;              // Has been bridged to Lux
+        bool bridged; // Has been bridged to Lux
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -82,19 +81,10 @@ abstract contract TeleportVault is Ownable, AccessControl, ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice Emitted on asset deposit - bridge monitors for this
-    event Deposit(
-        uint256 indexed nonce,
-        address indexed luxRecipient,
-        uint256 amount,
-        uint256 srcChainId
-    );
+    event Deposit(uint256 indexed nonce, address indexed luxRecipient, uint256 amount, uint256 srcChainId);
 
     /// @notice Emitted on asset release for Lux withdrawals
-    event Release(
-        uint256 indexed withdrawNonce,
-        address indexed recipient,
-        uint256 amount
-    );
+    event Release(uint256 indexed withdrawNonce, address indexed recipient, uint256 amount);
 
     /// @notice Emitted when MPC oracle updated
     event MPCOracleSet(address indexed oracle, bool active);
@@ -140,10 +130,7 @@ abstract contract TeleportVault is Ownable, AccessControl, ReentrancyGuard {
      * @param signature MPC signature
      * @return signer Address that signed the message
      */
-    function _verifyMPCSignature(
-        bytes32 messageHash,
-        bytes calldata signature
-    ) internal view returns (address signer) {
+    function _verifyMPCSignature(bytes32 messageHash, bytes calldata signature) internal view returns (address signer) {
         bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
         signer = ECDSA.recover(ethSignedHash, signature);
 
@@ -157,18 +144,12 @@ abstract contract TeleportVault is Ownable, AccessControl, ReentrancyGuard {
      * @param _withdrawNonce Withdraw nonce
      * @return messageHash Message hash for signature
      */
-    function _buildReleaseHash(
-        address recipient,
-        uint256 amount,
-        uint256 _withdrawNonce
-    ) internal view returns (bytes32) {
-        return keccak256(abi.encodePacked(
-            "RELEASE",
-            recipient,
-            amount,
-            _withdrawNonce,
-            block.chainid
-        ));
+    function _buildReleaseHash(address recipient, uint256 amount, uint256 _withdrawNonce)
+        internal
+        view
+        returns (bytes32)
+    {
+        return keccak256(abi.encodePacked("RELEASE", recipient, amount, _withdrawNonce, block.chainid));
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -181,21 +162,14 @@ abstract contract TeleportVault is Ownable, AccessControl, ReentrancyGuard {
      * @param amount Amount deposited
      * @return nonce Unique deposit identifier
      */
-    function _recordDeposit(
-        address luxRecipient,
-        uint256 amount
-    ) internal returns (uint256 nonce) {
+    function _recordDeposit(address luxRecipient, uint256 amount) internal returns (uint256 nonce) {
         if (amount == 0) revert ZeroAmount();
         if (luxRecipient == address(0)) revert ZeroAddress();
 
         nonce = ++depositNonce;
 
         deposits[nonce] = DepositProof({
-            nonce: nonce,
-            luxRecipient: luxRecipient,
-            amount: amount,
-            timestamp: block.timestamp,
-            bridged: false
+            nonce: nonce, luxRecipient: luxRecipient, amount: amount, timestamp: block.timestamp, bridged: false
         });
 
         totalDeposited += amount;
@@ -209,11 +183,7 @@ abstract contract TeleportVault is Ownable, AccessControl, ReentrancyGuard {
      * @param amount Amount released
      * @param _withdrawNonce Withdraw nonce
      */
-    function _recordRelease(
-        address recipient,
-        uint256 amount,
-        uint256 _withdrawNonce
-    ) internal {
+    function _recordRelease(address recipient, uint256 amount, uint256 _withdrawNonce) internal {
         if (processedWithdraws[_withdrawNonce]) revert NonceAlreadyProcessed();
 
         processedWithdraws[_withdrawNonce] = true;

@@ -1,22 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {
-    IOracle,
-    IOracleCallbacks
-} from "../prediction/interfaces/IOracle.sol";
+import { IOracle, IOracleCallbacks } from "../prediction/interfaces/IOracle.sol";
 
-import {
-    DisputeBondConfig,
-    PriceDispute,
-    IDisputer
-} from "./interfaces/IDisputer.sol";
+import { DisputeBondConfig, PriceDispute, IDisputer } from "./interfaces/IDisputer.sol";
 
-import {IVaultPriceFeed} from "./core/interfaces/IVaultPriceFeed.sol";
-import {ISecondaryPriceFeed} from "./oracle/interfaces/ISecondaryPriceFeed.sol";
+import { IVaultPriceFeed } from "./core/interfaces/IVaultPriceFeed.sol";
+import { ISecondaryPriceFeed } from "./oracle/interfaces/ISecondaryPriceFeed.sol";
 
 /// @title Disputer
 /// @notice Binds Oracle to perps integrity via price dispute resolution
@@ -132,11 +125,8 @@ contract Disputer is IDisputer, IOracleCallbacks {
         if (_defaultMaxBond != 0 && _defaultMaxBond < _defaultMinBond) {
             revert InvalidBondConfig();
         }
-        defaultBondConfig = DisputeBondConfig({
-            minBond: _defaultMinBond,
-            maxBond: _defaultMaxBond,
-            customBondEnabled: false
-        });
+        defaultBondConfig =
+            DisputeBondConfig({ minBond: _defaultMinBond, maxBond: _defaultMaxBond, customBondEnabled: false });
 
         // Set circuit breaker threshold
         if (_circuitBreakerThreshold > MAX_CIRCUIT_BREAKER_THRESHOLD) {
@@ -152,11 +142,10 @@ contract Disputer is IDisputer, IOracleCallbacks {
     // ============ Dispute Functions ============
 
     /// @inheritdoc IDisputer
-    function disputePrice(
-        address token,
-        uint256 claimedCorrectPrice,
-        uint256 bond
-    ) external returns (bytes32 disputeId) {
+    function disputePrice(address token, uint256 claimedCorrectPrice, uint256 bond)
+        external
+        returns (bytes32 disputeId)
+    {
         if (token == address(0)) revert InvalidToken();
         if (claimedCorrectPrice == 0) revert InvalidPrice();
 
@@ -171,15 +160,8 @@ contract Disputer is IDisputer, IOracleCallbacks {
         if (claimedCorrectPrice == currentFastPrice) revert InvalidPrice();
 
         // Generate dispute ID
-        disputeId = keccak256(
-            abi.encodePacked(
-                token,
-                currentFastPrice,
-                claimedCorrectPrice,
-                block.timestamp,
-                msg.sender
-            )
-        );
+        disputeId =
+            keccak256(abi.encodePacked(token, currentFastPrice, claimedCorrectPrice, block.timestamp, msg.sender));
 
         // Ensure no duplicate dispute
         if (disputes[disputeId].timestamp != 0) revert DisputeAlreadyExists();
@@ -200,12 +182,7 @@ contract Disputer is IDisputer, IOracleCallbacks {
         IERC20(bondToken).safeTransferFrom(msg.sender, address(this), bond);
 
         // Construct claim for V3 assertTruth
-        bytes memory claim = _constructClaim(
-            token,
-            currentFastPrice,
-            claimedCorrectPrice,
-            block.timestamp
-        );
+        bytes memory claim = _constructClaim(token, currentFastPrice, claimedCorrectPrice, block.timestamp);
 
         // Assert truth via Optimistic Oracle
         bytes32 assertionId = _assertTruth(disputeId, claim, bond);
@@ -214,14 +191,7 @@ contract Disputer is IDisputer, IOracleCallbacks {
         _assertionToDispute[assertionId] = disputeId;
         _disputeToAssertion[disputeId] = assertionId;
 
-        emit PriceDisputeCreated(
-            disputeId,
-            token,
-            msg.sender,
-            currentFastPrice,
-            claimedCorrectPrice,
-            bond
-        );
+        emit PriceDisputeCreated(disputeId, token, msg.sender, currentFastPrice, claimedCorrectPrice, bond);
     }
 
     /// @inheritdoc IDisputer
@@ -259,10 +229,7 @@ contract Disputer is IDisputer, IOracleCallbacks {
 
     /// @inheritdoc IOracleCallbacks
     /// @notice Called when an assertion is resolved (either by expiry or DVM)
-    function assertionResolvedCallback(
-        bytes32 assertionId,
-        bool assertedTruthfully
-    ) external onlyOptimisticOracle {
+    function assertionResolvedCallback(bytes32 assertionId, bool assertedTruthfully) external onlyOptimisticOracle {
         bytes32 disputeId = _assertionToDispute[assertionId];
 
         if (disputeId != bytes32(0) && !disputes[disputeId].resolved) {
@@ -272,9 +239,7 @@ contract Disputer is IDisputer, IOracleCallbacks {
 
     /// @inheritdoc IOracleCallbacks
     /// @notice Called when an assertion is disputed (escalated to DVM)
-    function assertionDisputedCallback(
-        bytes32 assertionId
-    ) external onlyOptimisticOracle {
+    function assertionDisputedCallback(bytes32 assertionId) external onlyOptimisticOracle {
         // Dispute escalated to DVM - emit event for monitoring
         // Resolution will happen via assertionResolvedCallback
         bytes32 disputeId = _assertionToDispute[assertionId];
@@ -297,29 +262,16 @@ contract Disputer is IDisputer, IOracleCallbacks {
     }
 
     /// @inheritdoc IDisputer
-    function setTokenBondConfig(
-        address token,
-        uint256 minBond,
-        uint256 maxBond,
-        bool enabled
-    ) external onlyAdmin {
+    function setTokenBondConfig(address token, uint256 minBond, uint256 maxBond, bool enabled) external onlyAdmin {
         if (enabled && maxBond != 0 && maxBond < minBond) revert InvalidBondConfig();
 
-        tokenBondConfigs[token] = DisputeBondConfig({
-            minBond: minBond,
-            maxBond: maxBond,
-            customBondEnabled: enabled
-        });
+        tokenBondConfigs[token] = DisputeBondConfig({ minBond: minBond, maxBond: maxBond, customBondEnabled: enabled });
 
         emit TokenBondConfigUpdated(token, minBond, maxBond, enabled);
     }
 
     /// @inheritdoc IDisputer
-    function getEffectiveBondConfig(address token)
-        external
-        view
-        returns (uint256 minBond, uint256 maxBond)
-    {
+    function getEffectiveBondConfig(address token) external view returns (uint256 minBond, uint256 maxBond) {
         DisputeBondConfig storage tokenConfig = tokenBondConfigs[token];
 
         if (tokenConfig.customBondEnabled) {
@@ -408,12 +360,11 @@ contract Disputer is IDisputer, IOracleCallbacks {
 
     /// @notice Construct claim for assertTruth
     /// @dev The claim is a human-readable statement that DVM voters evaluate
-    function _constructClaim(
-        address token,
-        uint256 disputedPrice,
-        uint256 claimedPrice,
-        uint256 timestamp
-    ) internal pure returns (bytes memory) {
+    function _constructClaim(address token, uint256 disputedPrice, uint256 claimedPrice, uint256 timestamp)
+        internal
+        pure
+        returns (bytes memory)
+    {
         return abi.encodePacked(
             "Price dispute for perps oracle. Token: ",
             _addressToHexString(token),
@@ -432,11 +383,7 @@ contract Disputer is IDisputer, IOracleCallbacks {
     /// @param claim The truth claim to assert
     /// @param bond The bond amount for the assertion
     /// @return assertionId The assertion identifier
-    function _assertTruth(
-        bytes32 disputeId,
-        bytes memory claim,
-        uint256 bond
-    ) internal returns (bytes32 assertionId) {
+    function _assertTruth(bytes32 disputeId, bytes memory claim, uint256 bond) internal returns (bytes32 assertionId) {
         PriceDispute storage dispute = disputes[disputeId];
 
         // Approve bond token for Oracle         IERC20(bondToken).forceApprove(address(oracle), bond);
@@ -458,14 +405,14 @@ contract Disputer is IDisputer, IOracleCallbacks {
         // - domainId: group assertions by perps disputes
         assertionId = oracle.assertTruth(
             claim,
-            address(this),      // asserter
-            address(this),      // callbackRecipient
-            address(0),         // escalationManager (use default)
-            _livenessSeconds,   // liveness
-            IERC20(bondToken),  // currency
-            bond,               // bond
-            identifier,         // identifier
-            DOMAIN_ID           // domainId
+            address(this), // asserter
+            address(this), // callbackRecipient
+            address(0), // escalationManager (use default)
+            _livenessSeconds, // liveness
+            IERC20(bondToken), // currency
+            bond, // bond
+            identifier, // identifier
+            DOMAIN_ID // domainId
         );
     }
 
@@ -489,28 +436,18 @@ contract Disputer is IDisputer, IOracleCallbacks {
             IERC20(bondToken).safeTransfer(dispute.disputer, dispute.bond);
 
             // Check if circuit breaker should trigger
-            uint256 deviation = _calculateDeviation(
-                dispute.disputedPrice,
-                dispute.claimedPrice
-            );
+            uint256 deviation = _calculateDeviation(dispute.disputedPrice, dispute.claimedPrice);
 
             if (deviation >= circuitBreakerThreshold) {
                 isCircuitBreakerActive[dispute.token] = true;
 
-                emit CircuitBreakerTriggered(
-                    dispute.token,
-                    dispute.disputedPrice,
-                    dispute.claimedPrice
-                );
+                emit CircuitBreakerTriggered(dispute.token, dispute.disputedPrice, dispute.claimedPrice);
             }
         }
         // If disputer lost, bond stays in contract (or could be distributed)
 
         emit PriceDisputeResolved(
-            disputeId,
-            dispute.token,
-            disputerWon,
-            disputerWon ? dispute.claimedPrice : dispute.disputedPrice
+            disputeId, dispute.token, disputerWon, disputerWon ? dispute.claimedPrice : dispute.disputedPrice
         );
     }
 
@@ -526,10 +463,7 @@ contract Disputer is IDisputer, IOracleCallbacks {
     }
 
     /// @notice Calculate price deviation in basis points
-    function _calculateDeviation(
-        uint256 price1,
-        uint256 price2
-    ) internal pure returns (uint256) {
+    function _calculateDeviation(uint256 price1, uint256 price2) internal pure returns (uint256) {
         if (price1 == 0) return BASIS_POINTS_DIVISOR;
 
         uint256 diff = price1 > price2 ? price1 - price2 : price2 - price1;

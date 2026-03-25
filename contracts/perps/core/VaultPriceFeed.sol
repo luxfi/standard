@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: MIT
 
-
-import {IVaultPriceFeed} from "./interfaces/IVaultPriceFeed.sol";
-import {IPriceFeed} from "../oracle/interfaces/IPriceFeed.sol";
-import {ISecondaryPriceFeed} from "../oracle/interfaces/ISecondaryPriceFeed.sol";
-import {IChainlinkFlags} from "../oracle/interfaces/IChainlinkFlags.sol";
-import {IPancakePair} from "../amm/interfaces/IPancakePair.sol";
+import { IVaultPriceFeed } from "./interfaces/IVaultPriceFeed.sol";
+import { IPriceFeed } from "../oracle/interfaces/IPriceFeed.sol";
+import { ISecondaryPriceFeed } from "../oracle/interfaces/ISecondaryPriceFeed.sol";
+import { IChainlinkFlags } from "../oracle/interfaces/IChainlinkFlags.sol";
+import { IPancakePair } from "../amm/interfaces/IPancakePair.sol";
 
 pragma solidity ^0.8.31;
 
 contract VaultPriceFeed is IVaultPriceFeed {
-    
-
     uint256 public constant PRICE_PRECISION = 10 ** 30;
     uint256 public constant ONE_USD = PRICE_PRECISION;
     uint256 public constant BASIS_POINTS_DIVISOR = 10000;
@@ -21,14 +18,15 @@ contract VaultPriceFeed is IVaultPriceFeed {
     uint256 public constant DEFAULT_MAX_PRICE_AGE = 1 hours;
 
     // Identifier of the Sequencer offline flag on the Flags contract
-    address constant private FLAG_ARBITRUM_SEQ_OFFLINE = address(bytes20(bytes32(uint256(keccak256("chainlink.flags.arbitrum-seq-offline")) - 1)));
+    address private constant FLAG_ARBITRUM_SEQ_OFFLINE =
+        address(bytes20(bytes32(uint256(keccak256("chainlink.flags.arbitrum-seq-offline")) - 1)));
 
     address public gov;
     address public chainlinkFlags;
 
     bool public isAmmEnabled = true;
     bool public isSecondaryPriceEnabled = true;
-    
+
     bool public favorPrimaryPrice = false;
     uint256 public priceSampleSpace = 3;
     uint256 public maxStrictPriceDeviation = 0;
@@ -42,22 +40,22 @@ contract VaultPriceFeed is IVaultPriceFeed {
     address public ethBnb;
     address public btcBnb;
 
-    mapping (address => address) public priceFeeds;
-    mapping (address => uint256) public priceDecimals;
-    mapping (address => uint256) public spreadBasisPoints;
+    mapping(address => address) public priceFeeds;
+    mapping(address => uint256) public priceDecimals;
+    mapping(address => uint256) public spreadBasisPoints;
     // Chainlink can return prices for stablecoins
     // that differs from 1 USD by a larger percentage than stableSwapFeeBasisPoints
     // we use strictStableTokens to cap the price to 1 USD
     // this allows us to configure stablecoins like DAI as being a stableToken
     // while not being a strictStableToken
-    mapping (address => bool) public strictStableTokens;
+    mapping(address => bool) public strictStableTokens;
 
-    mapping (address => uint256) public override adjustmentBasisPoints;
-    mapping (address => bool) public override isAdjustmentAdditive;
-    mapping (address => uint256) public lastAdjustmentTimings;
-    
+    mapping(address => uint256) public override adjustmentBasisPoints;
+    mapping(address => bool) public override isAdjustmentAdditive;
+    mapping(address => uint256) public lastAdjustmentTimings;
+
     /// @notice Maximum acceptable age for price data per token (0 = use DEFAULT_MAX_PRICE_AGE)
-    mapping (address => uint256) public maxPriceAge;
+    mapping(address => uint256) public maxPriceAge;
 
     modifier onlyGov() {
         require(msg.sender == gov, "VaultPriceFeed: forbidden");
@@ -86,8 +84,6 @@ contract VaultPriceFeed is IVaultPriceFeed {
         adjustmentBasisPoints[_token] = _adjustmentBps;
         lastAdjustmentTimings[_token] = block.timestamp;
     }
-
-    
 
     function setIsAmmEnabled(bool _isEnabled) external override onlyGov {
         isAmmEnabled = _isEnabled;
@@ -135,12 +131,11 @@ contract VaultPriceFeed is IVaultPriceFeed {
         maxStrictPriceDeviation = _maxStrictPriceDeviation;
     }
 
-    function setTokenConfig(
-        address _token,
-        address _priceFeed,
-        uint256 _priceDecimals,
-        bool _isStrictStable
-    ) external override onlyGov {
+    function setTokenConfig(address _token, address _priceFeed, uint256 _priceDecimals, bool _isStrictStable)
+        external
+        override
+        onlyGov
+    {
         priceFeeds[_token] = _priceFeed;
         priceDecimals[_token] = _priceDecimals;
         strictStableTokens[_token] = _isStrictStable;
@@ -161,7 +156,17 @@ contract VaultPriceFeed is IVaultPriceFeed {
         return age > 0 ? age : DEFAULT_MAX_PRICE_AGE;
     }
 
-    function getPrice(address _token, bool _maximise, bool _includeAmmPrice, bool /* _useSwapPricing */) public override view returns (uint256) {
+    function getPrice(
+        address _token,
+        bool _maximise,
+        bool _includeAmmPrice,
+        bool /* _useSwapPricing */
+    )
+        public
+        view
+        override
+        returns (uint256)
+    {
         uint256 price = _getPriceInternal(_token, _maximise, _includeAmmPrice);
 
         uint256 adjustmentBps = adjustmentBasisPoints[_token];
@@ -216,7 +221,11 @@ contract VaultPriceFeed is IVaultPriceFeed {
         return price * (BASIS_POINTS_DIVISOR - _spreadBasisPoints) / BASIS_POINTS_DIVISOR;
     }
 
-    function _getAdjustedAmmPrice(address _token, bool _maximise, uint256 _primaryPrice) internal view returns (uint256) {
+    function _getAdjustedAmmPrice(address _token, bool _maximise, uint256 _primaryPrice)
+        internal
+        view
+        returns (uint256)
+    {
         uint256 ammPrice = getAmmPrice(_token);
         if (ammPrice == 0) {
             return _primaryPrice;
@@ -241,24 +250,18 @@ contract VaultPriceFeed is IVaultPriceFeed {
         return _primaryPrice;
     }
 
-    function getLatestPrimaryPrice(address _token) public override view returns (uint256) {
+    function getLatestPrimaryPrice(address _token) public view override returns (uint256) {
         address priceFeedAddress = priceFeeds[_token];
         require(priceFeedAddress != address(0), "VaultPriceFeed: invalid price feed");
 
         IPriceFeed priceFeed = IPriceFeed(priceFeedAddress);
 
-        (
-            uint80 roundId,
-            int256 price,
-            ,
-            uint256 updatedAt,
-            uint80 answeredInRound
-        ) = priceFeed.latestRoundData();
-        
+        (uint80 roundId, int256 price,, uint256 updatedAt, uint80 answeredInRound) = priceFeed.latestRoundData();
+
         require(price > 0, "VaultPriceFeed: invalid price");
         require(updatedAt > 0, "VaultPriceFeed: round not complete");
         require(answeredInRound >= roundId, "VaultPriceFeed: stale round");
-        
+
         uint256 _maxPriceAge = getMaxPriceAge(_token);
         require(block.timestamp - updatedAt <= _maxPriceAge, "VaultPriceFeed: price too old");
 
@@ -266,14 +269,14 @@ contract VaultPriceFeed is IVaultPriceFeed {
         return uint256(price);
     }
 
-    function getPrimaryPrice(address _token, bool _maximise) public override view returns (uint256) {
+    function getPrimaryPrice(address _token, bool _maximise) public view override returns (uint256) {
         address priceFeedAddress = priceFeeds[_token];
         require(priceFeedAddress != address(0), "VaultPriceFeed: invalid price feed");
 
         if (chainlinkFlags != address(0)) {
             bool isRaised = IChainlinkFlags(chainlinkFlags).getFlag(FLAG_ARBITRUM_SEQ_OFFLINE);
             if (isRaised) {
-                    // If flag is raised we shouldn't perform any critical operations
+                // If flag is raised we shouldn't perform any critical operations
                 revert("Chainlink feeds are not being updated");
             }
         }
@@ -285,23 +288,18 @@ contract VaultPriceFeed is IVaultPriceFeed {
         uint256 _maxPriceAge = getMaxPriceAge(_token);
 
         for (uint80 i = 0; i < priceSampleSpace; i++) {
-            if (roundId <= i) { break; }
+            if (roundId <= i) break;
             uint256 p;
 
-            (
-                ,
-                int256 _p,
-                ,
-                uint256 updatedAt,
-            ) = priceFeed.getRoundData(roundId - i);
-            
+            (, int256 _p,, uint256 updatedAt,) = priceFeed.getRoundData(roundId - i);
+
             require(_p > 0, "VaultPriceFeed: invalid price");
-            
+
             // Skip stale rounds but don't revert (allow finding fresh prices in sample space)
             if (block.timestamp - updatedAt > _maxPriceAge) {
                 continue;
             }
-            
+
             // forge-lint: disable-next-line(unsafe-typecast)
             p = uint256(_p);
 
@@ -327,11 +325,11 @@ contract VaultPriceFeed is IVaultPriceFeed {
     }
 
     function getSecondaryPrice(address _token, uint256 _referencePrice, bool _maximise) public view returns (uint256) {
-        if (secondaryPriceFeed == address(0)) { return _referencePrice; }
+        if (secondaryPriceFeed == address(0)) return _referencePrice;
         return ISecondaryPriceFeed(secondaryPriceFeed).getPrice(_token, _referencePrice, _maximise);
     }
 
-    function getAmmPrice(address _token) public override view returns (uint256) {
+    function getAmmPrice(address _token) public view override returns (uint256) {
         if (_token == bnb) {
             // for bnbBusd, reserve0: BNB, reserve1: BUSD
             return getPairPrice(bnbBusd, true);
@@ -359,12 +357,12 @@ contract VaultPriceFeed is IVaultPriceFeed {
     // if divByReserve0: calculate price as reserve1 / reserve0
     // if !divByReserve1: calculate price as reserve0 / reserve1
     function getPairPrice(address _pair, bool _divByReserve0) public view returns (uint256) {
-        (uint256 reserve0, uint256 reserve1, ) = IPancakePair(_pair).getReserves();
+        (uint256 reserve0, uint256 reserve1,) = IPancakePair(_pair).getReserves();
         if (_divByReserve0) {
-            if (reserve0 == 0) { return 0; }
+            if (reserve0 == 0) return 0;
             return reserve1 * PRICE_PRECISION / reserve0;
         }
-        if (reserve1 == 0) { return 0; }
+        if (reserve1 == 0) return 0;
         return reserve0 * PRICE_PRECISION / reserve1;
     }
 }

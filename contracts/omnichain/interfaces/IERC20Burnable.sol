@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.31;
 
-import {IERC20Mintable} from "./IERC20Mintable.sol";
+import { IERC20Mintable } from "./IERC20Mintable.sol";
 
 interface IERC20Burnable is IERC20Mintable {
     function burn(uint256 _amount) external;

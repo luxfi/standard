@@ -34,7 +34,7 @@ type Id is bytes32;
 /// @notice Interface for Lux Markets lending primitive
 interface IMarkets {
     /* SUPPLY */
-    
+
     function supply(
         MarketParams memory marketParams,
         uint256 assets,
@@ -71,19 +71,11 @@ interface IMarkets {
 
     /* COLLATERAL */
 
-    function supplyCollateral(
-        MarketParams memory marketParams,
-        uint256 assets,
-        address onBehalf,
-        bytes calldata data
-    ) external;
+    function supplyCollateral(MarketParams memory marketParams, uint256 assets, address onBehalf, bytes calldata data)
+        external;
 
-    function withdrawCollateral(
-        MarketParams memory marketParams,
-        uint256 assets,
-        address onBehalf,
-        address receiver
-    ) external;
+    function withdrawCollateral(MarketParams memory marketParams, uint256 assets, address onBehalf, address receiver)
+        external;
 
     /* LIQUIDATION */
 

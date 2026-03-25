@@ -4,11 +4,18 @@ pragma solidity ^0.8.24;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-import {AaveV3SupplyStrategy, AaveV3LeverageStrategy, IPool, IRewardsController, IPriceOracle, DataTypes} from "../../contracts/bridge/yield/strategies/AaveV3Strategy.sol";
-import {YearnV3Strategy} from "../../contracts/bridge/yield/strategies/YearnV3Strategy.sol";
+import {
+    AaveV3SupplyStrategy,
+    AaveV3LeverageStrategy,
+    IPool,
+    IRewardsController,
+    IPriceOracle,
+    DataTypes
+} from "../../contracts/bridge/yield/strategies/AaveV3Strategy.sol";
+import { YearnV3Strategy } from "../../contracts/bridge/yield/strategies/YearnV3Strategy.sol";
 
-import {ILRC20} from "../../contracts/tokens/interfaces/ILRC20.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ILRC20 } from "../../contracts/tokens/interfaces/ILRC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MOCK TOKENS
@@ -44,9 +51,7 @@ contract MockAToken is MockERC20 {
 
     uint256 public liquidityIndex = 1e27; // Start at 1 (ray)
 
-    constructor(address pool, address underlying)
-        MockERC20("Aave Interest Bearing Token", "aToken", 18)
-    {
+    constructor(address pool, address underlying) MockERC20("Aave Interest Bearing Token", "aToken", 18) {
         POOL = pool;
         UNDERLYING_ASSET_ADDRESS = underlying;
     }
@@ -143,18 +148,22 @@ contract MockAavePool is IPool {
         return repayAmount;
     }
 
-    function setUserUseReserveAsCollateral(address, bool) external override {}
+    function setUserUseReserveAsCollateral(address, bool) external override { }
 
-    function getUserAccountData(address user) external view returns (
-        uint256 totalCollateralBase,
-        uint256 totalDebtBase,
-        uint256 availableBorrowsBase,
-        uint256 currentLiquidationThreshold,
-        uint256 ltv,
-        uint256 healthFactor
-    ) {
+    function getUserAccountData(address user)
+        external
+        view
+        returns (
+            uint256 totalCollateralBase,
+            uint256 totalDebtBase,
+            uint256 availableBorrowsBase,
+            uint256 currentLiquidationThreshold,
+            uint256 ltv,
+            uint256 healthFactor
+        )
+    {
         // Iterate over all registered assets
-        for (uint i = 0; i < registeredAssets.length; i++) {
+        for (uint256 i = 0; i < registeredAssets.length; i++) {
             address asset = registeredAssets[i];
             if (address(aTokens[asset]) != address(0)) {
                 totalCollateralBase += aTokens[asset].balanceOf(user);
@@ -187,7 +196,7 @@ contract MockAavePool is IPool {
         return reserves[asset];
     }
 
-    function setUserEMode(uint8) external override {}
+    function setUserEMode(uint8) external override { }
 
     function getUserEMode(address) external pure override returns (uint256) {
         return 0;
@@ -213,7 +222,7 @@ contract MockRewardsController is IRewardsController {
 
     function claimAllRewards(address[] calldata, address to) external returns (address[] memory, uint256[] memory) {
         uint256[] memory amounts = new uint256[](rewardTokens.length);
-        for (uint i = 0; i < rewardTokens.length; i++) {
+        for (uint256 i = 0; i < rewardTokens.length; i++) {
             amounts[i] = rewardAmounts[rewardTokens[i]];
             if (amounts[i] > 0) {
                 MockERC20(rewardTokens[i]).mint(to, amounts[i]);
@@ -228,7 +237,7 @@ contract MockRewardsController is IRewardsController {
 
     function getAllUserRewards(address[] calldata, address) external view returns (address[] memory, uint256[] memory) {
         uint256[] memory amounts = new uint256[](rewardTokens.length);
-        for (uint i = 0; i < rewardTokens.length; i++) {
+        for (uint256 i = 0; i < rewardTokens.length; i++) {
             amounts[i] = rewardAmounts[rewardTokens[i]];
         }
         return (rewardTokens, amounts);
@@ -252,7 +261,7 @@ contract MockPriceOracle is IPriceOracle {
 
     function getAssetsPrices(address[] calldata assets) external view returns (uint256[] memory) {
         uint256[] memory result = new uint256[](assets.length);
-        for (uint i = 0; i < assets.length; i++) {
+        for (uint256 i = 0; i < assets.length; i++) {
             result[i] = prices[assets[i]] == 0 ? 1e8 : prices[assets[i]];
         }
         return result;
@@ -464,13 +473,7 @@ contract AaveV3SupplyStrategyTest is Test {
         oracle.setAssetPrice(address(rewardToken), 100e8); // $100 per AAVE
 
         // Deploy strategy
-        strategy = new AaveV3SupplyStrategy(
-            vault,
-            address(pool),
-            address(aToken),
-            address(rewards),
-            address(oracle)
-        );
+        strategy = new AaveV3SupplyStrategy(vault, address(pool), address(aToken), address(rewards), address(oracle));
 
         // Mint underlying to users
         underlying.mint(vault, 1000000e6);
@@ -725,12 +728,7 @@ contract AaveV3LeverageStrategyTest is Test {
 
         // Deploy strategy
         strategy = new AaveV3LeverageStrategy(
-            vault,
-            address(pool),
-            address(aToken),
-            address(rewards),
-            address(oracle),
-            targetLeverage
+            vault, address(pool), address(aToken), address(rewards), address(oracle), targetLeverage
         );
 
         // Mint tokens

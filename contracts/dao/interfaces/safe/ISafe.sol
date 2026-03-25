@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {Enum} from "@gnosis.pm/safe-contracts/interfaces/Enum.sol";
+import { Enum } from "@gnosis.pm/safe-contracts/interfaces/Enum.sol";
 
 interface ISafe {
     // --- View Functions ---
@@ -10,11 +10,7 @@ interface ISafe {
 
     function nonce() external view returns (uint256 nonce);
 
-    function checkSignatures(
-        bytes32 dataHash_,
-        bytes memory data_,
-        bytes memory signatures_
-    ) external view;
+    function checkSignatures(bytes32 dataHash_, bytes memory data_, bytes memory signatures_) external view;
 
     function encodeTransactionData(
         address to_,

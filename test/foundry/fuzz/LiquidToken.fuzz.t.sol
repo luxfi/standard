@@ -2,8 +2,8 @@
 pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
-import {LiquidToken} from "../../../contracts/liquid/LiquidToken.sol";
-import {IERC3156FlashBorrower} from "../../../contracts/liquid/interfaces/IERC3156FlashBorrower.sol";
+import { LiquidToken } from "../../../contracts/liquid/LiquidToken.sol";
+import { IERC3156FlashBorrower } from "../../../contracts/liquid/interfaces/IERC3156FlashBorrower.sol";
 
 /// @title MockFlashBorrower
 /// @notice Valid flash loan borrower that returns borrowed amount + fee
@@ -29,18 +29,16 @@ contract MockFlashBorrower is IERC3156FlashBorrower {
         // In real usage, borrower would profit from arbitrage to cover fee
     }
 
-    function onFlashLoan(
-        address,
-        address token,
-        uint256 amount,
-        uint256 fee,
-        bytes calldata
-    ) external override returns (bytes32) {
+    function onFlashLoan(address, address token, uint256 amount, uint256 fee, bytes calldata)
+        external
+        override
+        returns (bytes32)
+    {
         lastAmount = amount;
         lastFee = fee;
 
         if (shouldFail) {
-            return bytes32(0);  // Invalid return
+            return bytes32(0); // Invalid return
         }
 
         // Approve repayment (amount + fee will be burned)
@@ -61,17 +59,15 @@ contract MaliciousFlashBorrower is IERC3156FlashBorrower {
         attacker = _attacker;
     }
 
-    function onFlashLoan(
-        address,
-        address token,
-        uint256 amount,
-        uint256,
-        bytes calldata
-    ) external override returns (bytes32) {
+    function onFlashLoan(address, address token, uint256 amount, uint256, bytes calldata)
+        external
+        override
+        returns (bytes32)
+    {
         // Try to transfer tokens to attacker instead of repaying
-        try LiquidToken(token).transfer(attacker, amount) {} catch {}
+        try LiquidToken(token).transfer(attacker, amount) { } catch { }
 
-        return CALLBACK_SUCCESS;  // Will still fail because tokens not available to burn
+        return CALLBACK_SUCCESS; // Will still fail because tokens not available to burn
     }
 }
 
@@ -86,24 +82,17 @@ contract ReentrantFlashBorrower is IERC3156FlashBorrower {
         token = LiquidToken(_token);
     }
 
-    function onFlashLoan(
-        address,
-        address,
-        uint256 amount,
-        uint256 fee,
-        bytes calldata
-    ) external override returns (bytes32) {
+    function onFlashLoan(address, address, uint256 amount, uint256 fee, bytes calldata)
+        external
+        override
+        returns (bytes32)
+    {
         reentrancyCount++;
 
         // Only attempt reentry on first call
         if (reentrancyCount == 1) {
             // Try to call flashLoan again (should fail due to reentrancy guard)
-            try token.flashLoan(
-                IERC3156FlashBorrower(address(this)),
-                address(token),
-                amount / 2,
-                ""
-            ) {} catch {}
+            try token.flashLoan(IERC3156FlashBorrower(address(this)), address(token), amount / 2, "") { } catch { }
         }
 
         // Approve repayment
@@ -125,7 +114,7 @@ contract LiquidTokenFuzzTest is Test {
     address public bob;
 
     uint256 constant BPS = 10000;
-    uint256 constant DEFAULT_FEE = 10;  // 0.1%
+    uint256 constant DEFAULT_FEE = 10; // 0.1%
 
     function setUp() public {
         admin = makeAddr("admin");
@@ -167,12 +156,7 @@ contract LiquidTokenFuzzTest is Test {
         token.mint(address(borrower), fee);
 
         vm.prank(alice);
-        bool success = token.flashLoan(
-            IERC3156FlashBorrower(address(borrower)),
-            address(token),
-            amount,
-            ""
-        );
+        bool success = token.flashLoan(IERC3156FlashBorrower(address(borrower)), address(token), amount, "");
 
         assertTrue(success);
         assertEq(borrower.lastAmount(), amount);
@@ -189,7 +173,7 @@ contract LiquidTokenFuzzTest is Test {
     function testFuzz_FlashFee_Calculation(uint256 amount, uint256 feeRate) public {
         amount = bound(amount, 1, type(uint128).max);
         // C-01 security fix: MIN_FLASH_FEE is now 1 (0.01%)
-        feeRate = bound(feeRate, 1, BPS);  // 0.01% to 100% (MIN_FLASH_FEE = 1)
+        feeRate = bound(feeRate, 1, BPS); // 0.01% to 100% (MIN_FLASH_FEE = 1)
 
         // Set fee rate
         vm.prank(admin);
@@ -210,26 +194,16 @@ contract LiquidTokenFuzzTest is Test {
         vm.prank(admin);
         token.setMaxFlashLoan(maxAmount);
 
-        vm.expectRevert();  // IllegalArgument
+        vm.expectRevert(); // IllegalArgument
         vm.prank(alice);
-        token.flashLoan(
-            IERC3156FlashBorrower(address(borrower)),
-            address(token),
-            requestedAmount,
-            ""
-        );
+        token.flashLoan(IERC3156FlashBorrower(address(borrower)), address(token), requestedAmount, "");
     }
 
     /// @notice Fuzz test flash loan with zero amount
     function testFuzz_FlashLoan_ZeroAmount() public {
         // Zero amount should work (no-op essentially)
         vm.prank(alice);
-        bool success = token.flashLoan(
-            IERC3156FlashBorrower(address(borrower)),
-            address(token),
-            0,
-            ""
-        );
+        bool success = token.flashLoan(IERC3156FlashBorrower(address(borrower)), address(token), 0, "");
 
         assertTrue(success);
         assertEq(borrower.lastAmount(), 0);
@@ -242,14 +216,9 @@ contract LiquidTokenFuzzTest is Test {
         vm.assume(wrongToken != address(0));
         amount = bound(amount, 1, 1_000_000e18);
 
-        vm.expectRevert();  // IllegalArgument
+        vm.expectRevert(); // IllegalArgument
         vm.prank(alice);
-        token.flashLoan(
-            IERC3156FlashBorrower(address(borrower)),
-            wrongToken,
-            amount,
-            ""
-        );
+        token.flashLoan(IERC3156FlashBorrower(address(borrower)), wrongToken, amount, "");
     }
 
     /// @notice Fuzz test flash loan borrower returns wrong value
@@ -258,14 +227,9 @@ contract LiquidTokenFuzzTest is Test {
 
         borrower.setShouldFail(true);
 
-        vm.expectRevert();  // IllegalState
+        vm.expectRevert(); // IllegalState
         vm.prank(alice);
-        token.flashLoan(
-            IERC3156FlashBorrower(address(borrower)),
-            address(token),
-            amount,
-            ""
-        );
+        token.flashLoan(IERC3156FlashBorrower(address(borrower)), address(token), amount, "");
     }
 
     /// @notice Fuzz test flash loan reentrancy protection
@@ -282,12 +246,7 @@ contract LiquidTokenFuzzTest is Test {
 
         // This should succeed (reentrancy attempt inside will fail silently)
         vm.prank(alice);
-        token.flashLoan(
-            IERC3156FlashBorrower(address(reentrantBorrower)),
-            address(token),
-            amount,
-            ""
-        );
+        token.flashLoan(IERC3156FlashBorrower(address(reentrantBorrower)), address(token), amount, "");
 
         // Only one successful flash loan (the outer one)
         assertEq(reentrantBorrower.reentrancyCount(), 1);
@@ -303,12 +262,7 @@ contract LiquidTokenFuzzTest is Test {
         // Should fail because borrower doesn't have tokens to burn
         vm.expectRevert();
         vm.prank(alice);
-        token.flashLoan(
-            IERC3156FlashBorrower(address(maliciousBorrower)),
-            address(token),
-            amount,
-            ""
-        );
+        token.flashLoan(IERC3156FlashBorrower(address(maliciousBorrower)), address(token), amount, "");
 
         // Attacker should have no tokens
         assertEq(token.balanceOf(attacker), 0);
@@ -324,9 +278,9 @@ contract LiquidTokenFuzzTest is Test {
 
         // C-01 security fix: MIN_FLASH_FEE is now 1 (0.01%), zero not allowed
         vm.prank(admin);
-        token.setFlashFee(1);  // MIN_FLASH_FEE
+        token.setFlashFee(1); // MIN_FLASH_FEE
 
-        uint256 fee = (amount * 1) / BPS;  // Minimum fee (0.01%)
+        uint256 fee = (amount * 1) / BPS; // Minimum fee (0.01%)
         uint256 feeRecipientBefore = token.balanceOf(admin);
 
         // Borrower needs fee tokens to repay
@@ -335,12 +289,7 @@ contract LiquidTokenFuzzTest is Test {
         token.mint(address(borrower), fee);
 
         vm.prank(alice);
-        token.flashLoan(
-            IERC3156FlashBorrower(address(borrower)),
-            address(token),
-            amount,
-            ""
-        );
+        token.flashLoan(IERC3156FlashBorrower(address(borrower)), address(token), amount, "");
 
         // Minimum fee minted to admin
         assertEq(token.balanceOf(admin), feeRecipientBefore + fee);
@@ -353,10 +302,10 @@ contract LiquidTokenFuzzTest is Test {
         amount = bound(amount, 1e18, 1_000_000e18);
 
         vm.prank(admin);
-        token.setFlashFee(BPS);  // 100% fee
+        token.setFlashFee(BPS); // 100% fee
 
         uint256 fee = token.flashFee(address(token), amount);
-        assertEq(fee, amount);  // Fee equals principal
+        assertEq(fee, amount); // Fee equals principal
 
         // Borrower needs fee tokens (equal to loan amount at 100% fee)
         vm.prank(admin);
@@ -364,12 +313,7 @@ contract LiquidTokenFuzzTest is Test {
         token.mint(address(borrower), fee);
 
         vm.prank(alice);
-        token.flashLoan(
-            IERC3156FlashBorrower(address(borrower)),
-            address(token),
-            amount,
-            ""
-        );
+        token.flashLoan(IERC3156FlashBorrower(address(borrower)), address(token), amount, "");
 
         assertEq(borrower.lastFee(), amount);
     }
@@ -378,7 +322,7 @@ contract LiquidTokenFuzzTest is Test {
     function testFuzz_SetFlashFee_CannotExceedMax(uint256 invalidFee) public {
         invalidFee = bound(invalidFee, BPS + 1, type(uint256).max);
 
-        vm.expectRevert();  // IllegalArgument
+        vm.expectRevert(); // IllegalArgument
         vm.prank(admin);
         token.setFlashFee(invalidFee);
     }
@@ -423,7 +367,7 @@ contract LiquidTokenFuzzTest is Test {
         vm.assume(unauthorized != address(0));
         amount = bound(amount, 1, type(uint128).max);
 
-        vm.expectRevert();  // Unauthorized
+        vm.expectRevert(); // Unauthorized
         vm.prank(unauthorized);
         token.mint(alice, amount);
     }
@@ -435,7 +379,7 @@ contract LiquidTokenFuzzTest is Test {
         vm.prank(admin);
         token.setPaused(minter, true);
 
-        vm.expectRevert();  // IllegalState
+        vm.expectRevert(); // IllegalState
         vm.prank(minter);
         token.mint(alice, amount);
     }
@@ -556,7 +500,7 @@ contract LiquidTokenFuzzTest is Test {
 
     /// @notice Fuzz test only sentinel can pause
     function testFuzz_SetPaused_OnlySentinel(address unauthorized, address target, bool state) public {
-        vm.assume(unauthorized != admin);  // admin has sentinel role by default
+        vm.assume(unauthorized != admin); // admin has sentinel role by default
 
         vm.expectRevert();
         vm.prank(unauthorized);
@@ -580,15 +524,10 @@ contract LiquidTokenFuzzTest is Test {
         token.setWhitelist(address(this), true);
         token.mint(address(borrower), fee);
 
-        uint256 supplyBefore = token.totalSupply();  // includes fee already minted to borrower
+        uint256 supplyBefore = token.totalSupply(); // includes fee already minted to borrower
 
         vm.prank(alice);
-        token.flashLoan(
-            IERC3156FlashBorrower(address(borrower)),
-            address(token),
-            amount,
-            ""
-        );
+        token.flashLoan(IERC3156FlashBorrower(address(borrower)), address(token), amount, "");
 
         uint256 supplyAfter = token.totalSupply();
 
@@ -613,12 +552,7 @@ contract LiquidTokenFuzzTest is Test {
         token.mint(address(borrower), fee);
 
         vm.prank(alice);
-        token.flashLoan(
-            IERC3156FlashBorrower(address(borrower)),
-            address(token),
-            amount,
-            ""
-        );
+        token.flashLoan(IERC3156FlashBorrower(address(borrower)), address(token), amount, "");
 
         assertEq(token.balanceOf(address(borrower)), 0);
     }
@@ -641,12 +575,7 @@ contract LiquidTokenFuzzTest is Test {
         token.mint(address(dataBorrower), fee);
 
         vm.prank(alice);
-        token.flashLoan(
-            IERC3156FlashBorrower(address(dataBorrower)),
-            address(token),
-            amount,
-            data
-        );
+        token.flashLoan(IERC3156FlashBorrower(address(dataBorrower)), address(token), amount, data);
 
         assertEq(dataBorrower.lastData(), data);
     }
@@ -658,13 +587,11 @@ contract DataRecordingBorrower is IERC3156FlashBorrower {
     bytes32 public constant CALLBACK_SUCCESS = keccak256("ERC3156FlashBorrower.onFlashLoan");
     bytes public lastData;
 
-    function onFlashLoan(
-        address,
-        address token,
-        uint256 amount,
-        uint256 fee,
-        bytes calldata data
-    ) external override returns (bytes32) {
+    function onFlashLoan(address, address token, uint256 amount, uint256 fee, bytes calldata data)
+        external
+        override
+        returns (bytes32)
+    {
         lastData = data;
         LiquidToken(token).approve(msg.sender, amount + fee);
         return CALLBACK_SUCCESS;

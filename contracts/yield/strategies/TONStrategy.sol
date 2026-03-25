@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.24;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title TON Blockchain Yield Strategies
 /// @notice Cross-chain yield strategies for TON blockchain protocols
@@ -432,7 +432,16 @@ contract TsTONStrategy is BaseTONStrategy {
     // ═══════════════════════════════════════════════════════════════════════════
 
     /// @notice
-    function deposit(uint256 amount, bytes calldata /* data */) external onlyVault nonReentrant whenActive returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        nonReentrant
+        whenActive
+        returns (uint256 shares)
+    {
         if (amount < minDeposit) revert BelowMinimum(amount, minDeposit);
 
         lton.safeTransferFrom(msg.sender, address(this), amount);
@@ -452,7 +461,16 @@ contract TsTONStrategy is BaseTONStrategy {
     }
 
     /// @notice
-    function withdraw(uint256 shares, address recipient, bytes calldata /* data */) external onlyVault nonReentrant returns (uint256 assets) {
+    function withdraw(
+        uint256 shares,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        nonReentrant
+        returns (uint256 assets)
+    {
         if (shares > tsTonBalance) revert InsufficientBalance(shares, tsTonBalance);
 
         assets = _tsTonToTon(shares);
@@ -638,7 +656,16 @@ contract StTONStrategy is BaseTONStrategy {
     // ═══════════════════════════════════════════════════════════════════════════
 
     /// @notice
-    function deposit(uint256 amount, bytes calldata /* data */) external onlyVault nonReentrant whenActive returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        nonReentrant
+        whenActive
+        returns (uint256 shares)
+    {
         if (amount < minDeposit) revert BelowMinimum(amount, minDeposit);
 
         lton.safeTransferFrom(msg.sender, address(this), amount);
@@ -658,7 +685,16 @@ contract StTONStrategy is BaseTONStrategy {
     }
 
     /// @notice
-    function withdraw(uint256 shares, address recipient, bytes calldata /* data */) external onlyVault nonReentrant returns (uint256 assets) {
+    function withdraw(
+        uint256 shares,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        nonReentrant
+        returns (uint256 assets)
+    {
         if (shares > stTonBalance) revert InsufficientBalance(shares, stTonBalance);
 
         assets = _stTonToTon(shares);
@@ -860,13 +896,8 @@ contract StonFiStrategy is BaseTONStrategy {
         defaultPool = _defaultPool;
 
         // Initialize default pool
-        pools[_defaultPool] = PoolInfo({
-            poolId: _defaultPool,
-            lpBalance: 0,
-            totalDeposited: 0,
-            pendingRewards: 0,
-            active: true
-        });
+        pools[_defaultPool] =
+            PoolInfo({ poolId: _defaultPool, lpBalance: 0, totalDeposited: 0, pendingRewards: 0, active: true });
         poolIds.push(_defaultPool);
     }
 
@@ -875,7 +906,16 @@ contract StonFiStrategy is BaseTONStrategy {
     // ═══════════════════════════════════════════════════════════════════════════
 
     /// @notice
-    function deposit(uint256 amount, bytes calldata /* data */) external onlyVault nonReentrant whenActive returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        nonReentrant
+        whenActive
+        returns (uint256 shares)
+    {
         if (amount < minDeposit) revert BelowMinimum(amount, minDeposit);
 
         lton.safeTransferFrom(msg.sender, address(this), amount);
@@ -896,7 +936,16 @@ contract StonFiStrategy is BaseTONStrategy {
     }
 
     /// @notice
-    function withdraw(uint256 shares, address recipient, bytes calldata /* data */) external onlyVault nonReentrant returns (uint256 assets) {
+    function withdraw(
+        uint256 shares,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        nonReentrant
+        returns (uint256 assets)
+    {
         PoolInfo storage pool = pools[defaultPool];
         if (shares > pool.lpBalance) revert InsufficientBalance(shares, pool.lpBalance);
 
@@ -1007,13 +1056,7 @@ contract StonFiStrategy is BaseTONStrategy {
     function addPool(bytes32 poolId) external onlyOwner {
         if (pools[poolId].poolId != bytes32(0)) revert InvalidPoolId(poolId);
 
-        pools[poolId] = PoolInfo({
-            poolId: poolId,
-            lpBalance: 0,
-            totalDeposited: 0,
-            pendingRewards: 0,
-            active: true
-        });
+        pools[poolId] = PoolInfo({ poolId: poolId, lpBalance: 0, totalDeposited: 0, pendingRewards: 0, active: true });
         poolIds.push(poolId);
 
         emit PoolAdded(poolId);
@@ -1034,11 +1077,13 @@ contract StonFiStrategy is BaseTONStrategy {
     }
 
     /// @notice Add liquidity to specific pool
-    function addLiquidityToPool(
-        bytes32 poolId,
-        uint256 amount0,
-        uint256 amount1
-    ) external onlyOwner nonReentrant whenActive returns (bytes32 txId) {
+    function addLiquidityToPool(bytes32 poolId, uint256 amount0, uint256 amount1)
+        external
+        onlyOwner
+        nonReentrant
+        whenActive
+        returns (bytes32 txId)
+    {
         if (!pools[poolId].active) revert InvalidPoolId(poolId);
 
         // Transfer and bridge
@@ -1054,10 +1099,12 @@ contract StonFiStrategy is BaseTONStrategy {
     }
 
     /// @notice Remove liquidity from specific pool
-    function removeLiquidityFromPool(
-        bytes32 poolId,
-        uint256 lpAmount
-    ) external onlyOwner nonReentrant returns (bytes32 txId) {
+    function removeLiquidityFromPool(bytes32 poolId, uint256 lpAmount)
+        external
+        onlyOwner
+        nonReentrant
+        returns (bytes32 txId)
+    {
         PoolInfo storage pool = pools[poolId];
         if (lpAmount > pool.lpBalance) revert InsufficientBalance(lpAmount, pool.lpBalance);
 
@@ -1191,31 +1238,19 @@ contract TONStrategyFactory is Ownable {
     /// @param vault Vault controller address
     /// @param tonRecipient TON recipient address (32 bytes)
     /// @return strategy Deployed strategy address
-    function deploy(
-        StrategyType strategyType,
-        address vault,
-        bytes32 tonRecipient
-    ) external onlyOwner returns (address strategy) {
+    function deploy(StrategyType strategyType, address vault, bytes32 tonRecipient)
+        external
+        onlyOwner
+        returns (address strategy)
+    {
         if (strategyType == StrategyType.TONSTAKERS) {
-            strategy = address(new TsTONStrategy(
-                lton,
-                tsTonWrapper,
-                tonBridge,
-                tonOracle,
-                tonController,
-                vault,
-                tonRecipient
-            ));
+            strategy = address(
+                new TsTONStrategy(lton, tsTonWrapper, tonBridge, tonOracle, tonController, vault, tonRecipient)
+            );
         } else if (strategyType == StrategyType.BEMO) {
-            strategy = address(new StTONStrategy(
-                lton,
-                stTonWrapper,
-                tonBridge,
-                tonOracle,
-                tonController,
-                vault,
-                tonRecipient
-            ));
+            strategy = address(
+                new StTONStrategy(lton, stTonWrapper, tonBridge, tonOracle, tonController, vault, tonRecipient)
+            );
         } else {
             revert("Invalid strategy type");
         }
@@ -1228,21 +1263,14 @@ contract TONStrategyFactory is Ownable {
     /// @param tonRecipient TON recipient address
     /// @param defaultPool Default pool ID for single-asset deposits
     /// @return strategy Deployed strategy address
-    function deployStonFi(
-        address vault,
-        bytes32 tonRecipient,
-        bytes32 defaultPool
-    ) external onlyOwner returns (address strategy) {
-        strategy = address(new StonFiStrategy(
-            lton,
-            stonWrapper,
-            tonBridge,
-            tonOracle,
-            tonController,
-            vault,
-            tonRecipient,
-            defaultPool
-        ));
+    function deployStonFi(address vault, bytes32 tonRecipient, bytes32 defaultPool)
+        external
+        onlyOwner
+        returns (address strategy)
+    {
+        strategy = address(
+            new StonFiStrategy(lton, stonWrapper, tonBridge, tonOracle, tonController, vault, tonRecipient, defaultPool)
+        );
 
         emit StrategyDeployed(StrategyType.STONFI, strategy);
     }

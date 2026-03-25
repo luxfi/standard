@@ -5,13 +5,13 @@ pragma solidity ^0.8.31;
  * @title RocketPoolStrategy
  * @notice Yield strategy that deposits ETH into Rocket Pool for rETH
  * @dev Deployed on Ethereum mainnet, earns ~4-5% APY from ETH staking
- * 
+ *
  * rETH is a non-rebasing token - value increases over time relative to ETH
  */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @notice Rocket Pool deposit interface
 interface IRocketDepositPool {
@@ -32,7 +32,7 @@ interface IRocketStorage {
     function getAddress(bytes32 _key) external view returns (address);
 }
 
-contract RocketPoolStrategy is Ownable{
+contract RocketPoolStrategy is Ownable {
     using SafeERC20 for IERC20;
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -41,7 +41,7 @@ contract RocketPoolStrategy is Ownable{
 
     /// @notice Rocket Pool Storage (Ethereum mainnet)
     IRocketStorage public constant ROCKET_STORAGE = IRocketStorage(0x1d8f8f00cfa6758d7bE78336684788Fb0ee0Fa46);
-    
+
     /// @notice rETH token address (Ethereum mainnet)
     address public constant RETH = 0xae78736Cd615f374D3085123A210448E74Fc6393;
 
@@ -98,16 +98,15 @@ contract RocketPoolStrategy is Ownable{
         require(msg.value == amount, "RocketPoolStrategy: ETH amount mismatch");
 
         // Get deposit pool address from storage
-        address depositPoolAddress = ROCKET_STORAGE.getAddress(
-            keccak256(abi.encodePacked("contract.address", "rocketDepositPool"))
-        );
+        address depositPoolAddress =
+            ROCKET_STORAGE.getAddress(keccak256(abi.encodePacked("contract.address", "rocketDepositPool")));
         IRocketDepositPool depositPool = IRocketDepositPool(depositPoolAddress);
 
         // Record rETH balance before
         uint256 rethBefore = IERC20(RETH).balanceOf(address(this));
 
         // Deposit ETH to Rocket Pool
-        depositPool.deposit{value: amount}();
+        depositPool.deposit{ value: amount }();
 
         // Calculate rETH received
         uint256 rethAfter = IERC20(RETH).balanceOf(address(this));
@@ -136,7 +135,7 @@ contract RocketPoolStrategy is Ownable{
         // rETH is non-rebasing - value appreciation is built into the token
         // Calculate yield as rate difference since last update
         uint256 currentRate = IRocketTokenRETH(RETH).getExchangeRate();
-        
+
         if (currentRate > lastExchangeRate && totalReth > 0) {
             // Calculate yield in ETH terms
             uint256 currentValue = IRocketTokenRETH(RETH).getEthValue(totalReth);
@@ -192,5 +191,5 @@ contract RocketPoolStrategy is Ownable{
         vault = _vault;
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

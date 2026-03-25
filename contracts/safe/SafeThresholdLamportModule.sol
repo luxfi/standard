@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {Enum} from "@luxfi/contracts/governance/base/Enum.sol";
-import {ISafe} from "@luxfi/contracts/interfaces/safe/ISafe.sol";
-import {SafeModule} from "./SafeModule.sol";
+import { Enum } from "@luxfi/contracts/governance/base/Enum.sol";
+import { ISafe } from "@luxfi/contracts/interfaces/safe/ISafe.sol";
+import { SafeModule } from "./SafeModule.sol";
 
 /**
  * @title SafeThresholdLamportModule
@@ -73,7 +73,7 @@ contract SafeThresholdLamportModule is SafeModule {
 
     /// @notice Constructor
     /// @param _safe The Safe address this module is attached to
-    constructor(address payable _safe) SafeModule(_safe) {}
+    constructor(address payable _safe) SafeModule(_safe) { }
 
     // ═══════════════════════════════════════════════════════════════════════
     // Initialization
@@ -103,11 +103,11 @@ contract SafeThresholdLamportModule is SafeModule {
      * @param pub 256x2 array of public key hashes
      * @return valid True if signature is valid
      */
-    function verify_u256(
-        uint256 bits,
-        bytes[256] calldata sig,
-        bytes32[2][256] calldata pub
-    ) public pure returns (bool valid) {
+    function verify_u256(uint256 bits, bytes[256] calldata sig, bytes32[2][256] calldata pub)
+        public
+        pure
+        returns (bool valid)
+    {
         unchecked {
             for (uint256 i; i < 256; i++) {
                 // Select pub[i][0] if bit is 0, pub[i][1] if bit is 1
@@ -159,28 +159,33 @@ contract SafeThresholdLamportModule is SafeModule {
         // STEP 2: Compute safeTxHash ON-CHAIN (SECURITY CRITICAL)
         // FIX: Don't accept prepacked hash from coordinator!
         // ═══════════════════════════════════════════════════════════════
-        bytes32 safeTxHash = ISafe(safe).getTransactionHash(
-            to,
-            value,
-            data,
-            operation,
-            0,              // safeTxGas (0 for module execution)
-            0,              // baseGas
-            0,              // gasPrice
-            address(0),     // gasToken
-            payable(0),     // refundReceiver
-            lamportNonce
-        );
+        bytes32 safeTxHash = ISafe(safe)
+            .getTransactionHash(
+                to,
+                value,
+                data,
+                operation,
+                0, // safeTxGas (0 for module execution)
+                0, // baseGas
+                0, // gasPrice
+                address(0), // gasToken
+                payable(0), // refundReceiver
+                lamportNonce
+            );
 
         // ═══════════════════════════════════════════════════════════════
         // STEP 3: Domain-separated message (prevents replay)
         // ═══════════════════════════════════════════════════════════════
-        uint256 m = uint256(keccak256(abi.encodePacked(
-            safeTxHash,
-            nextPKH,
-            address(this),   // Prevent cross-contract replay
-            block.chainid    // Prevent cross-chain replay
-        )));
+        uint256 m = uint256(
+            keccak256(
+                abi.encodePacked(
+                    safeTxHash,
+                    nextPKH,
+                    address(this), // Prevent cross-contract replay
+                    block.chainid // Prevent cross-chain replay
+                )
+            )
+        );
 
         // ═══════════════════════════════════════════════════════════════
         // STEP 4: Verify Lamport signature
@@ -217,15 +222,7 @@ contract SafeThresholdLamportModule is SafeModule {
         bytes32[2][256] calldata currentPub,
         bytes32 nextPKH
     ) external returns (bool) {
-        return this.execWithThresholdLamport(
-            to,
-            value,
-            data,
-            Enum.Operation.Call,
-            sig,
-            currentPub,
-            nextPKH
-        );
+        return this.execWithThresholdLamport(to, value, data, Enum.Operation.Call, sig, currentPub, nextPKH);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -265,22 +262,9 @@ contract SafeThresholdLamportModule is SafeModule {
         Enum.Operation operation,
         bytes32 nextPKH
     ) external view returns (uint256 m) {
-        bytes32 safeTxHash = ISafe(safe).getTransactionHash(
-            to,
-            value,
-            data,
-            operation,
-            0, 0, 0,
-            address(0),
-            payable(0),
-            lamportNonce
-        );
+        bytes32 safeTxHash = ISafe(safe)
+            .getTransactionHash(to, value, data, operation, 0, 0, 0, address(0), payable(0), lamportNonce);
 
-        m = uint256(keccak256(abi.encodePacked(
-            safeTxHash,
-            nextPKH,
-            address(this),
-            block.chainid
-        )));
+        m = uint256(keccak256(abi.encodePacked(safeTxHash, nextPKH, address(this), block.chainid)));
     }
 }

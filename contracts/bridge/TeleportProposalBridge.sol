@@ -2,10 +2,10 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.24;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /**
  * @title TeleportProposalBridge
@@ -90,7 +90,7 @@ contract TeleportProposalBridge is AccessControl, ReentrancyGuard {
 
     struct ValidatorSet {
         address[] validators;
-        uint256 threshold;           // Required signatures
+        uint256 threshold; // Required signatures
         uint256 rotationPeriod;
         uint256 lastRotation;
     }
@@ -147,12 +147,7 @@ contract TeleportProposalBridge is AccessControl, ReentrancyGuard {
     event LocaleUpdated(uint256 indexed chainId, address newEndpoint);
     event LocaleDeactivated(uint256 indexed chainId);
 
-    event MessageQueued(
-        bytes32 indexed messageId,
-        uint256 sourceChainId,
-        uint256 destChainId,
-        MessageType messageType
-    );
+    event MessageQueued(bytes32 indexed messageId, uint256 sourceChainId, uint256 destChainId, MessageType messageType);
     event MessageSigned(bytes32 indexed messageId, address indexed validator);
     event MessageExecuted(bytes32 indexed messageId, bool success);
     event MessageExpired(bytes32 indexed messageId);
@@ -184,11 +179,7 @@ contract TeleportProposalBridge is AccessControl, ReentrancyGuard {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(
-        address _admin,
-        address[] memory _validators,
-        uint256 _threshold
-    ) {
+    constructor(address _admin, address[] memory _validators, uint256 _threshold) {
         currentChainId = block.chainid;
 
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
@@ -217,17 +208,9 @@ contract TeleportProposalBridge is AccessControl, ReentrancyGuard {
         _registerLocale(BASE_MAINNET, "Base Mainnet", address(0));
     }
 
-    function _registerLocale(
-        uint256 chainId,
-        string memory name,
-        address bridgeEndpoint
-    ) internal {
+    function _registerLocale(uint256 chainId, string memory name, address bridgeEndpoint) internal {
         locales[chainId] = TeleportLocale({
-            chainId: chainId,
-            name: name,
-            bridgeEndpoint: bridgeEndpoint,
-            active: true,
-            messageNonce: 0
+            chainId: chainId, name: name, bridgeEndpoint: bridgeEndpoint, active: true, messageNonce: 0
         });
         localeChainIds.push(chainId);
         emit LocaleRegistered(chainId, name, bridgeEndpoint);
@@ -242,20 +225,17 @@ contract TeleportProposalBridge is AccessControl, ReentrancyGuard {
      * @param destChainId Destination chain (typically Lux C-Chain)
      * @param proposalPayload Encoded proposal data
      */
-    function queueProposalCreate(
-        uint256 destChainId,
-        bytes calldata proposalPayload
-    ) external nonReentrant returns (bytes32 messageId) {
+    function queueProposalCreate(uint256 destChainId, bytes calldata proposalPayload)
+        external
+        nonReentrant
+        returns (bytes32 messageId)
+    {
         if (paused) revert BridgePaused();
         if (!locales[destChainId].active) revert LocaleNotFound();
 
         messageId = _queueMessage(destChainId, MessageType.PROPOSAL_CREATE, proposalPayload);
 
-        emit ProposalRouted(
-            keccak256(proposalPayload),
-            currentChainId,
-            destChainId
-        );
+        emit ProposalRouted(keccak256(proposalPayload), currentChainId, destChainId);
     }
 
     /**
@@ -263,10 +243,12 @@ contract TeleportProposalBridge is AccessControl, ReentrancyGuard {
      * @param proposalId Proposal being voted on
      * @param encryptedVotes Encrypted vote data (TFHE ciphertext)
      */
-    function queueVoteBatch(
-        bytes32 proposalId,
-        bytes calldata encryptedVotes
-    ) external onlyRole(RELAYER_ROLE) nonReentrant returns (bytes32 messageId) {
+    function queueVoteBatch(bytes32 proposalId, bytes calldata encryptedVotes)
+        external
+        onlyRole(RELAYER_ROLE)
+        nonReentrant
+        returns (bytes32 messageId)
+    {
         if (paused) revert BridgePaused();
 
         bytes memory payload = abi.encode(proposalId, encryptedVotes);
@@ -292,13 +274,7 @@ contract TeleportProposalBridge is AccessControl, ReentrancyGuard {
     ) external onlyRole(RELAYER_ROLE) nonReentrant returns (bytes32 messageId) {
         if (paused) revert BridgePaused();
 
-        bytes memory payload = abi.encode(
-            proposalId,
-            daoId,
-            forVotes,
-            againstVotes,
-            abstainVotes
-        );
+        bytes memory payload = abi.encode(proposalId, daoId, forVotes, againstVotes, abstainVotes);
         messageId = _queueMessage(LUX_C_CHAIN, MessageType.TALLY_RESULT, payload);
 
         bool passed = forVotes > againstVotes;
@@ -312,12 +288,12 @@ contract TeleportProposalBridge is AccessControl, ReentrancyGuard {
      * @param amount Amount to spend
      * @param token Token address (or zero for native)
      */
-    function queueSpendAuth(
-        bytes32 authorizationId,
-        address recipient,
-        uint256 amount,
-        address token
-    ) external onlyRole(RELAYER_ROLE) nonReentrant returns (bytes32 messageId) {
+    function queueSpendAuth(bytes32 authorizationId, address recipient, uint256 amount, address token)
+        external
+        onlyRole(RELAYER_ROLE)
+        nonReentrant
+        returns (bytes32 messageId)
+    {
         if (paused) revert BridgePaused();
 
         bytes memory payload = abi.encode(authorizationId, recipient, amount, token);
@@ -333,12 +309,11 @@ contract TeleportProposalBridge is AccessControl, ReentrancyGuard {
      * @param destChainId Destination chain
      * @param recipient Recipient on destination
      */
-    function queueAssetTeleport(
-        address token,
-        uint256 amount,
-        uint256 destChainId,
-        address recipient
-    ) external nonReentrant returns (bytes32 messageId) {
+    function queueAssetTeleport(address token, uint256 amount, uint256 destChainId, address recipient)
+        external
+        nonReentrant
+        returns (bytes32 messageId)
+    {
         if (paused) revert BridgePaused();
         if (!locales[destChainId].active) revert LocaleNotFound();
 
@@ -348,21 +323,14 @@ contract TeleportProposalBridge is AccessControl, ReentrancyGuard {
         emit AssetTeleported(token, amount, destChainId);
     }
 
-    function _queueMessage(
-        uint256 destChainId,
-        MessageType messageType,
-        bytes memory payload
-    ) internal returns (bytes32 messageId) {
+    function _queueMessage(uint256 destChainId, MessageType messageType, bytes memory payload)
+        internal
+        returns (bytes32 messageId)
+    {
         uint256 nonce = ++locales[destChainId].messageNonce;
 
-        messageId = keccak256(abi.encodePacked(
-            currentChainId,
-            destChainId,
-            messageType,
-            payload,
-            nonce,
-            block.timestamp
-        ));
+        messageId =
+            keccak256(abi.encodePacked(currentChainId, destChainId, messageType, payload, nonce, block.timestamp));
 
         messages[messageId] = CrossChainMessage({
             messageId: messageId,
@@ -432,18 +400,13 @@ contract TeleportProposalBridge is AccessControl, ReentrancyGuard {
     }
 
     function _processTallyResult(bytes memory payload) internal returns (bool) {
-        (
-            bytes32 proposalId,
-            bytes32 daoId,
-            uint256 forVotes,
-            uint256 againstVotes,
-            uint256 abstainVotes
-        ) = abi.decode(payload, (bytes32, bytes32, uint256, uint256, uint256));
+        (bytes32 proposalId, bytes32 daoId, uint256 forVotes, uint256 againstVotes, uint256 abstainVotes) =
+            abi.decode(payload, (bytes32, bytes32, uint256, uint256, uint256));
 
         if (governanceContract == address(0)) return false;
 
         // Call governance contract's receiveTally function
-        (bool success, ) = governanceContract.call(
+        (bool success,) = governanceContract.call(
             abi.encodeWithSignature(
                 "receiveTally(bytes32,bytes32,uint256,uint256,uint256,bytes)",
                 proposalId,
@@ -459,23 +422,15 @@ contract TeleportProposalBridge is AccessControl, ReentrancyGuard {
     }
 
     function _processSpendAuth(bytes memory payload) internal returns (bool) {
-        (
-            bytes32 authorizationId,
-            address recipient,
-            uint256 amount,
-            address token
-        ) = abi.decode(payload, (bytes32, address, uint256, address));
+        (bytes32 authorizationId, address recipient, uint256 amount, address token) =
+            abi.decode(payload, (bytes32, address, uint256, address));
 
         if (zChainTreasury == address(0)) return false;
 
         // Call treasury's execute function
-        (bool success, ) = zChainTreasury.call(
+        (bool success,) = zChainTreasury.call(
             abi.encodeWithSignature(
-                "executeAuthorization(bytes32,address,uint256,address)",
-                authorizationId,
-                recipient,
-                amount,
-                token
+                "executeAuthorization(bytes32,address,uint256,address)", authorizationId, recipient, amount, token
             )
         );
 
@@ -518,19 +473,15 @@ contract TeleportProposalBridge is AccessControl, ReentrancyGuard {
     // ADMIN FUNCTIONS
     // ═══════════════════════════════════════════════════════════════════════
 
-    function registerLocale(
-        uint256 chainId,
-        string calldata name,
-        address bridgeEndpoint
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function registerLocale(uint256 chainId, string calldata name, address bridgeEndpoint)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         if (locales[chainId].active) revert LocaleAlreadyExists();
         _registerLocale(chainId, name, bridgeEndpoint);
     }
 
-    function updateLocaleEndpoint(
-        uint256 chainId,
-        address newEndpoint
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updateLocaleEndpoint(uint256 chainId, address newEndpoint) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (!locales[chainId].active) revert LocaleNotFound();
         locales[chainId].bridgeEndpoint = newEndpoint;
         emit LocaleUpdated(chainId, newEndpoint);
@@ -540,10 +491,7 @@ contract TeleportProposalBridge is AccessControl, ReentrancyGuard {
         if (!locales[chainId].active) revert LocaleNotFound();
         // Cannot deactivate Lux chains
         require(
-            chainId != LUX_C_CHAIN &&
-            chainId != LUX_T_CHAIN &&
-            chainId != LUX_Z_CHAIN,
-            "Cannot deactivate Lux chains"
+            chainId != LUX_C_CHAIN && chainId != LUX_T_CHAIN && chainId != LUX_Z_CHAIN, "Cannot deactivate Lux chains"
         );
         locales[chainId].active = false;
         emit LocaleDeactivated(chainId);
@@ -561,10 +509,10 @@ contract TeleportProposalBridge is AccessControl, ReentrancyGuard {
         zChainTreasury = _treasury;
     }
 
-    function updateValidatorSet(
-        address[] calldata _validators,
-        uint256 _threshold
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updateValidatorSet(address[] calldata _validators, uint256 _threshold)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         // Revoke old validators
         for (uint256 i = 0; i < validatorSet.validators.length; i++) {
             _revokeRole(VALIDATOR_ROLE, validatorSet.validators[i]);

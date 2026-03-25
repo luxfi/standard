@@ -2,15 +2,14 @@
 
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {IVester} from "../staking/interfaces/IVester.sol";
-import {IRewardTracker} from "../staking/interfaces/IRewardTracker.sol";
+import { IVester } from "../staking/interfaces/IVester.sol";
+import { IRewardTracker } from "../staking/interfaces/IRewardTracker.sol";
 
 contract xLpxBatchSender {
     using SafeERC20 for IERC20;
-
 
     address public admin;
     address public xLpx;
@@ -25,12 +24,10 @@ contract xLpxBatchSender {
         _;
     }
 
-    function send(
-        IVester _vester,
-        uint256 _minRatio,
-        address[] memory _accounts,
-        uint256[] memory _amounts
-    ) external onlyAdmin {
+    function send(IVester _vester, uint256 _minRatio, address[] memory _accounts, uint256[] memory _amounts)
+        external
+        onlyAdmin
+    {
         IRewardTracker rewardTracker = IRewardTracker(_vester.rewardTracker());
 
         for (uint256 i = 0; i < _accounts.length; i++) {
@@ -49,10 +46,11 @@ contract xLpxBatchSender {
             }
 
             uint256 nextTransferredAverageStakedAmount = _minRatio * totalCumulativeReward;
-            nextTransferredAverageStakedAmount = nextTransferredAverageStakedAmount -
-                rewardTracker.averageStakedAmounts(_accounts[i]) * cumulativeReward / totalCumulativeReward;
+            nextTransferredAverageStakedAmount = nextTransferredAverageStakedAmount
+                - rewardTracker.averageStakedAmounts(_accounts[i]) * cumulativeReward / totalCumulativeReward;
 
-            nextTransferredAverageStakedAmount = nextTransferredAverageStakedAmount * totalCumulativeReward / nextTransferredCumulativeReward;
+            nextTransferredAverageStakedAmount =
+                nextTransferredAverageStakedAmount * totalCumulativeReward / nextTransferredCumulativeReward;
 
             _vester.setTransferredAverageStakedAmounts(_accounts[i], nextTransferredAverageStakedAmount);
         }

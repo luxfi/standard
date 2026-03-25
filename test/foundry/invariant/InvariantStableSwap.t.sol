@@ -4,8 +4,8 @@ pragma solidity ^0.8.31;
 import "forge-std/Test.sol";
 import "forge-std/StdInvariant.sol";
 
-import {StableSwap} from "../../../contracts/amm/StableSwap.sol";
-import {MockERC20} from "../TestMocks.sol";
+import { StableSwap } from "../../../contracts/amm/StableSwap.sol";
+import { MockERC20 } from "../TestMocks.sol";
 
 /// @title StableSwapHandler
 /// @notice Bounded handler for StableSwap invariant testing
@@ -21,12 +21,7 @@ contract StableSwapHandler is Test {
     uint256 public ghost_addLiquidityCount;
     uint256 public ghost_removeLiquidityCount;
 
-    constructor(
-        StableSwap _pool,
-        MockERC20 _tokenA,
-        MockERC20 _tokenB,
-        MockERC20 _tokenC
-    ) {
+    constructor(StableSwap _pool, MockERC20 _tokenA, MockERC20 _tokenB, MockERC20 _tokenC) {
         pool = _pool;
         tokenA = _tokenA;
         tokenB = _tokenB;
@@ -60,7 +55,7 @@ contract StableSwapHandler is Test {
         inToken.approve(address(pool), amount);
         try pool.exchange(tokenIn, tokenOut, amount, 0, block.timestamp + 1) {
             ghost_swapCount++;
-        } catch {}
+        } catch { }
         vm.stopPrank();
     }
 
@@ -96,7 +91,7 @@ contract StableSwapHandler is Test {
 
         try pool.addLiquidity(amounts, 0, block.timestamp + 1) {
             ghost_addLiquidityCount++;
-        } catch {}
+        } catch { }
         vm.stopPrank();
     }
 
@@ -115,7 +110,7 @@ contract StableSwapHandler is Test {
         vm.startPrank(actor);
         try pool.removeLiquidity(amount, minAmounts, block.timestamp + 1) {
             ghost_removeLiquidityCount++;
-        } catch {}
+        } catch { }
         vm.stopPrank();
     }
 
@@ -133,7 +128,7 @@ contract StableSwapHandler is Test {
         vm.startPrank(actor);
         try pool.removeLiquidityOneCoin(amount, tokenIndex, 0, block.timestamp + 1) {
             ghost_removeLiquidityCount++;
-        } catch {}
+        } catch { }
         vm.stopPrank();
     }
 
@@ -179,9 +174,9 @@ contract InvariantStableSwapTest is StdInvariant, Test {
             decimals,
             "3Pool LP",
             "3CRV",
-            200,       // A = 200
-            4e6,       // 0.04% swap fee
-            5e9,       // 50% admin fee
+            200, // A = 200
+            4e6, // 0.04% swap fee
+            5e9, // 50% admin fee
             address(this)
         );
 
@@ -259,21 +254,9 @@ contract InvariantStableSwapTest is StdInvariant, Test {
         // Denormalize: 18 decimals -> 6 decimals (divide by 1e12)
         // The actual token balance should be >= denormalized internal balance
         // (admin fees are tracked separately but tokens are still in the contract)
-        assertGe(
-            poolBalA,
-            internalA / 1e12,
-            "LP_BACKED: tokenA actual balance < internal tracked balance"
-        );
-        assertGe(
-            poolBalB,
-            internalB / 1e12,
-            "LP_BACKED: tokenB actual balance < internal tracked balance"
-        );
-        assertGe(
-            poolBalC,
-            internalC / 1e12,
-            "LP_BACKED: tokenC actual balance < internal tracked balance"
-        );
+        assertGe(poolBalA, internalA / 1e12, "LP_BACKED: tokenA actual balance < internal tracked balance");
+        assertGe(poolBalB, internalB / 1e12, "LP_BACKED: tokenB actual balance < internal tracked balance");
+        assertGe(poolBalC, internalC / 1e12, "LP_BACKED: tokenC actual balance < internal tracked balance");
     }
 
     function invariant_callSummary() public view {

@@ -2,18 +2,21 @@
 pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {BridgedETH} from "../../../contracts/bridge/collateral/ETH.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { BridgedETH } from "../../../contracts/bridge/collateral/ETH.sol";
 
 contract MockBridgeToken is ERC20 {
     address public admin;
+
     constructor() ERC20("Bridged ETH", "LETH") {
         admin = msg.sender;
     }
+
     function mint(address to, uint256 amount) external {
         require(msg.sender == admin, "Only admin");
         _mint(to, amount);
     }
+
     function burn(address from, uint256 amount) external {
         require(msg.sender == admin, "Only admin");
         _burn(from, amount);
@@ -64,20 +67,14 @@ contract InvariantBridgeTest is Test {
     /// @notice totalSupply == totalBridgedIn - totalBridgedOut
     function invariant_supplyMatchesBridgeFlows() public view {
         assertEq(
-            token.totalSupply(),
-            handler.totalBridgedIn() - handler.totalBridgedOut(),
-            "Supply != net bridge flows"
+            token.totalSupply(), handler.totalBridgedIn() - handler.totalBridgedOut(), "Supply != net bridge flows"
         );
     }
 
     /// @notice No user can have more than totalSupply
     function invariant_noUserExceedsSupply() public view {
         for (uint256 i = 0; i < 5; i++) {
-            assertLe(
-                token.balanceOf(address(uint160(0x3000 + i))),
-                token.totalSupply(),
-                "User > supply"
-            );
+            assertLe(token.balanceOf(address(uint160(0x3000 + i))), token.totalSupply(), "User > supply");
         }
     }
 }

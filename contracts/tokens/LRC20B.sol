@@ -2,9 +2,9 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title ERC20B
@@ -30,10 +30,7 @@ contract LRC20B is ERC20, Ownable, AccessControl {
      * @param name_ Token name
      * @param symbol_ Token symbol
      */
-    constructor(string memory name_, string memory symbol_)
-        ERC20(name_, symbol_)
-        Ownable(msg.sender)
-    {
+    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) Ownable(msg.sender) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 

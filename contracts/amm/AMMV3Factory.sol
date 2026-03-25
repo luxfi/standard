@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {AMMV3Pool} from "./AMMV3Pool.sol";
+import { AMMV3Pool } from "./AMMV3Pool.sol";
 
 /// @title AMMV3Factory - Uniswap V3 Compatible Factory
 /// @notice Creates and manages concentrated liquidity pools
 /// @dev Supports multiple fee tiers with corresponding tick spacings
 contract AMMV3Factory {
     /// @notice Emitted when a new pool is created
-    event PoolCreated(address indexed token0, address indexed token1, uint24 indexed fee, int24 tickSpacing, address pool);
+    event PoolCreated(
+        address indexed token0, address indexed token1, uint24 indexed fee, int24 tickSpacing, address pool
+    );
 
     /// @notice Emitted when a new fee amount is enabled
     event FeeAmountEnabled(uint24 indexed fee, int24 indexed tickSpacing);
@@ -32,10 +34,10 @@ contract AMMV3Factory {
         emit OwnerChanged(address(0), msg.sender);
 
         // Initialize fee tiers (fee in hundredths of a bip, i.e. 1e-6)
-        feeAmountTickSpacing[100] = 1;      // 0.01% - stablecoins
-        feeAmountTickSpacing[500] = 10;     // 0.05% - stable pairs
-        feeAmountTickSpacing[3000] = 60;    // 0.30% - standard pairs
-        feeAmountTickSpacing[10000] = 200;  // 1.00% - exotic pairs
+        feeAmountTickSpacing[100] = 1; // 0.01% - stablecoins
+        feeAmountTickSpacing[500] = 10; // 0.05% - stable pairs
+        feeAmountTickSpacing[3000] = 60; // 0.30% - standard pairs
+        feeAmountTickSpacing[10000] = 200; // 1.00% - exotic pairs
 
         emit FeeAmountEnabled(100, 1);
         emit FeeAmountEnabled(500, 10);
@@ -53,11 +55,7 @@ contract AMMV3Factory {
     /// @param tokenB The other of the two tokens in the desired pool
     /// @param fee The desired fee for the pool
     /// @return pool The address of the newly created pool
-    function createPool(
-        address tokenA,
-        address tokenB,
-        uint24 fee
-    ) external returns (address pool) {
+    function createPool(address tokenA, address tokenB, uint24 fee) external returns (address pool) {
         require(tokenA != tokenB, "AMMV3: IDENTICAL_ADDRESSES");
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         require(token0 != address(0), "AMMV3: ZERO_ADDRESS");
@@ -66,7 +64,7 @@ contract AMMV3Factory {
         require(getPool[token0][token1][fee] == address(0), "AMMV3: POOL_EXISTS");
 
         bytes32 salt = keccak256(abi.encodePacked(token0, token1, fee));
-        pool = address(new AMMV3Pool{salt: salt}());
+        pool = address(new AMMV3Pool{ salt: salt }());
         AMMV3Pool(pool).initialize(token0, token1, fee, tickSpacing);
 
         getPool[token0][token1][fee] = pool;
@@ -91,12 +89,8 @@ contract AMMV3Factory {
     function computeAddress(address tokenA, address tokenB, uint24 fee) external view returns (address) {
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         bytes32 salt = keccak256(abi.encodePacked(token0, token1, fee));
-        bytes32 hash = keccak256(abi.encodePacked(
-            bytes1(0xff),
-            address(this),
-            salt,
-            keccak256(type(AMMV3Pool).creationCode)
-        ));
+        bytes32 hash =
+            keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(type(AMMV3Pool).creationCode)));
         return address(uint160(uint256(hash)));
     }
 

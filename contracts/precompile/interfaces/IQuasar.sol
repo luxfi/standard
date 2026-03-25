@@ -22,41 +22,31 @@ pragma solidity ^0.8.0;
 /// @title IVerkleVerify - Verkle witness verification with PQ finality
 /// @dev Address: 0x0300000000000000000000000000000000000020, Gas: 3,000
 interface IVerkleVerify {
-    function verify(
-        bytes32 commitment,
-        bytes32 proof,
-        bool thresholdMet
-    ) external view returns (bool valid);
+    function verify(bytes32 commitment, bytes32 proof, bool thresholdMet) external view returns (bool valid);
 }
 
 /// @title IBLSVerify - BLS signature verification
 /// @dev Address: 0x0300000000000000000000000000000000000021, Gas: 5,000
 interface IBLSVerify {
-    function verify(
-        bytes calldata publicKey,
-        bytes32 messageHash,
-        bytes calldata signature
-    ) external view returns (bool valid);
+    function verify(bytes calldata publicKey, bytes32 messageHash, bytes calldata signature)
+        external
+        view
+        returns (bool valid);
 }
 
 /// @title IBLSAggregate - BLS signature aggregation
 /// @dev Address: 0x0300000000000000000000000000000000000022, Gas: 2,000/sig
 interface IBLSAggregate {
-    function aggregate(bytes[] calldata signatures)
-        external
-        view
-        returns (bytes memory aggregatedSignature);
+    function aggregate(bytes[] calldata signatures) external view returns (bytes memory aggregatedSignature);
 }
 
 /// @title IRingtailVerify - Ringtail (ML-DSA) signature verification for consensus
 /// @dev Address: 0x0300000000000000000000000000000000000023, Gas: 8,000
 interface IRingtailVerify {
-    function verify(
-        uint8 mode,
-        bytes calldata publicKey,
-        bytes calldata message,
-        bytes calldata signature
-    ) external view returns (bool valid);
+    function verify(uint8 mode, bytes calldata publicKey, bytes calldata message, bytes calldata signature)
+        external
+        view
+        returns (bool valid);
 }
 
 /// @title IHybridVerify - Hybrid BLS+Ringtail signature verification
@@ -74,12 +64,10 @@ interface IHybridVerify {
 /// @title ICompressedVerify - Ultra-compressed witness verification
 /// @dev Address: 0x0300000000000000000000000000000000000025, Gas: 1,000
 interface ICompressedVerify {
-    function verify(
-        bytes16 commitment,
-        bytes16 proof,
-        bytes8 metadata,
-        uint32 validatorBits
-    ) external view returns (bool valid);
+    function verify(bytes16 commitment, bytes16 proof, bytes8 metadata, uint32 validatorBits)
+        external
+        view
+        returns (bool valid);
 }
 
 /**
@@ -111,31 +99,23 @@ library QuasarLib {
     error InvalidBLSPublicKeySize();
     error InvalidBLSSignatureSize();
 
-    function verifyBLS(
-        bytes memory publicKey,
-        bytes32 messageHash,
-        bytes memory signature
-    ) internal view returns (bool valid) {
+    function verifyBLS(bytes memory publicKey, bytes32 messageHash, bytes memory signature)
+        internal
+        view
+        returns (bool valid)
+    {
         if (publicKey.length != BLS_PUBKEY_SIZE) revert InvalidBLSPublicKeySize();
         if (signature.length != BLS_SIGNATURE_SIZE) revert InvalidBLSSignatureSize();
         return IBLSVerify(BLS_VERIFY).verify(publicKey, messageHash, signature);
     }
 
-    function verifyBLSOrRevert(
-        bytes memory publicKey,
-        bytes32 messageHash,
-        bytes memory signature
-    ) internal view {
+    function verifyBLSOrRevert(bytes memory publicKey, bytes32 messageHash, bytes memory signature) internal view {
         if (!verifyBLS(publicKey, messageHash, signature)) {
             revert BLSVerificationFailed();
         }
     }
 
-    function aggregateBLS(bytes[] memory signatures)
-        internal
-        view
-        returns (bytes memory aggregated)
-    {
+    function aggregateBLS(bytes[] memory signatures) internal view returns (bytes memory aggregated) {
         return IBLSAggregate(BLS_AGGREGATE).aggregate(signatures);
     }
 
@@ -156,19 +136,11 @@ library QuasarLib {
  * @dev Abstract contract for Quasar consensus verification
  */
 abstract contract QuasarVerifier {
-    function _verifyBLS(
-        bytes memory publicKey,
-        bytes32 messageHash,
-        bytes memory signature
-    ) internal view {
+    function _verifyBLS(bytes memory publicKey, bytes32 messageHash, bytes memory signature) internal view {
         QuasarLib.verifyBLSOrRevert(publicKey, messageHash, signature);
     }
 
-    function _aggregateBLS(bytes[] memory signatures)
-        internal
-        view
-        returns (bytes memory aggregated)
-    {
+    function _aggregateBLS(bytes[] memory signatures) internal view returns (bytes memory aggregated) {
         return QuasarLib.aggregateBLS(signatures);
     }
 

@@ -2,10 +2,10 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
-import {LiquidityAdapter, IMintBurnable} from "../../contracts/integrations/bridges/LiquidityAdapter.sol";
-import {BridgeParams, BridgeRoute, BridgeStatus} from "../../contracts/interfaces/adapters/IBridgeAdapter.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { LiquidityAdapter, IMintBurnable } from "../../contracts/integrations/bridges/LiquidityAdapter.sol";
+import { BridgeParams, BridgeRoute, BridgeStatus } from "../../contracts/interfaces/adapters/IBridgeAdapter.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MOCKS
@@ -37,7 +37,10 @@ contract MockLockToken is ERC20 {
     constructor() ERC20("Mock Lock Token", "MLT") {
         _mint(msg.sender, 1_000_000e18);
     }
-    function mint(address to, uint256 amt) external { _mint(to, amt); }
+
+    function mint(address to, uint256 amt) external {
+        _mint(to, amt);
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -70,12 +73,18 @@ contract LiquidityAdapterTest is Test {
 
         // Configure tokens
         adapter.configureToken(
-            address(mintToken), DST_CHAIN, address(0xDEAD),
-            LiquidityAdapter.BridgeMode.MintBurn, 0 // unlimited
+            address(mintToken),
+            DST_CHAIN,
+            address(0xDEAD),
+            LiquidityAdapter.BridgeMode.MintBurn,
+            0 // unlimited
         );
         adapter.configureToken(
-            address(lockToken), DST_CHAIN, address(0xBEEF),
-            LiquidityAdapter.BridgeMode.LockRelease, 500_000e18 // 500K daily limit
+            address(lockToken),
+            DST_CHAIN,
+            address(0xBEEF),
+            LiquidityAdapter.BridgeMode.LockRelease,
+            500_000e18 // 500K daily limit
         );
 
         // Grant MINTER_ROLE to adapter so it can burn
@@ -208,10 +217,16 @@ contract LiquidityAdapterTest is Test {
         // First bridge (burn on source)
         vm.startPrank(alice);
         mintToken.approve(address(adapter), 100e18);
-        bytes32 bridgeId = adapter.bridge(BridgeParams({
-            dstChainId: DST_CHAIN, token: address(mintToken), amount: 100e18,
-            recipient: bob, minAmountOut: 100e18, extraData: ""
-        }));
+        bytes32 bridgeId = adapter.bridge(
+            BridgeParams({
+                dstChainId: DST_CHAIN,
+                token: address(mintToken),
+                amount: 100e18,
+                recipient: bob,
+                minAmountOut: 100e18,
+                extraData: ""
+            })
+        );
         vm.stopPrank();
 
         // Oracle fills on destination (same contract in test, simulates dest chain)
@@ -233,15 +248,23 @@ contract LiquidityAdapterTest is Test {
         // Lock tokens
         vm.startPrank(alice);
         lockToken.approve(address(adapter), 100e18);
-        bytes32 bridgeId = adapter.bridge(BridgeParams({
-            dstChainId: DST_CHAIN, token: address(lockToken), amount: 100e18,
-            recipient: bob, minAmountOut: 100e18, extraData: ""
-        }));
+        bytes32 bridgeId = adapter.bridge(
+            BridgeParams({
+                dstChainId: DST_CHAIN,
+                token: address(lockToken),
+                amount: 100e18,
+                recipient: bob,
+                minAmountOut: 100e18,
+                extraData: ""
+            })
+        );
         vm.stopPrank();
 
         // Oracle releases
         vm.prank(oracle);
-        adapter.fill(bridgeId, address(lockToken), bob, 100e18, block.chainid, 0, LiquidityAdapter.BridgeMode.LockRelease);
+        adapter.fill(
+            bridgeId, address(lockToken), bob, 100e18, block.chainid, 0, LiquidityAdapter.BridgeMode.LockRelease
+        );
 
         assertEq(lockToken.balanceOf(bob), 100e18);
         assertEq(adapter.lockedBalance(address(lockToken)), 0);
@@ -255,28 +278,46 @@ contract LiquidityAdapterTest is Test {
         vm.startPrank(alice);
         mintToken.approve(address(adapter), 300e18);
 
-        bytes32 id1 = adapter.bridge(BridgeParams({
-            dstChainId: DST_CHAIN, token: address(mintToken), amount: 100e18,
-            recipient: bob, minAmountOut: 100e18, extraData: ""
-        }));
-        bytes32 id2 = adapter.bridge(BridgeParams({
-            dstChainId: DST_CHAIN, token: address(mintToken), amount: 200e18,
-            recipient: alice, minAmountOut: 200e18, extraData: ""
-        }));
+        bytes32 id1 = adapter.bridge(
+            BridgeParams({
+                dstChainId: DST_CHAIN,
+                token: address(mintToken),
+                amount: 100e18,
+                recipient: bob,
+                minAmountOut: 100e18,
+                extraData: ""
+            })
+        );
+        bytes32 id2 = adapter.bridge(
+            BridgeParams({
+                dstChainId: DST_CHAIN,
+                token: address(mintToken),
+                amount: 200e18,
+                recipient: alice,
+                minAmountOut: 200e18,
+                extraData: ""
+            })
+        );
         vm.stopPrank();
 
         bytes32[] memory ids = new bytes32[](2);
-        ids[0] = id1; ids[1] = id2;
+        ids[0] = id1;
+        ids[1] = id2;
         address[] memory tokens = new address[](2);
-        tokens[0] = address(mintToken); tokens[1] = address(mintToken);
+        tokens[0] = address(mintToken);
+        tokens[1] = address(mintToken);
         address[] memory recipients = new address[](2);
-        recipients[0] = bob; recipients[1] = alice;
+        recipients[0] = bob;
+        recipients[1] = alice;
         uint256[] memory amounts = new uint256[](2);
-        amounts[0] = 100e18; amounts[1] = 200e18;
+        amounts[0] = 100e18;
+        amounts[1] = 200e18;
         uint256[] memory origins = new uint256[](2);
-        origins[0] = block.chainid; origins[1] = block.chainid;
+        origins[0] = block.chainid;
+        origins[1] = block.chainid;
         uint256[] memory nonces = new uint256[](2);
-        nonces[0] = 0; nonces[1] = 1;
+        nonces[0] = 0;
+        nonces[1] = 1;
         LiquidityAdapter.BridgeMode[] memory modes = new LiquidityAdapter.BridgeMode[](2);
         modes[0] = LiquidityAdapter.BridgeMode.MintBurn;
         modes[1] = LiquidityAdapter.BridgeMode.MintBurn;
@@ -297,29 +338,47 @@ contract LiquidityAdapterTest is Test {
         vm.startPrank(alice);
         mintToken.approve(address(adapter), 100e18);
         vm.expectRevert(abi.encodeWithSelector(LiquidityAdapter.UnsupportedChain.selector, uint256(999)));
-        adapter.bridge(BridgeParams({
-            dstChainId: 999, token: address(mintToken), amount: 100e18,
-            recipient: bob, minAmountOut: 100e18, extraData: ""
-        }));
+        adapter.bridge(
+            BridgeParams({
+                dstChainId: 999,
+                token: address(mintToken),
+                amount: 100e18,
+                recipient: bob,
+                minAmountOut: 100e18,
+                extraData: ""
+            })
+        );
         vm.stopPrank();
     }
 
     function test_revert_zeroAmount() public {
         vm.prank(alice);
         vm.expectRevert(LiquidityAdapter.ZeroAmount.selector);
-        adapter.bridge(BridgeParams({
-            dstChainId: DST_CHAIN, token: address(mintToken), amount: 0,
-            recipient: bob, minAmountOut: 0, extraData: ""
-        }));
+        adapter.bridge(
+            BridgeParams({
+                dstChainId: DST_CHAIN,
+                token: address(mintToken),
+                amount: 0,
+                recipient: bob,
+                minAmountOut: 0,
+                extraData: ""
+            })
+        );
     }
 
     function test_revert_doubleFill() public {
         vm.startPrank(alice);
         mintToken.approve(address(adapter), 100e18);
-        bytes32 bridgeId = adapter.bridge(BridgeParams({
-            dstChainId: DST_CHAIN, token: address(mintToken), amount: 100e18,
-            recipient: bob, minAmountOut: 100e18, extraData: ""
-        }));
+        bytes32 bridgeId = adapter.bridge(
+            BridgeParams({
+                dstChainId: DST_CHAIN,
+                token: address(mintToken),
+                amount: 100e18,
+                recipient: bob,
+                minAmountOut: 100e18,
+                extraData: ""
+            })
+        );
         vm.stopPrank();
 
         vm.prank(oracle);
@@ -333,7 +392,9 @@ contract LiquidityAdapterTest is Test {
     function test_revert_nonOracleFill() public {
         vm.prank(alice);
         vm.expectRevert();
-        adapter.fill(bytes32(0), address(mintToken), bob, 100e18, block.chainid, 0, LiquidityAdapter.BridgeMode.MintBurn);
+        adapter.fill(
+            bytes32(0), address(mintToken), bob, 100e18, block.chainid, 0, LiquidityAdapter.BridgeMode.MintBurn
+        );
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -349,19 +410,33 @@ contract LiquidityAdapterTest is Test {
         lockToken.approve(address(adapter), 600_000e18);
 
         // First bridge: 400K (under 500K limit)
-        adapter.bridge(BridgeParams({
-            dstChainId: DST_CHAIN, token: address(lockToken), amount: 400_000e18,
-            recipient: bob, minAmountOut: 400_000e18, extraData: ""
-        }));
+        adapter.bridge(
+            BridgeParams({
+                dstChainId: DST_CHAIN,
+                token: address(lockToken),
+                amount: 400_000e18,
+                recipient: bob,
+                minAmountOut: 400_000e18,
+                extraData: ""
+            })
+        );
 
         // Second bridge: 200K (would exceed 500K daily)
         vm.expectRevert(
-            abi.encodeWithSelector(LiquidityAdapter.DailyLimitExceeded.selector, address(lockToken), 200_000e18, 100_000e18)
+            abi.encodeWithSelector(
+                LiquidityAdapter.DailyLimitExceeded.selector, address(lockToken), 200_000e18, 100_000e18
+            )
         );
-        adapter.bridge(BridgeParams({
-            dstChainId: DST_CHAIN, token: address(lockToken), amount: 200_000e18,
-            recipient: bob, minAmountOut: 200_000e18, extraData: ""
-        }));
+        adapter.bridge(
+            BridgeParams({
+                dstChainId: DST_CHAIN,
+                token: address(lockToken),
+                amount: 200_000e18,
+                recipient: bob,
+                minAmountOut: 200_000e18,
+                extraData: ""
+            })
+        );
         vm.stopPrank();
     }
 
@@ -373,18 +448,30 @@ contract LiquidityAdapterTest is Test {
         vm.startPrank(alice);
         lockToken.approve(address(adapter), 1_000_000e18);
 
-        adapter.bridge(BridgeParams({
-            dstChainId: DST_CHAIN, token: address(lockToken), amount: 400_000e18,
-            recipient: bob, minAmountOut: 400_000e18, extraData: ""
-        }));
+        adapter.bridge(
+            BridgeParams({
+                dstChainId: DST_CHAIN,
+                token: address(lockToken),
+                amount: 400_000e18,
+                recipient: bob,
+                minAmountOut: 400_000e18,
+                extraData: ""
+            })
+        );
 
         // Warp 1 day forward — limit resets
         vm.warp(block.timestamp + 1 days + 1);
 
-        adapter.bridge(BridgeParams({
-            dstChainId: DST_CHAIN, token: address(lockToken), amount: 400_000e18,
-            recipient: bob, minAmountOut: 400_000e18, extraData: ""
-        }));
+        adapter.bridge(
+            BridgeParams({
+                dstChainId: DST_CHAIN,
+                token: address(lockToken),
+                amount: 400_000e18,
+                recipient: bob,
+                minAmountOut: 400_000e18,
+                extraData: ""
+            })
+        );
         vm.stopPrank();
 
         assertEq(lockToken.balanceOf(address(adapter)), 800_000e18);
@@ -439,5 +526,5 @@ contract LiquidityAdapterTest is Test {
         assertEq(adapter.challengePeriod(), 3600);
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

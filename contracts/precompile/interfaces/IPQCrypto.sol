@@ -39,20 +39,20 @@ interface IPQCrypto {
     enum MLDSAMode {
         MLDSA44, // Level 2 security
         MLDSA65, // Level 3 security (recommended)
-        MLDSA87  // Level 5 security
+        MLDSA87 // Level 5 security
     }
 
     /// @notice ML-KEM security modes
     enum MLKEMMode {
-        MLKEM512,  // Level 1 security
-        MLKEM768,  // Level 3 security (recommended)
-        MLKEM1024  // Level 5 security
+        MLKEM512, // Level 1 security
+        MLKEM768, // Level 3 security (recommended)
+        MLKEM1024 // Level 5 security
     }
 
     /// @notice SLH-DSA parameter sets
     enum SLHDSAMode {
-        SHA2_128s,  // Small signatures
-        SHA2_128f,  // Fast signing
+        SHA2_128s, // Small signatures
+        SHA2_128f, // Fast signing
         SHA2_192s,
         SHA2_192f,
         SHA2_256s,
@@ -66,12 +66,10 @@ interface IPQCrypto {
     }
 
     /// @notice Verify an ML-DSA signature
-    function mldsaVerify(
-        uint8 mode,
-        bytes calldata publicKey,
-        bytes calldata message,
-        bytes calldata signature
-    ) external view returns (bool valid);
+    function mldsaVerify(uint8 mode, bytes calldata publicKey, bytes calldata message, bytes calldata signature)
+        external
+        view
+        returns (bool valid);
 
     /// @notice Perform ML-KEM encapsulation
     function mlkemEncapsulate(uint8 mode, bytes calldata publicKey)
@@ -80,19 +78,16 @@ interface IPQCrypto {
         returns (bytes memory ciphertext, bytes memory sharedSecret);
 
     /// @notice Perform ML-KEM decapsulation
-    function mlkemDecapsulate(
-        uint8 mode,
-        bytes calldata privateKey,
-        bytes calldata ciphertext
-    ) external view returns (bytes memory sharedSecret);
+    function mlkemDecapsulate(uint8 mode, bytes calldata privateKey, bytes calldata ciphertext)
+        external
+        view
+        returns (bytes memory sharedSecret);
 
     /// @notice Verify an SLH-DSA signature
-    function slhdsaVerify(
-        uint8 mode,
-        bytes calldata publicKey,
-        bytes calldata message,
-        bytes calldata signature
-    ) external view returns (bool valid);
+    function slhdsaVerify(uint8 mode, bytes calldata publicKey, bytes calldata message, bytes calldata signature)
+        external
+        view
+        returns (bool valid);
 }
 
 /**
@@ -120,32 +115,21 @@ library PQCryptoLib {
     error InvalidSignature();
 
     /// @notice Verify an ML-DSA-65 signature (recommended security level)
-    function verifyMLDSA65(
-        bytes memory publicKey,
-        bytes memory message,
-        bytes memory signature
-    ) internal view returns (bool valid) {
-        return IPQCrypto(PRECOMPILE_ADDRESS).mldsaVerify(
-            MLDSA_65,
-            publicKey,
-            message,
-            signature
-        );
+    function verifyMLDSA65(bytes memory publicKey, bytes memory message, bytes memory signature)
+        internal
+        view
+        returns (bool valid)
+    {
+        return IPQCrypto(PRECOMPILE_ADDRESS).mldsaVerify(MLDSA_65, publicKey, message, signature);
     }
 
     /// @notice Verify an ML-DSA signature
-    function verifyMLDSA(
-        uint8 mode,
-        bytes memory publicKey,
-        bytes memory message,
-        bytes memory signature
-    ) internal view returns (bool valid) {
-        return IPQCrypto(PRECOMPILE_ADDRESS).mldsaVerify(
-            mode,
-            publicKey,
-            message,
-            signature
-        );
+    function verifyMLDSA(uint8 mode, bytes memory publicKey, bytes memory message, bytes memory signature)
+        internal
+        view
+        returns (bool valid)
+    {
+        return IPQCrypto(PRECOMPILE_ADDRESS).mldsaVerify(mode, publicKey, message, signature);
     }
 
     /// @notice ML-KEM encapsulation (ML-KEM-768 recommended)
@@ -158,10 +142,11 @@ library PQCryptoLib {
     }
 
     /// @notice ML-KEM decapsulation
-    function decapsulateMLKEM768(
-        bytes memory privateKey,
-        bytes memory ciphertext
-    ) internal view returns (bytes memory sharedSecret) {
+    function decapsulateMLKEM768(bytes memory privateKey, bytes memory ciphertext)
+        internal
+        view
+        returns (bytes memory sharedSecret)
+    {
         return IPQCrypto(PRECOMPILE_ADDRESS).mlkemDecapsulate(MLKEM_768, privateKey, ciphertext);
     }
 }
@@ -173,11 +158,10 @@ library PQCryptoLib {
 abstract contract PQCryptoVerifier {
     error PQSignatureVerificationFailed();
 
-    function _verifyMLDSA65OrRevert(
-        bytes memory publicKey,
-        bytes memory message,
-        bytes memory signature
-    ) internal view {
+    function _verifyMLDSA65OrRevert(bytes memory publicKey, bytes memory message, bytes memory signature)
+        internal
+        view
+    {
         if (!PQCryptoLib.verifyMLDSA65(publicKey, message, signature)) {
             revert PQSignatureVerificationFailed();
         }

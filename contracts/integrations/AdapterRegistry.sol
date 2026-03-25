@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title AdapterRegistry
@@ -11,8 +11,21 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 contract AdapterRegistry is AccessControl {
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 
-    enum AdapterCategory { ORACLE, DEX, LENDING, BRIDGE, PERPS, AUTOMATION, MEV, RWA }
-    enum AdapterStatus { INACTIVE, ACTIVE, DEPRECATED }
+    enum AdapterCategory {
+        ORACLE,
+        DEX,
+        LENDING,
+        BRIDGE,
+        PERPS,
+        AUTOMATION,
+        MEV,
+        RWA
+    }
+    enum AdapterStatus {
+        INACTIVE,
+        ACTIVE,
+        DEPRECATED
+    }
 
     struct AdapterInfo {
         string name;
@@ -42,12 +55,11 @@ contract AdapterRegistry is AccessControl {
         _grantRole(REGISTRAR_ROLE, admin);
     }
 
-    function register(
-        string calldata name,
-        string calldata version,
-        AdapterCategory category,
-        address implementation
-    ) external onlyRole(REGISTRAR_ROLE) returns (bytes32 id) {
+    function register(string calldata name, string calldata version, AdapterCategory category, address implementation)
+        external
+        onlyRole(REGISTRAR_ROLE)
+        returns (bytes32 id)
+    {
         if (implementation == address(0)) revert InvalidAddress();
 
         id = keccak256(abi.encodePacked(name, category));
@@ -70,7 +82,10 @@ contract AdapterRegistry is AccessControl {
         emit AdapterRegistered(id, name, category, implementation);
     }
 
-    function updateVersion(bytes32 id, string calldata version, address implementation) external onlyRole(REGISTRAR_ROLE) {
+    function updateVersion(bytes32 id, string calldata version, address implementation)
+        external
+        onlyRole(REGISTRAR_ROLE)
+    {
         if (adapters[id].registeredAt == 0) revert AdapterNotFound();
         adapters[id].version = version;
         adapters[id].implementation = implementation;

@@ -8,12 +8,12 @@ contract owned {
         owner = msg.sender;
     }
 
-    modifier onlyOwner {
+    modifier onlyOwner() {
         require(msg.sender == owner, "Caller should be Owner");
         _;
     }
 
-    function transferOwnership(address newOwner) onlyOwner public {
+    function transferOwnership(address newOwner) public onlyOwner {
         owner = newOwner;
     }
 }

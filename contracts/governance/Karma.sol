@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
-import {IDIDRegistry} from "../identity/interfaces/IDID.sol";
+import { IDIDRegistry } from "../identity/interfaces/IDID.sol";
 
 /**
  * @title Karma (K) - Soul-Bound Reputation Token
@@ -249,7 +249,7 @@ contract Karma is AccessControl {
     /// @param reason Reason code for slashing
     function slash(address account, uint256 amount, bytes32 reason) external {
         if (!hasRole(SLASHER_ROLE, msg.sender)) revert NotSlasher();
-        
+
         uint256 balance = _balances[account];
         if (amount > balance) {
             amount = balance; // Slash entire balance if amount exceeds
@@ -383,14 +383,18 @@ contract Karma is AccessControl {
     /// @return activeLastMonth Whether account was active last month
     /// @return currentDecayRate Current decay rate in basis points
     /// @return hasKarmaFloor Whether account qualifies for MIN_VERIFIED_KARMA floor
-    function getActivityStatus(address account) external view returns (
-        uint256 karma,
-        bool verified,
-        bool activeThisMonth,
-        bool activeLastMonth,
-        uint256 currentDecayRate,
-        bool hasKarmaFloor
-    ) {
+    function getActivityStatus(address account)
+        external
+        view
+        returns (
+            uint256 karma,
+            bool verified,
+            bool activeThisMonth,
+            bool activeLastMonth,
+            uint256 currentDecayRate,
+            bool hasKarmaFloor
+        )
+    {
         karma = karmaOf(account);
         verified = isVerified[account];
         activeThisMonth = monthlyTxCount[account][currentMonth()] > 0;
@@ -413,13 +417,13 @@ contract Karma is AccessControl {
     /// @dev Caller must be the controller of the DID in the registry
     function linkDIDFromRegistry(string calldata did) external {
         if (address(didRegistry) == address(0)) revert ZeroAddress();
-        
+
         // Verify DID exists and caller is controller
         if (!didRegistry.didExists(did)) revert DIDNotVerified();
         if (didRegistry.controllerOf(did) != msg.sender) revert NotDIDController();
 
         bytes32 didHash = keccak256(bytes(did));
-        
+
         if (didOf[msg.sender] != bytes32(0)) revert AccountAlreadyHasDID();
         if (accountOf[didHash] != address(0)) revert DIDAlreadyLinked();
 
@@ -443,7 +447,7 @@ contract Karma is AccessControl {
     /// @return hasVerifiedDID Whether account has a verified DID
     function hasVerifiedDID(address account) external view returns (bool) {
         if (address(didRegistry) == address(0)) return false;
-        
+
         bytes32 didHash = didOf[account];
         if (didHash == bytes32(0)) return false;
 

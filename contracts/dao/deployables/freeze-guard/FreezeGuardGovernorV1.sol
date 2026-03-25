@@ -1,28 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IVersion} from "../../interfaces/deployables/IVersion.sol";
-import {
-    IFreezeGuardGovernorV1
-} from "../../interfaces/deployables/IFreezeGuardGovernorV1.sol";
-import {IFreezable} from "../../interfaces/deployables/IFreezable.sol";
-import {
-    IFreezeGuardBaseV1
-} from "../../interfaces/deployables/IFreezeGuardBaseV1.sol";
-import {IDeploymentBlock} from "../../interfaces/IDeploymentBlock.sol";
-import {
-    DeploymentBlockInitializable
-} from "../../DeploymentBlockInitializable.sol";
-import {InitializerEventEmitter} from "../../InitializerEventEmitter.sol";
-import {Enum} from "@gnosis.pm/safe-contracts/interfaces/Enum.sol";
-import {IGuard} from "../../interfaces/IGuard.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {
-    UUPSUpgradeable
-} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {
-    Ownable2StepUpgradeable
-} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import { IVersion } from "../../interfaces/deployables/IVersion.sol";
+import { IFreezeGuardGovernorV1 } from "../../interfaces/deployables/IFreezeGuardGovernorV1.sol";
+import { IFreezable } from "../../interfaces/deployables/IFreezable.sol";
+import { IFreezeGuardBaseV1 } from "../../interfaces/deployables/IFreezeGuardBaseV1.sol";
+import { IDeploymentBlock } from "../../interfaces/IDeploymentBlock.sol";
+import { DeploymentBlockInitializable } from "../../DeploymentBlockInitializable.sol";
+import { InitializerEventEmitter } from "../../InitializerEventEmitter.sol";
+import { Enum } from "@gnosis.pm/safe-contracts/interfaces/Enum.sol";
+import { IGuard } from "../../interfaces/IGuard.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 /**
  * @title FreezeGuardGovernorV1
@@ -65,7 +55,9 @@ contract FreezeGuardGovernorV1 is
      * @custom:storage-location erc7201:DAO.FreezeGuardGovernor.main
      */
     struct FreezeGuardGovernorStorage {
-        /** @notice The Freezable contract that determines if DAO is frozen */
+        /**
+         * @notice The Freezable contract that determines if DAO is frozen
+         */
         IFreezable freezable;
     }
 
@@ -81,11 +73,7 @@ contract FreezeGuardGovernorV1 is
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      * @return $ The storage struct for FreezeGuardGovernorV1
      */
-    function _getFreezeGuardGovernorStorage()
-        internal
-        pure
-        returns (FreezeGuardGovernorStorage storage $)
-    {
+    function _getFreezeGuardGovernorStorage() internal pure returns (FreezeGuardGovernorStorage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := FREEZE_GUARD_GOVERNOR_STORAGE_LOCATION
@@ -105,10 +93,7 @@ contract FreezeGuardGovernorV1 is
      * @dev Initializes all inherited contracts and sets the freeze voting reference.
      * The owner is typically the child DAO's Safe for self-governance.
      */
-    function initialize(
-        address owner_,
-        address freezeVoting_
-    ) public virtual override initializer {
+    function initialize(address owner_, address freezeVoting_) public virtual override initializer {
         __InitializerEventEmitter_init(abi.encode(owner_, freezeVoting_));
         __Ownable_init(owner_);
         __DeploymentBlockInitializable_init();
@@ -127,9 +112,7 @@ contract FreezeGuardGovernorV1 is
      * @inheritdoc UUPSUpgradeable
      * @dev Restricts upgrades to the owner (typically the parent DAO)
      */
-    function _authorizeUpgrade(
-        address newImplementation_
-    ) internal virtual override onlyOwner {
+    function _authorizeUpgrade(address newImplementation_) internal virtual override onlyOwner {
         // solhint-disable-previous-line no-empty-blocks
         // Intentionally empty - authorization logic handled by onlyOwner modifier
     }
@@ -210,15 +193,10 @@ contract FreezeGuardGovernorV1 is
      * @inheritdoc ERC165
      * @dev Supports IFreezeGuardGovernorV1, IFreezeGuardBaseV1, IGuard, IVersion, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(IFreezeGuardGovernorV1).interfaceId ||
-            interfaceId_ == type(IFreezeGuardBaseV1).interfaceId ||
-            interfaceId_ == type(IGuard).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(IFreezeGuardGovernorV1).interfaceId
+            || interfaceId_ == type(IFreezeGuardBaseV1).interfaceId || interfaceId_ == type(IGuard).interfaceId
+            || interfaceId_ == type(IVersion).interfaceId || interfaceId_ == type(IDeploymentBlock).interfaceId
+            || super.supportsInterface(interfaceId_);
     }
 }

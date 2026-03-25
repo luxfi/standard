@@ -2,13 +2,13 @@
 pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
-import {Bond} from "../../../contracts/treasury/Bond.sol";
-import {MockERC20} from "../TestMocks.sol";
+import { Bond } from "../../../contracts/treasury/Bond.sol";
+import { MockERC20 } from "../TestMocks.sol";
 
 /// @title MockMintableToken
 /// @notice ERC20 with mint capability for Bond testing
 contract MockMintableToken is MockERC20 {
-    constructor() MockERC20("Identity Token", "IDENT", 18) {}
+    constructor() MockERC20("Identity Token", "IDENT", 18) { }
 }
 
 /// @title BondFuzzTest
@@ -80,17 +80,17 @@ contract BondFuzzTest is Test {
         uint256 purchaseAmount
     ) public {
         // Bound inputs to reasonable ranges
-        targetRaise = bound(targetRaise, 1000e6, 10_000_000e6);  // 1k to 10M USDC
+        targetRaise = bound(targetRaise, 1000e6, 10_000_000e6); // 1k to 10M USDC
         tokensToMint = bound(tokensToMint, 1000e18, 10_000_000e18);
-        discount = bound(discount, 0, 5000);  // 0-50% discount
-        purchaseAmount = bound(purchaseAmount, 100e6, targetRaise);  // min 100 USDC
+        discount = bound(discount, 0, 5000); // 0-50% discount
+        purchaseAmount = bound(purchaseAmount, 100e6, targetRaise); // min 100 USDC
 
         uint256 bondId = _createBond(
             targetRaise,
             tokensToMint,
             discount,
             30 days,
-            100e6,      // min purchase
+            100e6, // min purchase
             targetRaise // max purchase
         );
 
@@ -134,17 +134,10 @@ contract BondFuzzTest is Test {
         // Bound inputs
         targetRaise = bound(targetRaise, 10_000e6, 1_000_000e6);
         tokensToMint = bound(tokensToMint, 10_000e18, 1_000_000e18);
-        discount = bound(discount, 0, 3000);  // 0-30%
+        discount = bound(discount, 0, 3000); // 0-30%
         purchaseAmount = bound(purchaseAmount, 1000e6, targetRaise);
 
-        uint256 bondId = _createBond(
-            targetRaise,
-            tokensToMint,
-            discount,
-            30 days,
-            1000e6,
-            targetRaise
-        );
+        uint256 bondId = _createBond(targetRaise, tokensToMint, discount, 30 days, 1000e6, targetRaise);
 
         paymentToken.mint(alice, purchaseAmount);
         vm.prank(alice);
@@ -153,7 +146,7 @@ contract BondFuzzTest is Test {
         vm.prank(alice);
         bond.purchase(bondId, purchaseAmount);
 
-        (, , uint256 tokensOwed, , , ) = bond.purchases(bondId, alice);
+        (,, uint256 tokensOwed,,,) = bond.purchases(bondId, alice);
 
         // Expected: (amount * tokensToMint * (10000 + discount)) / (targetRaise * 10000)
         uint256 expectedTokens = (purchaseAmount * tokensToMint * (BPS + discount)) / (targetRaise * BPS);
@@ -167,9 +160,9 @@ contract BondFuzzTest is Test {
         purchaseAmount = bound(purchaseAmount, 1, minPurchase - 1);
 
         uint256 bondId = _createBond(
-            100_000e6,  // target raise
+            100_000e6, // target raise
             100_000e18, // tokens to mint
-            1000,       // 10% discount
+            1000, // 10% discount
             30 days,
             minPurchase,
             100_000e6
@@ -191,7 +184,7 @@ contract BondFuzzTest is Test {
         uint256 purchaseAmount = maxPurchase + excessAmount;
 
         uint256 bondId = _createBond(
-            100_000e6,  // target raise (above maxPurchase)
+            100_000e6, // target raise (above maxPurchase)
             100_000e18,
             1000,
             30 days,
@@ -220,7 +213,7 @@ contract BondFuzzTest is Test {
             1000,
             30 days,
             100e6,
-            purchaseAmount  // max >= purchaseAmount
+            purchaseAmount // max >= purchaseAmount
         );
 
         paymentToken.mint(alice, purchaseAmount);
@@ -237,17 +230,10 @@ contract BondFuzzTest is Test {
     function testFuzz_Purchase_MultiplePurchasesAllowed(uint256 firstAmount, uint256 secondAmount) public {
         uint256 targetRaise = 100_000e6;
         uint256 maxPurchase = 50_000e6;
-        firstAmount = bound(firstAmount, 1000e6, 20_000e6);  // Under half of max
-        secondAmount = bound(secondAmount, 1000e6, 20_000e6);  // Under half of max
+        firstAmount = bound(firstAmount, 1000e6, 20_000e6); // Under half of max
+        secondAmount = bound(secondAmount, 1000e6, 20_000e6); // Under half of max
 
-        uint256 bondId = _createBond(
-            targetRaise,
-            100_000e18,
-            1000,
-            30 days,
-            1000e6,
-            maxPurchase
-        );
+        uint256 bondId = _createBond(targetRaise, 100_000e18, 1000, 30 days, 1000e6, maxPurchase);
 
         // First purchase
         paymentToken.mint(alice, firstAmount);
@@ -266,13 +252,7 @@ contract BondFuzzTest is Test {
         bond.purchase(bondId, secondAmount);
 
         // Verify total purchase amount accumulated
-        (
-            ,
-            uint256 totalPayment,
-            uint256 totalTokens,
-            ,
-            ,
-        ) = bond.purchases(bondId, alice);
+        (, uint256 totalPayment, uint256 totalTokens,,,) = bond.purchases(bondId, alice);
 
         assertEq(totalPayment, firstAmount + secondAmount);
         assertGt(totalTokens, 0);
@@ -287,14 +267,7 @@ contract BondFuzzTest is Test {
         // Second purchase would exceed max
         secondAmount = bound(secondAmount, maxPurchase - firstAmount + 1, 50_000e6);
 
-        uint256 bondId = _createBond(
-            targetRaise,
-            100_000e18,
-            1000,
-            30 days,
-            1000e6,
-            maxPurchase
-        );
+        uint256 bondId = _createBond(targetRaise, 100_000e18, 1000, 30 days, 1000e6, maxPurchase);
 
         // First purchase
         paymentToken.mint(alice, firstAmount);
@@ -327,7 +300,7 @@ contract BondFuzzTest is Test {
         uint256 bondId = _createBond(
             100_000e6,
             100_000e18,
-            1000,  // 10% discount
+            1000, // 10% discount
             vestingPeriod,
             1000e6,
             100_000e6
@@ -341,7 +314,7 @@ contract BondFuzzTest is Test {
         vm.prank(alice);
         bond.purchase(bondId, purchaseAmount);
 
-        (, , uint256 tokensOwed, , , ) = bond.purchases(bondId, alice);
+        (,, uint256 tokensOwed,,,) = bond.purchases(bondId, alice);
 
         // Fast forward time
         skip(timeElapsed);
@@ -378,14 +351,7 @@ contract BondFuzzTest is Test {
         purchaseAmount = bound(purchaseAmount, 10_000e6, 50_000e6);
         uint256 vestingPeriod = 30 days;
 
-        uint256 bondId = _createBond(
-            100_000e6,
-            100_000e18,
-            1000,
-            vestingPeriod,
-            1000e6,
-            100_000e6
-        );
+        uint256 bondId = _createBond(100_000e6, 100_000e18, 1000, vestingPeriod, 1000e6, 100_000e6);
 
         // Purchase
         paymentToken.mint(alice, purchaseAmount);
@@ -395,7 +361,7 @@ contract BondFuzzTest is Test {
         vm.prank(alice);
         bond.purchase(bondId, purchaseAmount);
 
-        (, , uint256 tokensOwed, , , ) = bond.purchases(bondId, alice);
+        (,, uint256 tokensOwed,,,) = bond.purchases(bondId, alice);
 
         uint256 totalClaimed = 0;
 
@@ -438,22 +404,12 @@ contract BondFuzzTest is Test {
     // =========================================================================
 
     /// @notice Invariant: total raised never exceeds target
-    function testFuzz_Invariant_TotalRaisedNeverExceedsTarget(
-        uint256 amount1,
-        uint256 amount2
-    ) public {
+    function testFuzz_Invariant_TotalRaisedNeverExceedsTarget(uint256 amount1, uint256 amount2) public {
         uint256 targetRaise = 100_000e6;
         amount1 = bound(amount1, 1000e6, 40_000e6);
         amount2 = bound(amount2, 1000e6, 40_000e6);
 
-        uint256 bondId = _createBond(
-            targetRaise,
-            100_000e18,
-            1000,
-            30 days,
-            1000e6,
-            50_000e6
-        );
+        uint256 bondId = _createBond(targetRaise, 100_000e18, 1000, 30 days, 1000e6, 50_000e6);
 
         // Alice purchases
         paymentToken.mint(alice, amount1);
@@ -483,7 +439,7 @@ contract BondFuzzTest is Test {
         uint256 bondId = _createBond(
             100_000e6,
             100_000e18,
-            0,  // zero discount
+            0, // zero discount
             30 days,
             1000e6,
             100_000e6
@@ -496,7 +452,7 @@ contract BondFuzzTest is Test {
         vm.prank(alice);
         bond.purchase(bondId, purchaseAmount);
 
-        (, , uint256 tokensOwed, , , ) = bond.purchases(bondId, alice);
+        (,, uint256 tokensOwed,,,) = bond.purchases(bondId, alice);
 
         // With 0% discount, tokens = amount * tokensToMint / targetRaise
         uint256 expected = (purchaseAmount * 100_000e18) / 100_000e6;
@@ -510,7 +466,7 @@ contract BondFuzzTest is Test {
         uint256 bondId = _createBond(
             100_000e6,
             100_000e18,
-            5000,  // 50% discount
+            5000, // 50% discount
             30 days,
             1000e6,
             100_000e6
@@ -523,11 +479,11 @@ contract BondFuzzTest is Test {
         vm.prank(alice);
         bond.purchase(bondId, purchaseAmount);
 
-        (, , uint256 tokensOwed, , , ) = bond.purchases(bondId, alice);
+        (,, uint256 tokensOwed,,,) = bond.purchases(bondId, alice);
 
         // With 50% discount, user gets 150% of base tokens
         uint256 baseTokens = (purchaseAmount * 100_000e18) / 100_000e6;
-        uint256 expected = (baseTokens * 15000) / 10000;  // 150%
+        uint256 expected = (baseTokens * 15000) / 10000; // 150%
         assertEq(tokensOwed, expected);
     }
 
@@ -535,14 +491,7 @@ contract BondFuzzTest is Test {
     function testFuzz_Purchase_InactiveBondFails(uint256 purchaseAmount) public {
         purchaseAmount = bound(purchaseAmount, 1000e6, 50_000e6);
 
-        uint256 bondId = _createBond(
-            100_000e6,
-            100_000e18,
-            1000,
-            30 days,
-            1000e6,
-            100_000e6
-        );
+        uint256 bondId = _createBond(100_000e6, 100_000e18, 1000, 30 days, 1000e6, 100_000e6);
 
         // Close bond
         vm.prank(owner);
@@ -567,7 +516,7 @@ contract BondFuzzTest is Test {
             tokensToMint: 100_000e18,
             discount: 1000,
             vestingPeriod: 30 days,
-            startTime: block.timestamp + 1 days,  // starts in future
+            startTime: block.timestamp + 1 days, // starts in future
             endTime: block.timestamp + 31 days,
             minPurchase: 1000e6,
             maxPurchase: 100_000e6,
@@ -590,14 +539,7 @@ contract BondFuzzTest is Test {
     function testFuzz_Purchase_AfterEndFails(uint256 purchaseAmount) public {
         purchaseAmount = bound(purchaseAmount, 1000e6, 50_000e6);
 
-        uint256 bondId = _createBond(
-            100_000e6,
-            100_000e18,
-            1000,
-            30 days,
-            1000e6,
-            100_000e6
-        );
+        uint256 bondId = _createBond(100_000e6, 100_000e18, 1000, 30 days, 1000e6, 100_000e6);
 
         // Fast forward past end time
         skip(31 days);

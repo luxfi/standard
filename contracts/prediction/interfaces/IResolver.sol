@@ -205,12 +205,7 @@ interface IResolver is IResolverErrors, IResolverEvents {
     /// @param minBond Minimum bond amount for this market
     /// @param maxBond Maximum bond amount for this market (0 = no maximum)
     /// @param enabled Whether to enable custom bond config for this market
-    function setMarketBondConfig(
-        bytes32 questionID,
-        uint256 minBond,
-        uint256 maxBond,
-        bool enabled
-    ) external;
+    function setMarketBondConfig(bytes32 questionID, uint256 minBond, uint256 maxBond, bool enabled) external;
 
     /// @notice Gets the effective bond configuration for a market
     /// @param questionID The unique questionID

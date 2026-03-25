@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IProposerAdapterBaseV1} from "./IProposerAdapterBaseV1.sol";
+import { IProposerAdapterBaseV1 } from "./IProposerAdapterBaseV1.sol";
 
 /**
  * @title IProposerAdapterERC721V1
@@ -40,8 +40,5 @@ interface IProposerAdapterERC721V1 is IProposerAdapterBaseV1 {
      * @notice Returns the minimum number of NFTs required to create proposals
      * @return proposerThreshold The threshold value
      */
-    function proposerThreshold()
-        external
-        view
-        returns (uint256 proposerThreshold);
+    function proposerThreshold() external view returns (uint256 proposerThreshold);
 }

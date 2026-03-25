@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title AMMV3Pool - Concentrated Liquidity Pool
 /// @notice Implements Uniswap V3-style concentrated liquidity
@@ -53,11 +53,48 @@ contract AMMV3Pool is ReentrancyGuard {
 
     // Events
     event Initialize(uint160 sqrtPriceX96, int24 tick);
-    event Mint(address sender, address indexed owner, int24 indexed tickLower, int24 indexed tickUpper, uint128 amount, uint256 amount0, uint256 amount1);
-    event Burn(address indexed owner, int24 indexed tickLower, int24 indexed tickUpper, uint128 amount, uint256 amount0, uint256 amount1);
-    event Swap(address indexed sender, address indexed recipient, int256 amount0, int256 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick);
-    event Collect(address indexed owner, address recipient, int24 indexed tickLower, int24 indexed tickUpper, uint128 amount0, uint128 amount1);
-    event Flash(address indexed sender, address indexed recipient, uint256 amount0, uint256 amount1, uint256 paid0, uint256 paid1);
+    event Mint(
+        address sender,
+        address indexed owner,
+        int24 indexed tickLower,
+        int24 indexed tickUpper,
+        uint128 amount,
+        uint256 amount0,
+        uint256 amount1
+    );
+    event Burn(
+        address indexed owner,
+        int24 indexed tickLower,
+        int24 indexed tickUpper,
+        uint128 amount,
+        uint256 amount0,
+        uint256 amount1
+    );
+    event Swap(
+        address indexed sender,
+        address indexed recipient,
+        int256 amount0,
+        int256 amount1,
+        uint160 sqrtPriceX96,
+        uint128 liquidity,
+        int24 tick
+    );
+    event Collect(
+        address indexed owner,
+        address recipient,
+        int24 indexed tickLower,
+        int24 indexed tickUpper,
+        uint128 amount0,
+        uint128 amount1
+    );
+    event Flash(
+        address indexed sender,
+        address indexed recipient,
+        uint256 amount0,
+        uint256 amount1,
+        uint256 paid0,
+        uint256 paid1
+    );
 
     constructor() {
         factory = msg.sender;
@@ -85,12 +122,11 @@ contract AMMV3Pool is ReentrancyGuard {
     }
 
     /// @notice Adds liquidity for the given recipient/tickLower/tickUpper position
-    function mint(
-        address recipient,
-        int24 tickLower,
-        int24 tickUpper,
-        uint128 amount
-    ) external nonReentrant returns (uint256 amount0, uint256 amount1) {
+    function mint(address recipient, int24 tickLower, int24 tickUpper, uint128 amount)
+        external
+        nonReentrant
+        returns (uint256 amount0, uint256 amount1)
+    {
         require(amount > 0, "AMMV3: ZERO_AMOUNT");
         require(tickLower < tickUpper, "AMMV3: INVALID_TICK_RANGE");
         require(tickLower >= MIN_TICK && tickUpper <= MAX_TICK, "AMMV3: TICK_OUT_OF_BOUNDS");
@@ -129,11 +165,11 @@ contract AMMV3Pool is ReentrancyGuard {
     }
 
     /// @notice Removes liquidity from the sender
-    function burn(
-        int24 tickLower,
-        int24 tickUpper,
-        uint128 amount
-    ) external nonReentrant returns (uint256 amount0, uint256 amount1) {
+    function burn(int24 tickLower, int24 tickUpper, uint128 amount)
+        external
+        nonReentrant
+        returns (uint256 amount0, uint256 amount1)
+    {
         bytes32 key = keccak256(abi.encodePacked(msg.sender, tickLower, tickUpper));
         Position storage position = positions[key];
         require(position.liquidity >= amount, "AMMV3: INSUFFICIENT_LIQUIDITY");
@@ -189,13 +225,11 @@ contract AMMV3Pool is ReentrancyGuard {
     }
 
     /// @notice Swap token0 for token1, or token1 for token0
-    function swap(
-        address recipient,
-        bool zeroForOne,
-        int256 amountSpecified,
-        uint160 sqrtPriceLimitX96,
-        bytes calldata
-    ) external nonReentrant returns (int256 amount0, int256 amount1) {
+    function swap(address recipient, bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96, bytes calldata)
+        external
+        nonReentrant
+        returns (int256 amount0, int256 amount1)
+    {
         require(amountSpecified != 0, "AMMV3: ZERO_AMOUNT");
         require(sqrtPriceX96 != 0, "AMMV3: NOT_INITIALIZED");
 
@@ -228,9 +262,11 @@ contract AMMV3Pool is ReentrancyGuard {
             amountOut = uint256(-amountSpecified);
             // Calculate input with fee
             if (zeroForOne) {
-                amountIn = (amountOut * balanceBefore0 * 1000000) / ((balanceBefore1 - amountOut) * (1000000 - uint256(fee))) + 1;
+                amountIn = (amountOut * balanceBefore0 * 1000000)
+                    / ((balanceBefore1 - amountOut) * (1000000 - uint256(fee))) + 1;
             } else {
-                amountIn = (amountOut * balanceBefore1 * 1000000) / ((balanceBefore0 - amountOut) * (1000000 - uint256(fee))) + 1;
+                amountIn = (amountOut * balanceBefore1 * 1000000)
+                    / ((balanceBefore0 - amountOut) * (1000000 - uint256(fee))) + 1;
             }
         }
 
@@ -270,12 +306,7 @@ contract AMMV3Pool is ReentrancyGuard {
     }
 
     /// @notice Flash loan tokens from the pool
-    function flash(
-        address recipient,
-        uint256 amount0,
-        uint256 amount1,
-        bytes calldata data
-    ) external nonReentrant {
+    function flash(address recipient, uint256 amount0, uint256 amount1, bytes calldata data) external nonReentrant {
         uint256 fee0 = amount0 > 0 ? (amount0 * fee) / 1000000 + 1 : 0;
         uint256 fee1 = amount1 > 0 ? (amount1 * fee) / 1000000 + 1 : 0;
 
@@ -309,12 +340,11 @@ contract AMMV3Pool is ReentrancyGuard {
         info.liquidityNet += liquidityDelta;
     }
 
-    function _getAmountsForLiquidity(
-        uint160 sqrtRatioX96,
-        int24 tickLower,
-        int24 tickUpper,
-        uint128 liquidityAmount
-    ) internal pure returns (uint256 amount0, uint256 amount1) {
+    function _getAmountsForLiquidity(uint160 sqrtRatioX96, int24 tickLower, int24 tickUpper, uint128 liquidityAmount)
+        internal
+        pure
+        returns (uint256 amount0, uint256 amount1)
+    {
         uint160 sqrtRatioAX96 = _getSqrtRatioAtTick(tickLower);
         uint160 sqrtRatioBX96 = _getSqrtRatioAtTick(tickUpper);
 
@@ -328,7 +358,11 @@ contract AMMV3Pool is ReentrancyGuard {
         }
     }
 
-    function _getAmount0ForLiquidity(uint160 sqrtRatioAX96, uint160 sqrtRatioBX96, uint128 liquidityAmount) internal pure returns (uint256) {
+    function _getAmount0ForLiquidity(uint160 sqrtRatioAX96, uint160 sqrtRatioBX96, uint128 liquidityAmount)
+        internal
+        pure
+        returns (uint256)
+    {
         if (sqrtRatioAX96 > sqrtRatioBX96) (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
         // Reorder operations to avoid overflow: divide by sqrtRatioAX96 first
         // Original: (L << 96) * (B - A) / B / A
@@ -340,7 +374,11 @@ contract AMMV3Pool is ReentrancyGuard {
         return intermediate * (sqrtRatioBX96 - sqrtRatioAX96) / sqrtRatioBX96;
     }
 
-    function _getAmount1ForLiquidity(uint160 sqrtRatioAX96, uint160 sqrtRatioBX96, uint128 liquidityAmount) internal pure returns (uint256) {
+    function _getAmount1ForLiquidity(uint160 sqrtRatioAX96, uint160 sqrtRatioBX96, uint128 liquidityAmount)
+        internal
+        pure
+        returns (uint256)
+    {
         if (sqrtRatioAX96 > sqrtRatioBX96) (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
         return uint256(liquidityAmount) * (sqrtRatioBX96 - sqrtRatioAX96) / (1 << 96);
     }

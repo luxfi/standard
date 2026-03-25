@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {StableSwap} from "./StableSwap.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { StableSwap } from "./StableSwap.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /**
  * @title StableSwapFactory
@@ -12,7 +12,6 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
  * @dev Manages pool registry and provides standard fee structures
  */
 contract StableSwapFactory is AccessControl {
-
     // ═══════════════════════════════════════════════════════════════════════
     // CONSTANTS
     // ═══════════════════════════════════════════════════════════════════════
@@ -52,14 +51,7 @@ contract StableSwapFactory is AccessControl {
     // EVENTS
     // ═══════════════════════════════════════════════════════════════════════
 
-    event PoolCreated(
-        address indexed pool,
-        address[] tokens,
-        uint256 A,
-        uint256 fee,
-        string name,
-        string symbol
-    );
+    event PoolCreated(address indexed pool, address[] tokens, uint256 A, uint256 fee, string name, string symbol);
 
     event BasePoolSet(address indexed pool, bool isBase);
     event FeeReceiverUpdated(address indexed receiver);
@@ -99,12 +91,11 @@ contract StableSwapFactory is AccessControl {
      * @param symbol LP token symbol
      * @return pool Address of deployed pool
      */
-    function deployStablePool(
-        address[] calldata tokens,
-        uint256 A,
-        string calldata name,
-        string calldata symbol
-    ) external onlyRole(DEPLOYER_ROLE) returns (address pool) {
+    function deployStablePool(address[] calldata tokens, uint256 A, string calldata name, string calldata symbol)
+        external
+        onlyRole(DEPLOYER_ROLE)
+        returns (address pool)
+    {
         return _deployPool(tokens, A, STABLECOIN_FEE, STANDARD_ADMIN_FEE, name, symbol);
     }
 
@@ -138,13 +129,11 @@ contract StableSwapFactory is AccessControl {
      * @param symbol LP token symbol
      * @return pool Address of deployed metapool
      */
-    function deployMetapool(
-        address basePool,
-        address token,
-        uint256 A,
-        string calldata name,
-        string calldata symbol
-    ) external onlyRole(DEPLOYER_ROLE) returns (address pool) {
+    function deployMetapool(address basePool, address token, uint256 A, string calldata name, string calldata symbol)
+        external
+        onlyRole(DEPLOYER_ROLE)
+        returns (address pool)
+    {
         if (!isBasePool[basePool]) revert InvalidTokens();
 
         address[] memory tokens = new address[](2);
@@ -181,16 +170,7 @@ contract StableSwapFactory is AccessControl {
 
         // Deploy pool via CREATE2 with poolKey + nonce for unique salt
         bytes32 salt = keccak256(abi.encodePacked(poolKey, allPools.length));
-        StableSwap newPool = new StableSwap{salt: salt}(
-            tokens,
-            decimals,
-            name,
-            symbol,
-            A,
-            fee,
-            adminFee,
-            feeReceiver
-        );
+        StableSwap newPool = new StableSwap{ salt: salt }(tokens, decimals, name, symbol, A, fee, adminFee, feeReceiver);
 
         pool = address(newPool);
         getPool[poolKey] = pool;
@@ -281,15 +261,9 @@ contract StableSwapFactory is AccessControl {
         bytes32 poolKey = _getPoolKey(tokens);
         bytes32 salt = keccak256(abi.encodePacked(poolKey, nonce));
         bytes memory bytecode = abi.encodePacked(
-            type(StableSwap).creationCode,
-            abi.encode(tokens, decimals, name, symbol, A, fee, adminFee, feeReceiver)
+            type(StableSwap).creationCode, abi.encode(tokens, decimals, name, symbol, A, fee, adminFee, feeReceiver)
         );
-        bytes32 hash = keccak256(abi.encodePacked(
-            bytes1(0xff),
-            address(this),
-            salt,
-            keccak256(bytecode)
-        ));
+        bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(bytecode)));
         return address(uint160(uint256(hash)));
     }
 }

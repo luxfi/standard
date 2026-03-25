@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IOracle} from "../markets/interfaces/IOracle.sol";
+import { IOracle } from "../markets/interfaces/IOracle.sol";
 
 /// @title MockChainlinkOracle
 /// @notice Mock oracle for local testing and Anvil deployments
@@ -96,13 +96,11 @@ contract MockChainlinkAggregator {
         return decimals_;
     }
 
-    function latestRoundData() external view returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    ) {
+    function latestRoundData()
+        external
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+    {
         return (latestRound, latestAnswer, latestTimestamp, latestTimestamp, latestRound);
     }
 
@@ -113,13 +111,11 @@ contract MockChainlinkAggregator {
         latestRound++;
     }
 
-    function getRoundData(uint80) external view returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    ) {
+    function getRoundData(uint80)
+        external
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+    {
         return (latestRound, latestAnswer, latestTimestamp, latestTimestamp, latestRound);
     }
 }
@@ -132,16 +128,11 @@ contract MockOracleFactory {
     /// @return btcUsd BTC/USD oracle
     /// @return luxUsd LUX/USD oracle
     /// @return usdcUsd USDC/USD oracle (should be ~1e8)
-    function deployCommonOracles() external returns (
-        address ethUsd,
-        address btcUsd,
-        address luxUsd,
-        address usdcUsd
-    ) {
+    function deployCommonOracles() external returns (address ethUsd, address btcUsd, address luxUsd, address usdcUsd) {
         // Deploy with realistic prices (8 decimals like Chainlink)
         ethUsd = address(new MockChainlinkAggregator(2000e8, 8, "ETH / USD"));
         btcUsd = address(new MockChainlinkAggregator(40000e8, 8, "BTC / USD"));
-        luxUsd = address(new MockChainlinkAggregator(10e8, 8, "LUX / USD"));   // $10
+        luxUsd = address(new MockChainlinkAggregator(10e8, 8, "LUX / USD")); // $10
         usdcUsd = address(new MockChainlinkAggregator(1e8, 8, "USDC / USD"));
 
         return (ethUsd, btcUsd, luxUsd, usdcUsd);

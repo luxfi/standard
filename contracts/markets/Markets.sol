@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {IMarkets, MarketParams, Position, Market, Id} from "./interfaces/IMarkets.sol";
-import {IMarketsCallbacks} from "./interfaces/IMarketsCallbacks.sol";
-import {IOracle} from "./interfaces/IOracle.sol";
-import {IRateModel} from "./interfaces/IRateModel.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IMarkets, MarketParams, Position, Market, Id } from "./interfaces/IMarkets.sol";
+import { IMarketsCallbacks } from "./interfaces/IMarketsCallbacks.sol";
+import { IOracle } from "./interfaces/IOracle.sol";
+import { IRateModel } from "./interfaces/IRateModel.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import {MathLib} from "./libraries/MathLib.sol";
-import {SharesMathLib} from "./libraries/SharesMathLib.sol";
-import {MarketParamsLib} from "./libraries/MarketParamsLib.sol";
+import { MathLib } from "./libraries/MathLib.sol";
+import { SharesMathLib } from "./libraries/SharesMathLib.sol";
+import { MarketParamsLib } from "./libraries/MarketParamsLib.sol";
 
 /// @title Lux Markets
 /// @author Lux Industries
@@ -67,12 +67,37 @@ contract Markets is IMarkets, ReentrancyGuard {
 
     event MarketCreated(Id indexed id, MarketParams marketParams);
     event Supply(Id indexed id, address indexed caller, address indexed onBehalf, uint256 assets, uint256 shares);
-    event Withdraw(Id indexed id, address indexed caller, address indexed onBehalf, address receiver, uint256 assets, uint256 shares);
-    event Borrow(Id indexed id, address indexed caller, address indexed onBehalf, address receiver, uint256 assets, uint256 shares);
+    event Withdraw(
+        Id indexed id,
+        address indexed caller,
+        address indexed onBehalf,
+        address receiver,
+        uint256 assets,
+        uint256 shares
+    );
+    event Borrow(
+        Id indexed id,
+        address indexed caller,
+        address indexed onBehalf,
+        address receiver,
+        uint256 assets,
+        uint256 shares
+    );
     event Repay(Id indexed id, address indexed caller, address indexed onBehalf, uint256 assets, uint256 shares);
     event SupplyCollateral(Id indexed id, address indexed caller, address indexed onBehalf, uint256 assets);
-    event WithdrawCollateral(Id indexed id, address indexed caller, address indexed onBehalf, address receiver, uint256 assets);
-    event Liquidate(Id indexed id, address indexed caller, address indexed borrower, uint256 repaidAssets, uint256 repaidShares, uint256 seizedAssets, uint256 badDebtAssets, uint256 badDebtShares);
+    event WithdrawCollateral(
+        Id indexed id, address indexed caller, address indexed onBehalf, address receiver, uint256 assets
+    );
+    event Liquidate(
+        Id indexed id,
+        address indexed caller,
+        address indexed borrower,
+        uint256 repaidAssets,
+        uint256 repaidShares,
+        uint256 seizedAssets,
+        uint256 badDebtAssets,
+        uint256 badDebtShares
+    );
     event FlashLoan(address indexed caller, address indexed token, uint256 assets);
     event SetOwner(address indexed newOwner);
     event SetFee(Id indexed id, uint256 newFee);
@@ -139,7 +164,7 @@ contract Markets is IMarkets, ReentrancyGuard {
         Id id = marketParams.id();
         if (!isMarketCreated[id]) revert MarketNotCreated();
         if (newFee > MAX_FEE) revert MaxFeeExceeded();
-        
+
         _accrueInterest(marketParams, id);
         // forge-lint: disable-next-line(unsafe-typecast)
         market[id].fee = uint128(newFee);
@@ -210,7 +235,7 @@ contract Markets is IMarkets, ReentrancyGuard {
         Id id = marketParams.id();
         if (!isMarketCreated[id]) revert MarketNotCreated();
         if (receiver == address(0)) revert ZeroAddress();
-        
+
         _checkAuthorization(onBehalf);
         _accrueInterest(marketParams, id);
 
@@ -317,12 +342,10 @@ contract Markets is IMarkets, ReentrancyGuard {
 
     /* COLLATERAL */
 
-    function supplyCollateral(
-        MarketParams memory marketParams,
-        uint256 assets,
-        address onBehalf,
-        bytes calldata data
-    ) external nonReentrant {
+    function supplyCollateral(MarketParams memory marketParams, uint256 assets, address onBehalf, bytes calldata data)
+        external
+        nonReentrant
+    {
         Id id = marketParams.id();
         if (!isMarketCreated[id]) revert MarketNotCreated();
         if (onBehalf == address(0)) revert ZeroAddress();
@@ -339,12 +362,10 @@ contract Markets is IMarkets, ReentrancyGuard {
         IERC20(marketParams.collateralToken).safeTransferFrom(msg.sender, address(this), assets);
     }
 
-    function withdrawCollateral(
-        MarketParams memory marketParams,
-        uint256 assets,
-        address onBehalf,
-        address receiver
-    ) external nonReentrant {
+    function withdrawCollateral(MarketParams memory marketParams, uint256 assets, address onBehalf, address receiver)
+        external
+        nonReentrant
+    {
         Id id = marketParams.id();
         if (!isMarketCreated[id]) revert MarketNotCreated();
         if (receiver == address(0)) revert ZeroAddress();
@@ -384,11 +405,13 @@ contract Markets is IMarkets, ReentrancyGuard {
             uint256 incentiveFactor = _liquidationIncentiveFactor(marketParams.lltv);
 
             if (seizedAssets > 0) {
-                repaidAssets = seizedAssets.mulDivUp(collateralPrice, ORACLE_PRICE_SCALE).mulDivUp(1e18, incentiveFactor);
+                repaidAssets =
+                    seizedAssets.mulDivUp(collateralPrice, ORACLE_PRICE_SCALE).mulDivUp(1e18, incentiveFactor);
                 repaidShares = repaidAssets.toSharesDown(market[id].totalBorrowAssets, market[id].totalBorrowShares);
             } else {
                 repaidAssets = repaidShares.toAssetsUp(market[id].totalBorrowAssets, market[id].totalBorrowShares);
-                seizedAssets = repaidAssets.mulDivDown(incentiveFactor, 1e18).mulDivDown(ORACLE_PRICE_SCALE, collateralPrice);
+                seizedAssets =
+                    repaidAssets.mulDivDown(incentiveFactor, 1e18).mulDivDown(ORACLE_PRICE_SCALE, collateralPrice);
             }
         }
 
@@ -492,10 +515,8 @@ contract Markets is IMarkets, ReentrancyGuard {
         uint256 collateralValue = position[id][borrower].collateral.mulDivDown(collateralPrice, ORACLE_PRICE_SCALE);
         uint256 maxBorrow = collateralValue.mulDivDown(marketParams.lltv, 1e18);
 
-        uint256 borrowed = position[id][borrower].borrowShares.toAssetsUp(
-            market[id].totalBorrowAssets,
-            market[id].totalBorrowShares
-        );
+        uint256 borrowed = position[id][borrower].borrowShares
+        .toAssetsUp(market[id].totalBorrowAssets, market[id].totalBorrowShares);
 
         return borrowed <= maxBorrow;
     }

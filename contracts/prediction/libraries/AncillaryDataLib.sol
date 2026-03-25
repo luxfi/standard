@@ -10,10 +10,7 @@ library AncillaryDataLib {
     /// @param initializer The initializer address
     /// @param ancillaryData The ancillary data
     /// @return The ancillary data with the initializer appended
-    function appendAncillaryData(
-        address initializer,
-        bytes memory ancillaryData
-    ) internal pure returns (bytes memory) {
+    function appendAncillaryData(address initializer, bytes memory ancillaryData) internal pure returns (bytes memory) {
         return abi.encodePacked(ancillaryData, INITIALIZER_PREFIX, toUtf8BytesAddress(initializer));
     }
 
@@ -24,8 +21,7 @@ library AncillaryDataLib {
     /// @return The UTF8-encoded address bytes
     function toUtf8BytesAddress(address addr) internal pure returns (bytes memory) {
         return abi.encodePacked(
-            toUtf8Bytes32Bottom(bytes32(bytes20(addr)) >> 128),
-            bytes8(toUtf8Bytes32Bottom(bytes20(addr)))
+            toUtf8Bytes32Bottom(bytes32(bytes20(addr)) >> 128), bytes8(toUtf8Bytes32Bottom(bytes20(addr)))
         );
     }
 

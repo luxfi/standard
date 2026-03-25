@@ -2,22 +2,23 @@
 
 pragma solidity ^0.8.31;
 
-import {IPositionRouter} from "../../interfaces/perps/IPositionRouter.sol";
+import { IPositionRouter } from "../../interfaces/perps/IPositionRouter.sol";
 
 contract PositionRouterReader {
-    function getTransferTokenOfIncreasePositionRequests(
-        address _positionRouter,
-        uint256 _endIndex
-    ) external view returns (uint256[] memory, address[] memory) {
+    function getTransferTokenOfIncreasePositionRequests(address _positionRouter, uint256 _endIndex)
+        external
+        view
+        returns (uint256[] memory, address[] memory)
+    {
         IPositionRouter positionRouter = IPositionRouter(_positionRouter);
 
         // increasePositionRequestKeysStart,
         // increasePositionRequestKeys.length,
         // decreasePositionRequestKeysStart,
         // decreasePositionRequestKeys.length
-        (uint256 index, uint256 length, ,) = positionRouter.getRequestQueueLengths();
+        (uint256 index, uint256 length,,) = positionRouter.getRequestQueueLengths();
 
-        if (_endIndex > length) { _endIndex = length; }
+        if (_endIndex > length) _endIndex = length;
 
         uint256[] memory requestIndexes = new uint256[](_endIndex - index);
         address[] memory transferTokens = new address[](_endIndex - index);

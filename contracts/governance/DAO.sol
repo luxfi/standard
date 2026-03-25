@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title DAO
 /// @notice Lux DAO governance - minimal on-chain governance
@@ -29,7 +29,7 @@ contract DAO is ReentrancyGuard {
     struct Proposal {
         uint256 id;
         address proposer;
-        uint256 eta;                // Execution time (for timelock)
+        uint256 eta; // Execution time (for timelock)
         address[] targets;
         uint256[] values;
         bytes[] calldatas;
@@ -45,7 +45,7 @@ contract DAO is ReentrancyGuard {
 
     struct Receipt {
         bool hasVoted;
-        uint8 support;  // 0 = Against, 1 = For, 2 = Abstain
+        uint8 support; // 0 = Against, 1 = For, 2 = Abstain
         uint256 votes;
     }
 
@@ -199,14 +199,7 @@ contract DAO is ReentrancyGuard {
         latestProposalIds[msg.sender] = proposalId;
 
         emit ProposalCreated(
-            proposalId,
-            msg.sender,
-            targets,
-            values,
-            calldatas,
-            proposal.startBlock,
-            proposal.endBlock,
-            description
+            proposalId, msg.sender, targets, values, calldatas, proposal.startBlock, proposal.endBlock, description
         );
 
         return proposalId;
@@ -236,9 +229,8 @@ contract DAO is ReentrancyGuard {
         proposal.executed = true;
 
         for (uint256 i = 0; i < proposal.targets.length; i++) {
-            (bool success, bytes memory returnData) = proposal.targets[i].call{value: proposal.values[i]}(
-                proposal.calldatas[i]
-            );
+            (bool success, bytes memory returnData) =
+                proposal.targets[i].call{ value: proposal.values[i] }(proposal.calldatas[i]);
             if (!success) {
                 // Bubble up revert
                 assembly {
@@ -293,13 +285,7 @@ contract DAO is ReentrancyGuard {
     /// @param v Signature v
     /// @param r Signature r
     /// @param s Signature s
-    function castVoteBySig(
-        uint256 proposalId,
-        uint8 support,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external {
+    function castVoteBySig(uint256 proposalId, uint8 support, uint8 v, bytes32 r, bytes32 s) external {
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)"),
@@ -309,13 +295,8 @@ contract DAO is ReentrancyGuard {
             )
         );
 
-        bytes32 structHash = keccak256(
-            abi.encode(
-                keccak256("Ballot(uint256 proposalId,uint8 support)"),
-                proposalId,
-                support
-            )
-        );
+        bytes32 structHash =
+            keccak256(abi.encode(keccak256("Ballot(uint256 proposalId,uint8 support)"), proposalId, support));
 
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
         address signer = ECDSA.recover(digest, v, r, s);
@@ -355,11 +336,7 @@ contract DAO is ReentrancyGuard {
     function getActions(uint256 proposalId)
         external
         view
-        returns (
-            address[] memory targets,
-            uint256[] memory values,
-            bytes[] memory calldatas
-        )
+        returns (address[] memory targets, uint256[] memory values, bytes[] memory calldatas)
     {
         Proposal storage p = proposals[proposalId];
         return (p.targets, p.values, p.calldatas);
@@ -416,12 +393,7 @@ contract DAO is ReentrancyGuard {
         return ProposalState.Queued;
     }
 
-    function _castVote(
-        address voter,
-        uint256 proposalId,
-        uint8 support,
-        string memory reason
-    ) internal {
+    function _castVote(address voter, uint256 proposalId, uint8 support, string memory reason) internal {
         if (_state(proposalId) != ProposalState.Active) revert VotingClosed();
 
         Proposal storage proposal = proposals[proposalId];
@@ -468,5 +440,5 @@ contract DAO is ReentrancyGuard {
     // RECEIVE
     // ═══════════════════════════════════════════════════════════════════════
 
-    receive() external payable {}
+    receive() external payable { }
 }

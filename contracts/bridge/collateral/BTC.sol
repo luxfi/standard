@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {LRC20B} from "../LRC20B.sol";
+import { LRC20B } from "../LRC20B.sol";
 
 /**
  * @title Bridged BTC
@@ -18,7 +18,7 @@ contract BridgedBTC is LRC20B {
     string public constant _symbol = "BTC";
     uint8 public constant _decimals = 8;
 
-    constructor() LRC20B(_name, _symbol) {}
+    constructor() LRC20B(_name, _symbol) { }
 
     function decimals() public pure override returns (uint8) {
         return _decimals;

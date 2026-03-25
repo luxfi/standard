@@ -14,10 +14,10 @@ pragma solidity ^0.8.31;
     Can be used as collateral for ASHA bonding (TIER_1)
  */
 
-import {LRC20B} from "../../bridge/LRC20B.sol";
+import { LRC20B } from "../../bridge/LRC20B.sol";
 
 contract LuxMIGA is LRC20B {
-    constructor() LRC20B("Liquid MIGA", "LMIGA") {}
+    constructor() LRC20B("Liquid MIGA", "LMIGA") { }
 
     function mint(address account, uint256 amount) public onlyAdmin {
         _mint(account, amount);

@@ -10,6 +10,8 @@ abstract contract TFHEConfig {
     address internal constant TFHE_GATEWAY = address(0); // Set per network
 }
 
-abstract contract LuxTFHEConfig is TFHEConfig {}
-abstract contract LuxTestnetTFHEConfig is TFHEConfig {}
-abstract contract LuxMainnetTFHEConfig is TFHEConfig {}
+abstract contract LuxTFHEConfig is TFHEConfig { }
+
+abstract contract LuxTestnetTFHEConfig is TFHEConfig { }
+
+abstract contract LuxMainnetTFHEConfig is TFHEConfig { }

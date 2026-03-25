@@ -128,12 +128,7 @@ interface IOptions {
      * @param amount Number of options written
      * @param collateral Collateral deposited
      */
-    event OptionsWritten(
-        uint256 indexed seriesId,
-        address indexed writer,
-        uint256 amount,
-        uint256 collateral
-    );
+    event OptionsWritten(uint256 indexed seriesId, address indexed writer, uint256 amount, uint256 collateral);
 
     /**
      * @notice Emitted when options are burned
@@ -142,12 +137,7 @@ interface IOptions {
      * @param amount Number of options burned
      * @param collateralReturned Collateral returned
      */
-    event OptionsBurned(
-        uint256 indexed seriesId,
-        address indexed writer,
-        uint256 amount,
-        uint256 collateralReturned
-    );
+    event OptionsBurned(uint256 indexed seriesId, address indexed writer, uint256 amount, uint256 collateralReturned);
 
     /**
      * @notice Emitted when options are exercised
@@ -156,12 +146,7 @@ interface IOptions {
      * @param amount Number of options exercised
      * @param payout Payout amount
      */
-    event OptionsExercised(
-        uint256 indexed seriesId,
-        address indexed holder,
-        uint256 amount,
-        uint256 payout
-    );
+    event OptionsExercised(uint256 indexed seriesId, address indexed holder, uint256 amount, uint256 payout);
 
     /**
      * @notice Emitted when a series is settled
@@ -169,11 +154,7 @@ interface IOptions {
      * @param settlementPrice Settlement price from oracle
      * @param timestamp Settlement timestamp
      */
-    event SeriesSettled(
-        uint256 indexed seriesId,
-        uint256 settlementPrice,
-        uint256 timestamp
-    );
+    event SeriesSettled(uint256 indexed seriesId, uint256 settlementPrice, uint256 timestamp);
 
     /**
      * @notice Emitted when collateral is claimed after settlement
@@ -181,11 +162,7 @@ interface IOptions {
      * @param writer Writer address
      * @param amount Amount claimed
      */
-    event CollateralClaimed(
-        uint256 indexed seriesId,
-        address indexed writer,
-        uint256 amount
-    );
+    event CollateralClaimed(uint256 indexed seriesId, address indexed writer, uint256 amount);
 
     // ═══════════════════════════════════════════════════════════════════════
     // SERIES MANAGEMENT
@@ -222,11 +199,7 @@ interface IOptions {
      * @param recipient Recipient of option tokens
      * @return collateralRequired Collateral locked
      */
-    function write(
-        uint256 seriesId,
-        uint256 amount,
-        address recipient
-    ) external returns (uint256 collateralRequired);
+    function write(uint256 seriesId, uint256 amount, address recipient) external returns (uint256 collateralRequired);
 
     // ═══════════════════════════════════════════════════════════════════════
     // SETTLEMENT & EXERCISE
@@ -245,10 +218,7 @@ interface IOptions {
      * @param amount Number of options to exercise
      * @return payout Payout amount
      */
-    function exercise(
-        uint256 seriesId,
-        uint256 amount
-    ) external returns (uint256 payout);
+    function exercise(uint256 seriesId, uint256 amount) external returns (uint256 payout);
 
     // ═══════════════════════════════════════════════════════════════════════
     // VIEW FUNCTIONS

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20, SafeERC20} from "@luxfi/standard/tokens/ERC20.sol";
-import {Ownable} from "@luxfi/standard/access/Access.sol";
-import {ReentrancyGuard} from "@luxfi/standard/utils/Utils.sol";
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import { IERC20, SafeERC20 } from "@luxfi/standard/tokens/ERC20.sol";
+import { Ownable } from "@luxfi/standard/access/Access.sol";
+import { ReentrancyGuard } from "@luxfi/standard/utils/Utils.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title Bond
@@ -38,16 +38,16 @@ contract Bond is Ownable, ReentrancyGuard {
 
     /// @notice Bond configuration
     struct BondConfig {
-        address paymentToken;      // USDC, ETH wrapper, parent token, etc.
-        uint256 targetRaise;       // Total amount to raise
-        uint256 tokensToMint;      // Identity tokens to distribute
-        uint256 discount;          // Discount in basis points (2000 = 20%)
-        uint256 vestingPeriod;     // Vesting duration in seconds
-        uint256 startTime;         // When bond opens
-        uint256 endTime;           // When bond closes
-        uint256 minPurchase;       // Minimum purchase amount
-        uint256 maxPurchase;       // Maximum purchase per address
-        bool active;               // Whether bond is active
+        address paymentToken; // USDC, ETH wrapper, parent token, etc.
+        uint256 targetRaise; // Total amount to raise
+        uint256 tokensToMint; // Identity tokens to distribute
+        uint256 discount; // Discount in basis points (2000 = 20%)
+        uint256 vestingPeriod; // Vesting duration in seconds
+        uint256 startTime; // When bond opens
+        uint256 endTime; // When bond closes
+        uint256 minPurchase; // Minimum purchase amount
+        uint256 maxPurchase; // Maximum purchase per address
+        bool active; // Whether bond is active
     }
 
     /// @notice User's bond purchase

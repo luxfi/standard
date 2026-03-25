@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {LRC20B} from "../LRC20B.sol";
+import { LRC20B } from "../LRC20B.sol";
 
 /**
  * @title Bridged DAI
@@ -13,7 +13,7 @@ contract BridgedDAI is LRC20B {
     string public constant _name = "Bridged DAI";
     string public constant _symbol = "DAI";
 
-    constructor() LRC20B(_name, _symbol) {}
+    constructor() LRC20B(_name, _symbol) { }
 
     function mint(address account, uint256 amount) public onlyAdmin {
         _mint(account, amount);

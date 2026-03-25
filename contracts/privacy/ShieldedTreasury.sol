@@ -2,8 +2,8 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.24;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title ShieldedTreasury
@@ -19,7 +19,6 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
  * - Multi-asset support
  */
 contract ShieldedTreasury is AccessControl, ReentrancyGuard {
-
     // ═══════════════════════════════════════════════════════════════════════
     // ROLES
     // ═══════════════════════════════════════════════════════════════════════
@@ -36,22 +35,22 @@ contract ShieldedTreasury is AccessControl, ReentrancyGuard {
 
     /// @notice Shielded UTXO commitment
     struct Commitment {
-        bytes32 hash;           // H(value || blinding || owner)
+        bytes32 hash; // H(value || blinding || owner)
         uint64 timestamp;
-        bytes encryptedData;    // Encrypted note details
+        bytes encryptedData; // Encrypted note details
         bool spent;
     }
 
     /// @notice Spending authorization from governance
     struct Authorization {
         bytes32 id;
-        bytes32 programId;      // Sub-DAO or program identifier
-        uint256 cap;            // Maximum spend amount
-        uint256 spent;          // Amount spent so far
-        uint256 expiry;         // Authorization expiry timestamp
+        bytes32 programId; // Sub-DAO or program identifier
+        uint256 cap; // Maximum spend amount
+        uint256 spent; // Amount spent so far
+        uint256 expiry; // Authorization expiry timestamp
         bytes32[] categoryTags; // Allowed spend categories
-        address[] operators;    // Authorized operators
-        bytes attestation;      // Governance attestation signature
+        address[] operators; // Authorized operators
+        bytes attestation; // Governance attestation signature
         bool active;
     }
 
@@ -59,7 +58,7 @@ contract ShieldedTreasury is AccessControl, ReentrancyGuard {
     struct ViewKeyHolder {
         address holder;
         bytes32 encryptedViewKey;
-        string scope;           // e.g., "security-dao", "all-treasury"
+        string scope; // e.g., "security-dao", "all-treasury"
         uint64 grantedAt;
         uint64 expiresAt;
         bool active;
@@ -128,22 +127,9 @@ contract ShieldedTreasury is AccessControl, ReentrancyGuard {
     // EVENTS
     // ═══════════════════════════════════════════════════════════════════════
 
-    event ShieldedDeposit(
-        bytes32 indexed commitment,
-        uint256 indexed index,
-        uint256 aggregateBalanceAfter
-    );
-    event ShieldedSpend(
-        bytes32 indexed nullifier,
-        bytes32 indexed authorizationId,
-        bytes32 newCommitment
-    );
-    event AuthorizationCreated(
-        bytes32 indexed id,
-        bytes32 indexed programId,
-        uint256 cap,
-        uint256 expiry
-    );
+    event ShieldedDeposit(bytes32 indexed commitment, uint256 indexed index, uint256 aggregateBalanceAfter);
+    event ShieldedSpend(bytes32 indexed nullifier, bytes32 indexed authorizationId, bytes32 newCommitment);
+    event AuthorizationCreated(bytes32 indexed id, bytes32 indexed programId, uint256 cap, uint256 expiry);
     event AuthorizationRevoked(bytes32 indexed id);
     event ViewKeyGranted(address indexed holder, string scope);
     event ViewKeyRevoked(address indexed holder);
@@ -218,20 +204,13 @@ contract ShieldedTreasury is AccessControl, ReentrancyGuard {
      * @param commitment Pedersen commitment H(value || blinding)
      * @param amount Amount being deposited (for aggregate tracking)
      */
-    function deposit(
-        bytes32 commitment,
-        uint256 amount
-    ) external onlyRole(DEPOSIT_ROLE) nonReentrant {
+    function deposit(bytes32 commitment, uint256 amount) external onlyRole(DEPOSIT_ROLE) nonReentrant {
         if (commitments[commitment].hash != bytes32(0)) revert CommitmentExists();
 
         // Store commitment
         uint256 index = nextCommitmentIndex++;
-        commitments[commitment] = Commitment({
-            hash: commitment,
-            timestamp: uint64(block.timestamp),
-            encryptedData: "",
-            spent: false
-        });
+        commitments[commitment] =
+            Commitment({ hash: commitment, timestamp: uint64(block.timestamp), encryptedData: "", spent: false });
         commitmentsByIndex[index] = commitment;
 
         // Update Merkle tree
@@ -246,19 +225,16 @@ contract ShieldedTreasury is AccessControl, ReentrancyGuard {
     /**
      * @notice Deposit with encrypted note data
      */
-    function depositWithNote(
-        bytes32 commitment,
-        uint256 amount,
-        bytes calldata encryptedNote
-    ) external onlyRole(DEPOSIT_ROLE) nonReentrant {
+    function depositWithNote(bytes32 commitment, uint256 amount, bytes calldata encryptedNote)
+        external
+        onlyRole(DEPOSIT_ROLE)
+        nonReentrant
+    {
         if (commitments[commitment].hash != bytes32(0)) revert CommitmentExists();
 
         uint256 index = nextCommitmentIndex++;
         commitments[commitment] = Commitment({
-            hash: commitment,
-            timestamp: uint64(block.timestamp),
-            encryptedData: encryptedNote,
-            spent: false
+            hash: commitment, timestamp: uint64(block.timestamp), encryptedData: encryptedNote, spent: false
         });
         commitmentsByIndex[index] = commitment;
 
@@ -396,10 +372,7 @@ contract ShieldedTreasury is AccessControl, ReentrancyGuard {
         if (newCommitment != bytes32(0)) {
             uint256 index = nextCommitmentIndex++;
             commitments[newCommitment] = Commitment({
-                hash: newCommitment,
-                timestamp: uint64(block.timestamp),
-                encryptedData: "",
-                spent: false
+                hash: newCommitment, timestamp: uint64(block.timestamp), encryptedData: "", spent: false
             });
             commitmentsByIndex[index] = newCommitment;
             _insertIntoMerkleTree(newCommitment, index);
@@ -434,11 +407,10 @@ contract ShieldedTreasury is AccessControl, ReentrancyGuard {
     /**
      * @notice Grant view key to auditor/observer
      */
-    function grantViewKey(
-        address holder,
-        bytes32 encryptedViewKey,
-        string calldata scope
-    ) external onlyRole(VIEW_KEY_ROLE) {
+    function grantViewKey(address holder, bytes32 encryptedViewKey, string calldata scope)
+        external
+        onlyRole(VIEW_KEY_ROLE)
+    {
         viewKeyHolders[holder] = ViewKeyHolder({
             holder: holder,
             encryptedViewKey: encryptedViewKey,
@@ -464,11 +436,10 @@ contract ShieldedTreasury is AccessControl, ReentrancyGuard {
     // ADMIN
     // ═══════════════════════════════════════════════════════════════════════
 
-    function setCustodyPolicy(
-        uint256 maxPerTx,
-        uint256 maxPerDay,
-        uint256 cooldownMinutes
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setCustodyPolicy(uint256 maxPerTx, uint256 maxPerDay, uint256 cooldownMinutes)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         custodyPolicy.maxPerTransaction = maxPerTx;
         custodyPolicy.maxPerDay = maxPerDay;
         custodyPolicy.cooldownMinutes = cooldownMinutes;
@@ -488,22 +459,25 @@ contract ShieldedTreasury is AccessControl, ReentrancyGuard {
     // VIEW FUNCTIONS
     // ═══════════════════════════════════════════════════════════════════════
 
-    function getVaultInfo() external view returns (
-        bytes32 _vaultId,
-        bytes32 _ownerId,
-        string memory _assetType,
-        uint256 _aggregateBalance,
-        uint256 _commitmentCount
-    ) {
+    function getVaultInfo()
+        external
+        view
+        returns (
+            bytes32 _vaultId,
+            bytes32 _ownerId,
+            string memory _assetType,
+            uint256 _aggregateBalance,
+            uint256 _commitmentCount
+        )
+    {
         return (vaultId, ownerId, assetType, aggregateBalance, nextCommitmentIndex);
     }
 
-    function getCustodyPolicy() external view returns (
-        uint256 _maxPerTransaction,
-        uint256 _maxPerDay,
-        uint256 _cooldownMinutes,
-        uint256 _dailySpent
-    ) {
+    function getCustodyPolicy()
+        external
+        view
+        returns (uint256 _maxPerTransaction, uint256 _maxPerDay, uint256 _cooldownMinutes, uint256 _dailySpent)
+    {
         return (
             custodyPolicy.maxPerTransaction,
             custodyPolicy.maxPerDay,

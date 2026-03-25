@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {FHE, ebool, euint8} from "../FHE.sol";
+import { FHE, ebool, euint8 } from "../FHE.sol";
 
 /**
  * @title       EncryptedErrors.
@@ -64,11 +64,11 @@ abstract contract EncryptedErrors {
      * @return newErrorCode     New reencrypted error code depending on `condition` value.
      * @dev                 `   indexCode` must be below the total number of error codes.
      */
-    function _errorChangeIf(
-        ebool condition,
-        uint8 indexCode,
-        euint8 errorCode
-    ) internal virtual returns (euint8 newErrorCode) {
+    function _errorChangeIf(ebool condition, uint8 indexCode, euint8 errorCode)
+        internal
+        virtual
+        returns (euint8 newErrorCode)
+    {
         if (indexCode > _TOTAL_NUMBER_ERROR_CODES) {
             revert ErrorIndexInvalid();
         }
@@ -85,11 +85,11 @@ abstract contract EncryptedErrors {
      * @return newErrorCode     New error code depending on `condition` value.
      * @dev                     `indexCode` must be below the total number of error codes.
      */
-    function _errorChangeIfNot(
-        ebool condition,
-        uint8 indexCode,
-        euint8 errorCode
-    ) internal virtual returns (euint8 newErrorCode) {
+    function _errorChangeIfNot(ebool condition, uint8 indexCode, euint8 errorCode)
+        internal
+        virtual
+        returns (euint8 newErrorCode)
+    {
         if (indexCode > _TOTAL_NUMBER_ERROR_CODES) {
             revert ErrorIndexInvalid();
         }

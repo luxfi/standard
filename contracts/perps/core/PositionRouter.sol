@@ -2,16 +2,16 @@
 
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {IRouter} from "./interfaces/IRouter.sol";
-import {IPositionRouter} from "./interfaces/IPositionRouter.sol";
-import {IPositionRouterCallbackReceiver} from "./interfaces/IPositionRouterCallbackReceiver.sol";
+import { IRouter } from "./interfaces/IRouter.sol";
+import { IPositionRouter } from "./interfaces/IPositionRouter.sol";
+import { IPositionRouterCallbackReceiver } from "./interfaces/IPositionRouterCallbackReceiver.sol";
 
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {BasePositionManager} from "./BasePositionManager.sol";
-import {IReferralStorage} from "../../interfaces/perps/IReferralStorage.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
+import { BasePositionManager } from "./BasePositionManager.sol";
+import { IReferralStorage } from "../../interfaces/perps/IReferralStorage.sol";
 
 contract PositionRouter is BasePositionManager, IPositionRouter {
     using Address for address;
@@ -65,15 +65,15 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
     uint256 public override decreasePositionRequestKeysStart;
 
     uint256 public callbackGasLimit;
-    mapping (address => uint256) public customCallbackGasLimits;
+    mapping(address => uint256) public customCallbackGasLimits;
 
-    mapping (address => bool) public isPositionKeeper;
+    mapping(address => bool) public isPositionKeeper;
 
-    mapping (address => uint256) public increasePositionsIndex;
-    mapping (bytes32 => IncreasePositionRequest) public increasePositionRequests;
+    mapping(address => uint256) public increasePositionsIndex;
+    mapping(bytes32 => IncreasePositionRequest) public increasePositionRequests;
 
-    mapping (address => uint256) public decreasePositionsIndex;
-    mapping (bytes32 => DecreasePositionRequest) public decreasePositionRequests;
+    mapping(address => uint256) public decreasePositionsIndex;
+    mapping(bytes32 => DecreasePositionRequest) public decreasePositionRequests;
 
     event CreateIncreasePosition(
         address indexed account,
@@ -217,25 +217,35 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
         emit SetIsLeverageEnabled(_isLeverageEnabled);
     }
 
-    function setDelayValues(uint256 _minBlockDelayKeeper, uint256 _minTimeDelayPublic, uint256 _maxTimeDelay) external onlyAdmin {
+    function setDelayValues(uint256 _minBlockDelayKeeper, uint256 _minTimeDelayPublic, uint256 _maxTimeDelay)
+        external
+        onlyAdmin
+    {
         minBlockDelayKeeper = _minBlockDelayKeeper;
         minTimeDelayPublic = _minTimeDelayPublic;
         maxTimeDelay = _maxTimeDelay;
         emit SetDelayValues(_minBlockDelayKeeper, _minTimeDelayPublic, _maxTimeDelay);
     }
 
-    function setRequestKeysStartValues(uint256 _increasePositionRequestKeysStart, uint256 _decreasePositionRequestKeysStart) external onlyAdmin {
+    function setRequestKeysStartValues(
+        uint256 _increasePositionRequestKeysStart,
+        uint256 _decreasePositionRequestKeysStart
+    ) external onlyAdmin {
         increasePositionRequestKeysStart = _increasePositionRequestKeysStart;
         decreasePositionRequestKeysStart = _decreasePositionRequestKeysStart;
 
         emit SetRequestKeysStartValues(_increasePositionRequestKeysStart, _decreasePositionRequestKeysStart);
     }
 
-    function executeIncreasePositions(uint256 _endIndex, address payable _executionFeeReceiver) external override onlyPositionKeeper {
+    function executeIncreasePositions(uint256 _endIndex, address payable _executionFeeReceiver)
+        external
+        override
+        onlyPositionKeeper
+    {
         uint256 index = increasePositionRequestKeysStart;
         uint256 length = increasePositionRequestKeys.length;
 
-        if (index >= length) { return; }
+        if (index >= length) return;
 
         if (_endIndex > length) {
             _endIndex = length;
@@ -251,12 +261,12 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
             // higher than what the user specified, or if there is insufficient liquidity for the position
             // in case an error was thrown, cancel the request
             try this.executeIncreasePosition(key, _executionFeeReceiver) returns (bool _wasExecuted) {
-                if (!_wasExecuted) { break; }
+                if (!_wasExecuted) break;
             } catch {
                 // wrap this call in a try catch to prevent invalid cancels from blocking the loop
                 try this.cancelIncreasePosition(key, _executionFeeReceiver) returns (bool _wasCancelled) {
-                    if (!_wasCancelled) { break; }
-                } catch {}
+                    if (!_wasCancelled) break;
+                } catch { }
             }
 
             delete increasePositionRequestKeys[index];
@@ -266,11 +276,15 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
         increasePositionRequestKeysStart = index;
     }
 
-    function executeDecreasePositions(uint256 _endIndex, address payable _executionFeeReceiver) external override onlyPositionKeeper {
+    function executeDecreasePositions(uint256 _endIndex, address payable _executionFeeReceiver)
+        external
+        override
+        onlyPositionKeeper
+    {
         uint256 index = decreasePositionRequestKeysStart;
         uint256 length = decreasePositionRequestKeys.length;
 
-        if (index >= length) { return; }
+        if (index >= length) return;
 
         if (_endIndex > length) {
             _endIndex = length;
@@ -285,12 +299,12 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
             // an error could be thrown if the request is too old
             // in case an error was thrown, cancel the request
             try this.executeDecreasePosition(key, _executionFeeReceiver) returns (bool _wasExecuted) {
-                if (!_wasExecuted) { break; }
+                if (!_wasExecuted) break;
             } catch {
                 // wrap this call in a try catch to prevent invalid cancels from blocking the loop
                 try this.cancelDecreasePosition(key, _executionFeeReceiver) returns (bool _wasCancelled) {
-                    if (!_wasCancelled) { break; }
-                } catch {}
+                    if (!_wasCancelled) break;
+                } catch { }
             }
 
             delete decreasePositionRequestKeys[index];
@@ -421,13 +435,17 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
         );
     }
 
-    function executeIncreasePosition(bytes32 _key, address payable _executionFeeReceiver) public nonReentrant returns (bool) {
+    function executeIncreasePosition(bytes32 _key, address payable _executionFeeReceiver)
+        public
+        nonReentrant
+        returns (bool)
+    {
         IncreasePositionRequest memory request = increasePositionRequests[_key];
         // if the request was already executed or cancelled, return true so that the executeIncreasePositions loop will continue executing the next request
-        if (request.account == address(0)) { return true; }
+        if (request.account == address(0)) return true;
 
         bool shouldExecute = _validateExecution(request.blockNumber, request.blockTime, request.account);
-        if (!shouldExecute) { return false; }
+        if (!shouldExecute) return false;
 
         delete increasePositionRequests[_key];
 
@@ -439,11 +457,20 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
                 amountIn = _swap(request.path, request.minOut, address(this));
             }
 
-            uint256 afterFeeAmount = _collectFees(request.account, request.path, amountIn, request.indexToken, request.isLong, request.sizeDelta);
+            uint256 afterFeeAmount = _collectFees(
+                request.account, request.path, amountIn, request.indexToken, request.isLong, request.sizeDelta
+            );
             IERC20(request.path[request.path.length - 1]).safeTransfer(vault, afterFeeAmount);
         }
 
-        _increasePosition(request.account, request.path[request.path.length - 1], request.indexToken, request.sizeDelta, request.isLong, request.acceptablePrice);
+        _increasePosition(
+            request.account,
+            request.path[request.path.length - 1],
+            request.indexToken,
+            request.sizeDelta,
+            request.isLong,
+            request.acceptablePrice
+        );
 
         _transferOutETHWithGasLimitFallbackToWeth(request.executionFee, _executionFeeReceiver);
 
@@ -466,13 +493,17 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
         return true;
     }
 
-    function cancelIncreasePosition(bytes32 _key, address payable _executionFeeReceiver) public nonReentrant returns (bool) {
+    function cancelIncreasePosition(bytes32 _key, address payable _executionFeeReceiver)
+        public
+        nonReentrant
+        returns (bool)
+    {
         IncreasePositionRequest memory request = increasePositionRequests[_key];
         // if the request was already executed or cancelled, return true so that the executeIncreasePositions loop will continue executing the next request
-        if (request.account == address(0)) { return true; }
+        if (request.account == address(0)) return true;
 
         bool shouldCancel = _validateCancellation(request.blockNumber, request.blockTime, request.account);
-        if (!shouldCancel) { return false; }
+        if (!shouldCancel) return false;
 
         delete increasePositionRequests[_key];
 
@@ -482,7 +513,7 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
             IERC20(request.path[0]).safeTransfer(request.account, request.amountIn);
         }
 
-       _transferOutETHWithGasLimitFallbackToWeth(request.executionFee, _executionFeeReceiver);
+        _transferOutETHWithGasLimitFallbackToWeth(request.executionFee, _executionFeeReceiver);
 
         emit CancelIncreasePosition(
             request.account,
@@ -503,17 +534,30 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
         return true;
     }
 
-    function executeDecreasePosition(bytes32 _key, address payable _executionFeeReceiver) public nonReentrant returns (bool) {
+    function executeDecreasePosition(bytes32 _key, address payable _executionFeeReceiver)
+        public
+        nonReentrant
+        returns (bool)
+    {
         DecreasePositionRequest memory request = decreasePositionRequests[_key];
         // if the request was already executed or cancelled, return true so that the executeDecreasePositions loop will continue executing the next request
-        if (request.account == address(0)) { return true; }
+        if (request.account == address(0)) return true;
 
         bool shouldExecute = _validateExecution(request.blockNumber, request.blockTime, request.account);
-        if (!shouldExecute) { return false; }
+        if (!shouldExecute) return false;
 
         delete decreasePositionRequests[_key];
 
-        uint256 amountOut = _decreasePosition(request.account, request.path[0], request.indexToken, request.collateralDelta, request.sizeDelta, request.isLong, address(this), request.acceptablePrice);
+        uint256 amountOut = _decreasePosition(
+            request.account,
+            request.path[0],
+            request.indexToken,
+            request.collateralDelta,
+            request.sizeDelta,
+            request.isLong,
+            address(this),
+            request.acceptablePrice
+        );
 
         if (amountOut > 0) {
             if (request.path.length > 1) {
@@ -522,13 +566,13 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
             }
 
             if (request.withdrawETH) {
-               _transferOutETHWithGasLimitFallbackToWeth(amountOut, payable(request.receiver));
+                _transferOutETHWithGasLimitFallbackToWeth(amountOut, payable(request.receiver));
             } else {
-               IERC20(request.path[request.path.length - 1]).safeTransfer(request.receiver, amountOut);
+                IERC20(request.path[request.path.length - 1]).safeTransfer(request.receiver, amountOut);
             }
         }
 
-       _transferOutETHWithGasLimitFallbackToWeth(request.executionFee, _executionFeeReceiver);
+        _transferOutETHWithGasLimitFallbackToWeth(request.executionFee, _executionFeeReceiver);
 
         emit ExecuteDecreasePosition(
             request.account,
@@ -550,17 +594,21 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
         return true;
     }
 
-    function cancelDecreasePosition(bytes32 _key, address payable _executionFeeReceiver) public nonReentrant returns (bool) {
+    function cancelDecreasePosition(bytes32 _key, address payable _executionFeeReceiver)
+        public
+        nonReentrant
+        returns (bool)
+    {
         DecreasePositionRequest memory request = decreasePositionRequests[_key];
         // if the request was already executed or cancelled, return true so that the executeDecreasePositions loop will continue executing the next request
-        if (request.account == address(0)) { return true; }
+        if (request.account == address(0)) return true;
 
         bool shouldCancel = _validateCancellation(request.blockNumber, request.blockTime, request.account);
-        if (!shouldCancel) { return false; }
+        if (!shouldCancel) return false;
 
         delete decreasePositionRequests[_key];
 
-       _transferOutETHWithGasLimitFallbackToWeth(request.executionFee, _executionFeeReceiver);
+        _transferOutETHWithGasLimitFallbackToWeth(request.executionFee, _executionFeeReceiver);
 
         emit CancelDecreasePosition(
             request.account,
@@ -597,18 +645,22 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
     }
 
     function _setTraderReferralCode(bytes32 _referralCode) internal {
-        if (_referralCode == bytes32(0)) { return; }
-        if (referralStorage == address(0)) { return; }
+        if (_referralCode == bytes32(0)) return;
+        if (referralStorage == address(0)) return;
 
         IReferralStorage _referralStorage = IReferralStorage(referralStorage);
 
         // skip setting of the referral code if the user already has a referral code
-        if (_referralStorage.traderReferralCodes(msg.sender) != bytes32(0)) { return; }
+        if (_referralStorage.traderReferralCodes(msg.sender) != bytes32(0)) return;
 
         _referralStorage.setTraderReferralCode(msg.sender, _referralCode);
     }
 
-    function _validateExecution(uint256 _positionBlockNumber, uint256 _positionBlockTime, address _account) internal view returns (bool) {
+    function _validateExecution(uint256 _positionBlockNumber, uint256 _positionBlockTime, address _account)
+        internal
+        view
+        returns (bool)
+    {
         if (_positionBlockTime + maxTimeDelay <= block.timestamp) {
             revert("expired");
         }
@@ -616,11 +668,19 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
         return _validateExecutionOrCancellation(_positionBlockNumber, _positionBlockTime, _account);
     }
 
-    function _validateCancellation(uint256 _positionBlockNumber, uint256 _positionBlockTime, address _account) internal view returns (bool) {
+    function _validateCancellation(uint256 _positionBlockNumber, uint256 _positionBlockTime, address _account)
+        internal
+        view
+        returns (bool)
+    {
         return _validateExecutionOrCancellation(_positionBlockNumber, _positionBlockTime, _account);
     }
 
-    function _validateExecutionOrCancellation(uint256 _positionBlockNumber, uint256 _positionBlockTime, address _account) internal view returns (bool) {
+    function _validateExecutionOrCancellation(
+        uint256 _positionBlockNumber,
+        uint256 _positionBlockTime,
+        address _account
+    ) internal view returns (bool) {
         bool isKeeperCall = msg.sender == address(this) || isPositionKeeper[msg.sender];
 
         if (!isLeverageEnabled && !isKeeperCall) {
@@ -688,7 +748,10 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
         return requestKey;
     }
 
-    function _storeIncreasePositionRequest(IncreasePositionRequest memory _request) internal returns (uint256, bytes32) {
+    function _storeIncreasePositionRequest(IncreasePositionRequest memory _request)
+        internal
+        returns (uint256, bytes32)
+    {
         address account = _request.account;
         uint256 index = increasePositionsIndex[account] + 1;
         increasePositionsIndex[account] = index;
@@ -700,7 +763,10 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
         return (index, key);
     }
 
-    function _storeDecreasePositionRequest(DecreasePositionRequest memory _request) internal returns (uint256, bytes32) {
+    function _storeDecreasePositionRequest(DecreasePositionRequest memory _request)
+        internal
+        returns (uint256, bytes32)
+    {
         address account = _request.account;
         uint256 index = decreasePositionsIndex[account] + 1;
         decreasePositionsIndex[account] = index;
@@ -763,12 +829,7 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
         return requestKey;
     }
 
-    function _callRequestCallback(
-        address _callbackTarget,
-        bytes32 _key,
-        bool _wasExecuted,
-        bool _isIncrease
-    ) internal {
+    function _callRequestCallback(address _callbackTarget, bytes32 _key, bool _wasExecuted, bool _isIncrease) internal {
         if (_callbackTarget == address(0)) {
             return;
         }
@@ -790,9 +851,11 @@ contract PositionRouter is BasePositionManager, IPositionRouter {
         }
 
         bool success;
-        try IPositionRouterCallbackReceiver(_callbackTarget).lpxPositionCallback{ gas: _gasLimit }(_key, _wasExecuted, _isIncrease) {
+        try IPositionRouterCallbackReceiver(_callbackTarget).lpxPositionCallback{ gas: _gasLimit }(
+            _key, _wasExecuted, _isIncrease
+        ) {
             success = true;
-        } catch {}
+        } catch { }
 
         emit Callback(_callbackTarget, success, _gasLimit);
     }

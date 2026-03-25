@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {IRouterClient} from "@chainlink/contracts/src/v0.8/ccip/interfaces/IRouterClient.sol";
-import {IAny2EVMMessageReceiver} from "@chainlink/contracts/src/v0.8/ccip/interfaces/IAny2EVMMessageReceiver.sol";
-import {Client} from "@chainlink/contracts/src/v0.8/ccip/libraries/Client.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IBridgeAdapter, BridgeParams, BridgeRoute, BridgeStatus} from "../../interfaces/adapters/IBridgeAdapter.sol";
+import { IRouterClient } from "@chainlink/contracts/src/v0.8/ccip/interfaces/IRouterClient.sol";
+import { IAny2EVMMessageReceiver } from "@chainlink/contracts/src/v0.8/ccip/interfaces/IAny2EVMMessageReceiver.sol";
+import { Client } from "@chainlink/contracts/src/v0.8/ccip/libraries/Client.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IBridgeAdapter, BridgeParams, BridgeRoute, BridgeStatus } from "../../interfaces/adapters/IBridgeAdapter.sol";
 
 /**
  * @title CCIPAdapter
@@ -101,7 +101,10 @@ contract CCIPAdapter is IBridgeAdapter, IAny2EVMMessageReceiver, AccessControl, 
         emit ChainAdded(_chainId, _selector);
     }
 
-    function setTokenMapping(address localToken, uint256 destChainId, address destToken) external onlyRole(BRIDGE_ADMIN_ROLE) {
+    function setTokenMapping(address localToken, uint256 destChainId, address destToken)
+        external
+        onlyRole(BRIDGE_ADMIN_ROLE)
+    {
         tokenMapping[localToken][destChainId] = destToken;
         emit TokenMapped(localToken, destChainId, destToken);
     }
@@ -119,11 +122,25 @@ contract CCIPAdapter is IBridgeAdapter, IAny2EVMMessageReceiver, AccessControl, 
     // IBridgeAdapter: metadata
     // ──────────────────────────────────────────────────────────────────────────
 
-    function version() external pure override returns (string memory) { return "1.0.0"; }
-    function protocol() external pure override returns (string memory) { return "Chainlink CCIP"; }
-    function chainId() external view override returns (uint256) { return srcChainId; }
-    function endpoint() external view override returns (address) { return address(ccipRouter); }
-    function supportedChains() external view override returns (uint256[] memory) { return _supportedChains; }
+    function version() external pure override returns (string memory) {
+        return "1.0.0";
+    }
+
+    function protocol() external pure override returns (string memory) {
+        return "Chainlink CCIP";
+    }
+
+    function chainId() external view override returns (uint256) {
+        return srcChainId;
+    }
+
+    function endpoint() external view override returns (address) {
+        return address(ccipRouter);
+    }
+
+    function supportedChains() external view override returns (uint256[] memory) {
+        return _supportedChains;
+    }
 
     function isRouteSupported(uint256 dstChainId, address token) external view override returns (bool) {
         return chainIdToSelector[dstChainId] != 0 && tokenMapping[token][dstChainId] != address(0);
@@ -168,24 +185,20 @@ contract CCIPAdapter is IBridgeAdapter, IAny2EVMMessageReceiver, AccessControl, 
 
         // Build CCIP message
         Client.EVMTokenAmount[] memory tokenAmounts = new Client.EVMTokenAmount[](1);
-        tokenAmounts[0] = Client.EVMTokenAmount({
-            token: params.token,
-            amount: params.amount
-        });
+        tokenAmounts[0] = Client.EVMTokenAmount({ token: params.token, amount: params.amount });
 
         Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
             receiver: abi.encode(params.recipient),
             data: params.extraData,
             tokenAmounts: tokenAmounts,
             feeToken: address(0), // pay in native
-            extraArgs: Client._argsToBytes(Client.EVMExtraArgsV2({
-                gasLimit: defaultGasLimit,
-                allowOutOfOrderExecution: true
-            }))
+            extraArgs: Client._argsToBytes(
+                Client.EVMExtraArgsV2({ gasLimit: defaultGasLimit, allowOutOfOrderExecution: true })
+            )
         });
 
         // Send via CCIP
-        bytes32 messageId = ccipRouter.ccipSend{value: msg.value}(destSelector, message);
+        bytes32 messageId = ccipRouter.ccipSend{ value: msg.value }(destSelector, message);
 
         // Track bridge status
         bridgeId = keccak256(abi.encodePacked(messageId, _nonce++));
@@ -213,7 +226,10 @@ contract CCIPAdapter is IBridgeAdapter, IAny2EVMMessageReceiver, AccessControl, 
     // ──────────────────────────────────────────────────────────────────────────
 
     function estimateFees(uint256 dstChainId, address token, uint256 amount)
-        external view override returns (uint256 bridgeFee, uint256 protocolFee)
+        external
+        view
+        override
+        returns (uint256 bridgeFee, uint256 protocolFee)
     {
         uint64 destSelector = chainIdToSelector[dstChainId];
         if (destSelector == 0) revert UnsupportedChain(dstChainId);
@@ -226,10 +242,9 @@ contract CCIPAdapter is IBridgeAdapter, IAny2EVMMessageReceiver, AccessControl, 
             data: "",
             tokenAmounts: tokenAmounts,
             feeToken: address(0),
-            extraArgs: Client._argsToBytes(Client.EVMExtraArgsV2({
-                gasLimit: defaultGasLimit,
-                allowOutOfOrderExecution: true
-            }))
+            extraArgs: Client._argsToBytes(
+                Client.EVMExtraArgsV2({ gasLimit: defaultGasLimit, allowOutOfOrderExecution: true })
+            )
         });
 
         bridgeFee = ccipRouter.getFee(destSelector, message);
@@ -266,10 +281,7 @@ contract CCIPAdapter is IBridgeAdapter, IAny2EVMMessageReceiver, AccessControl, 
         if (message.data.length > 0 && message.destTokenAmounts.length > 0) {
             address recipient = abi.decode(message.data, (address));
             for (uint256 i = 0; i < message.destTokenAmounts.length; i++) {
-                IERC20(message.destTokenAmounts[i].token).safeTransfer(
-                    recipient,
-                    message.destTokenAmounts[i].amount
-                );
+                IERC20(message.destTokenAmounts[i].token).safeTransfer(recipient, message.destTokenAmounts[i].amount);
             }
         }
     }
@@ -280,5 +292,5 @@ contract CCIPAdapter is IBridgeAdapter, IAny2EVMMessageReceiver, AccessControl, 
     }
 
     /// @notice Allow contract to receive native tokens for CCIP fees
-    receive() external payable {}
+    receive() external payable { }
 }

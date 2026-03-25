@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IBridgeAdapter, BridgeParams, BridgeRoute, BridgeStatus} from "../../interfaces/adapters/IBridgeAdapter.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IBridgeAdapter, BridgeParams, BridgeRoute, BridgeStatus } from "../../interfaces/adapters/IBridgeAdapter.sol";
 
 /**
  * @title IMintBurnable — minimal interface for bridge-compatible tokens
@@ -58,7 +58,10 @@ contract LiquidityAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     // Enums
     // ──────────────────────────────────────────────────────────────────────────
 
-    enum BridgeMode { MintBurn, LockRelease }
+    enum BridgeMode {
+        MintBurn,
+        LockRelease
+    }
 
     // ──────────────────────────────────────────────────────────────────────────
     // State
@@ -72,12 +75,12 @@ contract LiquidityAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
 
     /// @notice Token config per chain
     struct TokenConfig {
-        address destToken;      // Token address on destination chain
-        BridgeMode mode;        // Mint/Burn or Lock/Release
-        uint256 dailyLimit;     // Max bridge amount per 24h (0 = unlimited)
-        uint256 dailyBridged;   // Amount bridged in current period
-        uint256 periodStart;    // Start of current limit period
-        bool active;            // Route active flag
+        address destToken; // Token address on destination chain
+        BridgeMode mode; // Mint/Burn or Lock/Release
+        uint256 dailyLimit; // Max bridge amount per 24h (0 = unlimited)
+        uint256 dailyBridged; // Amount bridged in current period
+        uint256 periodStart; // Start of current limit period
+        bool active; // Route active flag
     }
     mapping(address => mapping(uint256 => TokenConfig)) public tokenConfig;
 
@@ -120,19 +123,11 @@ contract LiquidityAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     );
 
     event BridgeLock(
-        bytes32 indexed bridgeId,
-        address indexed sender,
-        address indexed token,
-        uint256 amount,
-        uint256 dstChainId
+        bytes32 indexed bridgeId, address indexed sender, address indexed token, uint256 amount, uint256 dstChainId
     );
 
     event BridgeRelease(
-        bytes32 indexed bridgeId,
-        address indexed recipient,
-        address indexed token,
-        uint256 amount,
-        uint256 srcChainId
+        bytes32 indexed bridgeId, address indexed recipient, address indexed token, uint256 amount, uint256 srcChainId
     );
 
     event ChainAdded(uint256 indexed chainId);
@@ -221,11 +216,25 @@ contract LiquidityAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     // IBridgeAdapter: metadata
     // ──────────────────────────────────────────────────────────────────────────
 
-    function version() external pure override returns (string memory) { return "1.0.0"; }
-    function protocol() external pure override returns (string memory) { return "Liquidity ATS"; }
-    function chainId() external view override returns (uint256) { return srcChainId; }
-    function endpoint() external view override returns (address) { return address(this); }
-    function supportedChains() external view override returns (uint256[] memory) { return _supportedChains; }
+    function version() external pure override returns (string memory) {
+        return "1.0.0";
+    }
+
+    function protocol() external pure override returns (string memory) {
+        return "Liquidity ATS";
+    }
+
+    function chainId() external view override returns (uint256) {
+        return srcChainId;
+    }
+
+    function endpoint() external view override returns (address) {
+        return address(this);
+    }
+
+    function supportedChains() external view override returns (uint256[] memory) {
+        return _supportedChains;
+    }
 
     function isRouteSupported(uint256 dstChainId, address token) external view override returns (bool) {
         return isChainSupported[dstChainId] && tokenConfig[token][dstChainId].active;
@@ -271,7 +280,9 @@ contract LiquidityAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
             IERC20(params.token).safeTransferFrom(msg.sender, address(this), params.amount);
             IMintBurnable(params.token).burn(params.amount);
 
-            emit BridgeBurn(bridgeId, msg.sender, params.token, params.amount, params.dstChainId, params.recipient, nonce);
+            emit BridgeBurn(
+                bridgeId, msg.sender, params.token, params.amount, params.dstChainId, params.recipient, nonce
+            );
         } else {
             // Lock tokens in adapter
             IERC20(params.token).safeTransferFrom(msg.sender, address(this), params.amount);
@@ -375,7 +386,12 @@ contract LiquidityAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
         return _bridgeStatus[bridgeId];
     }
 
-    function estimateFees(uint256, address, uint256) external pure override returns (uint256 bridgeFee, uint256 protocolFee) {
+    function estimateFees(uint256, address, uint256)
+        external
+        pure
+        override
+        returns (uint256 bridgeFee, uint256 protocolFee)
+    {
         return (0, 0); // Native bridge — zero fees (ATS absorbs gas costs)
     }
 
@@ -406,5 +422,5 @@ contract LiquidityAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     }
 
     /// @notice Allow adapter to receive native tokens
-    receive() external payable {}
+    receive() external payable { }
 }

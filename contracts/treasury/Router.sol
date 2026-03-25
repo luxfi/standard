@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {IERC20, SafeERC20} from "@luxfi/standard/tokens/ERC20.sol";
-import {Ownable} from "@luxfi/standard/access/Access.sol";
+import { IERC20, SafeERC20 } from "@luxfi/standard/tokens/ERC20.sol";
+import { Ownable } from "@luxfi/standard/access/Access.sol";
 
 interface IVault {
     function flush(bytes32 chain) external returns (uint256);
@@ -100,7 +100,9 @@ contract Router is Ownable {
         for (uint256 i = 0; i < list.length;) {
             weight[list[i]] = 0;
             emit Weight(list[i], 0);
-            unchecked { i++; }
+            unchecked {
+                i++;
+            }
         }
 
         uint256 sum;
@@ -116,7 +118,9 @@ contract Router is Ownable {
             weight[recipients[i]] = weightValues[i];
             sum += weightValues[i];
             emit Weight(recipients[i], weightValues[i]);
-            unchecked { i++; }
+            unchecked {
+                i++;
+            }
         }
 
         if (sum != BASE) revert Invalid();
@@ -132,7 +136,9 @@ contract Router is Ownable {
 
         for (uint256 i = 0; i < amounts.length;) {
             amount += amounts[i];
-            unchecked { i++; }
+            unchecked {
+                i++;
+            }
         }
 
         if (amount == 0) return 0;
@@ -145,7 +151,9 @@ contract Router is Ownable {
                 uint256 share = (amount * w) / BASE;
                 owed[recipient] += share;
             }
-            unchecked { i++; }
+            unchecked {
+                i++;
+            }
         }
 
         total += amount;
@@ -195,7 +203,9 @@ contract Router is Ownable {
         uint256[] memory w = new uint256[](list.length);
         for (uint256 i = 0; i < list.length;) {
             w[i] = weight[list[i]];
-            unchecked { i++; }
+            unchecked {
+                i++;
+            }
         }
         return (list, w);
     }

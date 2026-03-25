@@ -2,7 +2,7 @@
 pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
-import {FeeGov} from "../../../contracts/treasury/FeeGov.sol";
+import { FeeGov } from "../../../contracts/treasury/FeeGov.sol";
 
 contract InvariantTreasuryTest is Test {
     FeeGov public feeGov;

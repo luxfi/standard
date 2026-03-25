@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 /*
-    ██╗     ██╗   ██╗██╗  ██╗     ██████╗███████╗██╗      ██████╗ 
+    ██╗     ██╗   ██╗██╗  ██╗     ██████╗███████╗██╗      ██████╗
     ██║     ██║   ██║╚██╗██╔╝    ██╔════╝██╔════╝██║     ██╔═══██╗
     ██║     ██║   ██║ ╚███╔╝     ██║     █████╗  ██║     ██║   ██║
     ██║     ██║   ██║ ██╔██╗     ██║     ██╔══╝  ██║     ██║   ██║
     ███████╗╚██████╔╝██╔╝ ██╗    ╚██████╗███████╗███████╗╚██████╔╝
-    ╚══════╝ ╚═════╝ ╚═╝  ╚═╝     ╚═════╝╚══════╝╚══════╝ ╚═════╝ 
+    ╚══════╝ ╚═════╝ ╚═╝  ╚═╝     ╚═════╝╚══════╝╚══════╝ ╚═════╝
  */
 
-import {LRC20B} from "../../bridge/LRC20B.sol";
+import { LRC20B } from "../../bridge/LRC20B.sol";
 
 contract LuxCELO is LRC20B {
-    constructor() LRC20B("Liquid CELO", "LCELO") {}
+    constructor() LRC20B("Liquid CELO", "LCELO") { }
 
     function mint(address account, uint256 amount) public onlyAdmin {
         _mint(account, amount);

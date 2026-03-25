@@ -14,22 +14,14 @@ library Math {
     /*
      * Return target * (numerator / denominator).
      */
-    function getPartial(
-        uint256 target,
-        uint256 numerator,
-        uint256 denominator
-    ) internal pure returns (uint256) {
+    function getPartial(uint256 target, uint256 numerator, uint256 denominator) internal pure returns (uint256) {
         return (target * numerator) / denominator;
     }
 
     /*
      * Return target * (numerator / denominator), but rounded up.
      */
-    function getPartialRoundUp(
-        uint256 target,
-        uint256 numerator,
-        uint256 denominator
-    ) internal pure returns (uint256) {
+    function getPartialRoundUp(uint256 target, uint256 numerator, uint256 denominator) internal pure returns (uint256) {
         if (target == 0 || numerator == 0) {
             require(denominator > 0, "Math: division by zero");
             return 0;

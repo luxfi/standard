@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {Ownable} from "@luxfi/standard/access/Access.sol";
-import {EnumerableSet} from "@luxfi/standard/utils/Utils.sol";
+import { Ownable } from "@luxfi/standard/access/Access.sol";
+import { EnumerableSet } from "@luxfi/standard/utils/Utils.sol";
 
 /**
  * @title CollateralRegistry
@@ -31,24 +31,24 @@ contract CollateralRegistry is Ownable {
 
     /// @notice Risk tier for collateral
     enum RiskTier {
-        TIER_1,  // Native ecosystem (LUSD, LETH, CYRUS, MIGA, PARS)
-        TIER_2,  // Major assets (USDC, USDT, ETH, BTC)
-        TIER_3,  // LP tokens, wrapped assets
-        TIER_4   // Other volatile assets
+        TIER_1, // Native ecosystem (LUSD, LETH, CYRUS, MIGA, PARS)
+        TIER_2, // Major assets (USDC, USDT, ETH, BTC)
+        TIER_3, // LP tokens, wrapped assets
+        TIER_4 // Other volatile assets
     }
 
     /// @notice Collateral configuration
     struct CollateralConfig {
-        bool whitelisted;           // Whether asset is accepted
-        RiskTier tier;              // Risk tier for pricing
-        uint256 discountBonus;      // Additional discount in basis points (on top of base)
-        uint256 maxCapacity;        // Maximum amount that can be bonded (0 = unlimited)
-        uint256 totalBonded;        // Total amount bonded so far
-        address priceFeed;          // Chainlink price feed (optional)
-        bool isLiquidToken;         // True if this is an L* token
-        bool isLPToken;             // True if this is an LP token
-        bool requiresSwap;          // True if must swap to target collateral
-        address swapTarget;         // Target collateral after swap (if requiresSwap)
+        bool whitelisted; // Whether asset is accepted
+        RiskTier tier; // Risk tier for pricing
+        uint256 discountBonus; // Additional discount in basis points (on top of base)
+        uint256 maxCapacity; // Maximum amount that can be bonded (0 = unlimited)
+        uint256 totalBonded; // Total amount bonded so far
+        address priceFeed; // Chainlink price feed (optional)
+        bool isLiquidToken; // True if this is an L* token
+        bool isLPToken; // True if this is an LP token
+        bool requiresSwap; // True if must swap to target collateral
+        address swapTarget; // Target collateral after swap (if requiresSwap)
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -106,10 +106,10 @@ contract CollateralRegistry is Ownable {
         primaryCollateral = primaryCollateral_;
 
         // Set default tier discounts (basis points)
-        tierBaseDiscount[RiskTier.TIER_1] = 2500;  // 25% discount for native
-        tierBaseDiscount[RiskTier.TIER_2] = 2000;  // 20% discount for majors
-        tierBaseDiscount[RiskTier.TIER_3] = 1500;  // 15% discount for LP
-        tierBaseDiscount[RiskTier.TIER_4] = 1000;  // 10% discount for volatile
+        tierBaseDiscount[RiskTier.TIER_1] = 2500; // 25% discount for native
+        tierBaseDiscount[RiskTier.TIER_2] = 2000; // 20% discount for majors
+        tierBaseDiscount[RiskTier.TIER_3] = 1500; // 15% discount for LP
+        tierBaseDiscount[RiskTier.TIER_4] = 1000; // 10% discount for volatile
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -162,11 +162,7 @@ contract CollateralRegistry is Ownable {
      * @param tier Risk tier
      * @param discountBonus Additional discount bonus
      */
-    function addSwapCollateral(
-        address token,
-        RiskTier tier,
-        uint256 discountBonus
-    ) external onlyOwner {
+    function addSwapCollateral(address token, RiskTier tier, uint256 discountBonus) external onlyOwner {
         if (token == address(0)) revert InvalidAddress();
         if (collaterals[token].whitelisted) revert AlreadyWhitelisted(token);
 
@@ -207,11 +203,7 @@ contract CollateralRegistry is Ownable {
      * @param tier New risk tier
      * @param discountBonus New discount bonus
      */
-    function updateCollateral(
-        address token,
-        RiskTier tier,
-        uint256 discountBonus
-    ) external onlyOwner {
+    function updateCollateral(address token, RiskTier tier, uint256 discountBonus) external onlyOwner {
         if (!collaterals[token].whitelisted) revert NotWhitelisted(token);
 
         collaterals[token].tier = tier;

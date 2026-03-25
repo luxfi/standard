@@ -23,10 +23,10 @@ pragma solidity ^0.8.24;
  * - VePendleStrategy: Protocol fees (ETH) + vote incentives + boosted rewards
  */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PENDLE INTERFACES
@@ -97,19 +97,13 @@ interface IPendleRouter {
         TokenInput calldata input
     ) external payable returns (uint256 netPtOut, uint256 netSyFee);
 
-    function swapExactPtForToken(
-        address receiver,
-        address market,
-        uint256 exactPtIn,
-        TokenOutput calldata output
-    ) external returns (uint256 netTokenOut, uint256 netSyFee);
+    function swapExactPtForToken(address receiver, address market, uint256 exactPtIn, TokenOutput calldata output)
+        external
+        returns (uint256 netTokenOut, uint256 netSyFee);
 
-    function redeemPyToToken(
-        address receiver,
-        address YT,
-        uint256 netPyIn,
-        TokenOutput calldata output
-    ) external returns (uint256 netTokenOut);
+    function redeemPyToToken(address receiver, address YT, uint256 netPyIn, TokenOutput calldata output)
+        external
+        returns (uint256 netTokenOut);
 }
 
 /// @notice Pendle Market (AMM pool for PT-SY trading)
@@ -131,12 +125,10 @@ interface IPendleMarket {
 
 /// @notice Pendle Standardized Yield wrapper
 interface IPendleSY {
-    function deposit(
-        address receiver,
-        address tokenIn,
-        uint256 amountTokenToDeposit,
-        uint256 minSharesOut
-    ) external payable returns (uint256 amountSharesOut);
+    function deposit(address receiver, address tokenIn, uint256 amountTokenToDeposit, uint256 minSharesOut)
+        external
+        payable
+        returns (uint256 amountSharesOut);
 
     function redeem(
         address receiver,
@@ -157,11 +149,9 @@ interface IPendleSY {
 
 /// @notice Pendle Yield Token
 interface IPendleYT {
-    function redeemDueInterestAndRewards(
-        address user,
-        bool redeemInterest,
-        bool redeemRewards
-    ) external returns (uint256 interestOut, uint256[] memory rewardsOut);
+    function redeemDueInterestAndRewards(address user, bool redeemInterest, bool redeemRewards)
+        external
+        returns (uint256 interestOut, uint256[] memory rewardsOut);
 
     function redeemPY(address receiver) external returns (uint256 amountSyOut);
 
@@ -319,7 +309,7 @@ error PTNotMatured(uint256 expiry, uint256 currentTime);
  * - Market expiry (must exit before expiry or roll to new market)
  * - Smart contract risk
  */
-contract PendleLPStrategy is Ownable, ReentrancyGuard{
+contract PendleLPStrategy is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -383,12 +373,7 @@ contract PendleLPStrategy is Ownable, ReentrancyGuard{
      * @param _underlying Underlying asset address
      * @param strategyName Name for this strategy
      */
-    constructor(
-        address _router,
-        address _market,
-        address _underlying,
-        string memory strategyName
-    ) Ownable(msg.sender) {
+    constructor(address _router, address _market, address _underlying, string memory strategyName) Ownable(msg.sender) {
         if (_router == address(0) || _market == address(0)) revert InvalidMarket(_market);
 
         router = IPendleRouter(_router);
@@ -445,10 +430,7 @@ contract PendleLPStrategy is Ownable, ReentrancyGuard{
             bulk: address(0),
             pendleSwap: address(0),
             swapData: IPendleRouter.SwapData({
-                swapType: IPendleRouter.SwapType.NONE,
-                extRouter: address(0),
-                extCalldata: "",
-                needScale: false
+                swapType: IPendleRouter.SwapType.NONE, extRouter: address(0), extCalldata: "", needScale: false
             })
         });
 
@@ -464,13 +446,7 @@ contract PendleLPStrategy is Ownable, ReentrancyGuard{
         uint256 minLpOut = (amount * (BPS - slippageTolerance)) / BPS;
 
         // Add liquidity
-        (shares,) = router.addLiquiditySingleToken(
-            address(this),
-            address(market),
-            minLpOut,
-            approx,
-            input
-        );
+        (shares,) = router.addLiquiditySingleToken(address(this), address(market), minLpOut, approx, input);
 
         totalLPShares += shares;
         totalDeposited += amount;
@@ -496,20 +472,12 @@ contract PendleLPStrategy is Ownable, ReentrancyGuard{
             bulk: address(0),
             pendleSwap: address(0),
             swapData: IPendleRouter.SwapData({
-                swapType: IPendleRouter.SwapType.NONE,
-                extRouter: address(0),
-                extCalldata: "",
-                needScale: false
+                swapType: IPendleRouter.SwapType.NONE, extRouter: address(0), extCalldata: "", needScale: false
             })
         });
 
         // Remove liquidity
-        (assets,) = router.removeLiquiditySingleToken(
-            msg.sender,
-            address(market),
-            shares,
-            output
-        );
+        (assets,) = router.removeLiquiditySingleToken(msg.sender, address(market), shares, output);
 
         totalLPShares -= shares;
         if (assets <= totalDeposited) {
@@ -649,7 +617,7 @@ contract PendleLPStrategy is Ownable, ReentrancyGuard{
  * - Must hold to maturity for guaranteed yield
  * - Smart contract risk
  */
-contract PendlePTStrategy is Ownable, ReentrancyGuard{
+contract PendlePTStrategy is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -713,12 +681,7 @@ contract PendlePTStrategy is Ownable, ReentrancyGuard{
      * @param _underlying Underlying asset address
      * @param strategyName Name for this strategy
      */
-    constructor(
-        address _router,
-        address _market,
-        address _underlying,
-        string memory strategyName
-    ) Ownable(msg.sender) {
+    constructor(address _router, address _market, address _underlying, string memory strategyName) Ownable(msg.sender) {
         if (_router == address(0) || _market == address(0)) revert InvalidMarket(_market);
 
         router = IPendleRouter(_router);
@@ -775,32 +738,19 @@ contract PendlePTStrategy is Ownable, ReentrancyGuard{
             bulk: address(0),
             pendleSwap: address(0),
             swapData: IPendleRouter.SwapData({
-                swapType: IPendleRouter.SwapType.NONE,
-                extRouter: address(0),
-                extCalldata: "",
-                needScale: false
+                swapType: IPendleRouter.SwapType.NONE, extRouter: address(0), extCalldata: "", needScale: false
             })
         });
 
         // Build approx params
         IPendleRouter.ApproxParams memory approx = IPendleRouter.ApproxParams({
-            guessMin: 0,
-            guessMax: type(uint256).max,
-            guessOffchain: 0,
-            maxIteration: 256,
-            eps: 1e15
+            guessMin: 0, guessMax: type(uint256).max, guessOffchain: 0, maxIteration: 256, eps: 1e15
         });
 
         uint256 minPtOut = (amount * (BPS - slippageTolerance)) / BPS;
 
         // Swap underlying for PT
-        (shares,) = router.swapExactTokenForPt(
-            address(this),
-            address(market),
-            minPtOut,
-            approx,
-            input
-        );
+        (shares,) = router.swapExactTokenForPt(address(this), address(market), minPtOut, approx, input);
 
         // Update average purchase price
         if (totalPT == 0) {
@@ -836,10 +786,7 @@ contract PendlePTStrategy is Ownable, ReentrancyGuard{
                 bulk: address(0),
                 pendleSwap: address(0),
                 swapData: IPendleRouter.SwapData({
-                    swapType: IPendleRouter.SwapType.NONE,
-                    extRouter: address(0),
-                    extCalldata: "",
-                    needScale: false
+                    swapType: IPendleRouter.SwapType.NONE, extRouter: address(0), extCalldata: "", needScale: false
                 })
             });
 
@@ -855,10 +802,7 @@ contract PendlePTStrategy is Ownable, ReentrancyGuard{
                 bulk: address(0),
                 pendleSwap: address(0),
                 swapData: IPendleRouter.SwapData({
-                    swapType: IPendleRouter.SwapType.NONE,
-                    extRouter: address(0),
-                    extCalldata: "",
-                    needScale: false
+                    swapType: IPendleRouter.SwapType.NONE, extRouter: address(0), extCalldata: "", needScale: false
                 })
             });
 
@@ -1119,7 +1063,15 @@ contract VePendleStrategy is Ownable, ReentrancyGuard {
      * @param amount Amount of PENDLE to lock
      * @return shares vePENDLE balance after deposit
      */
-    function deposit(uint256 amount, bytes calldata /* data */) external nonReentrant whenActive returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        nonReentrant
+        whenActive
+        returns (uint256 shares)
+    {
         if (amount == 0) revert ZeroAmount();
 
         // Transfer PENDLE
@@ -1157,7 +1109,15 @@ contract VePendleStrategy is Ownable, ReentrancyGuard {
      * @param amount Amount to withdraw (must be full balance after expiry)
      * @return assets PENDLE received
      */
-    function withdraw(uint256 amount, address recipient, bytes calldata /* data */) external nonReentrant returns (uint256 assets) {
+    function withdraw(
+        uint256 amount,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        nonReentrant
+        returns (uint256 assets)
+    {
         uint256 shares = amount; // amount parameter represents shares for this strategy
         if (shares == 0) revert ZeroAmount();
         if (block.timestamp < lockExpiry) revert LockNotExpired(lockExpiry, block.timestamp);
@@ -1333,12 +1293,12 @@ contract VePendleStrategy is Ownable, ReentrancyGuard {
 
         uint256 balance = address(this).balance;
         if (balance > 0) {
-            (bool success,) = recipient.call{value: balance}("");
+            (bool success,) = recipient.call{ value: balance }("");
             require(success, "ETH transfer failed");
             accumulatedFees = 0;
         }
     }
 
     /// @notice Receive ETH from fee claims
-    receive() external payable {}
+    receive() external payable { }
 }

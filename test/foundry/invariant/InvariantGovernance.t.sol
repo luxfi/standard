@@ -2,14 +2,19 @@
 pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
-import {GaugeController} from "../../../contracts/governance/GaugeController.sol";
-import {DLUX} from "../../../contracts/governance/DLUX.sol";
-import {vLUX} from "../../../contracts/governance/vLUX.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { GaugeController } from "../../../contracts/governance/GaugeController.sol";
+import { DLUX } from "../../../contracts/governance/DLUX.sol";
+import { vLUX } from "../../../contracts/governance/vLUX.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MockWLUXG is ERC20 {
-    constructor() ERC20("WLUX", "WLUX") { _mint(msg.sender, 1e27); }
-    function mint(address to, uint256 a) external { _mint(to, a); }
+    constructor() ERC20("WLUX", "WLUX") {
+        _mint(msg.sender, 1e27);
+    }
+
+    function mint(address to, uint256 a) external {
+        _mint(to, a);
+    }
 }
 
 contract GovHandler is Test {
@@ -30,7 +35,7 @@ contract GovHandler is Test {
         uint256 gaugeId = gaugeSeed % gaugeCount;
         weight = bound(weight, 0, 10000);
         vm.prank(voter);
-        try gauge.vote(gaugeId, weight) {} catch {}
+        try gauge.vote(gaugeId, weight) { } catch { }
     }
 }
 

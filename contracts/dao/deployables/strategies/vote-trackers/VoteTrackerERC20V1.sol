@@ -1,18 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IVoteTrackerV1
-} from "../../../interfaces/deployables/IVoteTrackerV1.sol";
-import {IVersion} from "../../../interfaces/deployables/IVersion.sol";
-import {
-    IDeploymentBlock
-} from "../../../interfaces/IDeploymentBlock.sol";
-import {
-    DeploymentBlockInitializable
-} from "../../../DeploymentBlockInitializable.sol";
-import {InitializerEventEmitter} from "../../../InitializerEventEmitter.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { IVoteTrackerV1 } from "../../../interfaces/deployables/IVoteTrackerV1.sol";
+import { IVersion } from "../../../interfaces/deployables/IVersion.sol";
+import { IDeploymentBlock } from "../../../interfaces/IDeploymentBlock.sol";
+import { DeploymentBlockInitializable } from "../../../DeploymentBlockInitializable.sol";
+import { InitializerEventEmitter } from "../../../InitializerEventEmitter.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
  * @title VoteTrackerERC20V1
@@ -29,13 +23,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  *
  * @custom:security-contact security@lux.network
  */
-contract VoteTrackerERC20V1 is
-    IVoteTrackerV1,
-    IVersion,
-    DeploymentBlockInitializable,
-    InitializerEventEmitter,
-    ERC165
-{
+contract VoteTrackerERC20V1 is IVoteTrackerV1, IVersion, DeploymentBlockInitializable, InitializerEventEmitter, ERC165 {
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
@@ -46,9 +34,13 @@ contract VoteTrackerERC20V1 is
      * @custom:storage-location erc7201:DAO.VoteTrackerERC20.main
      */
     struct VoteTrackerERC20Storage {
-        /** @notice Tracks whether an address has voted in a specific context */
+        /**
+         * @notice Tracks whether an address has voted in a specific context
+         */
         mapping(uint256 contextId => mapping(address voter => bool hasVoted)) votes;
-        /** @notice Mapping of authorized caller contracts that can record votes */
+        /**
+         * @notice Mapping of authorized caller contracts that can record votes
+         */
         mapping(address caller => bool isAuthorized) authorizedCallers;
     }
 
@@ -64,11 +56,7 @@ contract VoteTrackerERC20V1 is
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      * @return $ The storage struct for VoteTrackerERC20V1
      */
-    function _getVoteTrackerERC20Storage()
-        internal
-        pure
-        returns (VoteTrackerERC20Storage storage $)
-    {
+    function _getVoteTrackerERC20Storage() internal pure returns (VoteTrackerERC20Storage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := VOTE_TRACKER_ERC20_STORAGE_LOCATION
@@ -101,14 +89,12 @@ contract VoteTrackerERC20V1 is
     /**
      * @inheritdoc IVoteTrackerV1
      */
-    function initialize(
-        address[] memory authorizedCallers_
-    ) public virtual override initializer {
+    function initialize(address[] memory authorizedCallers_) public virtual override initializer {
         __InitializerEventEmitter_init(abi.encode(authorizedCallers_));
         __DeploymentBlockInitializable_init();
 
         VoteTrackerERC20Storage storage $ = _getVoteTrackerERC20Storage();
-        for (uint256 i = 0; i < authorizedCallers_.length; ) {
+        for (uint256 i = 0; i < authorizedCallers_.length;) {
             $.authorizedCallers[authorizedCallers_[i]] = true;
             unchecked {
                 ++i;
@@ -132,7 +118,13 @@ contract VoteTrackerERC20V1 is
         uint256 contextId_,
         address voter_,
         bytes calldata /* voteData_ */
-    ) external view virtual override returns (bool) {
+    )
+        external
+        view
+        virtual
+        override
+        returns (bool)
+    {
         VoteTrackerERC20Storage storage $ = _getVoteTrackerERC20Storage();
         return $.votes[contextId_][voter_];
     }
@@ -147,11 +139,12 @@ contract VoteTrackerERC20V1 is
      * - Reverts if already voted
      * @custom:throws AlreadyVoted if the address has already voted in this context
      */
-    function recordVote(
-        uint256 contextId_,
-        address voter_,
-        bytes calldata voteData_
-    ) external virtual override onlyAuthorizedCaller {
+    function recordVote(uint256 contextId_, address voter_, bytes calldata voteData_)
+        external
+        virtual
+        override
+        onlyAuthorizedCaller
+    {
         VoteTrackerERC20Storage storage $ = _getVoteTrackerERC20Storage();
 
         if ($.votes[contextId_][voter_]) {
@@ -184,14 +177,9 @@ contract VoteTrackerERC20V1 is
      * @inheritdoc ERC165
      * @dev Supports IVoteTrackerV1, IVersion, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(IVoteTrackerV1).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(IVoteTrackerV1).interfaceId || interfaceId_ == type(IVersion).interfaceId
+            || interfaceId_ == type(IDeploymentBlock).interfaceId || super.supportsInterface(interfaceId_);
     }
 
     // ======================================================================

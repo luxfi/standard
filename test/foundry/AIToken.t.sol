@@ -112,16 +112,16 @@ contract AITokenTest is Test {
 
     function test_AllLaunchChains() public {
         uint256[10] memory launchChains = [
-            uint256(96369),  // Lux
-            uint256(36963),  // AI
+            uint256(96369), // Lux
+            uint256(36963), // AI
             uint256(200200), // Zoo
-            uint256(1),      // Ethereum
-            uint256(8453),   // Base
-            uint256(56),     // BNB
-            uint256(43114),  // Avalanche
-            uint256(42161),  // Arbitrum
-            uint256(10),     // Optimism
-            uint256(137)     // Polygon
+            uint256(1), // Ethereum
+            uint256(8453), // Base
+            uint256(56), // BNB
+            uint256(43114), // Avalanche
+            uint256(42161), // Arbitrum
+            uint256(10), // Optimism
+            uint256(137) // Polygon
         ];
 
         for (uint256 i = 0; i < launchChains.length; i++) {
@@ -156,9 +156,7 @@ contract AITokenTest is Test {
 
     function test_MintLP_ExceedsAllocation() public {
         vm.prank(safe);
-        vm.expectRevert(
-            abi.encodeWithSelector(AIToken.LPCapExceeded.selector, LP_ALLOCATION + 1, LP_ALLOCATION)
-        );
+        vm.expectRevert(abi.encodeWithSelector(AIToken.LPCapExceeded.selector, LP_ALLOCATION + 1, LP_ALLOCATION));
         token.mintLP(user, LP_ALLOCATION + 1);
     }
 
@@ -173,9 +171,7 @@ contract AITokenTest is Test {
         assertEq(token.lpMinted(), LP_ALLOCATION, "Should have minted full LP allocation");
 
         // Next mint should fail
-        vm.expectRevert(
-            abi.encodeWithSelector(AIToken.LPCapExceeded.selector, 1, 0)
-        );
+        vm.expectRevert(abi.encodeWithSelector(AIToken.LPCapExceeded.selector, 1, 0));
         token.mintLP(user, 1);
 
         vm.stopPrank();
@@ -239,9 +235,7 @@ contract AITokenTest is Test {
         uint256 overAmount = MINING_ALLOCATION + 1;
 
         vm.prank(miner);
-        vm.expectRevert(
-            abi.encodeWithSelector(AIToken.MiningCapExceeded.selector, overAmount, MINING_ALLOCATION)
-        );
+        vm.expectRevert(abi.encodeWithSelector(AIToken.MiningCapExceeded.selector, overAmount, MINING_ALLOCATION));
         token.mintReward(user, overAmount);
     }
 
@@ -432,11 +426,7 @@ contract AITokenTest is Test {
         assertLe(token.lpMinted(), LP_ALLOCATION, "LP cap violated");
 
         // Invariant: miningMinted + treasuryMinted <= MINING_ALLOCATION
-        assertLe(
-            token.miningMinted() + token.treasuryMinted(),
-            MINING_ALLOCATION,
-            "Mining cap violated"
-        );
+        assertLe(token.miningMinted() + token.treasuryMinted(), MINING_ALLOCATION, "Mining cap violated");
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

@@ -40,11 +40,7 @@ interface HatsEvents {
     /// @param hatId The id of the wearer's hat
     /// @param wearer The wearer's address
     /// @param wearerStanding Whether the wearer is in good standing for the hat
-    event WearerStandingChanged(
-        uint256 hatId,
-        address wearer,
-        bool wearerStanding
-    );
+    event WearerStandingChanged(uint256 hatId, address wearer, bool wearerStanding);
 
     /// @notice Emitted when a hat's status is updated
     /// @param hatId The id of the hat

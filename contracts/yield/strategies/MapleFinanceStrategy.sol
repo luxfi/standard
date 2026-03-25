@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.24;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title Maple Finance Lending Strategy
 /// @notice Institutional-grade undercollateralized lending for higher yields
@@ -48,7 +48,7 @@ interface IWithdrawalManager {
         uint64 cycleDuration;
         uint64 windowDuration;
     }
-    
+
     function addShares(uint256 shares, address owner) external;
     function removeShares(uint256 shares, address owner) external returns (uint256);
     function lockedShares(address owner) external view returns (uint256);
@@ -63,40 +63,40 @@ interface IWithdrawalManager {
 /// @title Maple Finance Pool Strategy
 /// @notice Deposits into Maple lending pools for institutional yields
 /// @dev Supports USDC, WETH pools with different pool delegates
-contract MapleFinanceStrategy is Ownable, ReentrancyGuard{
+contract MapleFinanceStrategy is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     string public constant name = "Maple Finance";
     string public constant protocol = "Maple";
     string public constant version = "1.0.0";
-    
+
     // Maple V2 Mainnet Addresses
     address public constant MAPLE_GLOBALS = 0x804a6F5F667170F545Bf14e5DDB48C70B788390C;
-    
+
     /// @notice Maple pool contract
     IMaplePool public immutable maplePool;
-    
+
     /// @notice Pool manager
     IMaplePoolManager public immutable poolManager;
-    
+
     /// @notice Withdrawal manager for redemption queue
     IWithdrawalManager public immutable withdrawalManager;
-    
+
     /// @notice Underlying asset (USDC, WETH, etc.)
     IERC20 public immutable underlyingAsset;
-    
+
     /// @notice Pool shares held
     uint256 public poolShares;
-    
+
     /// @notice Total assets deposited (in underlying)
     uint256 public totalDeposited;
-    
+
     /// @notice Shares pending withdrawal
     uint256 public pendingWithdrawShares;
-    
+
     /// @notice Whether new deposits are accepted
     bool public depositsEnabled = true;
-    
+
     bool public isPaused;
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -121,17 +121,12 @@ contract MapleFinanceStrategy is Ownable, ReentrancyGuard{
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════════
 
-    constructor(
-        address _maplePool,
-        address _poolManager,
-        address _withdrawalManager,
-        address _owner
-    ) Ownable(_owner) {
+    constructor(address _maplePool, address _poolManager, address _withdrawalManager, address _owner) Ownable(_owner) {
         maplePool = IMaplePool(_maplePool);
         poolManager = IMaplePoolManager(_poolManager);
         withdrawalManager = IWithdrawalManager(_withdrawalManager);
         underlyingAsset = IERC20(maplePool.asset());
-        
+
         // Approve pool
         underlyingAsset.approve(_maplePool, type(uint256).max);
     }
@@ -147,41 +142,37 @@ contract MapleFinanceStrategy is Ownable, ReentrancyGuard{
     function deposit(uint256 amount) external nonReentrant returns (uint256 shares) {
         if (isPaused) revert StrategyPaused();
         if (!depositsEnabled) revert DepositsDisabled();
-        
+
         // Check pool has sufficient first-loss cover
         if (!poolManager.hasSufficientCover()) revert InsufficientCover();
-        
+
         underlyingAsset.safeTransferFrom(msg.sender, address(this), amount);
-        
+
         // Deposit into Maple pool
         shares = maplePool.deposit(amount, address(this));
-        
+
         poolShares += shares;
         totalDeposited += amount;
-        
+
         emit Deposited(amount, shares);
     }
 
-    function withdraw(uint256 amount) 
-        external 
-        nonReentrant 
-        returns (uint256 assets) 
-    {
+    function withdraw(uint256 amount) external nonReentrant returns (uint256 assets) {
         // Calculate shares needed
         uint256 sharesToRedeem = (amount * poolShares) / totalDeposited;
         if (sharesToRedeem > poolShares - pendingWithdrawShares) revert InsufficientShares();
-        
+
         // Maple uses a withdrawal queue system
         // First, request redemption (locks shares)
         uint256 escrowedShares = maplePool.requestRedeem(sharesToRedeem, address(this));
         pendingWithdrawShares += escrowedShares;
-        
+
         // Actual withdrawal happens in separate transaction after cycle
         // For now, record the request
         uint256 cycleId = withdrawalManager.exitCycleId(address(this));
-        
+
         emit RedemptionRequested(escrowedShares, cycleId);
-        
+
         // Note: Caller must call `completeWithdrawal` after cycle window opens
         return 0; // Assets received later
     }
@@ -190,31 +181,31 @@ contract MapleFinanceStrategy is Ownable, ReentrancyGuard{
     function completeWithdrawal(address recipient) external nonReentrant returns (uint256 assets) {
         uint256 sharesToRedeem = pendingWithdrawShares;
         if (sharesToRedeem == 0) revert InsufficientShares();
-        
+
         // Check if withdrawal window is open
         uint256 cycleId = withdrawalManager.exitCycleId(address(this));
         uint256 windowStart = withdrawalManager.getWindowStart(cycleId);
         if (block.timestamp < windowStart) revert WithdrawalNotReady();
-        
+
         // Execute redemption
         assets = maplePool.redeem(sharesToRedeem, msg.sender, address(this));
-        
+
         poolShares -= sharesToRedeem;
         pendingWithdrawShares = 0;
         totalDeposited -= assets;
-        
+
         emit Redeemed(sharesToRedeem, assets);
     }
 
     function harvest() external returns (uint256 yield) {
         // Maple pools accrue yield in share price
         uint256 currentValue = maplePool.convertToAssets(poolShares);
-        
+
         if (currentValue > totalDeposited) {
             yield = currentValue - totalDeposited;
             // Yield is embedded in share value, no need to claim
         }
-        
+
         return yield;
     }
 
@@ -249,11 +240,7 @@ contract MapleFinanceStrategy is Ownable, ReentrancyGuard{
     }
 
     /// @notice Get pending withdrawal info
-    function getPendingWithdrawal() external view returns (
-        uint256 shares,
-        uint256 cycleId,
-        uint256 windowStart
-    ) {
+    function getPendingWithdrawal() external view returns (uint256 shares, uint256 cycleId, uint256 windowStart) {
         shares = pendingWithdrawShares;
         cycleId = withdrawalManager.exitCycleId(address(this));
         windowStart = withdrawalManager.getWindowStart(cycleId);
@@ -301,15 +288,10 @@ contract MapleUSDCStrategy is MapleFinanceStrategy {
     address public constant MAPLE_USDC_POOL = address(0);
     address public constant MAPLE_USDC_MANAGER = address(0);
     address public constant MAPLE_USDC_WITHDRAWAL = address(0);
-    
-    constructor(address _owner) 
-        MapleFinanceStrategy(
-            MAPLE_USDC_POOL,
-            MAPLE_USDC_MANAGER,
-            MAPLE_USDC_WITHDRAWAL,
-            _owner
-        ) 
-    {}
+
+    constructor(address _owner)
+        MapleFinanceStrategy(MAPLE_USDC_POOL, MAPLE_USDC_MANAGER, MAPLE_USDC_WITHDRAWAL, _owner)
+    { }
 }
 
 /// @title Maple WETH Pool Strategy
@@ -319,13 +301,8 @@ contract MapleWETHStrategy is MapleFinanceStrategy {
     address public constant MAPLE_WETH_POOL = address(0);
     address public constant MAPLE_WETH_MANAGER = address(0);
     address public constant MAPLE_WETH_WITHDRAWAL = address(0);
-    
-    constructor(address _owner) 
-        MapleFinanceStrategy(
-            MAPLE_WETH_POOL,
-            MAPLE_WETH_MANAGER,
-            MAPLE_WETH_WITHDRAWAL,
-            _owner
-        ) 
-    {}
+
+    constructor(address _owner)
+        MapleFinanceStrategy(MAPLE_WETH_POOL, MAPLE_WETH_MANAGER, MAPLE_WETH_WITHDRAWAL, _owner)
+    { }
 }

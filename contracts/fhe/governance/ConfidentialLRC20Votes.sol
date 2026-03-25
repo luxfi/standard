@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {FHE, ebool, euint64} from "../FHE.sol";
+import { FHE, ebool, euint64 } from "../FHE.sol";
 import { Ownable2Step, Ownable } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import { SignatureChecker } from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
@@ -88,13 +88,11 @@ abstract contract ConfidentialLRC20Votes is IConfidentialLRC20Votes, Confidentia
      * @param version_      Version (e.g. "0.1", "1.0").
      * @param totalSupply_  Total supply to mint.
      */
-    constructor(
-        address owner_,
-        string memory name_,
-        string memory symbol_,
-        string memory version_,
-        uint64 totalSupply_
-    ) ConfidentialLRC20(name_, symbol_) EIP712(name_, version_) Ownable(owner_) {
+    constructor(address owner_, string memory name_, string memory symbol_, string memory version_, uint64 totalSupply_)
+        ConfidentialLRC20(name_, symbol_)
+        EIP712(name_, version_)
+        Ownable(owner_)
+    {
         _unsafeMint(owner_, totalSupply_);
         _totalSupply = totalSupply_;
 
@@ -121,13 +119,10 @@ abstract contract ConfidentialLRC20Votes is IConfidentialLRC20Votes, Confidentia
      * @dev             Signature can be either 64-byte or 65-byte long if it is from an EOA.
      *                  Else, it must adhere to ERC1271. See {https://eips.ethereum.org/EIPS/eip-1271}
      */
-    function delegateBySig(
-        address delegator,
-        address delegatee,
-        uint256 nonce,
-        uint256 expiry,
-        bytes memory signature
-    ) public virtual {
+    function delegateBySig(address delegator, address delegatee, uint256 nonce, uint256 expiry, bytes memory signature)
+        public
+        virtual
+    {
         bytes32 structHash = keccak256(abi.encode(DELEGATION_TYPEHASH, delegatee, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", _domainSeparatorV4(), structHash));
 

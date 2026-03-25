@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {Enum} from "@luxfi/contracts/governance/base/Enum.sol";
+import { Enum } from "@luxfi/contracts/governance/base/Enum.sol";
 
 /// @title Safe Smart Account Interface
 /// @notice Extended interface for Safe integration with module support
@@ -41,12 +41,9 @@ interface ISafe {
     /// @param data Data payload of the module transaction.
     /// @param operation Operation type (Call or DelegateCall).
     /// @return success Boolean flag indicating if the call succeeded.
-    function execTransactionFromModule(
-        address to,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation
-    ) external returns (bool success);
+    function execTransactionFromModule(address to, uint256 value, bytes memory data, Enum.Operation operation)
+        external
+        returns (bool success);
 
     /// @notice Execute a transaction from an enabled module and return data.
     /// @param to Destination address of the module transaction.
@@ -55,12 +52,9 @@ interface ISafe {
     /// @param operation Operation type (Call or DelegateCall).
     /// @return success Boolean flag indicating if the call succeeded.
     /// @return returnData Data returned by the call.
-    function execTransactionFromModuleReturnData(
-        address to,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation
-    ) external returns (bool success, bytes memory returnData);
+    function execTransactionFromModuleReturnData(address to, uint256 value, bytes memory data, Enum.Operation operation)
+        external
+        returns (bool success, bytes memory returnData);
 
     /// @notice Returns whether a module is enabled.
     /// @param module The module address to check.

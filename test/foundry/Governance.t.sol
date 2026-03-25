@@ -6,19 +6,19 @@ import "forge-std/Test.sol";
 // Governance contracts
 // Note: Governor.sol is now Zodiac-style for Safe integration
 // Using DAO for simple governance tests
-import {DAO} from "../../contracts/governance/DAO.sol";
-import {Stake} from "../../contracts/governance/Stake.sol";
-import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
+import { DAO } from "../../contracts/governance/DAO.sol";
+import { Stake } from "../../contracts/governance/Stake.sol";
+import { TimelockController } from "@openzeppelin/contracts/governance/TimelockController.sol";
 
 // vLUX and Gauge contracts
-import {vLUX} from "../../contracts/governance/vLUX.sol";
-import {GaugeController} from "../../contracts/governance/GaugeController.sol";
+import { vLUX } from "../../contracts/governance/vLUX.sol";
+import { GaugeController } from "../../contracts/governance/GaugeController.sol";
 
 // Simple DAO contract
-import {DAO} from "../../contracts/governance/DAO.sol";
+import { DAO } from "../../contracts/governance/DAO.sol";
 
 // Shared test mocks
-import {MockERC20Solmate as MockERC20, MockTargetFull as MockTarget} from "./TestMocks.sol";
+import { MockERC20Solmate as MockERC20, MockTargetFull as MockTarget } from "./TestMocks.sol";
 
 /// @title GovernanceTest
 /// @notice Comprehensive tests for Lux DAO governance system
@@ -103,12 +103,7 @@ contract GovernanceTest is Test {
         proposers[0] = address(0); // Anyone can propose (governor will control)
         executors[0] = address(0); // Anyone can execute
 
-        timelock = new TimelockController(
-            TIMELOCK_DELAY,
-            proposers,
-            executors,
-            admin
-        );
+        timelock = new TimelockController(TIMELOCK_DELAY, proposers, executors, admin);
 
         // Deploy DAO (simple governance - Governor.sol is Zodiac-style for Safe integration)
         governor = new DAO(address(govToken), admin);
@@ -190,7 +185,7 @@ contract GovernanceTest is Test {
     function test_CreateProposal() public {
         // Advance a block so alice's voting power is recorded
         vm.roll(block.number + 1);
-        
+
         vm.startPrank(alice);
 
         address[] memory targets = new address[](1);
@@ -201,12 +196,7 @@ contract GovernanceTest is Test {
         values[0] = 0;
         calldatas[0] = abi.encodeWithSelector(MockTarget.setValue.selector, 42);
 
-        uint256 proposalId = governor.propose(
-            targets,
-            values,
-            calldatas,
-            "Set value to 42"
-        );
+        uint256 proposalId = governor.propose(targets, values, calldatas, "Set value to 42");
 
         assertTrue(proposalId > 0);
         assertEq(uint256(governor.state(proposalId)), uint256(DAO.ProposalState.Pending));
@@ -296,10 +286,10 @@ contract GovernanceTest is Test {
         address smallVoter = address(0x8888);
         vm.prank(admin);
         govToken.mint(smallVoter, 500_000e18);
-        
+
         vm.prank(smallVoter);
         govToken.delegate(smallVoter);
-        
+
         // Advance a block for delegation to take effect
         vm.roll(block.number + 1);
 
@@ -346,7 +336,7 @@ contract GovernanceTest is Test {
     function test_CancelProposal() public {
         // Advance a block so alice's voting power is recorded
         vm.roll(block.number + 1);
-        
+
         uint256 proposalId = _createProposal();
 
         // Alice cancels her own proposal (DAO uses simple proposalId-based API)
@@ -482,11 +472,11 @@ contract GovernanceTest is Test {
     function test_vLuxIncreaseAmount() public {
         // Warp to a reasonable timestamp first
         vm.warp(1 weeks);
-        
+
         // Mint extra LUX for alice to test increaseAmount
         vm.prank(admin);
         lux.mint(alice, 1000e18);
-        
+
         vm.startPrank(alice);
 
         lux.approve(address(veLux), 2000e18);
@@ -529,7 +519,7 @@ contract GovernanceTest is Test {
     function test_vLuxWithdraw() public {
         // Warp to a reasonable timestamp first
         vm.warp(1 weeks);
-        
+
         vm.startPrank(alice);
 
         lux.approve(address(veLux), 1000e18);
@@ -592,8 +582,7 @@ contract GovernanceTest is Test {
 
         assertEq(gaugeId, 1); // ID 0 is dummy
 
-        (address recipient, string memory name, uint256 gaugeType, bool active,) =
-            gaugeController.getGauge(gaugeId);
+        (address recipient, string memory name, uint256 gaugeType, bool active,) = gaugeController.getGauge(gaugeId);
 
         assertEq(recipient, address(0xdead));
         assertEq(name, "Burn Gauge");
@@ -604,7 +593,7 @@ contract GovernanceTest is Test {
     function test_GaugeControllerVote() public {
         // Warp past the vote delay (10 days) before any voting
         vm.warp(block.timestamp + 11 days);
-        
+
         // Setup: Alice creates vLUX lock
         vm.startPrank(alice);
         lux.approve(address(veLux), 1000e18);
@@ -664,7 +653,7 @@ contract GovernanceTest is Test {
     function test_GaugeControllerUpdateWeights() public {
         // Warp past the vote delay (10 days) before any voting
         vm.warp(block.timestamp + 11 days);
-        
+
         // Setup
         vm.startPrank(alice);
         lux.approve(address(veLux), 1000e18);
@@ -854,7 +843,7 @@ contract GovernanceTest is Test {
     function test_InsufficientVotesProposal() public {
         // Advance block for voting power
         vm.roll(block.number + 1);
-        
+
         // Charlie tries to create proposal on LuxGovernor (below threshold)
         // Note: DAO.sol has lower threshold (1% = 1M tokens), Charlie has 1M
         // But LuxGovernor has 100k threshold which Charlie exceeds
@@ -916,7 +905,7 @@ contract GovernanceTest is Test {
     function _createProposal() internal returns (uint256) {
         // Advance a block so alice's voting power is recorded for proposals
         vm.roll(block.number + 1);
-        
+
         vm.startPrank(alice);
 
         address[] memory targets = new address[](1);
@@ -927,12 +916,7 @@ contract GovernanceTest is Test {
         values[0] = 0;
         calldatas[0] = abi.encodeWithSelector(MockTarget.setValue.selector, 42);
 
-        uint256 proposalId = governor.propose(
-            targets,
-            values,
-            calldatas,
-            "Set value to 42"
-        );
+        uint256 proposalId = governor.propose(targets, values, calldatas, "Set value to 42");
 
         vm.stopPrank();
         return proposalId;

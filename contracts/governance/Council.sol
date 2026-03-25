@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.31;
 
-import {ICouncil} from "./interfaces/ICouncil.sol";
-import {ICharter} from "./interfaces/ICharter.sol";
-import {Transaction} from "./base/Transaction.sol";
-import {Secretariat} from "./Secretariat.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { ICouncil } from "./interfaces/ICouncil.sol";
+import { ICharter } from "./interfaces/ICharter.sol";
+import { Transaction } from "./base/Transaction.sol";
+import { Secretariat } from "./Secretariat.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+
 // Note: Initializable is inherited through Ownable2StepUpgradeable and UUPSUpgradeable
 
 /**
@@ -30,13 +31,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  *
  * @custom:security-contact security@lux.network
  */
-contract Council is
-    ICouncil,
-    Secretariat,
-    Ownable2StepUpgradeable,
-    UUPSUpgradeable,
-    ERC165
-{
+contract Council is ICouncil, Secretariat, Ownable2StepUpgradeable, UUPSUpgradeable, ERC165 {
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
@@ -81,9 +76,7 @@ contract Council is
      * @notice EIP-712 transaction type hash
      */
     bytes32 public constant TRANSACTION_TYPEHASH =
-        keccak256(
-            "Transaction(address to,uint256 value,bytes data,uint8 operation,uint256 nonce)"
-        );
+        keccak256("Transaction(address to,uint256 value,bytes data,uint8 operation,uint256 nonce)");
 
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
@@ -143,27 +136,15 @@ contract Council is
             address charter_,
             uint32 timelockPeriod_,
             uint32 executionPeriod_
-        ) = abi.decode(
-                initializeParams_,
-                (address, address, address, address, uint32, uint32)
-            );
-        initialize(
-            owner_,
-            vault_,
-            target_,
-            charter_,
-            timelockPeriod_,
-            executionPeriod_
-        );
+        ) = abi.decode(initializeParams_, (address, address, address, address, uint32, uint32));
+        initialize(owner_, vault_, target_, charter_, timelockPeriod_, executionPeriod_);
     }
 
     // ======================================================================
     // UUPSUpgradeable
     // ======================================================================
 
-    function _authorizeUpgrade(
-        address newImplementation_
-    ) internal virtual override onlyOwner {}
+    function _authorizeUpgrade(address newImplementation_) internal virtual override onlyOwner { }
 
     // ======================================================================
     // ICouncil View Functions
@@ -221,10 +202,7 @@ contract Council is
             return ProposalState.TIMELOCKED;
         }
         // EXECUTABLE - Ready for execution
-        else if (
-            block.timestamp <=
-            votingEndTimestamp + _proposal.timelockPeriod + _proposal.executionPeriod
-        ) {
+        else if (block.timestamp <= votingEndTimestamp + _proposal.timelockPeriod + _proposal.executionPeriod) {
             return ProposalState.EXECUTABLE;
         }
         // EXPIRED - Execution window passed
@@ -233,14 +211,15 @@ contract Council is
         }
     }
 
-    function generateTxHashData(
-        Transaction calldata transaction_,
-        uint256 nonce_
-    ) public view virtual override returns (bytes memory) {
+    function generateTxHashData(Transaction calldata transaction_, uint256 nonce_)
+        public
+        view
+        virtual
+        override
+        returns (bytes memory)
+    {
         uint256 chainId = block.chainid;
-        bytes32 domainSeparator = keccak256(
-            abi.encode(DOMAIN_SEPARATOR_TYPEHASH, chainId, this)
-        );
+        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_SEPARATOR_TYPEHASH, chainId, this));
         bytes32 transactionHash = keccak256(
             abi.encode(
                 TRANSACTION_TYPEHASH,
@@ -251,23 +230,14 @@ contract Council is
                 nonce_
             )
         );
-        return
-            abi.encodePacked(
-                bytes1(0x19),
-                bytes1(0x01),
-                domainSeparator,
-                transactionHash
-            );
+        return abi.encodePacked(bytes1(0x19), bytes1(0x01), domainSeparator, transactionHash);
     }
 
     function getTxHash(Transaction calldata transaction_) public view virtual override returns (bytes32) {
         return keccak256(generateTxHashData(transaction_, 0));
     }
 
-    function getProposalTxHash(
-        uint32 proposalId_,
-        uint32 txIndex_
-    ) public view virtual override returns (bytes32) {
+    function getProposalTxHash(uint32 proposalId_, uint32 txIndex_) public view virtual override returns (bytes32) {
         CouncilStorage storage $ = _getCouncilStorage();
         return $.proposals[proposalId_].txHashes[txIndex_];
     }
@@ -277,9 +247,13 @@ contract Council is
         return $.proposals[proposalId_].txHashes;
     }
 
-    function getProposal(
-        uint32 proposalId_
-    ) public view virtual override returns (address, bytes32[] memory, uint32, uint32, uint32) {
+    function getProposal(uint32 proposalId_)
+        public
+        view
+        virtual
+        override
+        returns (address, bytes32[] memory, uint32, uint32, uint32)
+    {
         CouncilStorage storage $ = _getCouncilStorage();
         Proposal memory _proposal = $.proposals[proposalId_];
         return (
@@ -344,18 +318,12 @@ contract Council is
         }
 
         // Validate proposer through charter's adapter system
-        if (
-            !$.charter.isProposer(
-                msg.sender,
-                proposerAdapter_,
-                proposerAdapterData_
-            )
-        ) revert InvalidProposer();
+        if (!$.charter.isProposer(msg.sender, proposerAdapter_, proposerAdapterData_)) revert InvalidProposer();
 
         // Compute transaction hashes
         bytes32[] memory txHashes = new bytes32[](transactions_.length);
         uint256 transactionsLength = transactions_.length;
-        for (uint256 i; i < transactionsLength; ) {
+        for (uint256 i; i < transactionsLength;) {
             txHashes[i] = getTxHash(transactions_[i]);
             unchecked {
                 ++i;
@@ -372,39 +340,27 @@ contract Council is
         // Initialize voting in charter
         $.charter.initializeProposal($.totalProposalCount);
 
-        emit ProposalCreated(
-            address($.charter),
-            $.totalProposalCount,
-            msg.sender,
-            transactions_,
-            metadata_
-        );
+        emit ProposalCreated(address($.charter), $.totalProposalCount, msg.sender, transactions_, metadata_);
 
         $.totalProposalCount++;
         // H-02 fix: Increment active proposal counter
         $.activeProposalCount++;
     }
 
-    function executeProposal(
-        uint32 proposalId_,
-        Transaction[] calldata transactions_
-    ) public virtual override {
+    function executeProposal(uint32 proposalId_, Transaction[] calldata transactions_) public virtual override {
         if (transactions_.length == 0) revert InvalidTxs();
 
         CouncilStorage storage $ = _getCouncilStorage();
         Proposal storage proposal = $.proposals[proposalId_];
 
-        if (
-            proposal.executionCounter + transactions_.length >
-            proposal.txHashes.length
-        ) revert InvalidTxs();
+        if (proposal.executionCounter + transactions_.length > proposal.txHashes.length) revert InvalidTxs();
 
         // H-02 fix: Track if this is the final execution batch
         bool willComplete = proposal.executionCounter + transactions_.length == proposal.txHashes.length;
 
         uint256 transactionsLength = transactions_.length;
         bytes32[] memory txHashes = new bytes32[](transactionsLength);
-        for (uint256 i; i < transactionsLength; ) {
+        for (uint256 i; i < transactionsLength;) {
             txHashes[i] = _executeProposalTx(proposalId_, transactions_[i]);
             unchecked {
                 ++i;
@@ -423,15 +379,11 @@ contract Council is
     // Ownable2StepUpgradeable
     // ======================================================================
 
-    function transferOwnership(
-        address newOwner_
-    ) public virtual override(Ownable2StepUpgradeable) onlyOwner {
+    function transferOwnership(address newOwner_) public virtual override(Ownable2StepUpgradeable) onlyOwner {
         Ownable2StepUpgradeable.transferOwnership(newOwner_);
     }
 
-    function _transferOwnership(
-        address newOwner_
-    ) internal virtual override(Ownable2StepUpgradeable) {
+    function _transferOwnership(address newOwner_) internal virtual override(Ownable2StepUpgradeable) {
         Ownable2StepUpgradeable._transferOwnership(newOwner_);
     }
 
@@ -440,40 +392,34 @@ contract Council is
     // ======================================================================
 
     function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(ICouncil).interfaceId ||
-            super.supportsInterface(interfaceId_);
+        return interfaceId_ == type(ICouncil).interfaceId || super.supportsInterface(interfaceId_);
     }
 
     // ======================================================================
     // INTERNAL HELPERS
     // ======================================================================
 
-    function _executeProposalTx(
-        uint32 proposalId_,
-        Transaction calldata transaction_
-    ) internal virtual returns (bytes32) {
-        if (proposalState(proposalId_) != ProposalState.EXECUTABLE)
+    function _executeProposalTx(uint32 proposalId_, Transaction calldata transaction_)
+        internal
+        virtual
+        returns (bytes32)
+    {
+        if (proposalState(proposalId_) != ProposalState.EXECUTABLE) {
             revert ProposalNotExecutable();
+        }
 
         bytes32 txHash = getTxHash(transaction_);
 
         CouncilStorage storage $ = _getCouncilStorage();
         Proposal storage proposal = $.proposals[proposalId_];
 
-        if (proposal.txHashes[proposal.executionCounter] != txHash)
+        if (proposal.txHashes[proposal.executionCounter] != txHash) {
             revert InvalidTxHash();
+        }
 
         proposal.executionCounter++;
 
-        if (
-            !exec(
-                transaction_.to,
-                transaction_.value,
-                transaction_.data,
-                transaction_.operation
-            )
-        ) revert TxFailed();
+        if (!exec(transaction_.to, transaction_.value, transaction_.data, transaction_.operation)) revert TxFailed();
 
         return txHash;
     }

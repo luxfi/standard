@@ -2,17 +2,17 @@
 pragma solidity ^0.8.31;
 
 /**
-    ██╗     ██╗   ██╗██╗  ██╗    ████████╗ ██████╗ ██╗  ██╗███████╗███╗   ██╗
-    ██║     ██║   ██║╚██╗██╔╝    ╚══██╔══╝██╔═══██╗██║ ██╔╝██╔════╝████╗  ██║
-    ██║     ██║   ██║ ╚███╔╝        ██║   ██║   ██║█████╔╝ █████╗  ██╔██╗ ██║
-    ██║     ██║   ██║ ██╔██╗        ██║   ██║   ██║██╔═██╗ ██╔══╝  ██║╚██╗██║
-    ███████╗╚██████╔╝██╔╝ ██╗       ██║   ╚██████╔╝██║  ██╗███████╗██║ ╚████║
-    ╚══════╝ ╚═════╝ ╚═╝  ╚═╝       ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝
+ *     ██╗     ██╗   ██╗██╗  ██╗    ████████╗ ██████╗ ██╗  ██╗███████╗███╗   ██╗
+ *     ██║     ██║   ██║╚██╗██╔╝    ╚══██╔══╝██╔═══██╗██║ ██╔╝██╔════╝████╗  ██║
+ *     ██║     ██║   ██║ ╚███╔╝        ██║   ██║   ██║█████╔╝ █████╗  ██╔██╗ ██║
+ *     ██║     ██║   ██║ ██╔██╗        ██║   ██║   ██║██╔═██╗ ██╔══╝  ██║╚██╗██║
+ *     ███████╗╚██████╔╝██╔╝ ██╗       ██║   ╚██████╔╝██║  ██╗███████╗██║ ╚████║
+ *     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝       ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝
  */
 
-import {LRC20} from "../tokens/LRC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { LRC20 } from "../tokens/LRC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title LRC20B
@@ -50,8 +50,8 @@ contract LRC20B is LRC20, Ownable, AccessControl {
     // EVENTS
     // ═══════════════════════════════════════════════════════════════════════
 
-    event BridgeMint(address indexed account, uint amount);
-    event BridgeBurn(address indexed account, uint amount);
+    event BridgeMint(address indexed account, uint256 amount);
+    event BridgeBurn(address indexed account, uint256 amount);
     event AdminGranted(address to);
     event AdminRevoked(address to);
     event MinterGranted(address indexed minter);
@@ -65,10 +65,7 @@ contract LRC20B is LRC20, Ownable, AccessControl {
     error MintLimitExceeded();
     error InsufficientAllowance();
 
-    constructor(
-        string memory name_,
-        string memory symbol_
-    ) LRC20(name_, symbol_) Ownable(msg.sender) {
+    constructor(string memory name_, string memory symbol_) LRC20(name_, symbol_) Ownable(msg.sender) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
         mintPeriodStart = block.timestamp;
@@ -78,10 +75,7 @@ contract LRC20B is LRC20, Ownable, AccessControl {
      * @dev verify that the sender is an admin
      */
     modifier onlyAdmin() {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "LRC20B: caller is not admin"
-        );
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "LRC20B: caller is not admin");
         _;
     }
 
@@ -107,14 +101,8 @@ contract LRC20B is LRC20, Ownable, AccessControl {
      * @dev C-03 fix: Uses MINTER_ROLE and enforces daily mint limit
      * @return amount If successful, returns true
      */
-    function bridgeMint(
-        address account,
-        uint256 amount
-    ) public returns (bool) {
-        require(
-            hasRole(MINTER_ROLE, msg.sender),
-            "LRC20B: caller is not minter"
-        );
+    function bridgeMint(address account, uint256 amount) public returns (bool) {
+        require(hasRole(MINTER_ROLE, msg.sender), "LRC20B: caller is not minter");
 
         // C-03 fix: Reset period if needed
         if (block.timestamp >= mintPeriodStart + MINT_LIMIT_PERIOD) {
@@ -140,10 +128,7 @@ contract LRC20B is LRC20, Ownable, AccessControl {
      * @dev H-02 fix: Only allow burning from address(this) or with allowance
      * @return amount If successful, returns true
      */
-    function bridgeBurn(
-        address account,
-        uint256 amount
-    ) public onlyAdmin returns (bool) {
+    function bridgeBurn(address account, uint256 amount) public onlyAdmin returns (bool) {
         // H-02 fix: Only allow burning from contract itself or with allowance
         if (account != address(this)) {
             uint256 currentAllowance = allowance(account, msg.sender);

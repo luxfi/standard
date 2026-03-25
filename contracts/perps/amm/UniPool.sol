@@ -23,9 +23,13 @@ contract UniPool {
 
     Slot0 public slot0;
 
-    function tickSpacing() external pure returns (int24) { return 0; }
+    function tickSpacing() external pure returns (int24) {
+        return 0;
+    }
 
-    function observe(uint32[] calldata /* secondsAgos */)
+    function observe(
+        uint32[] calldata /* secondsAgos */
+    )
         external
         pure
         returns (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s)

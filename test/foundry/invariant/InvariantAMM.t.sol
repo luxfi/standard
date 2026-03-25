@@ -2,11 +2,11 @@
 pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
-import {MockERC20} from "../TestMocks.sol";
-import {AMMV2Factory} from "../../../contracts/amm/AMMV2Factory.sol";
-import {AMMV2Pair} from "../../../contracts/amm/AMMV2Pair.sol";
-import {AMMV3Factory} from "../../../contracts/amm/AMMV3Factory.sol";
-import {AMMV3Pool} from "../../../contracts/amm/AMMV3Pool.sol";
+import { MockERC20 } from "../TestMocks.sol";
+import { AMMV2Factory } from "../../../contracts/amm/AMMV2Factory.sol";
+import { AMMV2Pair } from "../../../contracts/amm/AMMV2Pair.sol";
+import { AMMV3Factory } from "../../../contracts/amm/AMMV3Factory.sol";
+import { AMMV3Pool } from "../../../contracts/amm/AMMV3Pool.sol";
 
 // ============================================================================
 // Handler for AMMV2Pair invariant testing
@@ -247,7 +247,7 @@ contract InvariantAMMV2Test is Test {
         selectors[0] = AMMV2Handler.addLiquidity.selector;
         selectors[1] = AMMV2Handler.removeLiquidity.selector;
         selectors[2] = AMMV2Handler.swap.selector;
-        targetSelector(FuzzSelector({addr: address(handler), selectors: selectors}));
+        targetSelector(FuzzSelector({ addr: address(handler), selectors: selectors }));
     }
 
     /// @notice reserve0 * reserve1 >= previous K after any operation
@@ -344,7 +344,7 @@ contract InvariantAMMV3Test is Test {
         bytes4[] memory selectors = new bytes4[](2);
         selectors[0] = AMMV3Handler.mint.selector;
         selectors[1] = AMMV3Handler.burn.selector;
-        targetSelector(FuzzSelector({addr: address(handler), selectors: selectors}));
+        targetSelector(FuzzSelector({ addr: address(handler), selectors: selectors }));
     }
 
     /// @notice Global liquidity must equal sum of in-range position liquidities

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {Enum} from "@luxfi/contracts/governance/base/Enum.sol";
-import {ISafe} from "@luxfi/contracts/interfaces/safe/ISafe.sol";
+import { Enum } from "@luxfi/contracts/governance/base/Enum.sol";
+import { ISafe } from "@luxfi/contracts/interfaces/safe/ISafe.sol";
 
 /**
  * @title SafeModule
@@ -45,12 +45,10 @@ abstract contract SafeModule {
     /// @param data Call data
     /// @param operation Call or DelegateCall
     /// @return success True if execution succeeded
-    function _executeFromModule(
-        address to,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation
-    ) internal returns (bool success) {
+    function _executeFromModule(address to, uint256 value, bytes memory data, Enum.Operation operation)
+        internal
+        returns (bool success)
+    {
         success = ISafe(safe).execTransactionFromModule(to, value, data, operation);
         if (!success) revert ExecutionFailed();
         emit ModuleExecuted(to, value, data, operation);

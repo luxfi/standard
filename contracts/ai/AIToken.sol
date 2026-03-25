@@ -3,10 +3,10 @@
 // Copyright (C) 2019-2025, Lux Industries Inc. All rights reserved.
 pragma solidity ^0.8.31;
 
-import {LRC20} from "../tokens/LRC20.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import { LRC20 } from "../tokens/LRC20.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title AIToken
@@ -318,11 +318,12 @@ contract AIToken is LRC20, AccessControl, ReentrancyGuard, Pausable {
      * @dev Called by authorized bridge after validating cross-chain message
      *      INVARIANT: totalSupply() ≤ CHAIN_SUPPLY_CAP after call
      */
-    function bridgeMint(
-        address to,
-        uint256 amount,
-        bytes32 teleportId
-    ) external onlyRole(BRIDGE_ROLE) whenNotPaused returns (bool success) {
+    function bridgeMint(address to, uint256 amount, bytes32 teleportId)
+        external
+        onlyRole(BRIDGE_ROLE)
+        whenNotPaused
+        returns (bool success)
+    {
         if (to == address(0)) revert InvalidAddress();
         if (amount == 0) revert ZeroAmount();
 
@@ -344,10 +345,7 @@ contract AIToken is LRC20, AccessControl, ReentrancyGuard, Pausable {
      * @return success True if burn succeeded
      * @dev User burns their tokens, bridge observes and mints on dest chain
      */
-    function bridgeBurn(
-        uint256 amount,
-        bytes32 destChainId
-    ) external whenNotPaused returns (bool success) {
+    function bridgeBurn(uint256 amount, bytes32 destChainId) external whenNotPaused returns (bool success) {
         if (amount == 0) revert ZeroAmount();
 
         _burn(msg.sender, amount);
@@ -368,10 +366,7 @@ contract AIToken is LRC20, AccessControl, ReentrancyGuard, Pausable {
      *      98% goes to miner, 2% goes to treasury
      *      INVARIANT: miningMinted + treasuryMinted ≤ MINING_ALLOCATION after call
      */
-    function mintReward(
-        address miner,
-        uint256 amount
-    ) external nonReentrant onlyRole(MINER_ROLE) whenNotPaused {
+    function mintReward(address miner, uint256 amount) external nonReentrant onlyRole(MINER_ROLE) whenNotPaused {
         if (genesisBlock == 0) revert GenesisNotSet();
         if (miner == address(0)) revert InvalidAddress();
         if (amount == 0) revert ZeroAmount();
@@ -424,9 +419,7 @@ contract AIToken is LRC20, AccessControl, ReentrancyGuard, Pausable {
     function currentEpoch() public view returns (uint256 epoch) {
         if (genesisBlock == 0) return 0;
 
-        uint256 blocksSinceGenesis = block.number > genesisBlock
-            ? block.number - genesisBlock
-            : 0;
+        uint256 blocksSinceGenesis = block.number > genesisBlock ? block.number - genesisBlock : 0;
 
         return blocksSinceGenesis / HALVING_INTERVAL;
     }
@@ -449,9 +442,7 @@ contract AIToken is LRC20, AccessControl, ReentrancyGuard, Pausable {
     function blocksUntilHalving() external view returns (uint256 blocks) {
         if (genesisBlock == 0) return 0;
 
-        uint256 blocksSinceGenesis = block.number > genesisBlock
-            ? block.number - genesisBlock
-            : 0;
+        uint256 blocksSinceGenesis = block.number > genesisBlock ? block.number - genesisBlock : 0;
 
         uint256 blocksIntoEpoch = blocksSinceGenesis % HALVING_INTERVAL;
         return HALVING_INTERVAL - blocksIntoEpoch;
@@ -468,16 +459,20 @@ contract AIToken is LRC20, AccessControl, ReentrancyGuard, Pausable {
      * @return _remainingLP LP tokens remaining
      * @return _remainingMining Mining tokens remaining
      */
-    function getStats() external view returns (
-        uint256 _totalSupply,
-        uint256 _lpMinted,
-        uint256 _miningMinted,
-        uint256 _treasuryMinted,
-        uint256 _epoch,
-        uint256 _reward,
-        uint256 _remainingLP,
-        uint256 _remainingMining
-    ) {
+    function getStats()
+        external
+        view
+        returns (
+            uint256 _totalSupply,
+            uint256 _lpMinted,
+            uint256 _miningMinted,
+            uint256 _treasuryMinted,
+            uint256 _epoch,
+            uint256 _reward,
+            uint256 _remainingLP,
+            uint256 _remainingMining
+        )
+    {
         return (
             totalSupply(),
             lpMinted,
@@ -704,13 +699,10 @@ library LaunchChains {
      * @return valid True if chain is a launch chain
      */
     function isLaunchChain(uint256 chainId) internal pure returns (bool valid) {
-        return chainId == LUX || chainId == LUX_TESTNET ||
-               chainId == HANZO || chainId == HANZO_TESTNET ||
-               chainId == ZOO || chainId == ZOO_TESTNET ||
-               chainId == ANVIL ||
-               chainId == ETHEREUM || chainId == BASE || chainId == BNB ||
-               chainId == AVALANCHE || chainId == ARBITRUM || chainId == OPTIMISM ||
-               chainId == POLYGON;
+        return chainId == LUX || chainId == LUX_TESTNET || chainId == HANZO || chainId == HANZO_TESTNET
+            || chainId == ZOO || chainId == ZOO_TESTNET || chainId == ANVIL || chainId == ETHEREUM || chainId == BASE
+            || chainId == BNB || chainId == AVALANCHE || chainId == ARBITRUM || chainId == OPTIMISM
+            || chainId == POLYGON;
     }
 
     /**
@@ -719,9 +711,8 @@ library LaunchChains {
      * @return isNative True if chain is Lux native
      */
     function isLuxNative(uint256 chainId) internal pure returns (bool isNative) {
-        return chainId == LUX || chainId == LUX_TESTNET ||
-               chainId == HANZO || chainId == HANZO_TESTNET ||
-               chainId == ZOO || chainId == ZOO_TESTNET;
+        return chainId == LUX || chainId == LUX_TESTNET || chainId == HANZO || chainId == HANZO_TESTNET
+            || chainId == ZOO || chainId == ZOO_TESTNET;
     }
 
     /**

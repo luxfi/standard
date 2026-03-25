@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.24;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title Fluid (Instadapp) Yield Strategies
 /// @notice Yield strategies for Fluid Protocol's lending and DEX platforms
@@ -148,13 +148,9 @@ interface IFluidDexPool {
     /// @param recipient Address to receive LP tokens
     /// @param deadline Transaction deadline
     /// @return lpAmount LP tokens minted
-    function addLiquidity(
-        uint256 amount0,
-        uint256 amount1,
-        uint256 minLpAmount,
-        address recipient,
-        uint256 deadline
-    ) external returns (uint256 lpAmount);
+    function addLiquidity(uint256 amount0, uint256 amount1, uint256 minLpAmount, address recipient, uint256 deadline)
+        external
+        returns (uint256 lpAmount);
 
     /// @notice Remove liquidity from the pool
     /// @param lpAmount LP tokens to burn
@@ -179,13 +175,9 @@ interface IFluidDexPool {
     /// @param recipient Address to receive output
     /// @param deadline Transaction deadline
     /// @return amountOut Output amount
-    function swap(
-        address tokenIn,
-        uint256 amountIn,
-        uint256 minAmountOut,
-        address recipient,
-        uint256 deadline
-    ) external returns (uint256 amountOut);
+    function swap(address tokenIn, uint256 amountIn, uint256 minAmountOut, address recipient, uint256 deadline)
+        external
+        returns (uint256 amountOut);
 
     /// @notice Get pool reserves
     function getReserves() external view returns (uint256 reserve0, uint256 reserve1);
@@ -259,7 +251,7 @@ interface IWETH {
 /// @title Fluid Lending Base Strategy
 /// @notice Abstract base for Fluid lending vault strategies
 /// @dev Implements common lending vault integration logic
-abstract contract FluidLendingBaseStrategy is Ownable, ReentrancyGuard{
+abstract contract FluidLendingBaseStrategy is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // =========================================================================
@@ -349,11 +341,7 @@ abstract contract FluidLendingBaseStrategy is Ownable, ReentrancyGuard{
     // CONSTRUCTOR
     // =========================================================================
 
-    constructor(
-        address _vault,
-        address _controller,
-        address _owner
-    ) Ownable(_owner) {
+    constructor(address _vault, address _controller, address _owner) Ownable(_owner) {
         if (_vault == address(0)) revert InvalidVault();
 
         lendingVault = IFluidLendingVault(_vault);
@@ -529,13 +517,17 @@ abstract contract FluidLendingBaseStrategy is Ownable, ReentrancyGuard{
     }
 
     /// @notice Get vault metrics
-    function getVaultMetrics() external view returns (
-        uint256 totalSupply,
-        uint256 totalBorrows,
-        uint256 liquidityRate,
-        uint256 borrowRate,
-        uint256 utilization
-    ) {
+    function getVaultMetrics()
+        external
+        view
+        returns (
+            uint256 totalSupply,
+            uint256 totalBorrows,
+            uint256 liquidityRate,
+            uint256 borrowRate,
+            uint256 utilization
+        )
+    {
         totalSupply = lendingVault.totalAssets();
         totalBorrows = lendingVault.totalBorrows();
         liquidityRate = lendingVault.getLiquidityRate();
@@ -600,9 +592,7 @@ contract FluidLendingUSDCStrategy is FluidLendingBaseStrategy {
     /// @notice Fluid USDC vault (fUSDC)
     address public constant FUSDC = 0x9Fb7b4477576Fe5B32be4C1843aFB1e55F251B33;
 
-    constructor(address _controller, address _owner)
-        FluidLendingBaseStrategy(FUSDC, _controller, _owner)
-    {}
+    constructor(address _controller, address _owner) FluidLendingBaseStrategy(FUSDC, _controller, _owner) { }
 
     /// @notice
     function name() external pure override returns (string memory) {
@@ -619,9 +609,7 @@ contract FluidLendingUSDTStrategy is FluidLendingBaseStrategy {
     /// @notice Fluid USDT vault (fUSDT)
     address public constant FUSDT = 0x5C20B550819128074FD538Edf79791733ccEdd18;
 
-    constructor(address _controller, address _owner)
-        FluidLendingBaseStrategy(FUSDT, _controller, _owner)
-    {}
+    constructor(address _controller, address _owner) FluidLendingBaseStrategy(FUSDT, _controller, _owner) { }
 
     /// @notice
     function name() external pure override returns (string memory) {
@@ -640,9 +628,7 @@ contract FluidLendingWETHStrategy is FluidLendingBaseStrategy {
     /// @notice Fluid WETH vault (fWETH)
     address public constant FWETH = 0x90551c1795392094FE6D29B758EcCD233cFAa260;
 
-    constructor(address _controller, address _owner)
-        FluidLendingBaseStrategy(FWETH, _controller, _owner)
-    {}
+    constructor(address _controller, address _owner) FluidLendingBaseStrategy(FWETH, _controller, _owner) { }
 
     /// @notice
     function name() external pure override returns (string memory) {
@@ -654,7 +640,7 @@ contract FluidLendingWETHStrategy is FluidLendingBaseStrategy {
         if (msg.value == 0) revert ZeroAmount();
 
         // Wrap ETH to WETH
-        IWETH(WETH).deposit{value: msg.value}();
+        IWETH(WETH).deposit{ value: msg.value }();
 
         // Deposit to Fluid vault
         shares = lendingVault.deposit(msg.value, address(this));
@@ -677,7 +663,7 @@ contract FluidLendingWETHStrategy is FluidLendingBaseStrategy {
         IWETH(WETH).withdraw(assets);
 
         // Send ETH to controller
-        (bool success, ) = msg.sender.call{value: assets}("");
+        (bool success,) = msg.sender.call{ value: assets }("");
         require(success, "ETH transfer failed");
 
         vaultShares -= shares;
@@ -690,7 +676,7 @@ contract FluidLendingWETHStrategy is FluidLendingBaseStrategy {
         emit Withdrawn(msg.sender, assets, shares);
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // =============================================================================
@@ -793,11 +779,7 @@ contract FluidDexStrategy is Ownable, ReentrancyGuard {
     // CONSTRUCTOR
     // =========================================================================
 
-    constructor(
-        address _pool,
-        address _controller,
-        address _owner
-    ) Ownable(_owner) {
+    constructor(address _pool, address _controller, address _owner) Ownable(_owner) {
         if (_pool == address(0)) revert InvalidPool();
 
         pool = IFluidDexPool(_pool);
@@ -848,13 +830,7 @@ contract FluidDexStrategy is Ownable, ReentrancyGuard {
         uint256 minLp = (expectedLp * (BPS - slippageTolerance)) / BPS;
 
         // Add liquidity
-        shares = pool.addLiquidity(
-            amount,
-            amount1,
-            minLp,
-            address(this),
-            block.timestamp + 300
-        );
+        shares = pool.addLiquidity(amount, amount1, minLp, address(this), block.timestamp + 300);
 
         position.lpBalance += shares;
         position.deposit0 += amount;
@@ -879,13 +855,8 @@ contract FluidDexStrategy is Ownable, ReentrancyGuard {
         uint256 minAmount1 = (expectedAmount1 * (BPS - slippageTolerance)) / BPS;
 
         // Remove liquidity
-        (uint256 amount0, uint256 amount1) = pool.removeLiquidity(
-            amount,
-            minAmount0,
-            minAmount1,
-            controller,
-            block.timestamp + 300
-        );
+        (uint256 amount0, uint256 amount1) =
+            pool.removeLiquidity(amount, minAmount0, minAmount1, controller, block.timestamp + 300);
 
         position.lpBalance -= amount;
         if (amount0 <= position.deposit0) {
@@ -940,7 +911,7 @@ contract FluidDexStrategy is Ownable, ReentrancyGuard {
     function totalAssets() external view returns (uint256) {
         if (position.lpBalance == 0) return 0;
 
-        (uint256 reserve0, ) = pool.getReserves();
+        (uint256 reserve0,) = pool.getReserves();
         uint256 totalLp = pool.totalSupply();
 
         // Return value in primary token terms
@@ -983,12 +954,13 @@ contract FluidDexStrategy is Ownable, ReentrancyGuard {
     // =========================================================================
 
     /// @notice Add liquidity with both tokens
-    function addLiquidity(
-        uint256 amount0,
-        uint256 amount1,
-        uint256 minLp,
-        uint256 deadline
-    ) external onlyController whenNotPaused nonReentrant returns (uint256 lpTokens) {
+    function addLiquidity(uint256 amount0, uint256 amount1, uint256 minLp, uint256 deadline)
+        external
+        onlyController
+        whenNotPaused
+        nonReentrant
+        returns (uint256 lpTokens)
+    {
         if (block.timestamp > deadline) revert DeadlineExpired();
 
         IERC20(primaryToken).safeTransferFrom(msg.sender, address(this), amount0);
@@ -1012,13 +984,8 @@ contract FluidDexStrategy is Ownable, ReentrancyGuard {
     {
         if (position.lpBalance == 0) revert InsufficientLiquidity();
 
-        (amount0, amount1) = pool.removeLiquidity(
-            position.lpBalance,
-            minAmount0,
-            minAmount1,
-            msg.sender,
-            block.timestamp + 300
-        );
+        (amount0, amount1) =
+            pool.removeLiquidity(position.lpBalance, minAmount0, minAmount1, msg.sender, block.timestamp + 300);
 
         emit LiquidityRemoved(amount0, amount1, position.lpBalance);
 
@@ -1039,12 +1006,11 @@ contract FluidDexStrategy is Ownable, ReentrancyGuard {
     }
 
     /// @notice Get pool metrics
-    function getPoolMetrics() external view returns (
-        uint256 reserve0,
-        uint256 reserve1,
-        uint256 totalLp,
-        uint24 feeRate
-    ) {
+    function getPoolMetrics()
+        external
+        view
+        returns (uint256 reserve0, uint256 reserve1, uint256 totalLp, uint24 feeRate)
+    {
         (reserve0, reserve1) = pool.getReserves();
         totalLp = pool.totalSupply();
         feeRate = pool.fee();
@@ -1108,13 +1074,8 @@ contract FluidDexStrategy is Ownable, ReentrancyGuard {
     /// @notice Emergency withdraw all liquidity
     function emergencyWithdraw() external onlyOwner {
         if (position.lpBalance > 0) {
-            (uint256 amount0, uint256 amount1) = pool.removeLiquidity(
-                position.lpBalance,
-                0,
-                0,
-                owner(),
-                block.timestamp + 300
-            );
+            (uint256 amount0, uint256 amount1) =
+                pool.removeLiquidity(position.lpBalance, 0, 0, owner(), block.timestamp + 300);
 
             emit LiquidityRemoved(amount0, amount1, position.lpBalance);
 
@@ -1223,12 +1184,7 @@ contract FluidMultiVaultManager is Ownable, ReentrancyGuard {
     // CONSTRUCTOR
     // =========================================================================
 
-    constructor(
-        address _factory,
-        address _rewardsController,
-        address _controller,
-        address _owner
-    ) Ownable(_owner) {
+    constructor(address _factory, address _rewardsController, address _controller, address _owner) Ownable(_owner) {
         factory = IFluidLendingFactory(_factory);
         rewardsController = IFluidRewardsController(_rewardsController);
         controller = _controller;
@@ -1247,14 +1203,11 @@ contract FluidMultiVaultManager is Ownable, ReentrancyGuard {
 
         address underlying = IFluidLendingVault(vault).asset();
 
-        allocations.push(VaultAllocation({
-            vault: vault,
-            underlying: underlying,
-            shares: 0,
-            deposited: 0,
-            targetWeight: weight,
-            active: true
-        }));
+        allocations.push(
+            VaultAllocation({
+                vault: vault, underlying: underlying, shares: 0, deposited: 0, targetWeight: weight, active: true
+            })
+        );
 
         vaultIndex[vault] = allocations.length - 1;
         totalWeight += weight;
@@ -1302,7 +1255,13 @@ contract FluidMultiVaultManager is Ownable, ReentrancyGuard {
     // =========================================================================
 
     /// @notice Deposit to a specific vault
-    function depositToVault(address vault, uint256 amount) external onlyController whenNotPaused nonReentrant returns (uint256 shares) {
+    function depositToVault(address vault, uint256 amount)
+        external
+        onlyController
+        whenNotPaused
+        nonReentrant
+        returns (uint256 shares)
+    {
         uint256 index = vaultIndex[vault];
         if (allocations[index].vault != vault) revert VaultNotFound();
 
@@ -1317,7 +1276,12 @@ contract FluidMultiVaultManager is Ownable, ReentrancyGuard {
     }
 
     /// @notice Withdraw from a specific vault
-    function withdrawFromVault(address vault, uint256 shares) external onlyController nonReentrant returns (uint256 amount) {
+    function withdrawFromVault(address vault, uint256 shares)
+        external
+        onlyController
+        nonReentrant
+        returns (uint256 amount)
+    {
         uint256 index = vaultIndex[vault];
         if (allocations[index].vault != vault) revert VaultNotFound();
         if (shares > allocations[index].shares) revert InsufficientBalance();
@@ -1462,11 +1426,7 @@ contract FluidMultiVaultManager is Ownable, ReentrancyGuard {
     function emergencyWithdrawAll() external onlyOwner {
         for (uint256 i = 0; i < allocations.length; i++) {
             if (allocations[i].shares > 0) {
-                IFluidLendingVault(allocations[i].vault).redeem(
-                    allocations[i].shares,
-                    owner(),
-                    address(this)
-                );
+                IFluidLendingVault(allocations[i].vault).redeem(allocations[i].shares, owner(), address(this));
                 allocations[i].shares = 0;
                 allocations[i].deposited = 0;
             }
@@ -1498,7 +1458,7 @@ contract FluidStrategyFactory is Ownable {
     // CONSTRUCTOR
     // =========================================================================
 
-    constructor() Ownable(msg.sender) {}
+    constructor() Ownable(msg.sender) { }
 
     // =========================================================================
     // DEPLOYMENT FUNCTIONS
@@ -1533,33 +1493,24 @@ contract FluidStrategyFactory is Ownable {
     }
 
     /// @notice Deploy multi-vault manager
-    function deployMultiVaultManager(
-        address factory,
-        address rewardsController,
-        address controller
-    ) external onlyOwner returns (address) {
-        FluidMultiVaultManager manager = new FluidMultiVaultManager(
-            factory,
-            rewardsController,
-            controller,
-            msg.sender
-        );
+    function deployMultiVaultManager(address factory, address rewardsController, address controller)
+        external
+        onlyOwner
+        returns (address)
+    {
+        FluidMultiVaultManager manager = new FluidMultiVaultManager(factory, rewardsController, controller, msg.sender);
         emit MultiVaultManagerDeployed(address(manager));
         return address(manager);
     }
 
     /// @notice Deploy custom lending strategy for any Fluid vault
-    function deployCustomLendingStrategy(
-        address vault,
-        address controller,
-        string calldata strategyName
-    ) external onlyOwner returns (address) {
-        CustomFluidLendingStrategy strategy = new CustomFluidLendingStrategy(
-            vault,
-            controller,
-            strategyName,
-            msg.sender
-        );
+    function deployCustomLendingStrategy(address vault, address controller, string calldata strategyName)
+        external
+        onlyOwner
+        returns (address)
+    {
+        CustomFluidLendingStrategy strategy =
+            new CustomFluidLendingStrategy(vault, controller, strategyName, msg.sender);
         emit LendingStrategyDeployed(address(strategy), vault, strategyName);
         return address(strategy);
     }
@@ -1570,12 +1521,9 @@ contract FluidStrategyFactory is Ownable {
 contract CustomFluidLendingStrategy is FluidLendingBaseStrategy {
     string private _name;
 
-    constructor(
-        address _vault,
-        address _controller,
-        string memory strategyName,
-        address _owner
-    ) FluidLendingBaseStrategy(_vault, _controller, _owner) {
+    constructor(address _vault, address _controller, string memory strategyName, address _owner)
+        FluidLendingBaseStrategy(_vault, _controller, _owner)
+    {
         _name = strategyName;
     }
 

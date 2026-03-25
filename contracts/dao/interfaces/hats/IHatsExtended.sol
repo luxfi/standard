@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IHats} from "./IHats.sol";
+import { IHats } from "./IHats.sol";
 
 /**
  * @notice Extended Hats interface to access lastTopHatId

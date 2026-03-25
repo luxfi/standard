@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 interface IPriceFeed {
     function getPrice(address token, bool maximize) external view returns (uint256);
@@ -22,22 +22,22 @@ contract Perp is Ownable, ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     struct Position {
-        uint256 size;           // Position size in USD (30 decimals)
-        uint256 collateral;     // Collateral amount in USD (30 decimals)
-        uint256 averagePrice;   // Average entry price
-        uint256 entryFunding;   // Funding rate at entry
-        uint256 reserveAmount;  // Reserved collateral
-        int256 realisedPnl;     // Realized PnL
-        uint256 lastUpdated;    // Last update timestamp
+        uint256 size; // Position size in USD (30 decimals)
+        uint256 collateral; // Collateral amount in USD (30 decimals)
+        uint256 averagePrice; // Average entry price
+        uint256 entryFunding; // Funding rate at entry
+        uint256 reserveAmount; // Reserved collateral
+        int256 realisedPnl; // Realized PnL
+        uint256 lastUpdated; // Last update timestamp
     }
 
     struct Market {
-        address indexToken;     // The token to trade (e.g., WBTC, WETH)
+        address indexToken; // The token to trade (e.g., WBTC, WETH)
         address collateralToken; // Collateral token (e.g., USDC)
-        bool isLong;            // Long or short
-        uint256 maxLeverage;    // Maximum leverage (e.g., 50x = 50e30)
-        uint256 fundingRate;    // Current funding rate
-        bool isActive;          // Market active flag
+        bool isLong; // Long or short
+        uint256 maxLeverage; // Maximum leverage (e.g., 50x = 50e30)
+        uint256 fundingRate; // Current funding rate
+        bool isActive; // Market active flag
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -47,7 +47,7 @@ contract Perp is Ownable, ReentrancyGuard {
     uint256 public constant PRICE_PRECISION = 1e30;
     uint256 public constant BASIS_POINTS = 10000;
     uint256 public constant MAX_FEE_BASIS_POINTS = 500; // 5%
-    
+
     // ═══════════════════════════════════════════════════════════════════════
     // STATE
     // ═══════════════════════════════════════════════════════════════════════
@@ -107,11 +107,7 @@ contract Perp is Ownable, ReentrancyGuard {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(
-        address _vault,
-        address _priceFeed,
-        address _feeReceiver
-    ) Ownable(msg.sender) {
+    constructor(address _vault, address _priceFeed, address _feeReceiver) Ownable(msg.sender) {
         vault = _vault;
         priceFeed = _priceFeed;
         feeReceiver = _feeReceiver;
@@ -127,16 +123,13 @@ contract Perp is Ownable, ReentrancyGuard {
     /// @param collateralAmount Amount of collateral
     /// @param sizeDelta Position size increase
     /// @param isLong Long or short
-    function open(
-        address indexToken,
-        address collateralToken,
-        uint256 collateralAmount,
-        uint256 sizeDelta,
-        bool isLong
-    ) external nonReentrant {
+    function open(address indexToken, address collateralToken, uint256 collateralAmount, uint256 sizeDelta, bool isLong)
+        external
+        nonReentrant
+    {
         bytes32 key = getMarketKey(indexToken, collateralToken, isLong);
         Market storage market = markets[key];
-        
+
         if (!market.isActive) revert MarketNotActive();
         if (collateralAmount == 0 || sizeDelta == 0) revert ZeroAmount();
 
@@ -153,20 +146,21 @@ contract Perp is Ownable, ReentrancyGuard {
 
         // Get or create position
         Position storage position = positions[msg.sender][key];
-        
+
         // Calculate fees
         uint256 fee = sizeDelta * positionFee / BASIS_POINTS;
 
         // Update position
         uint256 price = _getPrice(indexToken, isLong);
-        
+
         if (position.size == 0) {
             // New position
             position.averagePrice = price;
             position.entryFunding = market.fundingRate;
         } else {
             // Increase position - weighted average price
-            position.averagePrice = (position.size * position.averagePrice + sizeDelta * price) / (position.size + sizeDelta);
+            position.averagePrice =
+                (position.size * position.averagePrice + sizeDelta * price) / (position.size + sizeDelta);
         }
 
         position.size += sizeDelta;
@@ -188,15 +182,10 @@ contract Perp is Ownable, ReentrancyGuard {
     /// @param collateralToken Collateral token
     /// @param sizeDelta Position size to close
     /// @param isLong Long or short
-    function close(
-        address indexToken,
-        address collateralToken,
-        uint256 sizeDelta,
-        bool isLong
-    ) external nonReentrant {
+    function close(address indexToken, address collateralToken, uint256 sizeDelta, bool isLong) external nonReentrant {
         bytes32 key = getMarketKey(indexToken, collateralToken, isLong);
         Position storage position = positions[msg.sender][key];
-        
+
         if (position.size == 0) revert PositionNotFound();
         if (sizeDelta > position.size) sizeDelta = position.size;
 
@@ -226,7 +215,7 @@ contract Perp is Ownable, ReentrancyGuard {
         // Calculate payout
         // forge-lint: disable-next-line(unsafe-typecast)
         int256 payout = int256(collateralDelta) + pnl - int256(fee);
-        
+
         if (payout > 0) {
             // Convert USD to tokens and transfer
             // forge-lint: disable-next-line(unsafe-typecast)
@@ -242,31 +231,26 @@ contract Perp is Ownable, ReentrancyGuard {
     /// @param indexToken Token traded
     /// @param collateralToken Collateral token
     /// @param isLong Long or short
-    function liquidate(
-        address user,
-        address indexToken,
-        address collateralToken,
-        bool isLong
-    ) external nonReentrant {
+    function liquidate(address user, address indexToken, address collateralToken, bool isLong) external nonReentrant {
         bytes32 key = getMarketKey(indexToken, collateralToken, isLong);
         Position storage position = positions[user][key];
-        
+
         if (position.size == 0) revert PositionNotFound();
 
         // Check if liquidatable
         uint256 currentPrice = _getPrice(indexToken, isLong);
         int256 pnl = _calculatePnL(position, currentPrice, position.size, isLong);
-        
+
         // Position is liquidatable if collateral + PnL < maintenance margin (5%)
         int256 remainingCollateral = int256(position.collateral) + pnl;
         uint256 maintenanceMargin = position.size * 500 / BASIS_POINTS; // 5%
-        
+
         // forge-lint: disable-next-line(unsafe-typecast)
         if (remainingCollateral >= int256(maintenanceMargin)) revert NotLiquidatable();
 
         // Calculate liquidation fee
         uint256 fee = position.size * liquidationFee / BASIS_POINTS;
-        
+
         // Update global positions
         if (isLong) {
             globalLongSizes[key] -= position.size;
@@ -289,20 +273,18 @@ contract Perp is Ownable, ReentrancyGuard {
     }
 
     /// @notice Add collateral to existing position
-    function addCollateral(
-        address indexToken,
-        address collateralToken,
-        uint256 amount,
-        bool isLong
-    ) external nonReentrant {
+    function addCollateral(address indexToken, address collateralToken, uint256 amount, bool isLong)
+        external
+        nonReentrant
+    {
         bytes32 key = getMarketKey(indexToken, collateralToken, isLong);
         Position storage position = positions[msg.sender][key];
-        
+
         if (position.size == 0) revert PositionNotFound();
         if (amount == 0) revert ZeroAmount();
 
         IERC20(collateralToken).safeTransferFrom(msg.sender, address(this), amount);
-        
+
         uint256 collateralUsd = _tokenToUsd(collateralToken, amount);
         position.collateral += collateralUsd;
         position.lastUpdated = block.timestamp;
@@ -315,31 +297,29 @@ contract Perp is Ownable, ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice Get position details
-    function getPosition(
-        address user,
-        address indexToken,
-        address collateralToken,
-        bool isLong
-    ) external view returns (Position memory) {
+    function getPosition(address user, address indexToken, address collateralToken, bool isLong)
+        external
+        view
+        returns (Position memory)
+    {
         bytes32 key = getMarketKey(indexToken, collateralToken, isLong);
         return positions[user][key];
     }
 
     /// @notice Calculate current PnL for a position
-    function getPositionPnL(
-        address user,
-        address indexToken,
-        address collateralToken,
-        bool isLong
-    ) external view returns (int256 pnl, uint256 leverage) {
+    function getPositionPnL(address user, address indexToken, address collateralToken, bool isLong)
+        external
+        view
+        returns (int256 pnl, uint256 leverage)
+    {
         bytes32 key = getMarketKey(indexToken, collateralToken, isLong);
         Position storage position = positions[user][key];
-        
+
         if (position.size == 0) return (0, 0);
 
         uint256 currentPrice = _getPrice(indexToken, isLong);
         pnl = _calculatePnL(position, currentPrice, position.size, isLong);
-        
+
         int256 effectiveCollateral = int256(position.collateral) + pnl;
         if (effectiveCollateral > 0) {
             // forge-lint: disable-next-line(unsafe-typecast)
@@ -348,11 +328,7 @@ contract Perp is Ownable, ReentrancyGuard {
     }
 
     /// @notice Get market key from parameters
-    function getMarketKey(
-        address indexToken,
-        address collateralToken,
-        bool isLong
-    ) public pure returns (bytes32) {
+    function getMarketKey(address indexToken, address collateralToken, bool isLong) public pure returns (bytes32) {
         return keccak256(abi.encodePacked(indexToken, collateralToken, isLong));
     }
 
@@ -361,12 +337,10 @@ contract Perp is Ownable, ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice Add a new trading market
-    function addMarket(
-        address indexToken,
-        address collateralToken,
-        bool isLong,
-        uint256 maxLeverage
-    ) external onlyOwner {
+    function addMarket(address indexToken, address collateralToken, bool isLong, uint256 maxLeverage)
+        external
+        onlyOwner
+    {
         bytes32 key = getMarketKey(indexToken, collateralToken, isLong);
         markets[key] = Market({
             indexToken: indexToken,
@@ -414,17 +388,16 @@ contract Perp is Ownable, ReentrancyGuard {
         return usdAmount * (10 ** decimals) / price;
     }
 
-    function _calculatePnL(
-        Position storage position,
-        uint256 currentPrice,
-        uint256 sizeDelta,
-        bool isLong
-    ) internal view returns (int256) {
+    function _calculatePnL(Position storage position, uint256 currentPrice, uint256 sizeDelta, bool isLong)
+        internal
+        view
+        returns (int256)
+    {
         if (position.averagePrice == 0) return 0;
 
         // forge-lint: disable-next-line(unsafe-typecast)
         int256 priceDelta = int256(currentPrice) - int256(position.averagePrice);
-        
+
         if (!isLong) {
             priceDelta = -priceDelta;
         }

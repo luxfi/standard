@@ -12,12 +12,12 @@ interface IBridgeAggregator {
 
     /// @notice Supported bridge protocols
     enum BridgeProtocol {
-        LUX_WARP,       // Native Lux Warp messaging (fastest for Lux ecosystem)
-        AXELAR_GMP,     // Axelar General Message Passing
-        LAYERZERO_V2,   // LayerZero V2 OFT/ONFT
-        WORMHOLE_CCTP,  // Wormhole Circle CCTP
-        HYPERLANE,      // Hyperlane messaging
-        CCIP            // Chainlink CCIP
+        LUX_WARP, // Native Lux Warp messaging (fastest for Lux ecosystem)
+        AXELAR_GMP, // Axelar General Message Passing
+        LAYERZERO_V2, // LayerZero V2 OFT/ONFT
+        WORMHOLE_CCTP, // Wormhole Circle CCTP
+        HYPERLANE, // Hyperlane messaging
+        CCIP // Chainlink CCIP
     }
 
     /// @notice Bridge route for cross-chain transfer
@@ -27,10 +27,10 @@ interface IBridgeAggregator {
         uint256 dstChainId;
         address srcToken;
         address dstToken;
-        uint256 estimatedTime;      // Seconds
-        uint256 fee;                // Native token fee
-        uint256 minAmount;          // Minimum transfer amount
-        uint256 maxAmount;          // Maximum transfer amount
+        uint256 estimatedTime; // Seconds
+        uint256 fee; // Native token fee
+        uint256 minAmount; // Minimum transfer amount
+        uint256 maxAmount; // Maximum transfer amount
         bool isActive;
     }
 
@@ -54,7 +54,7 @@ interface IBridgeAggregator {
         address recipient;
         uint256 minAmountOut;
         uint256 gasLimit;
-        bytes extraData;            // Protocol-specific data
+        bytes extraData; // Protocol-specific data
     }
 
     /// @notice Bridge transfer result
@@ -100,18 +100,9 @@ interface IBridgeAggregator {
         uint256 amount
     );
 
-    event BridgeFailed(
-        bytes32 indexed messageId,
-        BridgeProtocol indexed protocol,
-        string reason
-    );
+    event BridgeFailed(bytes32 indexed messageId, BridgeProtocol indexed protocol, string reason);
 
-    event MessageReceived(
-        bytes32 indexed messageId,
-        uint256 srcChainId,
-        address sender,
-        bytes payload
-    );
+    event MessageReceived(bytes32 indexed messageId, uint256 srcChainId, address sender, bytes payload);
 
     /*//////////////////////////////////////////////////////////////
                           BRIDGE FUNCTIONS
@@ -120,49 +111,42 @@ interface IBridgeAggregator {
     /// @notice Bridge tokens to another chain
     /// @param request Transfer request details
     /// @return result Transfer result with message ID
-    function bridge(
-        TransferRequest calldata request
-    ) external payable returns (TransferResult memory result);
+    function bridge(TransferRequest calldata request) external payable returns (TransferResult memory result);
 
     /// @notice Bridge with specific protocol
     /// @param protocol Bridge protocol to use
     /// @param request Transfer request details
     /// @return result Transfer result
-    function bridgeVia(
-        BridgeProtocol protocol,
-        TransferRequest calldata request
-    ) external payable returns (TransferResult memory result);
+    function bridgeVia(BridgeProtocol protocol, TransferRequest calldata request)
+        external
+        payable
+        returns (TransferResult memory result);
 
     /// @notice Get best route for transfer
     /// @param token Source token
     /// @param amount Amount to transfer
     /// @param dstChainId Destination chain
     /// @return route Best available route
-    function getBestRoute(
-        address token,
-        uint256 amount,
-        uint256 dstChainId
-    ) external view returns (BridgeRoute memory route);
+    function getBestRoute(address token, uint256 amount, uint256 dstChainId)
+        external
+        view
+        returns (BridgeRoute memory route);
 
     /// @notice Get quotes from all available bridges
     /// @param token Source token
     /// @param amount Amount to transfer
     /// @param dstChainId Destination chain
     /// @return quotes Array of quotes from each protocol
-    function getQuotes(
-        address token,
-        uint256 amount,
-        uint256 dstChainId
-    ) external view returns (BridgeQuote[] memory quotes);
+    function getQuotes(address token, uint256 amount, uint256 dstChainId)
+        external
+        view
+        returns (BridgeQuote[] memory quotes);
 
     /// @notice Get available routes for a token pair
     /// @param srcToken Source token
     /// @param dstChainId Destination chain
     /// @return routes Array of available routes
-    function getRoutes(
-        address srcToken,
-        uint256 dstChainId
-    ) external view returns (BridgeRoute[] memory routes);
+    function getRoutes(address srcToken, uint256 dstChainId) external view returns (BridgeRoute[] memory routes);
 
     /*//////////////////////////////////////////////////////////////
                        MESSAGE FUNCTIONS
@@ -174,12 +158,10 @@ interface IBridgeAggregator {
     /// @param payload Message payload
     /// @param gasLimit Gas limit on destination
     /// @return messageId Unique message identifier
-    function sendMessage(
-        uint256 dstChainId,
-        address recipient,
-        bytes calldata payload,
-        uint256 gasLimit
-    ) external payable returns (bytes32 messageId);
+    function sendMessage(uint256 dstChainId, address recipient, bytes calldata payload, uint256 gasLimit)
+        external
+        payable
+        returns (bytes32 messageId);
 
     /// @notice Send message via specific protocol
     /// @param protocol Bridge protocol
@@ -202,12 +184,10 @@ interface IBridgeAggregator {
     /// @param payload Message payload
     /// @param gasLimit Gas limit on destination
     /// @return fee Estimated fee in native token
-    function estimateMessageFee(
-        BridgeProtocol protocol,
-        uint256 dstChainId,
-        bytes calldata payload,
-        uint256 gasLimit
-    ) external view returns (uint256 fee);
+    function estimateMessageFee(BridgeProtocol protocol, uint256 dstChainId, bytes calldata payload, uint256 gasLimit)
+        external
+        view
+        returns (uint256 fee);
 
     /*//////////////////////////////////////////////////////////////
                         STATUS FUNCTIONS
@@ -227,27 +207,19 @@ interface IBridgeAggregator {
     /// @param protocol Bridge protocol
     /// @param chainId Chain ID to check
     /// @return supported True if chain is supported
-    function isChainSupported(
-        BridgeProtocol protocol,
-        uint256 chainId
-    ) external view returns (bool supported);
+    function isChainSupported(BridgeProtocol protocol, uint256 chainId) external view returns (bool supported);
 
     /// @notice Get supported chains for protocol
     /// @param protocol Bridge protocol
     /// @return chainIds Array of supported chain IDs
-    function getSupportedChains(
-        BridgeProtocol protocol
-    ) external view returns (uint256[] memory chainIds);
+    function getSupportedChains(BridgeProtocol protocol) external view returns (uint256[] memory chainIds);
 }
 
 /// @title IAxelarGateway
 /// @notice Axelar Gateway interface for GMP
 interface IAxelarGateway {
-    function callContract(
-        string calldata destinationChain,
-        string calldata contractAddress,
-        bytes calldata payload
-    ) external;
+    function callContract(string calldata destinationChain, string calldata contractAddress, bytes calldata payload)
+        external;
 
     function callContractWithToken(
         string calldata destinationChain,
@@ -318,15 +290,12 @@ interface ILayerZeroEndpointV2 {
         MessagingFee fee;
     }
 
-    function send(
-        MessagingParams calldata _params,
-        address _refundAddress
-    ) external payable returns (MessagingReceipt memory);
+    function send(MessagingParams calldata _params, address _refundAddress)
+        external
+        payable
+        returns (MessagingReceipt memory);
 
-    function quote(
-        MessagingParams calldata _params,
-        address _sender
-    ) external view returns (MessagingFee memory);
+    function quote(MessagingParams calldata _params, address _sender) external view returns (MessagingFee memory);
 
     function eid() external view returns (uint32);
 }
@@ -342,14 +311,10 @@ interface IWormholeRelayer {
         uint256 gasLimit
     ) external payable returns (uint64 sequence);
 
-    function quoteEVMDeliveryPrice(
-        uint16 targetChain,
-        uint256 receiverValue,
-        uint256 gasLimit
-    ) external view returns (
-        uint256 nativePriceQuote,
-        uint256 targetChainRefundPerGasUnused
-    );
+    function quoteEVMDeliveryPrice(uint16 targetChain, uint256 receiverValue, uint256 gasLimit)
+        external
+        view
+        returns (uint256 nativePriceQuote, uint256 targetChainRefundPerGasUnused);
 }
 
 /// @title IWarp
@@ -357,16 +322,12 @@ interface IWormholeRelayer {
 interface IWarp {
     function sendWarpMessage(bytes calldata payload) external returns (bytes32 messageId);
 
-    function getVerifiedWarpMessage(uint32 index) external view returns (
-        bytes32 sourceChainId,
-        address originSenderAddress,
-        bytes memory payload
-    );
+    function getVerifiedWarpMessage(uint32 index)
+        external
+        view
+        returns (bytes32 sourceChainId, address originSenderAddress, bytes memory payload);
 
-    function getVerifiedWarpBlockHash(uint32 index) external view returns (
-        bytes32 sourceChainId,
-        bytes32 blockHash
-    );
+    function getVerifiedWarpBlockHash(uint32 index) external view returns (bytes32 sourceChainId, bytes32 blockHash);
 }
 
 /// @title BridgeLib
@@ -376,12 +337,10 @@ library BridgeLib {
     IWarp internal constant WARP = IWarp(0x0200000000000000000000000000000000000005);
 
     /// @notice Axelar Gateway (Ethereum)
-    IAxelarGateway internal constant AXELAR_GATEWAY_ETH =
-        IAxelarGateway(0x4F4495243837681061C4743b74B3eEdf548D56A5);
+    IAxelarGateway internal constant AXELAR_GATEWAY_ETH = IAxelarGateway(0x4F4495243837681061C4743b74B3eEdf548D56A5);
 
     /// @notice Axelar Gas Service (Ethereum)
-    IAxelarGasService internal constant AXELAR_GAS_ETH =
-        IAxelarGasService(0x2d5d7d31F671F86C782533cc367F14109a082712);
+    IAxelarGasService internal constant AXELAR_GAS_ETH = IAxelarGasService(0x2d5d7d31F671F86C782533cc367F14109a082712);
 
     /// @notice LayerZero V2 Endpoint (Ethereum)
     ILayerZeroEndpointV2 internal constant LZ_ENDPOINT_ETH =
@@ -406,27 +365,27 @@ library BridgeLib {
 
     /// @notice Chain ID to LayerZero V2 EID mapping
     function getLzEndpointId(uint256 chainId) internal pure returns (uint32) {
-        if (chainId == 1) return 30101;         // Ethereum
-        if (chainId == 56) return 30102;        // BSC
-        if (chainId == 137) return 30109;       // Polygon
-        if (chainId == 43114) return 30106;     // Avalanche
-        if (chainId == 42161) return 30110;     // Arbitrum
-        if (chainId == 10) return 30111;        // Optimism
-        if (chainId == 8453) return 30184;      // Base
-        if (chainId == 96369) return 30369;     // Lux (custom EID)
+        if (chainId == 1) return 30101; // Ethereum
+        if (chainId == 56) return 30102; // BSC
+        if (chainId == 137) return 30109; // Polygon
+        if (chainId == 43114) return 30106; // Avalanche
+        if (chainId == 42161) return 30110; // Arbitrum
+        if (chainId == 10) return 30111; // Optimism
+        if (chainId == 8453) return 30184; // Base
+        if (chainId == 96369) return 30369; // Lux (custom EID)
         revert("BridgeLib: unsupported LZ chain");
     }
 
     /// @notice Chain ID to Wormhole chain ID mapping
     function getWormholeChainId(uint256 chainId) internal pure returns (uint16) {
-        if (chainId == 1) return 2;             // Ethereum
-        if (chainId == 56) return 4;            // BSC
-        if (chainId == 137) return 5;           // Polygon
-        if (chainId == 43114) return 6;         // Avalanche
-        if (chainId == 42161) return 23;        // Arbitrum
-        if (chainId == 10) return 24;           // Optimism
-        if (chainId == 8453) return 30;         // Base
-        if (chainId == 96369) return 36;        // Lux (reserved)
+        if (chainId == 1) return 2; // Ethereum
+        if (chainId == 56) return 4; // BSC
+        if (chainId == 137) return 5; // Polygon
+        if (chainId == 43114) return 6; // Avalanche
+        if (chainId == 42161) return 23; // Arbitrum
+        if (chainId == 10) return 24; // Optimism
+        if (chainId == 8453) return 30; // Base
+        if (chainId == 96369) return 36; // Lux (reserved)
         revert("BridgeLib: unsupported Wormhole chain");
     }
 
@@ -444,12 +403,12 @@ library BridgeLib {
     function encodeLzOptions(uint128 gasLimit) internal pure returns (bytes memory) {
         // Type 3 options with executor gas
         return abi.encodePacked(
-            uint16(3),          // Options type
-            uint8(1),           // Worker options
-            uint16(17),         // Length of gas option
-            uint8(1),           // Gas option type
-            uint128(gasLimit),  // Gas limit
-            uint128(0)          // Native drop (0)
+            uint16(3), // Options type
+            uint8(1), // Worker options
+            uint16(17), // Length of gas option
+            uint8(1), // Gas option type
+            uint128(gasLimit), // Gas limit
+            uint128(0) // Native drop (0)
         );
     }
 }
@@ -470,8 +429,7 @@ abstract contract AxelarExecutable {
         bytes calldata payload
     ) external {
         require(
-            gateway.validateContractCall(commandId, sourceChain, sourceAddress, keccak256(payload)),
-            "Invalid command"
+            gateway.validateContractCall(commandId, sourceChain, sourceAddress, keccak256(payload)), "Invalid command"
         );
         _execute(sourceChain, sourceAddress, payload);
     }
@@ -486,23 +444,16 @@ abstract contract AxelarExecutable {
     ) external {
         require(
             gateway.validateContractCallAndMint(
-                commandId,
-                sourceChain,
-                sourceAddress,
-                keccak256(payload),
-                tokenSymbol,
-                amount
+                commandId, sourceChain, sourceAddress, keccak256(payload), tokenSymbol, amount
             ),
             "Invalid command"
         );
         _executeWithToken(sourceChain, sourceAddress, payload, tokenSymbol, amount);
     }
 
-    function _execute(
-        string calldata sourceChain,
-        string calldata sourceAddress,
-        bytes calldata payload
-    ) internal virtual;
+    function _execute(string calldata sourceChain, string calldata sourceAddress, bytes calldata payload)
+        internal
+        virtual;
 
     function _executeWithToken(
         string calldata sourceChain,
@@ -510,7 +461,7 @@ abstract contract AxelarExecutable {
         bytes calldata payload,
         string calldata tokenSymbol,
         uint256 amount
-    ) internal virtual {}
+    ) internal virtual { }
 }
 
 /// @title LayerZeroReceiver
@@ -527,23 +478,13 @@ abstract contract LayerZeroReceiver {
         peers[_eid] = _peer;
     }
 
-    function lzReceive(
-        uint32 _srcEid,
-        bytes32 _sender,
-        uint64 _nonce,
-        bytes calldata _message
-    ) external {
+    function lzReceive(uint32 _srcEid, bytes32 _sender, uint64 _nonce, bytes calldata _message) external {
         require(msg.sender == address(endpoint), "Not endpoint");
         require(_sender == peers[_srcEid], "Unknown peer");
         _lzReceive(_srcEid, _sender, _nonce, _message);
     }
 
-    function _lzReceive(
-        uint32 _srcEid,
-        bytes32 _sender,
-        uint64 _nonce,
-        bytes calldata _message
-    ) internal virtual;
+    function _lzReceive(uint32 _srcEid, bytes32 _sender, uint64 _nonce, bytes calldata _message) internal virtual;
 }
 
 /// @title WormholeReceiver
@@ -568,11 +509,7 @@ abstract contract WormholeReceiver {
         _receiveWormholeMessage(payload, sourceChain, sourceAddress);
     }
 
-    function _receiveWormholeMessage(
-        bytes memory payload,
-        uint16 sourceChain,
-        bytes32 sourceAddress
-    ) internal virtual;
+    function _receiveWormholeMessage(bytes memory payload, uint16 sourceChain, bytes32 sourceAddress) internal virtual;
 }
 
 /// @title WarpReceiver
@@ -584,8 +521,7 @@ abstract contract WarpReceiver {
     mapping(bytes32 => mapping(address => bool)) public trustedSenders;
 
     function receiveWarpMessage(uint32 warpIndex) external {
-        (bytes32 sourceChainId, address sender, bytes memory payload) =
-            WARP.getVerifiedWarpMessage(warpIndex);
+        (bytes32 sourceChainId, address sender, bytes memory payload) = WARP.getVerifiedWarpMessage(warpIndex);
 
         require(trustedChains[sourceChainId], "Untrusted chain");
         require(trustedSenders[sourceChainId][sender], "Untrusted sender");
@@ -593,9 +529,5 @@ abstract contract WarpReceiver {
         _receiveWarpMessage(sourceChainId, sender, payload);
     }
 
-    function _receiveWarpMessage(
-        bytes32 sourceChainId,
-        address sender,
-        bytes memory payload
-    ) internal virtual;
+    function _receiveWarpMessage(bytes32 sourceChainId, address sender, bytes memory payload) internal virtual;
 }

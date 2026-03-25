@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {IMarkets, MarketParams} from "./interfaces/IMarkets.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IWETH} from "./interfaces/IWETH.sol";
+import { IMarkets, MarketParams } from "./interfaces/IMarkets.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IWETH } from "./interfaces/IWETH.sol";
 
 /// @title Router
 /// @notice User-friendly router for Markets operations
@@ -34,147 +34,132 @@ contract Router {
 
     /* RECEIVE */
 
-    receive() external payable {}
+    receive() external payable { }
 
     /* SUPPLY */
 
     /// @notice Supply assets to a market
-    function supply(
-        MarketParams calldata marketParams,
-        uint256 assets,
-        address onBehalf
-    ) external returns (uint256 assetsSupplied, uint256 shares) {
+    function supply(MarketParams calldata marketParams, uint256 assets, address onBehalf)
+        external
+        returns (uint256 assetsSupplied, uint256 shares)
+    {
         IERC20(marketParams.loanToken).safeTransferFrom(msg.sender, address(this), assets);
         IERC20(marketParams.loanToken).approve(address(markets), assets);
-        
+
         return markets.supply(marketParams, assets, 0, onBehalf, "");
     }
 
     /// @notice Supply native ETH (wraps to WETH)
-    function supplyETH(
-        MarketParams calldata marketParams,
-        address onBehalf
-    ) external payable returns (uint256 assetsSupplied, uint256 shares) {
+    function supplyETH(MarketParams calldata marketParams, address onBehalf)
+        external
+        payable
+        returns (uint256 assetsSupplied, uint256 shares)
+    {
         require(marketParams.loanToken == address(weth), "Not WETH market");
-        
-        weth.deposit{value: msg.value}();
+
+        weth.deposit{ value: msg.value }();
         IERC20(address(weth)).approve(address(markets), msg.value);
-        
+
         return markets.supply(marketParams, msg.value, 0, onBehalf, "");
     }
 
     /* WITHDRAW */
 
     /// @notice Withdraw assets from a market
-    function withdraw(
-        MarketParams calldata marketParams,
-        uint256 assets,
-        address receiver
-    ) external returns (uint256 assetsWithdrawn, uint256 shares) {
+    function withdraw(MarketParams calldata marketParams, uint256 assets, address receiver)
+        external
+        returns (uint256 assetsWithdrawn, uint256 shares)
+    {
         return markets.withdraw(marketParams, assets, 0, msg.sender, receiver);
     }
 
     /// @notice Withdraw and unwrap to native ETH
-    function withdrawETH(
-        MarketParams calldata marketParams,
-        uint256 assets,
-        address receiver
-    ) external returns (uint256 assetsWithdrawn, uint256 shares) {
+    function withdrawETH(MarketParams calldata marketParams, uint256 assets, address receiver)
+        external
+        returns (uint256 assetsWithdrawn, uint256 shares)
+    {
         require(marketParams.loanToken == address(weth), "Not WETH market");
-        
+
         (assetsWithdrawn, shares) = markets.withdraw(marketParams, assets, 0, msg.sender, address(this));
-        
+
         weth.withdraw(assetsWithdrawn);
-        (bool success,) = receiver.call{value: assetsWithdrawn}("");
+        (bool success,) = receiver.call{ value: assetsWithdrawn }("");
         if (!success) revert TransferFailed();
     }
 
     /* COLLATERAL */
 
     /// @notice Supply collateral to a market
-    function supplyCollateral(
-        MarketParams calldata marketParams,
-        uint256 assets,
-        address onBehalf
-    ) external {
+    function supplyCollateral(MarketParams calldata marketParams, uint256 assets, address onBehalf) external {
         IERC20(marketParams.collateralToken).safeTransferFrom(msg.sender, address(this), assets);
         IERC20(marketParams.collateralToken).approve(address(markets), assets);
-        
+
         markets.supplyCollateral(marketParams, assets, onBehalf, "");
     }
 
     /// @notice Supply native ETH as collateral
-    function supplyCollateralETH(
-        MarketParams calldata marketParams,
-        address onBehalf
-    ) external payable {
+    function supplyCollateralETH(MarketParams calldata marketParams, address onBehalf) external payable {
         require(marketParams.collateralToken == address(weth), "Not WETH collateral");
-        
-        weth.deposit{value: msg.value}();
+
+        weth.deposit{ value: msg.value }();
         IERC20(address(weth)).approve(address(markets), msg.value);
-        
+
         markets.supplyCollateral(marketParams, msg.value, onBehalf, "");
     }
 
     /// @notice Withdraw collateral
-    function withdrawCollateral(
-        MarketParams calldata marketParams,
-        uint256 assets,
-        address receiver
-    ) external {
+    function withdrawCollateral(MarketParams calldata marketParams, uint256 assets, address receiver) external {
         markets.withdrawCollateral(marketParams, assets, msg.sender, receiver);
     }
 
     /* BORROW */
 
     /// @notice Borrow assets from a market
-    function borrow(
-        MarketParams calldata marketParams,
-        uint256 assets,
-        address receiver
-    ) external returns (uint256 assetsBorrowed, uint256 shares) {
+    function borrow(MarketParams calldata marketParams, uint256 assets, address receiver)
+        external
+        returns (uint256 assetsBorrowed, uint256 shares)
+    {
         return markets.borrow(marketParams, assets, 0, msg.sender, receiver);
     }
 
     /// @notice Borrow and unwrap to native ETH
-    function borrowETH(
-        MarketParams calldata marketParams,
-        uint256 assets,
-        address receiver
-    ) external returns (uint256 assetsBorrowed, uint256 shares) {
+    function borrowETH(MarketParams calldata marketParams, uint256 assets, address receiver)
+        external
+        returns (uint256 assetsBorrowed, uint256 shares)
+    {
         require(marketParams.loanToken == address(weth), "Not WETH market");
-        
+
         (assetsBorrowed, shares) = markets.borrow(marketParams, assets, 0, msg.sender, address(this));
-        
+
         weth.withdraw(assetsBorrowed);
-        (bool success,) = receiver.call{value: assetsBorrowed}("");
+        (bool success,) = receiver.call{ value: assetsBorrowed }("");
         if (!success) revert TransferFailed();
     }
 
     /* REPAY */
 
     /// @notice Repay borrowed assets
-    function repay(
-        MarketParams calldata marketParams,
-        uint256 assets,
-        address onBehalf
-    ) external returns (uint256 assetsRepaid, uint256 shares) {
+    function repay(MarketParams calldata marketParams, uint256 assets, address onBehalf)
+        external
+        returns (uint256 assetsRepaid, uint256 shares)
+    {
         IERC20(marketParams.loanToken).safeTransferFrom(msg.sender, address(this), assets);
         IERC20(marketParams.loanToken).approve(address(markets), assets);
-        
+
         return markets.repay(marketParams, assets, 0, onBehalf, "");
     }
 
     /// @notice Repay with native ETH
-    function repayETH(
-        MarketParams calldata marketParams,
-        address onBehalf
-    ) external payable returns (uint256 assetsRepaid, uint256 shares) {
+    function repayETH(MarketParams calldata marketParams, address onBehalf)
+        external
+        payable
+        returns (uint256 assetsRepaid, uint256 shares)
+    {
         require(marketParams.loanToken == address(weth), "Not WETH market");
-        
-        weth.deposit{value: msg.value}();
+
+        weth.deposit{ value: msg.value }();
         IERC20(address(weth)).approve(address(markets), msg.value);
-        
+
         return markets.repay(marketParams, msg.value, 0, onBehalf, "");
     }
 

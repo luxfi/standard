@@ -5,14 +5,14 @@ pragma solidity ^0.8.31;
  * @title EthenaStrategy
  * @notice Yield strategy for Ethena USDe/sUSDe
  * @dev Ethena earns yield from delta-neutral ETH positions + funding rates
- * 
+ *
  * APY: 15-30%+ (varies with funding rates)
  * Risk: Medium-High (smart contract + counterparty + funding rate risk)
  */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @notice Ethena sUSDe interface (staked USDe)
 interface IsUSDe {
@@ -33,7 +33,7 @@ contract EthenaStrategy is Ownable {
 
     /// @notice USDe stablecoin
     address public constant USDE = 0x4c9EDD5852cd905f086C759E8383e09bff1E68B3;
-    
+
     /// @notice sUSDe (staked USDe)
     address public constant SUSDE = 0x9D39A5DE30e57443BfF2A8307A4256c8797A3497;
 
@@ -72,7 +72,7 @@ contract EthenaStrategy is Ownable {
     constructor(address _vault, address _inputAsset) Ownable(msg.sender) {
         vault = _vault;
         inputAsset = _inputAsset;
-        
+
         // Approve sUSDe to spend USDe
         IERC20(USDE).approve(SUSDE, type(uint256).max);
     }
@@ -84,7 +84,7 @@ contract EthenaStrategy is Ownable {
     /// @notice
     function deposit(uint256 amount) external onlyVault returns (uint256 shares) {
         require(active, "EthenaStrategy: not active");
-        
+
         // Receive USDe (or USDC which needs to be swapped first)
         IERC20(USDE).safeTransferFrom(msg.sender, address(this), amount);
 

@@ -1,19 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IAutonomousAdminV1
-} from "../../interfaces/deployables/IAutonomousAdminV1.sol";
-import {
-    IHatsElectionsEligibility
-} from "../../interfaces/hats/modules/IHatsElectionsEligibility.sol";
-import {IVersion} from "../../interfaces/deployables/IVersion.sol";
-import {IDeploymentBlock} from "../../interfaces/IDeploymentBlock.sol";
-import {
-    DeploymentBlockInitializable
-} from "../../DeploymentBlockInitializable.sol";
-import {InitializerEventEmitter} from "../../InitializerEventEmitter.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { IAutonomousAdminV1 } from "../../interfaces/deployables/IAutonomousAdminV1.sol";
+import { IHatsElectionsEligibility } from "../../interfaces/hats/modules/IHatsElectionsEligibility.sol";
+import { IVersion } from "../../interfaces/deployables/IVersion.sol";
+import { IDeploymentBlock } from "../../interfaces/IDeploymentBlock.sol";
+import { DeploymentBlockInitializable } from "../../DeploymentBlockInitializable.sol";
+import { InitializerEventEmitter } from "../../InitializerEventEmitter.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
  * @title AutonomousAdminV1
@@ -81,20 +75,14 @@ contract AutonomousAdminV1 is
      *
      * This function is permissionless by design to ensure timely transitions.
      */
-    function triggerStartNextTerm(
-        TriggerStartArgs calldata args_
-    ) public virtual override {
-        IHatsElectionsEligibility hatsElectionModule = IHatsElectionsEligibility(
-                args_.hatsProtocol.getHatEligibilityModule(args_.hatId)
-            );
+    function triggerStartNextTerm(TriggerStartArgs calldata args_) public virtual override {
+        IHatsElectionsEligibility hatsElectionModule =
+            IHatsElectionsEligibility(args_.hatsProtocol.getHatEligibilityModule(args_.hatId));
 
         hatsElectionModule.startNextTerm();
 
         // This will burn the hat if wearer is no longer eligible
-        args_.hatsProtocol.checkHatWearerStatus(
-            args_.hatId,
-            args_.currentWearer
-        );
+        args_.hatsProtocol.checkHatWearerStatus(args_.hatId, args_.currentWearer);
 
         // This will mint the hat to the nominated wearer, if necessary
         if (args_.nominatedWearer != args_.currentWearer) {
@@ -125,13 +113,8 @@ contract AutonomousAdminV1 is
      * @inheritdoc ERC165
      * @dev Supports IAutonomousAdminV1, IVersion, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(IAutonomousAdminV1).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(IAutonomousAdminV1).interfaceId || interfaceId_ == type(IVersion).interfaceId
+            || interfaceId_ == type(IDeploymentBlock).interfaceId || super.supportsInterface(interfaceId_);
     }
 }

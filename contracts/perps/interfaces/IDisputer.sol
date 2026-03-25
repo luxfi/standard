@@ -48,29 +48,17 @@ interface IDisputer {
 
     /// @notice Emitted when a dispute is resolved
     event PriceDisputeResolved(
-        bytes32 indexed disputeId,
-        address indexed token,
-        bool disputerWon,
-        uint256 resolvedPrice
+        bytes32 indexed disputeId, address indexed token, bool disputerWon, uint256 resolvedPrice
     );
 
     /// @notice Emitted when circuit breaker is triggered
-    event CircuitBreakerTriggered(
-        address indexed token,
-        uint256 incorrectPrice,
-        uint256 correctPrice
-    );
+    event CircuitBreakerTriggered(address indexed token, uint256 incorrectPrice, uint256 correctPrice);
 
     /// @notice Emitted when default bond config is updated
     event DefaultBondConfigUpdated(uint256 minBond, uint256 maxBond);
 
     /// @notice Emitted when token-specific bond config is updated
-    event TokenBondConfigUpdated(
-        address indexed token,
-        uint256 minBond,
-        uint256 maxBond,
-        bool enabled
-    );
+    event TokenBondConfigUpdated(address indexed token, uint256 minBond, uint256 maxBond, bool enabled);
 
     /// @notice Emitted when circuit breaker threshold is updated
     event CircuitBreakerThresholdUpdated(uint256 newThreshold);
@@ -104,11 +92,7 @@ interface IDisputer {
     /// @param claimedCorrectPrice The price the disputer claims is correct
     /// @param bond The bond amount to post
     /// @return disputeId Unique identifier for this dispute
-    function disputePrice(
-        address token,
-        uint256 claimedCorrectPrice,
-        uint256 bond
-    ) external returns (bytes32 disputeId);
+    function disputePrice(address token, uint256 claimedCorrectPrice, uint256 bond) external returns (bytes32 disputeId);
 
     /// @notice Settle a dispute after UMA resolution
     /// @param disputeId The dispute to settle
@@ -136,21 +120,13 @@ interface IDisputer {
     /// @param minBond Minimum bond amount
     /// @param maxBond Maximum bond amount (0 = no max)
     /// @param enabled Whether to use custom config for this token
-    function setTokenBondConfig(
-        address token,
-        uint256 minBond,
-        uint256 maxBond,
-        bool enabled
-    ) external;
+    function setTokenBondConfig(address token, uint256 minBond, uint256 maxBond, bool enabled) external;
 
     /// @notice Get effective bond config for a token
     /// @param token The token address
     /// @return minBond The minimum bond
     /// @return maxBond The maximum bond
-    function getEffectiveBondConfig(address token)
-        external
-        view
-        returns (uint256 minBond, uint256 maxBond);
+    function getEffectiveBondConfig(address token) external view returns (uint256 minBond, uint256 maxBond);
 
     // ============ Circuit Breaker ============
 

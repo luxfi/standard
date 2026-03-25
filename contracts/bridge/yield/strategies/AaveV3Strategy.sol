@@ -20,10 +20,10 @@ pragma solidity ^0.8.24;
  * - Leveraged yield amplification (for leverage strategy)
  */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AAVE V3 DATA TYPES
@@ -61,49 +61,35 @@ library DataTypes {
 /// @notice Aave V3 Pool interface
 interface IPool {
     /// @notice Supply assets to Aave
-    function supply(
-        address asset,
-        uint256 amount,
-        address onBehalfOf,
-        uint16 referralCode
-    ) external;
+    function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
 
     /// @notice Withdraw assets from Aave
-    function withdraw(
-        address asset,
-        uint256 amount,
-        address to
-    ) external returns (uint256);
+    function withdraw(address asset, uint256 amount, address to) external returns (uint256);
 
     /// @notice Borrow assets from Aave
-    function borrow(
-        address asset,
-        uint256 amount,
-        uint256 interestRateMode,
-        uint16 referralCode,
-        address onBehalfOf
-    ) external;
+    function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf)
+        external;
 
     /// @notice Repay borrowed assets
-    function repay(
-        address asset,
-        uint256 amount,
-        uint256 interestRateMode,
-        address onBehalfOf
-    ) external returns (uint256);
+    function repay(address asset, uint256 amount, uint256 interestRateMode, address onBehalfOf)
+        external
+        returns (uint256);
 
     /// @notice Set asset as collateral
     function setUserUseReserveAsCollateral(address asset, bool useAsCollateral) external;
 
     /// @notice Get user account data
-    function getUserAccountData(address user) external view returns (
-        uint256 totalCollateralBase,
-        uint256 totalDebtBase,
-        uint256 availableBorrowsBase,
-        uint256 currentLiquidationThreshold,
-        uint256 ltv,
-        uint256 healthFactor
-    );
+    function getUserAccountData(address user)
+        external
+        view
+        returns (
+            uint256 totalCollateralBase,
+            uint256 totalDebtBase,
+            uint256 availableBorrowsBase,
+            uint256 currentLiquidationThreshold,
+            uint256 ltv,
+            uint256 healthFactor
+        );
 
     /// @notice Get reserve data for an asset
     function getReserveData(address asset) external view returns (DataTypes.ReserveData memory);
@@ -136,31 +122,23 @@ interface IAToken {
 /// @notice Aave V3 Rewards Controller interface
 interface IRewardsController {
     /// @notice Claim specific reward token
-    function claimRewards(
-        address[] calldata assets,
-        uint256 amount,
-        address to,
-        address reward
-    ) external returns (uint256);
+    function claimRewards(address[] calldata assets, uint256 amount, address to, address reward)
+        external
+        returns (uint256);
 
     /// @notice Claim all reward tokens
-    function claimAllRewards(
-        address[] calldata assets,
-        address to
-    ) external returns (address[] memory rewardsList, uint256[] memory claimedAmounts);
+    function claimAllRewards(address[] calldata assets, address to)
+        external
+        returns (address[] memory rewardsList, uint256[] memory claimedAmounts);
 
     /// @notice Get user rewards for specific token
-    function getUserRewards(
-        address[] calldata assets,
-        address user,
-        address reward
-    ) external view returns (uint256);
+    function getUserRewards(address[] calldata assets, address user, address reward) external view returns (uint256);
 
     /// @notice Get all user rewards
-    function getAllUserRewards(
-        address[] calldata assets,
-        address user
-    ) external view returns (address[] memory rewardsList, uint256[] memory unclaimedAmounts);
+    function getAllUserRewards(address[] calldata assets, address user)
+        external
+        view
+        returns (address[] memory rewardsList, uint256[] memory unclaimedAmounts);
 
     /// @notice Get reward tokens for an asset
     function getRewardsByAsset(address asset) external view returns (address[] memory);
@@ -192,7 +170,7 @@ interface IPriceOracle {
  * - AAVE token incentives
  * - Additional reward tokens (GHO, etc.)
  */
-contract AaveV3SupplyStrategy is Ownable, ReentrancyGuard{
+contract AaveV3SupplyStrategy is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -318,13 +296,9 @@ contract AaveV3SupplyStrategy is Ownable, ReentrancyGuard{
      * @param _rewardsController Rewards controller address
      * @param _priceOracle Price oracle address
      */
-    constructor(
-        address _vault,
-        address _pool,
-        address _aToken,
-        address _rewardsController,
-        address _priceOracle
-    ) Ownable(msg.sender) {
+    constructor(address _vault, address _pool, address _aToken, address _rewardsController, address _priceOracle)
+        Ownable(msg.sender)
+    {
         vault = _vault;
         pool = IPool(_pool);
         aToken = IAToken(_aToken);
@@ -408,10 +382,7 @@ contract AaveV3SupplyStrategy is Ownable, ReentrancyGuard{
         assets[0] = address(aToken);
 
         // Claim all rewards
-        (address[] memory rewardTokens, uint256[] memory amounts) = rewardsController.claimAllRewards(
-            assets,
-            vault
-        );
+        (address[] memory rewardTokens, uint256[] memory amounts) = rewardsController.claimAllRewards(assets, vault);
 
         // Calculate harvested value
         for (uint256 i = 0; i < rewardTokens.length; i++) {
@@ -480,14 +451,18 @@ contract AaveV3SupplyStrategy is Ownable, ReentrancyGuard{
     }
 
     /// @notice Get user account data
-    function accountData() external view returns (
-        uint256 totalCollateralBase,
-        uint256 totalDebtBase,
-        uint256 availableBorrowsBase,
-        uint256 currentLiquidationThreshold,
-        uint256 ltv,
-        uint256 healthFactor
-    ) {
+    function accountData()
+        external
+        view
+        returns (
+            uint256 totalCollateralBase,
+            uint256 totalDebtBase,
+            uint256 availableBorrowsBase,
+            uint256 currentLiquidationThreshold,
+            uint256 ltv,
+            uint256 healthFactor
+        )
+    {
         return pool.getUserAccountData(address(this));
     }
 
@@ -564,7 +539,7 @@ contract AaveV3SupplyStrategy is Ownable, ReentrancyGuard{
  * - E-Mode correlated assets (stablecoins, ETH variants)
  * - When supply APY + incentives > borrow APY
  */
-contract AaveV3LeverageStrategy is Ownable, ReentrancyGuard{
+contract AaveV3LeverageStrategy is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -713,7 +688,7 @@ contract AaveV3LeverageStrategy is Ownable, ReentrancyGuard{
 
     modifier healthFactorCheck() {
         _;
-        (, , , , , uint256 hf) = pool.getUserAccountData(address(this));
+        (,,,,, uint256 hf) = pool.getUserAccountData(address(this));
         if (hf < minHealthFactor && hf != type(uint256).max) {
             revert HealthFactorTooLow();
         }
@@ -768,7 +743,14 @@ contract AaveV3LeverageStrategy is Ownable, ReentrancyGuard{
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice
-    function deposit(uint256 amount) external onlyVault whenActive nonReentrant healthFactorCheck returns (uint256 sharesOut) {
+    function deposit(uint256 amount)
+        external
+        onlyVault
+        whenActive
+        nonReentrant
+        healthFactorCheck
+        returns (uint256 sharesOut)
+    {
         if (amount == 0) revert ZeroAmount();
 
         // Transfer underlying from vault
@@ -837,10 +819,7 @@ contract AaveV3LeverageStrategy is Ownable, ReentrancyGuard{
         assets[1] = variableDebtToken;
 
         // Claim all rewards
-        (address[] memory rewardTokens, uint256[] memory amounts) = rewardsController.claimAllRewards(
-            assets,
-            vault
-        );
+        (address[] memory rewardTokens, uint256[] memory amounts) = rewardsController.claimAllRewards(assets, vault);
 
         // Calculate harvested value
         for (uint256 i = 0; i < rewardTokens.length; i++) {
@@ -919,7 +898,7 @@ contract AaveV3LeverageStrategy is Ownable, ReentrancyGuard{
 
         for (uint256 i = 0; i < MAX_LOOPS; i++) {
             // Get available borrows
-            (, , uint256 availableBorrows, , , uint256 hf) = pool.getUserAccountData(address(this));
+            (,, uint256 availableBorrows,,, uint256 hf) = pool.getUserAccountData(address(this));
 
             // Check health factor
             if (hf < minHealthFactor && hf != type(uint256).max) {
@@ -984,7 +963,7 @@ contract AaveV3LeverageStrategy is Ownable, ReentrancyGuard{
 
             // Withdraw and repay loop
             // Calculate safe withdraw amount
-            (, , , , uint256 ltv, ) = pool.getUserAccountData(address(this));
+            (,,,, uint256 ltv,) = pool.getUserAccountData(address(this));
             if (ltv == 0) break;
 
             // Max we can withdraw = supply - (debt * 10000 / ltv) with buffer
@@ -1030,7 +1009,7 @@ contract AaveV3LeverageStrategy is Ownable, ReentrancyGuard{
             uint256 currentSupply = aToken.balanceOf(address(this));
 
             // Calculate max withdraw
-            (, , , , uint256 ltv, ) = pool.getUserAccountData(address(this));
+            (,,,, uint256 ltv,) = pool.getUserAccountData(address(this));
             if (ltv == 0) break;
 
             uint256 minCollateral = (currentDebt * BPS * 105) / (ltv * 100);
@@ -1068,7 +1047,7 @@ contract AaveV3LeverageStrategy is Ownable, ReentrancyGuard{
 
     /// @notice Get current health factor
     function healthFactor() external view returns (uint256) {
-        (, , , , , uint256 hf) = pool.getUserAccountData(address(this));
+        (,,,,, uint256 hf) = pool.getUserAccountData(address(this));
         return hf;
     }
 
@@ -1137,7 +1116,7 @@ contract AaveV3LeverageStrategy is Ownable, ReentrancyGuard{
             if (currentDebt == 0) break;
 
             uint256 currentSupply = aToken.balanceOf(address(this));
-            (, , , , uint256 ltv, ) = pool.getUserAccountData(address(this));
+            (,,,, uint256 ltv,) = pool.getUserAccountData(address(this));
             if (ltv == 0) break;
 
             uint256 minCollateral = (currentDebt * BPS * 105) / (ltv * 100);
@@ -1189,13 +1168,7 @@ contract AaveV3WETHSupplyStrategy is AaveV3SupplyStrategy {
     address public constant REWARDS = 0x8164Cc65827dcFe994AB23944CBC90e0aa80bFcb;
     address public constant ORACLE = 0x54586bE62E3c3580375aE3723C145253060Ca0C2;
 
-    constructor(address _vault) AaveV3SupplyStrategy(
-        _vault,
-        POOL,
-        A_WETH,
-        REWARDS,
-        ORACLE
-    ) {}
+    constructor(address _vault) AaveV3SupplyStrategy(_vault, POOL, A_WETH, REWARDS, ORACLE) { }
 }
 
 /**
@@ -1209,13 +1182,7 @@ contract AaveV3USDCSupplyStrategy is AaveV3SupplyStrategy {
     address public constant REWARDS = 0x8164Cc65827dcFe994AB23944CBC90e0aa80bFcb;
     address public constant ORACLE = 0x54586bE62E3c3580375aE3723C145253060Ca0C2;
 
-    constructor(address _vault) AaveV3SupplyStrategy(
-        _vault,
-        POOL,
-        A_USDC,
-        REWARDS,
-        ORACLE
-    ) {}
+    constructor(address _vault) AaveV3SupplyStrategy(_vault, POOL, A_USDC, REWARDS, ORACLE) { }
 }
 
 /**
@@ -1233,14 +1200,9 @@ contract AaveV3WETHLeverageStrategy is AaveV3LeverageStrategy {
     // E-Mode category 1 = ETH correlated (stETH, cbETH, rETH, wstETH)
     uint8 public constant ETH_EMODE = 1;
 
-    constructor(address _vault, uint256 _targetLeverage) AaveV3LeverageStrategy(
-        _vault,
-        POOL,
-        A_WETH,
-        REWARDS,
-        ORACLE,
-        _targetLeverage
-    ) {
+    constructor(address _vault, uint256 _targetLeverage)
+        AaveV3LeverageStrategy(_vault, POOL, A_WETH, REWARDS, ORACLE, _targetLeverage)
+    {
         // Enable E-Mode for higher LTV
         pool.setUserEMode(ETH_EMODE);
         eModeCategoryId = ETH_EMODE;
@@ -1262,14 +1224,9 @@ contract AaveV3StablecoinsLeverageStrategy is AaveV3LeverageStrategy {
     // E-Mode category 2 = Stablecoins (USDC, DAI, USDT, etc.)
     uint8 public constant STABLECOIN_EMODE = 2;
 
-    constructor(address _vault, uint256 _targetLeverage) AaveV3LeverageStrategy(
-        _vault,
-        POOL,
-        A_USDC,
-        REWARDS,
-        ORACLE,
-        _targetLeverage
-    ) {
+    constructor(address _vault, uint256 _targetLeverage)
+        AaveV3LeverageStrategy(_vault, POOL, A_USDC, REWARDS, ORACLE, _targetLeverage)
+    {
         // Enable E-Mode for higher LTV on stablecoins
         pool.setUserEMode(STABLECOIN_EMODE);
         eModeCategoryId = STABLECOIN_EMODE;
@@ -1289,16 +1246,15 @@ contract AaveV3StrategyFactory {
     event SupplyStrategyDeployed(address indexed strategy, address indexed vault, address indexed aToken);
 
     /// @notice Emitted when a leverage strategy is deployed
-    event LeverageStrategyDeployed(address indexed strategy, address indexed vault, address indexed aToken, uint256 leverage);
+    event LeverageStrategyDeployed(
+        address indexed strategy, address indexed vault, address indexed aToken, uint256 leverage
+    );
 
     /// @notice Deploy a generic supply strategy
-    function deploySupply(
-        address vault,
-        address poolAddr,
-        address aTokenAddr,
-        address rewardsAddr,
-        address oracleAddr
-    ) external returns (address strategy) {
+    function deploySupply(address vault, address poolAddr, address aTokenAddr, address rewardsAddr, address oracleAddr)
+        external
+        returns (address strategy)
+    {
         strategy = address(new AaveV3SupplyStrategy(vault, poolAddr, aTokenAddr, rewardsAddr, oracleAddr));
         emit SupplyStrategyDeployed(strategy, vault, aTokenAddr);
     }
@@ -1312,7 +1268,9 @@ contract AaveV3StrategyFactory {
         address oracleAddr,
         uint256 targetLeverage
     ) external returns (address strategy) {
-        strategy = address(new AaveV3LeverageStrategy(vault, poolAddr, aTokenAddr, rewardsAddr, oracleAddr, targetLeverage));
+        strategy = address(
+            new AaveV3LeverageStrategy(vault, poolAddr, aTokenAddr, rewardsAddr, oracleAddr, targetLeverage)
+        );
         emit LeverageStrategyDeployed(strategy, vault, aTokenAddr, targetLeverage);
     }
 

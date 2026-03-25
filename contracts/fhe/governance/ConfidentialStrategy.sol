@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
-import {FHE, euint256} from "../FHE.sol";
-import {TFHE} from "../threshold/TFHE.sol";
-import {TFHEApp} from "../threshold/TFHEApp.sol";
-import {ICharter} from "../../governance/interfaces/ICharter.sol";
-import {IVotingTypes} from "../../governance/interfaces/IVotingTypes.sol";
-import {IVotingWeight} from "../../governance/interfaces/IVotingWeight.sol";
-import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { FHE, euint256 } from "../FHE.sol";
+import { TFHE } from "../threshold/TFHE.sol";
+import { TFHEApp } from "../threshold/TFHEApp.sol";
+import { ICharter } from "../../governance/interfaces/ICharter.sol";
+import { IVotingTypes } from "../../governance/interfaces/IVotingTypes.sol";
+import { IVotingWeight } from "../../governance/interfaces/IVotingWeight.sol";
+import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
  * @title ConfidentialStrategy
@@ -28,12 +28,7 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
  *   Voter → castVote(encrypted) → FHE operations → TFHE.decrypt()
  *   → T-Chain Validators → callbackDecryption() → isPassed()
  */
-contract ConfidentialStrategy is
-    ICharter,
-    TFHEApp,
-    Ownable2StepUpgradeable,
-    UUPSUpgradeable
-{
+contract ConfidentialStrategy is ICharter, TFHEApp, Ownable2StepUpgradeable, UUPSUpgradeable {
     // ============================================================
     // ERRORS
     // ============================================================
@@ -44,10 +39,7 @@ contract ConfidentialStrategy is
     // EVENTS
     // ============================================================
 
-    event FreezeVoterAuthorizationChanged(
-        address indexed freezeVoterContract,
-        bool isAuthorized
-    );
+    event FreezeVoterAuthorizationChanged(address indexed freezeVoterContract, bool isAuthorized);
 
     // ============================================================
     // STATE VARIABLES
@@ -58,11 +50,11 @@ contract ConfidentialStrategy is
         uint48 votingStartTimestamp;
         uint48 votingEndTimestamp;
         uint32 votingStartBlock;
-        euint256 yesVotes;        // Encrypted YES vote weight
-        euint256 noVotes;         // Encrypted NO vote weight
-        euint256 abstainVotes;    // Encrypted ABSTAIN vote weight
-        uint256 yesVotesDecrypted;    // Decrypted after voting ends
-        uint256 noVotesDecrypted;     // Decrypted after voting ends
+        euint256 yesVotes; // Encrypted YES vote weight
+        euint256 noVotes; // Encrypted NO vote weight
+        euint256 abstainVotes; // Encrypted ABSTAIN vote weight
+        uint256 yesVotesDecrypted; // Decrypted after voting ends
+        uint256 noVotesDecrypted; // Decrypted after voting ends
         uint256 abstainVotesDecrypted; // Decrypted after voting ends
         bool decryptionComplete;
         bool passed;
@@ -70,8 +62,7 @@ contract ConfidentialStrategy is
 
     /// @notice Storage slot for main storage (EIP-7201)
     /// @dev keccak256("lux.confidential.strategy.v1") - 1
-    bytes32 internal constant STORAGE_LOCATION =
-        0xb4c8b1c40e0c0c5e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0100;
+    bytes32 internal constant STORAGE_LOCATION = 0xb4c8b1c40e0c0c5e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0100;
 
     struct StrategyStorage {
         uint32 votingPeriod;
@@ -143,10 +134,11 @@ contract ConfidentialStrategy is
     }
 
     /// @notice See IStrategy for documentation
-    function initialize2(
-        address strategyAdmin_,
-        IVotingTypes.VotingConfig[] calldata votingConfigs_
-    ) external override reinitializer(2) {
+    function initialize2(address strategyAdmin_, IVotingTypes.VotingConfig[] calldata votingConfigs_)
+        external
+        override
+        reinitializer(2)
+    {
         if (strategyAdmin_ == address(0)) revert InvalidStrategyAdmin();
         if (votingConfigs_.length == 0) revert NoVotingConfigs();
 
@@ -162,18 +154,18 @@ contract ConfidentialStrategy is
     // UUPS
     // ============================================================
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+    function _authorizeUpgrade(address) internal override onlyOwner { }
 
     // ============================================================
     // VIEW FUNCTIONS
     // ============================================================
 
     /// @notice See IStrategy for documentation
-    function isProposer(
-        address address_,
-        address proposerAdapter_,
-        bytes calldata proposerAdapterData_
-    ) external view returns (bool) {
+    function isProposer(address address_, address proposerAdapter_, bytes calldata proposerAdapterData_)
+        external
+        view
+        returns (bool)
+    {
         StrategyStorage storage $ = _getStorage();
         if (!$.isProposerAdapter[proposerAdapter_]) return false;
         // Delegate to adapter
@@ -194,9 +186,7 @@ contract ConfidentialStrategy is
     }
 
     /// @notice See IStrategy for documentation
-    function getVotingTimestamps(
-        uint32 proposalId_
-    ) external view override returns (uint48 startTime, uint48 endTime) {
+    function getVotingTimestamps(uint32 proposalId_) external view override returns (uint48 startTime, uint48 endTime) {
         StrategyStorage storage $ = _getStorage();
         ConfidentialProposalVoting storage pv = $.proposalVoting[proposalId_];
         return (pv.votingStartTimestamp, pv.votingEndTimestamp);
@@ -238,9 +228,7 @@ contract ConfidentialStrategy is
     }
 
     /// @notice See IStrategy for documentation
-    function proposalVotingDetails(
-        uint32 proposalId_
-    ) external view override returns (ProposalVotingDetails memory) {
+    function proposalVotingDetails(uint32 proposalId_) external view override returns (ProposalVotingDetails memory) {
         StrategyStorage storage $ = _getStorage();
         ConfidentialProposalVoting storage pv = $.proposalVoting[proposalId_];
 
@@ -335,11 +323,7 @@ contract ConfidentialStrategy is
         return _validVote(voter_, proposalId_, voteType_);
     }
 
-    function _validVote(
-        address voter_,
-        uint32 proposalId_,
-        uint8 voteType_
-    ) internal view returns (bool) {
+    function _validVote(address voter_, uint32 proposalId_, uint8 voteType_) internal view returns (bool) {
         StrategyStorage storage $ = _getStorage();
         ConfidentialProposalVoting storage pv = $.proposalVoting[proposalId_];
 
@@ -375,12 +359,7 @@ contract ConfidentialStrategy is
         FHE.allowThis(pv.noVotes);
         FHE.allowThis(pv.abstainVotes);
 
-        emit ProposalInitialized(
-            proposalId_,
-            pv.votingStartTimestamp,
-            pv.votingEndTimestamp,
-            pv.votingStartBlock
-        );
+        emit ProposalInitialized(proposalId_, pv.votingStartTimestamp, pv.votingEndTimestamp, pv.votingStartBlock);
     }
 
     /// @notice See IStrategy for documentation
@@ -408,11 +387,8 @@ contract ConfidentialStrategy is
             if (configIndex >= $.votingConfigs.length) revert InvalidVotingConfig(configIndex);
 
             IVotingTypes.VotingConfig memory config = $.votingConfigs[configIndex];
-            (uint256 weight, ) = IVotingWeight(config.votingWeight).calculateWeight(
-                msg.sender,
-                pv.votingStartBlock,
-                votingConfigsData_[i].voteData
-            );
+            (uint256 weight,) = IVotingWeight(config.votingWeight)
+                .calculateWeight(msg.sender, pv.votingStartBlock, votingConfigsData_[i].voteData);
             totalWeight += weight;
         }
 
@@ -455,13 +431,7 @@ contract ConfidentialStrategy is
         cts[1] = TFHE.toUint256(pv.noVotes);
         cts[2] = TFHE.toUint256(pv.abstainVotes);
 
-        uint256 requestId = TFHE.decrypt(
-            cts,
-            this.callbackVoteDecryption.selector,
-            0,
-            block.timestamp + 1 days,
-            false
-        );
+        uint256 requestId = TFHE.decrypt(cts, this.callbackVoteDecryption.selector, 0, block.timestamp + 1 days, false);
 
         $.decryptionRequests[requestId] = proposalId_;
         emit VotingPeriodEnded(proposalId_);
@@ -474,12 +444,10 @@ contract ConfidentialStrategy is
      * @param noVotes Decrypted NO votes
      * @param abstainVotes Decrypted ABSTAIN votes
      */
-    function callbackVoteDecryption(
-        uint256 requestId,
-        uint256 yesVotes,
-        uint256 noVotes,
-        uint256 abstainVotes
-    ) external onlyGateway {
+    function callbackVoteDecryption(uint256 requestId, uint256 yesVotes, uint256 noVotes, uint256 abstainVotes)
+        external
+        onlyGateway
+    {
         StrategyStorage storage $ = _getStorage();
         uint32 proposalId = $.decryptionRequests[requestId];
 
@@ -492,8 +460,7 @@ contract ConfidentialStrategy is
         // Calculate if passed: quorum met AND basis met
         bool quorumMet = (yesVotes + abstainVotes) >= $.quorumThreshold;
         uint256 totalVotes = yesVotes + noVotes;
-        bool basisMet = totalVotes > 0 &&
-            (yesVotes * BASIS_DENOMINATOR) > (totalVotes * $.basisNumerator);
+        bool basisMet = totalVotes > 0 && (yesVotes * BASIS_DENOMINATOR) > (totalVotes * $.basisNumerator);
 
         pv.passed = quorumMet && basisMet;
 

@@ -3,18 +3,18 @@
 pragma solidity ^0.8.31;
 
 /**
-    ██╗     ██████╗  ██████╗███████╗██████╗  ██╗██████╗
-    ██║     ██╔══██╗██╔════╝╚════██║╚════██╗███║██╔══██╗
-    ██║     ██████╔╝██║         ██╔╝ █████╔╝╚██║██████╔╝
-    ██║     ██╔══██╗██║        ██╔╝ ██╔═══╝  ██║██╔══██╗
-    ███████╗██║  ██║╚██████╗   ██║  ███████╗ ██║██████╔╝
-    ╚══════╝╚═╝  ╚═╝ ╚═════╝   ╚═╝  ╚══════╝ ╚═╝╚═════╝
-
-    LRC721B - Bridge-compatible NFT base using LRC721 standards
+ *     ██╗     ██████╗  ██████╗███████╗██████╗  ██╗██████╗
+ *     ██║     ██╔══██╗██╔════╝╚════██║╚════██╗███║██╔══██╗
+ *     ██║     ██████╔╝██║         ██╔╝ █████╔╝╚██║██████╔╝
+ *     ██║     ██╔══██╗██║        ██╔╝ ██╔═══╝  ██║██╔══██╗
+ *     ███████╗██║  ██║╚██████╗   ██║  ███████╗ ██║██████╔╝
+ *     ╚══════╝╚═╝  ╚═╝ ╚═════╝   ╚═╝  ╚══════╝ ╚═╝╚═════╝
+ *
+ *     LRC721B - Bridge-compatible NFT base using LRC721 standards
  */
 
-import {LRC721} from "./LRC721/LRC721.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { LRC721 } from "./LRC721/LRC721.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title LRC721B
@@ -31,13 +31,9 @@ contract LRC721B is LRC721, Ownable {
      * @param symbol_ Token symbol
      * @param baseURI_ Base URI for metadata
      */
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        string memory baseURI_
-    ) 
+    constructor(string memory name_, string memory symbol_, string memory baseURI_)
         LRC721(name_, symbol_, baseURI_, address(0), 0)
-        Ownable(msg.sender) 
+        Ownable(msg.sender)
     {
         // Grant bridge admin role to deployer
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -104,12 +100,7 @@ contract LRC721B is LRC721, Ownable {
     /**
      * @dev Override supportsInterface to include Ownable
      */
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(LRC721)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(LRC721) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }

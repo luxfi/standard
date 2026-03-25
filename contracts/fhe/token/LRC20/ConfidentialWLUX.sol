@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {FHE, ebool, euint64} from "../../FHE.sol";
-import {TFHEApp} from "../../threshold/TFHEApp.sol";
-import {TFHE} from "../../threshold/TFHE.sol";
+import { FHE, ebool, euint64 } from "../../FHE.sol";
+import { TFHEApp } from "../../threshold/TFHEApp.sol";
+import { TFHE } from "../../threshold/TFHE.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { ConfidentialLRC20 } from "./ConfidentialLRC20.sol";
 import { IConfidentialLRC20Wrapped } from "./IConfidentialLRC20Wrapped.sol";
@@ -13,12 +13,7 @@ import { IConfidentialLRC20Wrapped } from "./IConfidentialLRC20Wrapped.sol";
  * @notice  This contract allows users to wrap/unwrap trustlessly
  *          LUX (or other native tokens) to ConfidentialLRC20 tokens.
  */
-abstract contract ConfidentialWLUX is
-    ConfidentialLRC20,
-    IConfidentialLRC20Wrapped,
-    ReentrancyGuard,
-    TFHEApp
-{
+abstract contract ConfidentialWLUX is ConfidentialLRC20, IConfidentialLRC20Wrapped, ReentrancyGuard, TFHEApp {
     /// @notice Returned if LUX transfer fails.
     error LUXTransferFail();
 
@@ -40,9 +35,9 @@ abstract contract ConfidentialWLUX is
      *                                  The current implementation expects the Gateway to always return a decrypted
      *                                  value within the delay specified, as long as it is sufficient enough.
      */
-    constructor(
-        uint256 maxDecryptionDelay_
-    ) ConfidentialLRC20(string(abi.encodePacked("Confidential Wrapped LUX")), string(abi.encodePacked("WLUXc"))) {
+    constructor(uint256 maxDecryptionDelay_)
+        ConfidentialLRC20(string(abi.encodePacked("Confidential Wrapped LUX")), string(abi.encodePacked("WLUXc")))
+    {
         /// @dev The maximum delay is set to 1 day.
         if (maxDecryptionDelay_ > 1 days) {
             revert MaxDecryptionDelayTooHigh();
@@ -70,13 +65,7 @@ abstract contract ConfidentialWLUX is
         uint256[] memory cts = new uint256[](1);
         cts[0] = TFHE.toUint256(canUnwrap);
 
-        uint256 requestId = TFHE.decrypt(
-            cts,
-            this.callbackUnwrap.selector,
-            0,
-            block.timestamp + 100,
-            false
-        );
+        uint256 requestId = TFHE.decrypt(cts, this.callbackUnwrap.selector, 0, block.timestamp + 100, false);
 
         unwrapRequests[requestId] = UnwrapRequest({ account: msg.sender, amount: amount });
     }
@@ -114,7 +103,7 @@ abstract contract ConfidentialWLUX is
 
             /* solhint-disable avoid-call-value*/
             /* solhint-disable avoid-low-level-calls*/
-            (bool callSuccess, ) = unwrapRequest.account.call{ value: amountUint256 }("");
+            (bool callSuccess,) = unwrapRequest.account.call{ value: amountUint256 }("");
 
             if (callSuccess) {
                 _unsafeBurn(unwrapRequest.account, unwrapRequest.amount);
@@ -137,12 +126,11 @@ abstract contract ConfidentialWLUX is
         }
     }
 
-    function _transferNoEvent(
-        address from,
-        address to,
-        euint64 amount,
-        ebool isTransferable
-    ) internal virtual override {
+    function _transferNoEvent(address from, address to, euint64 amount, ebool isTransferable)
+        internal
+        virtual
+        override
+    {
         _canTransferOrUnwrap(from);
         super._transferNoEvent(from, to, amount, isTransferable);
     }

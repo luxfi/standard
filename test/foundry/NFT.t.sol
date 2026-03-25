@@ -5,11 +5,15 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "../../contracts/nft/Market.sol";
 import "../../contracts/tokens/LRC1155/LRC1155.sol";
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
+import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 // Shared mocks
-import {MockERC721Full as MockERC721, MockERC721FullWithRoyalty as MockERC721WithRoyalty, MockLRC20} from "./TestMocks.sol";
+import {
+    MockERC721Full as MockERC721,
+    MockERC721FullWithRoyalty as MockERC721WithRoyalty,
+    MockLRC20
+} from "./TestMocks.sol";
 
 /**
  * @title MarketTest
@@ -222,7 +226,7 @@ contract MarketTest is Test {
 
         // Buy NFT
         vm.startPrank(buyer);
-        market.buy{value: PRICE}(listingId);
+        market.buy{ value: PRICE }(listingId);
         vm.stopPrank();
 
         // Verify NFT transferred
@@ -259,7 +263,7 @@ contract MarketTest is Test {
 
         // Buy NFT
         vm.startPrank(buyer);
-        market.buy{value: PRICE}(listingId);
+        market.buy{ value: PRICE }(listingId);
         vm.stopPrank();
 
         // Verify royalty paid
@@ -274,7 +278,7 @@ contract MarketTest is Test {
         uint256 buyerBalanceBefore = buyer.balance;
 
         vm.startPrank(buyer);
-        market.buy{value: PRICE + 1 ether}(listingId);
+        market.buy{ value: PRICE + 1 ether }(listingId);
         vm.stopPrank();
 
         // Verify refund (should only spend PRICE + gas)
@@ -288,7 +292,7 @@ contract MarketTest is Test {
 
         vm.startPrank(buyer);
         vm.expectRevert(Market.InsufficientPayment.selector);
-        market.buy{value: PRICE - 1}(listingId);
+        market.buy{ value: PRICE - 1 }(listingId);
         vm.stopPrank();
     }
 
@@ -302,7 +306,7 @@ contract MarketTest is Test {
 
         vm.startPrank(buyer);
         vm.expectRevert(Market.ListingExpired.selector);
-        market.buy{value: PRICE}(listingId);
+        market.buy{ value: PRICE }(listingId);
         vm.stopPrank();
     }
 
@@ -498,7 +502,7 @@ contract MarketTest is Test {
         vm.deal(buyer, price * 2);
 
         vm.startPrank(buyer);
-        market.buy{value: price}(listingId);
+        market.buy{ value: price }(listingId);
         vm.stopPrank();
 
         assertEq(nft.ownerOf(1), buyer);

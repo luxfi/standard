@@ -18,9 +18,9 @@ pragma solidity ^0.8.24;
  * - Curve LP trading fees (embedded in LP value)
  */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 // =============================================================================
 // CONVEX INTERFACES
@@ -40,14 +40,10 @@ interface IConvexBooster {
     function withdraw(uint256 _pid, uint256 _amount) external returns (bool);
 
     /// @notice Get pool info
-    function poolInfo(uint256 _pid) external view returns (
-        address lptoken,
-        address token,
-        address gauge,
-        address crvRewards,
-        address stash,
-        bool shutdown
-    );
+    function poolInfo(uint256 _pid)
+        external
+        view
+        returns (address lptoken, address token, address gauge, address crvRewards, address stash, bool shutdown);
 
     /// @notice Total number of pools
     function poolLength() external view returns (uint256);
@@ -289,26 +285,14 @@ contract ConvexCurveStrategy is Ownable {
      * @param _autoCompound Whether to auto-compound rewards
      * @param _lockCvx Whether to lock CVX for vlCVX boost
      */
-    constructor(
-        address _vault,
-        uint256 _poolId,
-        bool _autoCompound,
-        bool _lockCvx
-    ) Ownable(msg.sender) {
+    constructor(address _vault, uint256 _poolId, bool _autoCompound, bool _lockCvx) Ownable(msg.sender) {
         vault = _vault;
         poolId = _poolId;
         autoCompound = _autoCompound;
         lockCvx = _lockCvx;
 
         // Get pool info from Booster
-        (
-            address _lpToken,
-            ,
-            ,
-            address _crvRewards,
-            ,
-            bool shutdown
-        ) = IConvexBooster(CONVEX_BOOSTER).poolInfo(_poolId);
+        (address _lpToken,,, address _crvRewards,, bool shutdown) = IConvexBooster(CONVEX_BOOSTER).poolInfo(_poolId);
 
         if (shutdown) revert PoolShutdown();
         if (_lpToken == address(0)) revert InvalidPool();
@@ -336,7 +320,7 @@ contract ConvexCurveStrategy is Ownable {
         if (amount == 0) revert ZeroAmount();
 
         // Check pool not shutdown
-        (,,,, , bool shutdown) = IConvexBooster(CONVEX_BOOSTER).poolInfo(poolId);
+        (,,,,, bool shutdown) = IConvexBooster(CONVEX_BOOSTER).poolInfo(poolId);
         if (shutdown) revert PoolShutdown();
 
         // Transfer LP tokens from vault
@@ -454,7 +438,7 @@ contract ConvexCurveStrategy is Ownable {
 
     /// @notice
     function isActive() external view returns (bool) {
-        (,,,, , bool shutdown) = IConvexBooster(CONVEX_BOOSTER).poolInfo(poolId);
+        (,,,,, bool shutdown) = IConvexBooster(CONVEX_BOOSTER).poolInfo(poolId);
         return active && !shutdown;
     }
 
@@ -502,14 +486,11 @@ contract ConvexCurveStrategy is Ownable {
     }
 
     /// @notice Get pool info
-    function getPoolInfo() external view returns (
-        address _lpToken,
-        address token,
-        address gauge,
-        address crvRewards,
-        address stash,
-        bool shutdown
-    ) {
+    function getPoolInfo()
+        external
+        view
+        returns (address _lpToken, address token, address gauge, address crvRewards, address stash, bool shutdown)
+    {
         return IConvexBooster(CONVEX_BOOSTER).poolInfo(poolId);
     }
 
@@ -773,26 +754,14 @@ contract ConvexFraxStrategy is Ownable {
      * @param _autoCompound Whether to auto-compound rewards
      * @param _lockCvx Whether to lock CVX for vlCVX
      */
-    constructor(
-        address _vault,
-        uint256 _poolId,
-        bool _autoCompound,
-        bool _lockCvx
-    ) Ownable(msg.sender) {
+    constructor(address _vault, uint256 _poolId, bool _autoCompound, bool _lockCvx) Ownable(msg.sender) {
         vault = _vault;
         poolId = _poolId;
         autoCompound = _autoCompound;
         lockCvx = _lockCvx;
 
         // Get pool info
-        (
-            address _lpToken,
-            ,
-            ,
-            address _crvRewards,
-            ,
-            bool shutdown
-        ) = IConvexBooster(CONVEX_BOOSTER).poolInfo(_poolId);
+        (address _lpToken,,, address _crvRewards,, bool shutdown) = IConvexBooster(CONVEX_BOOSTER).poolInfo(_poolId);
 
         if (shutdown) revert PoolShutdown();
         if (_lpToken == address(0)) revert InvalidPool();
@@ -819,7 +788,7 @@ contract ConvexFraxStrategy is Ownable {
     function deposit(uint256 amount) external onlyVault whenActive returns (uint256 shares) {
         if (amount == 0) revert ZeroAmount();
 
-        (,,,, , bool shutdown) = IConvexBooster(CONVEX_BOOSTER).poolInfo(poolId);
+        (,,,,, bool shutdown) = IConvexBooster(CONVEX_BOOSTER).poolInfo(poolId);
         if (shutdown) revert PoolShutdown();
 
         IERC20(lpToken).safeTransferFrom(msg.sender, address(this), amount);
@@ -911,7 +880,7 @@ contract ConvexFraxStrategy is Ownable {
 
     /// @notice
     function isActive() external view returns (bool) {
-        (,,,, , bool shutdown) = IConvexBooster(CONVEX_BOOSTER).poolInfo(poolId);
+        (,,,,, bool shutdown) = IConvexBooster(CONVEX_BOOSTER).poolInfo(poolId);
         return active && !shutdown;
     }
 
@@ -1027,9 +996,7 @@ contract ConvexFraxStrategy is Ownable {
 contract ConvexTriCryptoStrategy is ConvexCurveStrategy {
     uint256 public constant TRICRYPTO_PID = 38;
 
-    constructor(address _vault)
-        ConvexCurveStrategy(_vault, TRICRYPTO_PID, false, true)
-    {}
+    constructor(address _vault) ConvexCurveStrategy(_vault, TRICRYPTO_PID, false, true) { }
 }
 
 /**
@@ -1040,9 +1007,7 @@ contract ConvexTriCryptoStrategy is ConvexCurveStrategy {
 contract Convex3PoolStrategy is ConvexCurveStrategy {
     uint256 public constant THREE_POOL_PID = 9;
 
-    constructor(address _vault)
-        ConvexCurveStrategy(_vault, THREE_POOL_PID, false, true)
-    {}
+    constructor(address _vault) ConvexCurveStrategy(_vault, THREE_POOL_PID, false, true) { }
 }
 
 /**
@@ -1053,9 +1018,7 @@ contract Convex3PoolStrategy is ConvexCurveStrategy {
 contract ConvexStETHStrategy is ConvexCurveStrategy {
     uint256 public constant STETH_PID = 25;
 
-    constructor(address _vault)
-        ConvexCurveStrategy(_vault, STETH_PID, false, true)
-    {}
+    constructor(address _vault) ConvexCurveStrategy(_vault, STETH_PID, false, true) { }
 }
 
 /**
@@ -1066,9 +1029,7 @@ contract ConvexStETHStrategy is ConvexCurveStrategy {
 contract ConvexFraxBPStrategy is ConvexFraxStrategy {
     uint256 public constant FRAXBP_PID = 100;
 
-    constructor(address _vault)
-        ConvexFraxStrategy(_vault, FRAXBP_PID, false, true)
-    {}
+    constructor(address _vault) ConvexFraxStrategy(_vault, FRAXBP_PID, false, true) { }
 }
 
 // =============================================================================
@@ -1083,23 +1044,19 @@ contract ConvexStrategyFactory {
     event StrategyDeployed(address indexed strategy, uint256 indexed poolId, string strategyType);
 
     /// @notice Deploy a generic Convex Curve strategy
-    function deployCurve(
-        address vault,
-        uint256 poolId,
-        bool autoCompound,
-        bool lockCvx
-    ) external returns (address strategy) {
+    function deployCurve(address vault, uint256 poolId, bool autoCompound, bool lockCvx)
+        external
+        returns (address strategy)
+    {
         strategy = address(new ConvexCurveStrategy(vault, poolId, autoCompound, lockCvx));
         emit StrategyDeployed(strategy, poolId, "ConvexCurve");
     }
 
     /// @notice Deploy a Convex Frax strategy
-    function deployFrax(
-        address vault,
-        uint256 poolId,
-        bool autoCompound,
-        bool lockCvx
-    ) external returns (address strategy) {
+    function deployFrax(address vault, uint256 poolId, bool autoCompound, bool lockCvx)
+        external
+        returns (address strategy)
+    {
         strategy = address(new ConvexFraxStrategy(vault, poolId, autoCompound, lockCvx));
         emit StrategyDeployed(strategy, poolId, "ConvexFrax");
     }

@@ -3,9 +3,9 @@
 
 pragma solidity ^0.8.20;
 
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import {ShortStrings, ShortString} from "@openzeppelin/contracts/utils/ShortStrings.sol";
-import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { ShortStrings, ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
+import { IERC5267 } from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 
 /**
  * @dev https://eips.ethereum.org/EIPS/eip-712[EIP 712] is a standard for hashing and signing of typed structured data.
@@ -38,9 +38,7 @@ abstract contract EIP712 is IERC5267 {
     using ShortStrings for *;
 
     bytes32 private constant TYPE_HASH =
-        keccak256(
-            "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-        );
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
     // Cache the domain separator as an immutable value, but also store the chain id that it corresponds to, in order to
     // invalidate the cached domain separator if the chain id changes.
@@ -89,16 +87,7 @@ abstract contract EIP712 is IERC5267 {
     }
 
     function _buildDomainSeparator() private view returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    TYPE_HASH,
-                    _hashedName,
-                    _hashedVersion,
-                    block.chainid,
-                    address(0)
-                )
-            );
+        return keccak256(abi.encode(TYPE_HASH, _hashedName, _hashedVersion, block.chainid, address(0)));
     }
 
     /**
@@ -116,11 +105,8 @@ abstract contract EIP712 is IERC5267 {
      * address signer = ECDSA.recover(digest, signature);
      * ```
      */
-    function _hashTypedDataV4(
-        bytes32 structHash
-    ) internal view virtual returns (bytes32) {
-        return
-            MessageHashUtils.toTypedDataHash(_domainSeparatorV4(), structHash);
+    function _hashTypedDataV4(bytes32 structHash) internal view virtual returns (bytes32) {
+        return MessageHashUtils.toTypedDataHash(_domainSeparatorV4(), structHash);
     }
 
     /**

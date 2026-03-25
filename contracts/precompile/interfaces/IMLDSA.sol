@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 /**
  * @title IMLDSA
  * @dev Interface for the ML-DSA (FIPS 204) post-quantum signature verification precompile
- * 
+ *
  * ML-DSA (Module-Lattice-Based Digital Signature Algorithm) is a quantum-resistant
  * signature scheme based on the Dilithium algorithm and standardized in FIPS 204.
  *
@@ -55,11 +55,10 @@ interface IMLDSA {
      * - Medium message (1KB): 110,240 gas
      * - Large message (10KB): 202,400 gas
      */
-    function verify(
-        bytes calldata publicKey,
-        bytes calldata message,
-        bytes calldata signature
-    ) external view returns (bool valid);
+    function verify(bytes calldata publicKey, bytes calldata message, bytes calldata signature)
+        external
+        view
+        returns (bool valid);
 }
 
 /**
@@ -106,11 +105,7 @@ library MLDSALib {
      * - Signature size is not 3309 bytes
      * - Signature verification fails
      */
-    function verifyOrRevert(
-        bytes calldata publicKey,
-        bytes calldata message,
-        bytes calldata signature
-    ) internal view {
+    function verifyOrRevert(bytes calldata publicKey, bytes calldata message, bytes calldata signature) internal view {
         if (publicKey.length != PUBLIC_KEY_SIZE) {
             revert InvalidPublicKeySize(PUBLIC_KEY_SIZE, publicKey.length);
         }
@@ -187,11 +182,10 @@ abstract contract MLDSAVerifier {
      * @param message The message that was signed
      * @param signature The ML-DSA-65 signature
      */
-    function verifyMLDSASignature(
-        bytes calldata publicKey,
-        bytes calldata message,
-        bytes calldata signature
-    ) internal view {
+    function verifyMLDSASignature(bytes calldata publicKey, bytes calldata message, bytes calldata signature)
+        internal
+        view
+    {
         MLDSALib.verifyOrRevert(publicKey, message, signature);
     }
 

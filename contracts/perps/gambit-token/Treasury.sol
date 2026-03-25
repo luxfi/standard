@@ -2,17 +2,16 @@
 
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import {IPancakeRouter} from "../amm/interfaces/IPancakeRouter.sol";
-import {IGMT} from "./interfaces/IGMT.sol";
-import {ITimelockTarget} from "../peripherals/interfaces/ITimelockTarget.sol";
+import { IPancakeRouter } from "../amm/interfaces/IPancakeRouter.sol";
+import { IGMT } from "./interfaces/IGMT.sol";
+import { ITimelockTarget } from "../peripherals/interfaces/ITimelockTarget.sol";
 
 contract Treasury is ReentrancyGuard, ITimelockTarget {
     using SafeERC20 for IERC20;
-
 
     uint256 constant PRECISION = 1000000;
     uint256 constant BASIS_POINTS_DIVISOR = 10000;
@@ -37,8 +36,8 @@ contract Treasury is ReentrancyGuard, ITimelockTarget {
 
     address public gov;
 
-    mapping (address => uint256) public swapAmounts;
-    mapping (address => bool) public swapWhitelist;
+    mapping(address => uint256) public swapAmounts;
+    mapping(address => bool) public swapWhitelist;
 
     modifier onlyGov() {
         require(msg.sender == gov, "Treasury: forbidden");
@@ -49,10 +48,7 @@ contract Treasury is ReentrancyGuard, ITimelockTarget {
         gov = msg.sender;
     }
 
-    function initialize(
-        address[] memory _addresses,
-        uint256[] memory _values
-    ) external onlyGov {
+    function initialize(address[] memory _addresses, uint256[] memory _values) external onlyGov {
         require(!isInitialized, "Treasury: already initialized");
         isInitialized = true;
 
@@ -137,16 +133,17 @@ contract Treasury is ReentrancyGuard, ITimelockTarget {
 
         IGMT(gmt).endMigration();
 
-        IPancakeRouter(router).addLiquidity(
-            busd, // tokenA
-            gmt, // tokenB
-            busdAmount, // amountADesired
-            gmtAmount, // amountBDesired
-            0, // amountAMin
-            0, // amountBMin
-            address(this), // to
-            block.timestamp // deadline
-        );
+        IPancakeRouter(router)
+            .addLiquidity(
+                busd, // tokenA
+                gmt, // tokenB
+                busdAmount, // amountADesired
+                gmtAmount, // amountBDesired
+                0, // amountAMin
+                0, // amountBMin
+                address(this), // to
+                block.timestamp // deadline
+            );
 
         IGMT(gmt).beginMigration();
 

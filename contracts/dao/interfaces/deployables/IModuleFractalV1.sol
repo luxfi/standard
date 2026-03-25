@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {Transaction} from "../Module.sol";
+import { Transaction } from "../Module.sol";
 
 /**
  * @title IModuleFractalV1
@@ -37,7 +37,9 @@ import {Transaction} from "../Module.sol";
 interface IModuleFractalV1 {
     // --- Errors ---
 
-    /** @notice Thrown when a transaction execution through the Safe fails */
+    /**
+     * @notice Thrown when a transaction execution through the Safe fails
+     */
     error TxFailed();
 
     // --- Initializer Functions ---
@@ -51,11 +53,7 @@ interface IModuleFractalV1 {
      * @param avatar_ The child DAO's Safe address that will execute transactions
      * @param target_ The child DAO's Safe address (usually same as avatar)
      */
-    function initialize(
-        address owner_,
-        address avatar_,
-        address target_
-    ) external;
+    function initialize(address owner_, address avatar_, address target_) external;
 
     // --- State-Changing Functions ---
 

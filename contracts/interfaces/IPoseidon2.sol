@@ -9,7 +9,7 @@ pragma solidity ^0.8.20;
  *      - Optimized for STARK/SNARK circuits
  *      - ~2000x faster than Pedersen commitments in circuits
  *      - Uses BN254 scalar field (same as zkSNARK circuits)
- * 
+ *
  * Gas costs:
  *   - Hash (1-4 elements): 800 gas
  *   - Hash (5-8 elements): 1,200 gas
@@ -36,32 +36,23 @@ interface IPoseidon2 {
     /// @param owner Owner address (padded to 32 bytes)
     /// @param blindingFactor Random blinding factor for hiding
     /// @return commitment Note commitment hash
-    function noteCommitment(
-        uint256 amount,
-        bytes32 assetId,
-        address owner,
-        bytes32 blindingFactor
-    ) external view returns (bytes32 commitment);
+    function noteCommitment(uint256 amount, bytes32 assetId, address owner, bytes32 blindingFactor)
+        external
+        view
+        returns (bytes32 commitment);
 
     /// @notice Compute nullifier hash: H(commitment || secret)
     /// @param commitment Note commitment being spent
     /// @param secret Owner's secret key
     /// @return nullifier Unique identifier for spent note
-    function nullifierHash(
-        bytes32 commitment,
-        bytes32 secret
-    ) external view returns (bytes32 nullifier);
+    function nullifierHash(bytes32 commitment, bytes32 secret) external view returns (bytes32 nullifier);
 
     /// @notice Compute Merkle root from leaf and proof
     /// @param leaf Leaf commitment
     /// @param proof Merkle proof path (sibling hashes)
     /// @param index Position of leaf in tree
     /// @return root Computed Merkle root
-    function merkleRoot(
-        bytes32 leaf,
-        bytes32[] calldata proof,
-        uint256 index
-    ) external view returns (bytes32 root);
+    function merkleRoot(bytes32 leaf, bytes32[] calldata proof, uint256 index) external view returns (bytes32 root);
 }
 
 /**
@@ -74,29 +65,30 @@ library Poseidon2 {
 
     /// @notice Hash arbitrary data using Poseidon2
     function hash(bytes memory data) internal view returns (bytes32 result) {
-        (bool success, bytes memory output) = PRECOMPILE.staticcall(
-            abi.encodePacked(uint8(0x01), data) // 0x01 = HASH opcode
-        );
+        (bool success, bytes memory output) =
+            PRECOMPILE.staticcall(
+                abi.encodePacked(uint8(0x01), data) // 0x01 = HASH opcode
+            );
         require(success, "Poseidon2: hash failed");
         result = abi.decode(output, (bytes32));
     }
 
     /// @notice Hash two values (Merkle pair)
     function hashPair(bytes32 left, bytes32 right) internal view returns (bytes32 result) {
-        (bool success, bytes memory output) = PRECOMPILE.staticcall(
-            abi.encodePacked(uint8(0x02), left, right) // 0x02 = HASH_PAIR opcode
-        );
+        (bool success, bytes memory output) =
+            PRECOMPILE.staticcall(
+                abi.encodePacked(uint8(0x02), left, right) // 0x02 = HASH_PAIR opcode
+            );
         require(success, "Poseidon2: hashPair failed");
         result = abi.decode(output, (bytes32));
     }
 
     /// @notice Compute note commitment
-    function noteCommitment(
-        uint256 amount,
-        bytes32 assetId,
-        address owner,
-        bytes32 blindingFactor
-    ) internal view returns (bytes32 commitment) {
+    function noteCommitment(uint256 amount, bytes32 assetId, address owner, bytes32 blindingFactor)
+        internal
+        view
+        returns (bytes32 commitment)
+    {
         (bool success, bytes memory output) = PRECOMPILE.staticcall(
             abi.encodePacked(
                 uint8(0x03), // NOTE_COMMITMENT opcode
@@ -111,27 +103,21 @@ library Poseidon2 {
     }
 
     /// @notice Compute nullifier for spending a note
-    function nullifierHash(
-        bytes32 commitment,
-        bytes32 secret
-    ) internal view returns (bytes32 nullifier) {
-        (bool success, bytes memory output) = PRECOMPILE.staticcall(
-            abi.encodePacked(
-                uint8(0x04), // NULLIFIER_HASH opcode
-                commitment,
-                secret
-            )
-        );
+    function nullifierHash(bytes32 commitment, bytes32 secret) internal view returns (bytes32 nullifier) {
+        (bool success, bytes memory output) =
+            PRECOMPILE.staticcall(
+                abi.encodePacked(
+                    uint8(0x04), // NULLIFIER_HASH opcode
+                    commitment,
+                    secret
+                )
+            );
         require(success, "Poseidon2: nullifierHash failed");
         nullifier = abi.decode(output, (bytes32));
     }
 
     /// @notice Compute Merkle root
-    function merkleRoot(
-        bytes32 leaf,
-        bytes32[] memory proof,
-        uint256 index
-    ) internal view returns (bytes32 root) {
+    function merkleRoot(bytes32 leaf, bytes32[] memory proof, uint256 index) internal view returns (bytes32 root) {
         root = leaf;
         for (uint256 i = 0; i < proof.length; i++) {
             if (index % 2 == 0) {
@@ -151,7 +137,7 @@ library Poseidon2 {
 
     /// @notice Check if precompile is available
     function isPrecompileAvailable() internal view returns (bool) {
-        (bool success, ) = PRECOMPILE.staticcall(abi.encodePacked(uint8(0x00))); // 0x00 = STATUS
+        (bool success,) = PRECOMPILE.staticcall(abi.encodePacked(uint8(0x00))); // 0x00 = STATUS
         return success;
     }
 }

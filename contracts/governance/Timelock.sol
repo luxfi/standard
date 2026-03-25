@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
+import { TimelockController } from "@openzeppelin/contracts/governance/TimelockController.sol";
 
 /**
  * @title Timelock
@@ -19,12 +19,9 @@ contract Timelock is TimelockController {
      * @param executors Addresses that can execute (address(0) = anyone)
      * @param admin Admin address (address(0) = no admin)
      */
-    constructor(
-        uint256 minDelay,
-        address[] memory proposers,
-        address[] memory executors,
-        address admin
-    ) TimelockController(minDelay, proposers, executors, admin) {}
+    constructor(uint256 minDelay, address[] memory proposers, address[] memory executors, address admin)
+        TimelockController(minDelay, proposers, executors, admin)
+    { }
 
     /// @notice Returns the timelock version
     function version() external pure returns (string memory) {

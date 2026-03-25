@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title Cover
@@ -36,30 +36,30 @@ contract Cover is ERC721, ReentrancyGuard, AccessControl, Pausable {
     }
 
     enum CoverType {
-        PROTOCOL,     // Smart contract risk
-        CUSTODY,      // Custodial risk (bridges, CEX)
-        DEFI,         // DeFi composability risk
-        STABLECOIN    // Depeg protection
+        PROTOCOL, // Smart contract risk
+        CUSTODY, // Custodial risk (bridges, CEX)
+        DEFI, // DeFi composability risk
+        STABLECOIN // Depeg protection
     }
 
     struct Pool {
         bytes32 poolId;
         string name;
-        address protocol;          // Protocol being covered
+        address protocol; // Protocol being covered
         CoverType coverType;
-        uint256 totalCapacity;     // Max coverage capacity
-        uint256 usedCapacity;      // Currently in-use capacity
-        uint256 stakedAmount;      // Total staked by underwriters
-        uint256 basePremiumBps;    // Base annual premium in bps
-        uint256 utilizationCap;    // Max utilization (e.g., 8000 = 80%)
+        uint256 totalCapacity; // Max coverage capacity
+        uint256 usedCapacity; // Currently in-use capacity
+        uint256 stakedAmount; // Total staked by underwriters
+        uint256 basePremiumBps; // Base annual premium in bps
+        uint256 utilizationCap; // Max utilization (e.g., 8000 = 80%)
         bool active;
     }
 
     struct Policy {
         bytes32 poolId;
         address holder;
-        uint256 coverAmount;       // Coverage amount
-        uint256 premiumPaid;       // Total premium paid
+        uint256 coverAmount; // Coverage amount
+        uint256 premiumPaid; // Total premium paid
         uint256 startTime;
         uint256 endTime;
         bool active;
@@ -70,7 +70,7 @@ contract Cover is ERC721, ReentrancyGuard, AccessControl, Pausable {
         bytes32 poolId;
         address claimant;
         uint256 amount;
-        string evidence;           // IPFS hash or description
+        string evidence; // IPFS hash or description
         uint256 submittedAt;
         uint256 votesFor;
         uint256 votesAgainst;
@@ -148,11 +148,7 @@ contract Cover is ERC721, ReentrancyGuard, AccessControl, Pausable {
     // ═══════════════════════════════════════════════════════════════════════
 
     event PoolCreated(
-        bytes32 indexed poolId,
-        string name,
-        address indexed protocol,
-        CoverType coverType,
-        uint256 basePremiumBps
+        bytes32 indexed poolId, string name, address indexed protocol, CoverType coverType, uint256 basePremiumBps
     );
 
     event CoverPurchased(
@@ -164,43 +160,17 @@ contract Cover is ERC721, ReentrancyGuard, AccessControl, Pausable {
         uint256 duration
     );
 
-    event Staked(
-        address indexed underwriter,
-        bytes32 indexed poolId,
-        uint256 amount
-    );
+    event Staked(address indexed underwriter, bytes32 indexed poolId, uint256 amount);
 
-    event Unstaked(
-        address indexed underwriter,
-        bytes32 indexed poolId,
-        uint256 amount
-    );
+    event Unstaked(address indexed underwriter, bytes32 indexed poolId, uint256 amount);
 
-    event ClaimSubmitted(
-        uint256 indexed claimId,
-        uint256 indexed policyId,
-        address indexed claimant,
-        uint256 amount
-    );
+    event ClaimSubmitted(uint256 indexed claimId, uint256 indexed policyId, address indexed claimant, uint256 amount);
 
-    event ClaimVoted(
-        uint256 indexed claimId,
-        address indexed voter,
-        bool approve,
-        uint256 weight
-    );
+    event ClaimVoted(uint256 indexed claimId, address indexed voter, bool approve, uint256 weight);
 
-    event ClaimResolved(
-        uint256 indexed claimId,
-        ClaimStatus status,
-        uint256 payout
-    );
+    event ClaimResolved(uint256 indexed claimId, ClaimStatus status, uint256 payout);
 
-    event RewardsClaimed(
-        address indexed underwriter,
-        bytes32 indexed poolId,
-        uint256 amount
-    );
+    event RewardsClaimed(address indexed underwriter, bytes32 indexed poolId, uint256 amount);
 
     // ═══════════════════════════════════════════════════════════════════════
     // ERRORS
@@ -226,12 +196,9 @@ contract Cover is ERC721, ReentrancyGuard, AccessControl, Pausable {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(
-        address _capitalToken,
-        address _feeReceiver,
-        address _treasury,
-        address _admin
-    ) ERC721("Lux Cover", "COVER") {
+    constructor(address _capitalToken, address _feeReceiver, address _treasury, address _admin)
+        ERC721("Lux Cover", "COVER")
+    {
         capitalToken = IERC20(_capitalToken);
         feeReceiver = _feeReceiver;
         treasury = _treasury;
@@ -298,10 +265,7 @@ contract Cover is ERC721, ReentrancyGuard, AccessControl, Pausable {
      * @param poolId Pool to stake in
      * @param amount Amount to stake
      */
-    function stake(
-        bytes32 poolId,
-        uint256 amount
-    ) external nonReentrant whenNotPaused {
+    function stake(bytes32 poolId, uint256 amount) external nonReentrant whenNotPaused {
         Pool storage pool = pools[poolId];
         if (pool.poolId == bytes32(0)) revert PoolNotFound();
         if (!pool.active) revert PoolNotActive();
@@ -334,10 +298,7 @@ contract Cover is ERC721, ReentrancyGuard, AccessControl, Pausable {
      * @param poolId Pool to unstake from
      * @param amount Amount to unstake
      */
-    function unstake(
-        bytes32 poolId,
-        uint256 amount
-    ) external nonReentrant {
+    function unstake(bytes32 poolId, uint256 amount) external nonReentrant {
         Stake storage s = stakes[msg.sender][poolId];
         if (s.amount < amount) revert InsufficientStake();
 
@@ -371,11 +332,12 @@ contract Cover is ERC721, ReentrancyGuard, AccessControl, Pausable {
      * @param coverAmount Amount of coverage
      * @param duration Duration in seconds
      */
-    function buyCover(
-        bytes32 poolId,
-        uint256 coverAmount,
-        uint256 duration
-    ) external nonReentrant whenNotPaused returns (uint256 policyId) {
+    function buyCover(bytes32 poolId, uint256 coverAmount, uint256 duration)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (uint256 policyId)
+    {
         Pool storage pool = pools[poolId];
         if (pool.poolId == bytes32(0)) revert PoolNotFound();
         if (!pool.active) revert PoolNotActive();
@@ -425,11 +387,7 @@ contract Cover is ERC721, ReentrancyGuard, AccessControl, Pausable {
      * @param coverAmount Coverage amount
      * @param duration Duration in seconds
      */
-    function calculatePremium(
-        bytes32 poolId,
-        uint256 coverAmount,
-        uint256 duration
-    ) public view returns (uint256) {
+    function calculatePremium(bytes32 poolId, uint256 coverAmount, uint256 duration) public view returns (uint256) {
         Pool storage pool = pools[poolId];
         if (pool.poolId == bytes32(0)) return 0;
 
@@ -437,9 +395,7 @@ contract Cover is ERC721, ReentrancyGuard, AccessControl, Pausable {
         uint256 basePremium = (coverAmount * pool.basePremiumBps) / BPS;
 
         // Adjust for utilization (higher util = higher premium)
-        uint256 utilization = pool.totalCapacity > 0
-            ? (pool.usedCapacity * BPS) / pool.totalCapacity
-            : 0;
+        uint256 utilization = pool.totalCapacity > 0 ? (pool.usedCapacity * BPS) / pool.totalCapacity : 0;
 
         // Premium multiplier based on utilization (1x at 0%, 2x at 80%)
         uint256 multiplier = BPS + (utilization * BPS) / pool.utilizationCap;
@@ -460,11 +416,11 @@ contract Cover is ERC721, ReentrancyGuard, AccessControl, Pausable {
      * @param amount Claim amount
      * @param evidence IPFS hash or evidence description
      */
-    function submitClaim(
-        uint256 policyId,
-        uint256 amount,
-        string calldata evidence
-    ) external nonReentrant returns (uint256 claimId) {
+    function submitClaim(uint256 policyId, uint256 amount, string calldata evidence)
+        external
+        nonReentrant
+        returns (uint256 claimId)
+    {
         Policy storage policy = policies[policyId];
         if (policy.holder == address(0)) revert PolicyNotFound();
         if (!policy.active) revert PolicyNotActive();
@@ -496,10 +452,7 @@ contract Cover is ERC721, ReentrancyGuard, AccessControl, Pausable {
      * @param claimId Claim ID
      * @param approve True to approve, false to deny
      */
-    function voteClaim(
-        uint256 claimId,
-        bool approve
-    ) external onlyRole(ASSESSOR_ROLE) {
+    function voteClaim(uint256 claimId, bool approve) external onlyRole(ASSESSOR_ROLE) {
         Claim storage claim = claims[claimId];
         if (claim.claimant == address(0)) revert ClaimNotFound();
         if (claim.status != ClaimStatus.PENDING) revert ClaimAlreadyResolved();
@@ -659,12 +612,7 @@ contract Cover is ERC721, ReentrancyGuard, AccessControl, Pausable {
     }
 
     // Required overrides
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721, AccessControl)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }

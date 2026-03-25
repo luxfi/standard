@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {IERC1271, ILegacyERC1271} from "./interfaces/IERC1271.sol";
+import { IERC1271, ILegacyERC1271 } from "./interfaces/IERC1271.sol";
 
 /// @title IRingtailThreshold
 /// @dev Interface for the Ringtail Threshold precompile at 0x020000000000000000000000000000000000000B
 /// Ringtail is a post-quantum threshold signature scheme based on Module-LWE (Lattice)
 interface IRingtailThreshold {
-    function verifyThreshold(
-        uint32 threshold,
-        uint32 totalParties,
-        bytes32 messageHash,
-        bytes calldata signature
-    ) external view returns (bool valid);
+    function verifyThreshold(uint32 threshold, uint32 totalParties, bytes32 messageHash, bytes calldata signature)
+        external
+        view
+        returns (bool valid);
 }
 
 /// @title Safe Ringtail Signer
@@ -124,12 +122,7 @@ contract SafeRingtailSigner is IERC1271, ILegacyERC1271 {
         }
 
         // Call the Ringtail precompile to verify the threshold signature
-        return IRingtailThreshold(RINGTAIL_PRECOMPILE).verifyThreshold(
-            threshold,
-            totalParties,
-            messageHash,
-            signature
-        );
+        return IRingtailThreshold(RINGTAIL_PRECOMPILE).verifyThreshold(threshold, totalParties, messageHash, signature);
     }
 
     /// @inheritdoc IERC1271
@@ -210,12 +203,8 @@ contract SafeRingtailCoSigner is IERC1271 {
             revert InvalidCoSignature();
         }
 
-        bool valid = IRingtailThreshold(RINGTAIL_PRECOMPILE).verifyThreshold(
-            threshold,
-            totalParties,
-            safeTxHash,
-            coSignature
-        );
+        bool valid =
+            IRingtailThreshold(RINGTAIL_PRECOMPILE).verifyThreshold(threshold, totalParties, safeTxHash, coSignature);
 
         if (!valid) revert InvalidCoSignature();
 
@@ -228,12 +217,8 @@ contract SafeRingtailCoSigner is IERC1271 {
             return bytes4(0);
         }
 
-        bool valid = IRingtailThreshold(RINGTAIL_PRECOMPILE).verifyThreshold(
-            threshold,
-            totalParties,
-            message,
-            signature
-        );
+        bool valid =
+            IRingtailThreshold(RINGTAIL_PRECOMPILE).verifyThreshold(threshold, totalParties, message, signature);
 
         if (valid) magicValue = IERC1271.isValidSignature.selector;
     }
@@ -243,24 +228,11 @@ contract SafeRingtailCoSigner is IERC1271 {
 /// @notice Factory for deploying SafeRingtailSigner instances
 contract SafeRingtailFactory {
     /// @notice Emitted when a new Ringtail signer is deployed
-    event RingtailSignerDeployed(
-        address indexed signer,
-        uint32 threshold,
-        uint32 totalParties,
-        bool quantumResistant
-    );
+    event RingtailSignerDeployed(address indexed signer, uint32 threshold, uint32 totalParties, bool quantumResistant);
 
     /// @notice Deploy a new SafeRingtailSigner
-    function deploy(
-        uint32 threshold,
-        uint32 totalParties,
-        bytes calldata publicKey
-    ) external returns (address) {
-        SafeRingtailSigner signer = new SafeRingtailSigner(
-            threshold,
-            totalParties,
-            publicKey
-        );
+    function deploy(uint32 threshold, uint32 totalParties, bytes calldata publicKey) external returns (address) {
+        SafeRingtailSigner signer = new SafeRingtailSigner(threshold, totalParties, publicKey);
 
         emit RingtailSignerDeployed(address(signer), threshold, totalParties, true);
 
@@ -268,18 +240,11 @@ contract SafeRingtailFactory {
     }
 
     /// @notice Deploy a new SafeRingtailCoSigner for a Safe
-    function deployCoSigner(
-        address safe,
-        uint32 threshold,
-        uint32 totalParties,
-        bytes calldata publicKey
-    ) external returns (address) {
-        SafeRingtailCoSigner coSigner = new SafeRingtailCoSigner(
-            safe,
-            threshold,
-            totalParties,
-            publicKey
-        );
+    function deployCoSigner(address safe, uint32 threshold, uint32 totalParties, bytes calldata publicKey)
+        external
+        returns (address)
+    {
+        SafeRingtailCoSigner coSigner = new SafeRingtailCoSigner(safe, threshold, totalParties, publicKey);
 
         return address(coSigner);
     }

@@ -8,8 +8,8 @@
 // Copyright (c) 2019 Arca Labs Inc — https://arca.digital
 pragma solidity ^0.8.24;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {IComplianceModule} from "../interfaces/IComplianceModule.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IComplianceModule } from "../interfaces/IComplianceModule.sol";
 
 /**
  * @title JurisdictionModule
@@ -50,10 +50,7 @@ contract JurisdictionModule is IComplianceModule, AccessControl {
 
     // ── Admin functions ──────────────────────────────────────────────────────
 
-    function setAccountJurisdiction(address account, bytes2 countryCode)
-        external
-        onlyRole(JURISDICTION_ADMIN_ROLE)
-    {
+    function setAccountJurisdiction(address account, bytes2 countryCode) external onlyRole(JURISDICTION_ADMIN_ROLE) {
         if (account == address(0)) revert ZeroAddress();
         accountJurisdiction[account] = countryCode;
         emit AccountJurisdictionSet(account, countryCode);
@@ -87,7 +84,11 @@ contract JurisdictionModule is IComplianceModule, AccessControl {
 
     // ── IComplianceModule ────────────────────────────────────────────────────
 
-    function checkTransfer(address from, address to, uint256 /* amount */ )
+    function checkTransfer(
+        address from,
+        address to,
+        uint256 /* amount */
+    )
         external
         view
         override

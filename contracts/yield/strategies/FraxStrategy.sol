@@ -19,9 +19,9 @@ pragma solidity ^0.8.24;
  * - veFXS: Vote-escrowed FXS for boosted yields
  */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FRAX PROTOCOL INTERFACES
@@ -72,7 +72,9 @@ interface IFraxlendPair {
     function redeem(uint256 _shares, address _receiver, address _owner) external returns (uint256 _amountToReturn);
     function addCollateral(uint256 _collateralAmount, address _borrower) external;
     function removeCollateral(uint256 _collateralAmount, address _receiver, address _borrower) external;
-    function borrow(uint256 _borrowAmount, uint256 _collateralAmount, address _receiver, address _borrower) external returns (uint256 _shares);
+    function borrow(uint256 _borrowAmount, uint256 _collateralAmount, address _receiver, address _borrower)
+        external
+        returns (uint256 _shares);
     function repay(uint256 _shares, address _borrower) external returns (uint256 _amountRepaid);
     function totalAsset() external view returns (uint128 amount, uint128 shares);
     function totalBorrow() external view returns (uint128 amount, uint128 shares);
@@ -80,20 +82,26 @@ interface IFraxlendPair {
     function userBorrowShares(address _user) external view returns (uint256);
     function toAssetAmount(uint256 _shares, bool _roundUp) external view returns (uint256);
     function toAssetShares(uint256 _amount, bool _roundUp) external view returns (uint256);
-    function currentRateInfo() external view returns (
-        uint32 lastBlock,
-        uint32 feeToProtocolRate,
-        uint64 lastTimestamp,
-        uint64 ratePerSec,
-        uint64 fullUtilizationRate
-    );
-    function getConstants() external view returns (
-        uint256 _LTV_PRECISION,
-        uint256 _EXCHANGE_PRECISION,
-        uint256 _UTIL_PRECISION,
-        uint256 _FEE_PRECISION,
-        uint256 _INTEREST_PRECISION
-    );
+    function currentRateInfo()
+        external
+        view
+        returns (
+            uint32 lastBlock,
+            uint32 feeToProtocolRate,
+            uint64 lastTimestamp,
+            uint64 ratePerSec,
+            uint64 fullUtilizationRate
+        );
+    function getConstants()
+        external
+        view
+        returns (
+            uint256 _LTV_PRECISION,
+            uint256 _EXCHANGE_PRECISION,
+            uint256 _UTIL_PRECISION,
+            uint256 _FEE_PRECISION,
+            uint256 _INTEREST_PRECISION
+        );
     function asset() external view returns (address);
     function collateralContract() external view returns (address);
     function cleanLiquidationFee() external view returns (uint256);
@@ -107,7 +115,7 @@ interface IveFXS {
         int128 amount;
         uint256 end;
     }
-    
+
     function create_lock(uint256 _value, uint256 _unlock_time) external;
     function increase_amount(uint256 _value) external;
     function increase_unlock_time(uint256 _unlock_time) external;
@@ -151,18 +159,18 @@ library FraxAddresses {
     // Core tokens
     address internal constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
     address internal constant FXS = 0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0;
-    
+
     // Staked tokens
     address internal constant sFRAX = 0xA663B02CF0a4b149d2aD41910CB81e23e1c41c32;
     address internal constant frxETH = 0x5E8422345238F34275888049021821E8E08CAa1f;
     address internal constant sfrxETH = 0xac3E018457B222d93114458476f3E3416Abbe38F;
-    
+
     // Governance
     address internal constant veFXS = 0xc8418aF6358FFddA74e09Ca9CC3Fe03Ca6aDC5b0;
-    
+
     // Minters
     address internal constant frxETH_MINTER = 0xbAFA44EFE7901E04E39Dad13167D089C559c1138;
-    
+
     // Fraxlend markets (example: FRAX/USDC)
     address internal constant FRAXLEND_FRAX_USDC = 0xDbe88DBAc39263c47629ebbA02b3eF4cf0752A72;
     address internal constant FRAXLEND_FRAX_CRV = 0x3835a58CA93Cdb5f912519ad366826aC9a752510;
@@ -235,7 +243,7 @@ contract sFRAXStrategy is Ownable {
 
     constructor(address _vault) Ownable(msg.sender) {
         vault = _vault;
-        
+
         // Approve sFRAX to spend FRAX
         IERC20(FRAX).approve(address(SFRAX), type(uint256).max);
     }
@@ -405,7 +413,7 @@ contract sfrxETHStrategy is Ownable {
 
     constructor(address _vault) Ownable(msg.sender) {
         vault = _vault;
-        
+
         // Approve sfrxETH to spend frxETH
         IERC20(FRXETH).approve(address(SFRXETH), type(uint256).max);
     }
@@ -504,7 +512,7 @@ contract sfrxETHStrategy is Ownable {
         vault = _vault;
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -570,10 +578,7 @@ contract FraxlendStrategy is Ownable {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(
-        address _vault,
-        address _pair
-    ) Ownable(msg.sender) {
+    constructor(address _vault, address _pair) Ownable(msg.sender) {
         vault = _vault;
         pair = IFraxlendPair(_pair);
         underlyingAsset = pair.asset();
@@ -634,11 +639,11 @@ contract FraxlendStrategy is Ownable {
     function currentAPY() external view returns (uint256) {
         // Get current rate per second and annualize
         (,,, uint64 ratePerSec,) = pair.currentRateInfo();
-        
+
         // Annualize: rate * seconds per year
         // ratePerSec is in 1e18 precision
         uint256 annualRate = uint256(ratePerSec) * 365 days;
-        
+
         // Convert to basis points (1e18 = 100% = 10000 bps)
         return annualRate / 1e14;
     }
@@ -666,7 +671,7 @@ contract FraxlendStrategy is Ownable {
     function utilizationRate() external view returns (uint256) {
         (uint128 totalAssetAmount,) = pair.totalAsset();
         (uint128 totalBorrowAmount,) = pair.totalBorrow();
-        
+
         if (totalAssetAmount == 0) return 0;
         return (uint256(totalBorrowAmount) * 1e18) / uint256(totalAssetAmount);
     }
@@ -767,7 +772,7 @@ contract veFXSStrategy is Ownable {
 
     constructor(address _vault) Ownable(msg.sender) {
         vault = _vault;
-        
+
         // Approve veFXS to spend FXS
         IERC20(FXS).approve(address(VEFXS), type(uint256).max);
     }
@@ -790,7 +795,7 @@ contract veFXSStrategy is Ownable {
             // Round down to week
             // forge-lint: disable-next-line(divide-before-multiply)
             unlockTime = (unlockTime / 1 weeks) * 1 weeks;
-            
+
             VEFXS.create_lock(amount, unlockTime);
             lockEnd = unlockTime;
         } else {
@@ -871,11 +876,11 @@ contract veFXSStrategy is Ownable {
     function extendLock(uint256 newUnlockTime) external onlyOwner {
         require(newUnlockTime > lockEnd, "veFXSStrategy: must extend");
         require(newUnlockTime <= block.timestamp + MAX_LOCK_TIME, "veFXSStrategy: too long");
-        
+
         // Round down to week
         // forge-lint: disable-next-line(divide-before-multiply)
         newUnlockTime = (newUnlockTime / 1 weeks) * 1 weeks;
-        
+
         VEFXS.increase_unlock_time(newUnlockTime);
         lockEnd = newUnlockTime;
 
@@ -976,11 +981,7 @@ contract FraxGaugeStrategy is Ownable {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(
-        address _vault,
-        address _gauge,
-        address _lpToken
-    ) Ownable(msg.sender) {
+    constructor(address _vault, address _gauge, address _lpToken) Ownable(msg.sender) {
         vault = _vault;
         gauge = IFraxGauge(_gauge);
         lpToken = _lpToken;
@@ -1046,9 +1047,9 @@ contract FraxGaugeStrategy is Ownable {
         // Calculate APY from reward rate
         uint256 rewardRate = gauge.rewardRate();
         uint256 totalSupply = gauge.totalSupply();
-        
+
         if (totalSupply == 0) return 0;
-        
+
         // Annualize: (rewardRate * seconds/year) / totalSupply
         // Assume FXS price relative to LP token value
         uint256 annualRewards = rewardRate * 365 days;
@@ -1141,11 +1142,7 @@ contract FraxStrategyFactory {
     }
 
     /// @notice Deploy gauge strategy
-    function deployGaugeStrategy(
-        address vault,
-        address gauge,
-        address lpToken
-    ) external returns (address) {
+    function deployGaugeStrategy(address vault, address gauge, address lpToken) external returns (address) {
         FraxGaugeStrategy strategy = new FraxGaugeStrategy(vault, gauge, lpToken);
         emit GaugeStrategyDeployed(address(strategy), vault, gauge);
         return address(strategy);

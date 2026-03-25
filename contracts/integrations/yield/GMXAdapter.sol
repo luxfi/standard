@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {RiskTier, CapitalState} from "@luxfi/contracts/interfaces/core/ICapital.sol";
-import {YieldType, AccrualPattern} from "@luxfi/contracts/interfaces/core/IYield.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { RiskTier, CapitalState } from "@luxfi/contracts/interfaces/core/ICapital.sol";
+import { YieldType, AccrualPattern } from "@luxfi/contracts/interfaces/core/IYield.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════╗
@@ -54,7 +54,9 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 /// @notice GLP vault interface (simplified)
 interface IGLPManager {
     function addLiquidity(address _token, uint256 _amount, uint256 _minUsdg, uint256 _minGlp) external returns (uint256);
-    function removeLiquidity(address _tokenOut, uint256 _glpAmount, uint256 _minOut, address _receiver) external returns (uint256);
+    function removeLiquidity(address _tokenOut, uint256 _glpAmount, uint256 _minOut, address _receiver)
+        external
+        returns (uint256);
 }
 
 /// @notice GLP token interface
@@ -72,8 +74,12 @@ interface IFeeGlpTracker {
 
 /// @notice Staking rewards
 interface IRewardRouter {
-    function mintAndStakeGlp(address _token, uint256 _amount, uint256 _minUsdg, uint256 _minGlp) external returns (uint256);
-    function unstakeAndRedeemGlp(address _tokenOut, uint256 _glpAmount, uint256 _minOut, address _receiver) external returns (uint256);
+    function mintAndStakeGlp(address _token, uint256 _amount, uint256 _minUsdg, uint256 _minGlp)
+        external
+        returns (uint256);
+    function unstakeAndRedeemGlp(address _tokenOut, uint256 _glpAmount, uint256 _minOut, address _receiver)
+        external
+        returns (uint256);
     function handleRewards(
         bool _shouldClaimGmx,
         bool _shouldStakeGmx,
@@ -87,12 +93,12 @@ interface IRewardRouter {
 
 /// @notice Position data
 struct YieldPosition {
-    uint256 glpAmount;          // GLP tokens held
-    uint256 depositValue;       // Original deposit value (USD)
-    uint256 feesClaimed;        // Total fees claimed
-    uint256 lastClaimTime;      // Last claim timestamp
-    address depositToken;       // Token used for deposit
-    bool active;                // Position is active
+    uint256 glpAmount; // GLP tokens held
+    uint256 depositValue; // Original deposit value (USD)
+    uint256 feesClaimed; // Total fees claimed
+    uint256 lastClaimTime; // Last claim timestamp
+    address depositToken; // Token used for deposit
+    bool active; // Position is active
 }
 
 /// @notice Adapter errors
@@ -150,13 +156,7 @@ contract GMXYieldAdapter is ReentrancyGuard {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════════
 
-    constructor(
-        address _rewardRouter,
-        address _glpManager,
-        address _glp,
-        address _feeGlpTracker,
-        address _weth
-    ) {
+    constructor(address _rewardRouter, address _glpManager, address _glp, address _feeGlpTracker, address _weth) {
         rewardRouter = IRewardRouter(_rewardRouter);
         glpManager = IGLPManager(_glpManager);
         glp = IGLP(_glp);
@@ -175,11 +175,11 @@ contract GMXYieldAdapter is ReentrancyGuard {
      * @param minGlp Minimum GLP to receive
      * @return glpReceived Amount of GLP minted
      */
-    function deposit(
-        address token,
-        uint256 amount,
-        uint256 minGlp
-    ) external nonReentrant returns (uint256 glpReceived) {
+    function deposit(address token, uint256 amount, uint256 minGlp)
+        external
+        nonReentrant
+        returns (uint256 glpReceived)
+    {
         if (amount == 0) revert ZeroAmount();
 
         // Transfer token
@@ -209,11 +209,11 @@ contract GMXYieldAdapter is ReentrancyGuard {
      * @param minOut Minimum tokens to receive
      * @return received Amount received
      */
-    function withdraw(
-        address tokenOut,
-        uint256 glpAmount,
-        uint256 minOut
-    ) external nonReentrant returns (uint256 received) {
+    function withdraw(address tokenOut, uint256 glpAmount, uint256 minOut)
+        external
+        nonReentrant
+        returns (uint256 received)
+    {
         YieldPosition storage pos = positions[msg.sender];
         if (!pos.active) revert PositionNotActive();
         if (glpAmount > pos.glpAmount) revert InsufficientGLP();
@@ -257,13 +257,13 @@ contract GMXYieldAdapter is ReentrancyGuard {
 
         // Claim WETH fees from GMX
         rewardRouter.handleRewards(
-            false,  // don't claim GMX
-            false,  // don't stake GMX
-            false,  // don't claim esGMX
-            false,  // don't stake esGMX
-            false,  // don't stake multiplier points
-            true,   // claim WETH
-            false   // keep as WETH
+            false, // don't claim GMX
+            false, // don't stake GMX
+            false, // don't claim esGMX
+            false, // don't stake esGMX
+            false, // don't stake multiplier points
+            true, // claim WETH
+            false // keep as WETH
         );
 
         // Calculate user's share
@@ -285,9 +285,7 @@ contract GMXYieldAdapter is ReentrancyGuard {
      * @dev Triggers fee distribution from GMX
      */
     function harvestFees() external {
-        rewardRouter.handleRewards(
-            false, false, false, false, false, true, false
-        );
+        rewardRouter.handleRewards(false, false, false, false, false, true, false);
 
         uint256 balance = weth.balanceOf(address(this));
         emit FeesHarvested(balance, block.timestamp);
@@ -311,15 +309,19 @@ contract GMXYieldAdapter is ReentrancyGuard {
     /**
      * @notice Get position summary
      */
-    function getPosition(address user) external view returns (
-        uint256 glpAmount,
-        uint256 depositValue,
-        uint256 currentValue,
-        uint256 feesClaimed,
-        uint256 pendingFees,
-        uint256 totalReturn,
-        uint256 apy
-    ) {
+    function getPosition(address user)
+        external
+        view
+        returns (
+            uint256 glpAmount,
+            uint256 depositValue,
+            uint256 currentValue,
+            uint256 feesClaimed,
+            uint256 pendingFees,
+            uint256 totalReturn,
+            uint256 apy
+        )
+    {
         YieldPosition storage pos = positions[user];
 
         glpAmount = pos.glpAmount;
@@ -371,16 +373,16 @@ contract GMXYieldAdapter is ReentrancyGuard {
     /**
      * @notice Explain why this is Shariah-compliant
      */
-    function shariahCompliance() external pure returns (
-        bool compliant,
-        string memory reason,
-        string memory yieldSource,
-        string memory comparisonToInterest
-    ) {
+    function shariahCompliance()
+        external
+        pure
+        returns (bool compliant, string memory reason, string memory yieldSource, string memory comparisonToInterest)
+    {
         compliant = true;
         reason = "Fees represent payment for a legitimate service (market making / liquidity provision)";
         yieldSource = "Trading fees from perpetual traders using GLP liquidity";
-        comparisonToInterest = "Unlike interest (riba), fees are earned through active service provision, not passive time-based extraction";
+        comparisonToInterest =
+            "Unlike interest (riba), fees are earned through active service provision, not passive time-based extraction";
     }
 
     /**
@@ -424,10 +426,7 @@ contract GMXYieldAdapter is ReentrancyGuard {
      * @param maxAmount Maximum amount to route
      * @return routed Amount actually routed
      */
-    function routeToSettlement(
-        address recipient,
-        uint256 maxAmount
-    ) external nonReentrant returns (uint256 routed) {
+    function routeToSettlement(address recipient, uint256 maxAmount) external nonReentrant returns (uint256 routed) {
         uint256 pending = getPendingFees(msg.sender);
         if (pending == 0) revert NoFeesToClaim();
 
@@ -444,10 +443,7 @@ contract GMXYieldAdapter is ReentrancyGuard {
      * @param timeHorizon Time to project (seconds)
      * @return projected Estimated fees over period
      */
-    function projectYield(
-        address user,
-        uint256 timeHorizon
-    ) external view returns (uint256 projected) {
+    function projectYield(address user, uint256 timeHorizon) external view returns (uint256 projected) {
         YieldPosition storage pos = positions[user];
         if (!pos.active || pos.glpAmount == 0) return 0;
 
@@ -471,20 +467,11 @@ contract GMXYieldAdapter is ReentrancyGuard {
 contract GMXYieldAdapterFactory {
     event AdapterCreated(address indexed adapter);
 
-    function create(
-        address rewardRouter,
-        address glpManager,
-        address glp,
-        address feeGlpTracker,
-        address weth
-    ) external returns (address) {
-        GMXYieldAdapter adapter = new GMXYieldAdapter(
-            rewardRouter,
-            glpManager,
-            glp,
-            feeGlpTracker,
-            weth
-        );
+    function create(address rewardRouter, address glpManager, address glp, address feeGlpTracker, address weth)
+        external
+        returns (address)
+    {
+        GMXYieldAdapter adapter = new GMXYieldAdapter(rewardRouter, glpManager, glp, feeGlpTracker, weth);
         emit AdapterCreated(address(adapter));
         return address(adapter);
     }

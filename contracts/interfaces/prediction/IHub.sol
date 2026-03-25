@@ -48,17 +48,9 @@ interface IHub {
         uint256 outcomeSlotCount
     );
 
-    event MarketStatusUpdated(
-        bytes32 indexed marketId,
-        MarketStatus oldStatus,
-        MarketStatus newStatus
-    );
+    event MarketStatusUpdated(bytes32 indexed marketId, MarketStatus oldStatus, MarketStatus newStatus);
 
-    event MarketResolved(
-        bytes32 indexed marketId,
-        uint256[] payouts,
-        uint256 timestamp
-    );
+    event MarketResolved(bytes32 indexed marketId, uint256[] payouts, uint256 timestamp);
 
     // ═══════════════════════════════════════════════════════════════════════
     // FUNCTIONS
@@ -85,18 +77,12 @@ interface IHub {
     /**
      * @notice Record market resolution (called by oracle relay)
      */
-    function recordResolution(
-        bytes32 marketId,
-        uint256[] calldata payouts
-    ) external;
+    function recordResolution(bytes32 marketId, uint256[] calldata payouts) external;
 
     /**
      * @notice Broadcast resolution to spoke chain via Warp
      */
-    function broadcastResolution(
-        bytes32 marketId,
-        bytes32 targetChainId
-    ) external returns (bytes32 messageId);
+    function broadcastResolution(bytes32 marketId, bytes32 targetChainId) external returns (bytes32 messageId);
 
     /**
      * @notice Get market data

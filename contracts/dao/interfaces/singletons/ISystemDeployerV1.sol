@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IVotesERC20V1} from "../deployables/IVotesERC20V1.sol";
+import { IVotesERC20V1 } from "../deployables/IVotesERC20V1.sol";
 
 /**
  * @title ISystemDeployerV1
@@ -37,25 +37,39 @@ import {IVotesERC20V1} from "../deployables/IVotesERC20V1.sol";
 interface ISystemDeployerV1 {
     // --- Errors ---
 
-    /** @notice Thrown when attempting to deploy a proxy with a non-contract implementation */
+    /**
+     * @notice Thrown when attempting to deploy a proxy with a non-contract implementation
+     */
     error ImplementationMustBeAContract();
 
-    /** @notice Thrown when deployProxy is called directly instead of via delegatecall */
+    /**
+     * @notice Thrown when deployProxy is called directly instead of via delegatecall
+     */
     error MustBeCalledViaDelegatecall();
 
-    /** @notice Thrown when referencing a governance token that wasn't deployed */
+    /**
+     * @notice Thrown when referencing a governance token that wasn't deployed
+     */
     error VotesERC20V1NotFoundAtIndex(uint256 tokenIndex);
 
-    /** @notice Thrown when attempting to deploy multiple freeze voting contracts */
+    /**
+     * @notice Thrown when attempting to deploy multiple freeze voting contracts
+     */
     error CannotDeployMultipleFreezeVotingContracts();
 
-    /** @notice Thrown when freeze guard references a freeze voting contract that wasn't deployed */
+    /**
+     * @notice Thrown when freeze guard references a freeze voting contract that wasn't deployed
+     */
     error FreezeVotingContractNotDeployed();
 
-    /** @notice Thrown when freeze components reference an Governor module that wasn't deployed */
+    /**
+     * @notice Thrown when freeze components reference an Governor module that wasn't deployed
+     */
     error GovernorModuleNotDeployed();
 
-    /** @notice Thrown when FreezeVotingStandaloneV1 is paired with FreezeGuardGovernorV1 */
+    /**
+     * @notice Thrown when FreezeVotingStandaloneV1 is paired with FreezeGuardGovernorV1
+     */
     error InvalidFreezeVotingGuardPairing();
 
     // --- Structs ---
@@ -339,11 +353,7 @@ interface ISystemDeployerV1 {
      * @param salt The salt used for deterministic deployment
      * @param initData The initialization data for the Safe
      */
-    event SystemDeployed(
-        address indexed safeProxyFactory,
-        bytes32 salt,
-        bytes initData
-    );
+    event SystemDeployed(address indexed safeProxyFactory, bytes32 salt, bytes initData);
 
     // --- View Functions ---
 
@@ -357,12 +367,10 @@ interface ISystemDeployerV1 {
      * @param deployer_ The address that will deploy (usually this contract)
      * @return proxy The predicted proxy address
      */
-    function predictProxyAddress(
-        address implementation_,
-        bytes memory initData_,
-        bytes32 salt_,
-        address deployer_
-    ) external view returns (address proxy);
+    function predictProxyAddress(address implementation_, bytes memory initData_, bytes32 salt_, address deployer_)
+        external
+        view
+        returns (address proxy);
 
     // --- State-Changing Functions ---
 
@@ -402,9 +410,7 @@ interface ISystemDeployerV1 {
      * @custom:throws MustBeCalledViaDelegatecall if called directly
      * @custom:emits ProxyDeployed (only emitted for new deployments, not existing contracts)
      */
-    function deployProxy(
-        address implementation_,
-        bytes memory initData_,
-        bytes32 salt_
-    ) external returns (address proxy);
+    function deployProxy(address implementation_, bytes memory initData_, bytes32 salt_)
+        external
+        returns (address proxy);
 }

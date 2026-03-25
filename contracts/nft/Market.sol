@@ -3,42 +3,46 @@
 pragma solidity ^0.8.31;
 
 /**
-    ███╗   ███╗ █████╗ ██████╗ ██╗  ██╗███████╗████████╗
-    ████╗ ████║██╔══██╗██╔══██╗██║ ██╔╝██╔════╝╚══██╔══╝
-    ██╔████╔██║███████║██████╔╝█████╔╝ █████╗     ██║
-    ██║╚██╔╝██║██╔══██║██╔══██╗██╔═██╗ ██╔══╝     ██║
-    ██║ ╚═╝ ██║██║  ██║██║  ██║██║  ██╗███████╗   ██║
-    ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝   ╚═╝
+ *     ███╗   ███╗ █████╗ ██████╗ ██╗  ██╗███████╗████████╗
+ *     ████╗ ████║██╔══██╗██╔══██╗██║ ██╔╝██╔════╝╚══██╔══╝
+ *     ██╔████╔██║███████║██████╔╝█████╔╝ █████╗     ██║
+ *     ██║╚██╔╝██║██╔══██║██╔══██╗██╔═██╗ ██╔══╝     ██║
+ *     ██║ ╚═╝ ██║██║  ██║██║  ██║██║  ██╗███████╗   ██║
+ *     ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝   ╚═╝
+ *
+ *     Market - Native NFT Marketplace
+ *
+ *     First-principles NFT trading:
+ *     - Direct peer-to-peer trades (no custodial escrow)
+ *     - Protocol fees to DAO Treasury
+ *     - Royalty enforcement via ERC-2981
+ *     - LUSD as primary settlement currency
+ *     - Seaport integration for trustless execution
+ */
 
-    Market - Native NFT Marketplace
-
-    First-principles NFT trading:
-    - Direct peer-to-peer trades (no custodial escrow)
-    - Protocol fees to DAO Treasury
-    - Royalty enforcement via ERC-2981
-    - LUSD as primary settlement currency
-    - Seaport integration for trustless execution
-*/
-
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { IERC2981 } from "@openzeppelin/contracts/interfaces/IERC2981.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // Seaport interfaces
-import {SeaportInterface} from "seaport-types/src/interfaces/SeaportInterface.sol";
-import {ILRC20} from "../tokens/interfaces/ILRC20.sol";
+import { SeaportInterface } from "seaport-types/src/interfaces/SeaportInterface.sol";
+import { ILRC20 } from "../tokens/interfaces/ILRC20.sol";
 
 /**
  * @title IMarket
  * @notice Market interface
  */
 interface IMarket {
-    function list(address nftContract, uint256 tokenId, address paymentToken, uint256 price, uint256 duration) external returns (bytes32);
+    function list(address nftContract, uint256 tokenId, address paymentToken, uint256 price, uint256 duration)
+        external
+        returns (bytes32);
     function cancelListing(bytes32 listingId) external;
     function buy(bytes32 listingId) external payable;
-    function makeOffer(address nftContract, uint256 tokenId, address paymentToken, uint256 amount, uint256 duration) external returns (bytes32);
+    function makeOffer(address nftContract, uint256 tokenId, address paymentToken, uint256 amount, uint256 duration)
+        external
+        returns (bytes32);
     function cancelOffer(bytes32 offerId) external;
     function acceptOffer(bytes32 offerId) external;
 }
@@ -72,7 +76,7 @@ contract Market is IMarket, Ownable, ReentrancyGuard {
         address seller;
         address nftContract;
         uint256 tokenId;
-        address paymentToken;    // address(0) = native LUX, otherwise LRC20
+        address paymentToken; // address(0) = native LUX, otherwise LRC20
         uint256 price;
         uint256 expiration;
         bool active;
@@ -213,11 +217,7 @@ contract Market is IMarket, Ownable, ReentrancyGuard {
      * @param conduit_ Conduit address for approvals
      * @param lusd_ LUSD stablecoin address
      */
-    constructor(
-        address seaport_,
-        address conduit_,
-        address lusd_
-    ) Ownable(msg.sender) {
+    constructor(address seaport_, address conduit_, address lusd_) Ownable(msg.sender) {
         seaport = SeaportInterface(seaport_);
         conduit = conduit_;
         lusd = ILRC20(lusd_);
@@ -245,13 +245,12 @@ contract Market is IMarket, Ownable, ReentrancyGuard {
      * @param duration Listing duration in seconds
      * @return listingId Unique listing identifier
      */
-    function list(
-        address nftContract,
-        uint256 tokenId,
-        address paymentToken,
-        uint256 price,
-        uint256 duration
-    ) external whenNotPaused nonReentrant returns (bytes32 listingId) {
+    function list(address nftContract, uint256 tokenId, address paymentToken, uint256 price, uint256 duration)
+        external
+        whenNotPaused
+        nonReentrant
+        returns (bytes32 listingId)
+    {
         if (price == 0) revert InvalidPrice();
         if (duration == 0) revert InvalidExpiration();
 
@@ -260,20 +259,13 @@ contract Market is IMarket, Ownable, ReentrancyGuard {
         if (nft.ownerOf(tokenId) != msg.sender) revert NotOwner();
 
         // Verify approval
-        if (!nft.isApprovedForAll(msg.sender, address(this)) &&
-            nft.getApproved(tokenId) != address(this)) {
+        if (!nft.isApprovedForAll(msg.sender, address(this)) && nft.getApproved(tokenId) != address(this)) {
             revert NotApproved();
         }
 
         // Generate listing ID
         uint256 nonce = userNonce[msg.sender]++;
-        listingId = keccak256(abi.encodePacked(
-            msg.sender,
-            nftContract,
-            tokenId,
-            nonce,
-            block.timestamp
-        ));
+        listingId = keccak256(abi.encodePacked(msg.sender, nftContract, tokenId, nonce, block.timestamp));
 
         uint256 expiration = block.timestamp + duration;
 
@@ -339,22 +331,22 @@ contract Market is IMarket, Ownable, ReentrancyGuard {
             if (msg.value < price) revert InsufficientPayment();
 
             // Pay seller
-            (bool success, ) = payable(listing.seller).call{value: sellerProceeds}("");
+            (bool success,) = payable(listing.seller).call{ value: sellerProceeds }("");
             if (!success) revert TransferFailed();
 
             // Pay protocol fee
-            (success, ) = DAO_TREASURY.call{value: protocolFee}("");
+            (success,) = DAO_TREASURY.call{ value: protocolFee }("");
             if (!success) revert TransferFailed();
 
             // Pay royalty
             if (royaltyFee > 0 && royaltyRecipient != address(0)) {
-                (success, ) = payable(royaltyRecipient).call{value: royaltyFee}("");
+                (success,) = payable(royaltyRecipient).call{ value: royaltyFee }("");
                 if (!success) revert TransferFailed();
             }
 
             // Refund excess
             if (msg.value > price) {
-                (success, ) = payable(msg.sender).call{value: msg.value - price}("");
+                (success,) = payable(msg.sender).call{ value: msg.value - price }("");
                 if (!success) revert TransferFailed();
             }
         } else {
@@ -415,13 +407,12 @@ contract Market is IMarket, Ownable, ReentrancyGuard {
      * @param duration Offer duration in seconds
      * @return offerId Unique offer identifier
      */
-    function makeOffer(
-        address nftContract,
-        uint256 tokenId,
-        address paymentToken,
-        uint256 amount,
-        uint256 duration
-    ) external whenNotPaused nonReentrant returns (bytes32 offerId) {
+    function makeOffer(address nftContract, uint256 tokenId, address paymentToken, uint256 amount, uint256 duration)
+        external
+        whenNotPaused
+        nonReentrant
+        returns (bytes32 offerId)
+    {
         if (amount == 0) revert InvalidPrice();
         if (duration == 0) revert InvalidExpiration();
         if (paymentToken == address(0)) revert InvalidPrice(); // Must use LRC20 for offers
@@ -432,14 +423,7 @@ contract Market is IMarket, Ownable, ReentrancyGuard {
 
         // Generate offer ID
         uint256 nonce = userNonce[msg.sender]++;
-        offerId = keccak256(abi.encodePacked(
-            msg.sender,
-            nftContract,
-            tokenId,
-            nonce,
-            block.timestamp,
-            "offer"
-        ));
+        offerId = keccak256(abi.encodePacked(msg.sender, nftContract, tokenId, nonce, block.timestamp, "offer"));
 
         uint256 expiration = block.timestamp + duration;
 
@@ -622,5 +606,5 @@ contract Market is IMarket, Ownable, ReentrancyGuard {
     // RECEIVE
     // ═══════════════════════════════════════════════════════════════════════
 
-    receive() external payable {}
+    receive() external payable { }
 }

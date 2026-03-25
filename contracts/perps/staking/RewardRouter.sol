@@ -2,24 +2,23 @@
 
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
-import {IRewardTracker} from "./interfaces/IRewardTracker.sol";
-import {IRewardRouter} from "./interfaces/IRewardRouter.sol";
-import {IVester} from "./interfaces/IVester.sol";
-import {IMintable} from "../tokens/interfaces/IMintable.sol";
-import {IWETH} from "../tokens/interfaces/IWETH.sol";
-import {ILLPManager} from "../core/interfaces/ILLPManager.sol";
-import {Governable} from "../access/Governable.sol";
+import { IRewardTracker } from "./interfaces/IRewardTracker.sol";
+import { IRewardRouter } from "./interfaces/IRewardRouter.sol";
+import { IVester } from "./interfaces/IVester.sol";
+import { IMintable } from "../tokens/interfaces/IMintable.sol";
+import { IWETH } from "../tokens/interfaces/IWETH.sol";
+import { ILLPManager } from "../core/interfaces/ILLPManager.sol";
+import { Governable } from "../access/Governable.sol";
 
 /// @title RewardRouter
 /// @notice Routes staking and rewards for LPX perpetuals protocol
 /// @dev DLUX is the single governance rewards token across the Lux ecosystem
 contract RewardRouter is IRewardRouter, ReentrancyGuard, Governable {
-
     using SafeERC20 for IERC20;
     using Address for address payable;
 
@@ -37,7 +36,7 @@ contract RewardRouter is IRewardRouter, ReentrancyGuard, Governable {
 
     address public lpx;
     address public xLPX;
-    address public dlux;  // DLUX governance token - single reward token
+    address public dlux; // DLUX governance token - single reward token
 
     address public llp; // LLP - Lux Liquidity Provider token
 
@@ -59,7 +58,7 @@ contract RewardRouter is IRewardRouter, ReentrancyGuard, Governable {
     address public govToken;
     VotingPowerType public votingPowerType;
 
-    mapping (address => address) public pendingReceivers;
+    mapping(address => address) public pendingReceivers;
 
     event StakeLPX(address account, address token, uint256 amount);
     event UnstakeLPX(address account, address token, uint256 amount);
@@ -130,7 +129,11 @@ contract RewardRouter is IRewardRouter, ReentrancyGuard, Governable {
         IERC20(_token).safeTransfer(_account, _amount);
     }
 
-    function batchStakeLPXForAccount(address[] memory _accounts, uint256[] memory _amounts) external nonReentrant onlyGov {
+    function batchStakeLPXForAccount(address[] memory _accounts, uint256[] memory _amounts)
+        external
+        nonReentrant
+        onlyGov
+    {
         address _lpx = lpx;
         for (uint256 i = 0; i < _accounts.length; i++) {
             _stakeLPX(msg.sender, _accounts[i], _lpx, _amounts[i]);
@@ -157,11 +160,16 @@ contract RewardRouter is IRewardRouter, ReentrancyGuard, Governable {
         _unstakeLPX(msg.sender, xLPX, _amount, true);
     }
 
-    function mintAndStakeLLP(address _token, uint256 _amount, uint256 _minLPUSD, uint256 _minLLP) external nonReentrant returns (uint256) {
+    function mintAndStakeLLP(address _token, uint256 _amount, uint256 _minLPUSD, uint256 _minLLP)
+        external
+        nonReentrant
+        returns (uint256)
+    {
         require(_amount > 0, "invalid _amount");
 
         address account = msg.sender;
-        uint256 llpAmount = ILLPManager(llpManager).addLiquidityForAccount(account, account, _token, _amount, _minLPUSD, _minLLP);
+        uint256 llpAmount =
+            ILLPManager(llpManager).addLiquidityForAccount(account, account, _token, _amount, _minLPUSD, _minLLP);
         IRewardTracker(feeLLPTracker).stakeForAccount(account, account, llp, llpAmount);
         IRewardTracker(stakedLLPTracker).stakeForAccount(account, account, feeLLPTracker, llpAmount);
 
@@ -173,11 +181,12 @@ contract RewardRouter is IRewardRouter, ReentrancyGuard, Governable {
     function mintAndStakeLLPETH(uint256 _minLPUSD, uint256 _minLLP) external payable nonReentrant returns (uint256) {
         require(msg.value > 0, "invalid msg.value");
 
-        IWETH(weth).deposit{value: msg.value}();
+        IWETH(weth).deposit{ value: msg.value }();
         IERC20(weth).approve(llpManager, msg.value);
 
         address account = msg.sender;
-        uint256 llpAmount = ILLPManager(llpManager).addLiquidityForAccount(address(this), account, weth, msg.value, _minLPUSD, _minLLP);
+        uint256 llpAmount =
+            ILLPManager(llpManager).addLiquidityForAccount(address(this), account, weth, msg.value, _minLPUSD, _minLLP);
 
         IRewardTracker(feeLLPTracker).stakeForAccount(account, account, llp, llpAmount);
         IRewardTracker(stakedLLPTracker).stakeForAccount(account, account, feeLLPTracker, llpAmount);
@@ -187,26 +196,36 @@ contract RewardRouter is IRewardRouter, ReentrancyGuard, Governable {
         return llpAmount;
     }
 
-    function unstakeAndRedeemLLP(address _tokenOut, uint256 _llpAmount, uint256 _minOut, address _receiver) external nonReentrant returns (uint256) {
+    function unstakeAndRedeemLLP(address _tokenOut, uint256 _llpAmount, uint256 _minOut, address _receiver)
+        external
+        nonReentrant
+        returns (uint256)
+    {
         require(_llpAmount > 0, "invalid _llpAmount");
 
         address account = msg.sender;
         IRewardTracker(stakedLLPTracker).unstakeForAccount(account, feeLLPTracker, _llpAmount, account);
         IRewardTracker(feeLLPTracker).unstakeForAccount(account, llp, _llpAmount, account);
-        uint256 amountOut = ILLPManager(llpManager).removeLiquidityForAccount(account, _tokenOut, _llpAmount, _minOut, _receiver);
+        uint256 amountOut =
+            ILLPManager(llpManager).removeLiquidityForAccount(account, _tokenOut, _llpAmount, _minOut, _receiver);
 
         emit UnstakeLLP(account, _llpAmount);
 
         return amountOut;
     }
 
-    function unstakeAndRedeemLLPETH(uint256 _llpAmount, uint256 _minOut, address payable _receiver) external nonReentrant returns (uint256) {
+    function unstakeAndRedeemLLPETH(uint256 _llpAmount, uint256 _minOut, address payable _receiver)
+        external
+        nonReentrant
+        returns (uint256)
+    {
         require(_llpAmount > 0, "invalid _llpAmount");
 
         address account = msg.sender;
         IRewardTracker(stakedLLPTracker).unstakeForAccount(account, feeLLPTracker, _llpAmount, account);
         IRewardTracker(feeLLPTracker).unstakeForAccount(account, llp, _llpAmount, account);
-        uint256 amountOut = ILLPManager(llpManager).removeLiquidityForAccount(account, weth, _llpAmount, _minOut, address(this));
+        uint256 amountOut =
+            ILLPManager(llpManager).removeLiquidityForAccount(account, weth, _llpAmount, _minOut, address(this));
 
         IWETH(weth).withdraw(amountOut);
 
@@ -390,26 +409,57 @@ contract RewardRouter is IRewardRouter, ReentrancyGuard, Governable {
     }
 
     function _validateReceiver(address _receiver) private view {
-        require(IRewardTracker(stakedLPXTracker).averageStakedAmounts(_receiver) == 0, "stakedLPXTracker.averageStakedAmounts > 0");
-        require(IRewardTracker(stakedLPXTracker).cumulativeRewards(_receiver) == 0, "stakedLPXTracker.cumulativeRewards > 0");
+        require(
+            IRewardTracker(stakedLPXTracker).averageStakedAmounts(_receiver) == 0,
+            "stakedLPXTracker.averageStakedAmounts > 0"
+        );
+        require(
+            IRewardTracker(stakedLPXTracker).cumulativeRewards(_receiver) == 0, "stakedLPXTracker.cumulativeRewards > 0"
+        );
 
-        require(IRewardTracker(bonusLPXTracker).averageStakedAmounts(_receiver) == 0, "bonusLPXTracker.averageStakedAmounts > 0");
-        require(IRewardTracker(bonusLPXTracker).cumulativeRewards(_receiver) == 0, "bonusLPXTracker.cumulativeRewards > 0");
+        require(
+            IRewardTracker(bonusLPXTracker).averageStakedAmounts(_receiver) == 0,
+            "bonusLPXTracker.averageStakedAmounts > 0"
+        );
+        require(
+            IRewardTracker(bonusLPXTracker).cumulativeRewards(_receiver) == 0, "bonusLPXTracker.cumulativeRewards > 0"
+        );
 
-        require(IRewardTracker(feeLPXTracker).averageStakedAmounts(_receiver) == 0, "feeLPXTracker.averageStakedAmounts > 0");
+        require(
+            IRewardTracker(feeLPXTracker).averageStakedAmounts(_receiver) == 0, "feeLPXTracker.averageStakedAmounts > 0"
+        );
         require(IRewardTracker(feeLPXTracker).cumulativeRewards(_receiver) == 0, "feeLPXTracker.cumulativeRewards > 0");
 
-        require(IVester(lpxVester).transferredAverageStakedAmounts(_receiver) == 0, "lpxVester.transferredAverageStakedAmounts > 0");
-        require(IVester(lpxVester).transferredCumulativeRewards(_receiver) == 0, "lpxVester.transferredCumulativeRewards > 0");
+        require(
+            IVester(lpxVester).transferredAverageStakedAmounts(_receiver) == 0,
+            "lpxVester.transferredAverageStakedAmounts > 0"
+        );
+        require(
+            IVester(lpxVester).transferredCumulativeRewards(_receiver) == 0,
+            "lpxVester.transferredCumulativeRewards > 0"
+        );
 
-        require(IRewardTracker(stakedLLPTracker).averageStakedAmounts(_receiver) == 0, "stakedLLPTracker.averageStakedAmounts > 0");
-        require(IRewardTracker(stakedLLPTracker).cumulativeRewards(_receiver) == 0, "stakedLLPTracker.cumulativeRewards > 0");
+        require(
+            IRewardTracker(stakedLLPTracker).averageStakedAmounts(_receiver) == 0,
+            "stakedLLPTracker.averageStakedAmounts > 0"
+        );
+        require(
+            IRewardTracker(stakedLLPTracker).cumulativeRewards(_receiver) == 0, "stakedLLPTracker.cumulativeRewards > 0"
+        );
 
-        require(IRewardTracker(feeLLPTracker).averageStakedAmounts(_receiver) == 0, "feeLLPTracker.averageStakedAmounts > 0");
+        require(
+            IRewardTracker(feeLLPTracker).averageStakedAmounts(_receiver) == 0, "feeLLPTracker.averageStakedAmounts > 0"
+        );
         require(IRewardTracker(feeLLPTracker).cumulativeRewards(_receiver) == 0, "feeLLPTracker.cumulativeRewards > 0");
 
-        require(IVester(llpVester).transferredAverageStakedAmounts(_receiver) == 0, "lpxVester.transferredAverageStakedAmounts > 0");
-        require(IVester(llpVester).transferredCumulativeRewards(_receiver) == 0, "lpxVester.transferredCumulativeRewards > 0");
+        require(
+            IVester(llpVester).transferredAverageStakedAmounts(_receiver) == 0,
+            "lpxVester.transferredAverageStakedAmounts > 0"
+        );
+        require(
+            IVester(llpVester).transferredCumulativeRewards(_receiver) == 0,
+            "lpxVester.transferredCumulativeRewards > 0"
+        );
 
         require(IERC20(lpxVester).balanceOf(_receiver) == 0, "lpxVester.balance > 0");
         require(IERC20(llpVester).balanceOf(_receiver) == 0, "llpVester.balance > 0");
@@ -457,13 +507,13 @@ contract RewardRouter is IRewardRouter, ReentrancyGuard, Governable {
         // get the DLUX balance of the user, this would be the amount of
         // DLUX that has not been staked
         uint256 dluxAmount = IERC20(dlux).balanceOf(_account);
-        if (dluxAmount == 0) { return; }
+        if (dluxAmount == 0) return;
 
         // get the baseStakedAmount which would be the sum of staked LPX and staked xLPX tokens
         uint256 baseStakedAmount = IRewardTracker(stakedLPXTracker).stakedAmounts(_account);
         uint256 maxAllowedDLUXAmount = baseStakedAmount * maxBoostBasisPoints / BASIS_POINTS_DIVISOR;
         uint256 currentDLUXAmount = IRewardTracker(feeLPXTracker).depositBalances(_account, dlux);
-        if (currentDLUXAmount == maxAllowedDLUXAmount) { return; }
+        if (currentDLUXAmount == maxAllowedDLUXAmount) return;
 
         // if the currentDLUXAmount is more than the maxAllowedDLUXAmount
         // unstake the excess tokens
@@ -536,7 +586,7 @@ contract RewardRouter is IRewardRouter, ReentrancyGuard, Governable {
 
     function _syncVotingPower(address _account, uint256 _amount) private {
         uint256 currentVotingPower = IERC20(govToken).balanceOf(_account);
-        if (currentVotingPower == _amount) { return; }
+        if (currentVotingPower == _amount) return;
 
         if (currentVotingPower > _amount) {
             uint256 amountToBurn = currentVotingPower - _amount;

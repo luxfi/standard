@@ -6,4 +6,5 @@ pragma solidity ^0.8.31;
 /// @dev TODO: Implement payload verification
 abstract contract RedStoneAdapter {
     // RedStone-specific implementation pending
-}
+
+    }

@@ -2,8 +2,8 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import {IERC1155MetadataURI} from "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
+import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import { IERC1155MetadataURI } from "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
 
 /**
  * @title ILRC1155
@@ -26,7 +26,8 @@ interface ILRC1155 is IERC1155 {
     // - isApprovedForAll(address account, address operator) external view returns (bool)
     // - safeTransferFrom(address from, address to, uint256 id, uint256 value, bytes calldata data) external
     // - safeBatchTransferFrom(address from, address to, uint256[] calldata ids, uint256[] calldata values, bytes calldata data) external
-}
+
+    }
 
 /**
  * @title ILRC1155MetadataURI
@@ -35,4 +36,5 @@ interface ILRC1155 is IERC1155 {
 interface ILRC1155MetadataURI is ILRC1155, IERC1155MetadataURI {
     // Inherits metadata function:
     // - uri(uint256 id) external view returns (string memory)
-}
+
+    }
