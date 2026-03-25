@@ -71,10 +71,14 @@ contract FeeGov is Ownable {
         emit Rate(_rate, version);
     }
 
-    /// @notice Set bounds
+    /// @notice Set bounds (clamps rate to new bounds)
     function bounds(uint16 _floor, uint16 _cap) external onlyOwner {
+        require(_floor <= _cap, "floor > cap");
         floor = _floor;
         cap = _cap;
+        // Clamp rate to new bounds
+        if (rate < _floor) rate = _floor;
+        if (rate > _cap) rate = _cap;
     }
 
     /// @notice Add chain
