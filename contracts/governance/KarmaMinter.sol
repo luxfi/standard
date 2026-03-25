@@ -247,6 +247,9 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
         for (uint256 i = 0; i < recipients.length; i++) {
             address recipient = recipients[i];
 
+            // Cannot mint for self (consistent with rewardKarma)
+            if (recipient == msg.sender) continue;
+
             // Skip if cooldown not expired
             if (block.timestamp < lastReward[recipient][eventType] + config.cooldown) {
                 continue;
