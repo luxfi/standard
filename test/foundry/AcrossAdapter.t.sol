@@ -2,12 +2,9 @@
 pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
-import {
-    AcrossAdapter,
-    ISpokePool
-} from "../../contracts/integrations/bridges/AcrossAdapter.sol";
-import {BridgeParams, BridgeRoute, BridgeStatus} from "../../contracts/interfaces/adapters/IBridgeAdapter.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { AcrossAdapter, ISpokePool } from "../../contracts/integrations/bridges/AcrossAdapter.sol";
+import { BridgeParams, BridgeRoute, BridgeStatus } from "../../contracts/interfaces/adapters/IBridgeAdapter.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MOCKS
@@ -17,7 +14,10 @@ contract MockAcrossToken is ERC20 {
     constructor() ERC20("Mock", "MCK") {
         _mint(msg.sender, 1_000_000e18);
     }
-    function mint(address to, uint256 amt) external { _mint(to, amt); }
+
+    function mint(address to, uint256 amt) external {
+        _mint(to, amt);
+    }
 }
 
 contract MockSpokePool is ISpokePool {
@@ -200,12 +200,7 @@ contract AcrossAdapterTest is Test {
     function test_bridge_revert_zeroAmount() public {
         vm.prank(alice);
         BridgeParams memory params = BridgeParams({
-            dstChainId: ARB_CHAIN_ID,
-            token: address(token),
-            amount: 0,
-            recipient: alice,
-            minAmountOut: 0,
-            extraData: ""
+            dstChainId: ARB_CHAIN_ID, token: address(token), amount: 0, recipient: alice, minAmountOut: 0, extraData: ""
         });
 
         vm.expectRevert(AcrossAdapter.ZeroAmount.selector);
@@ -217,12 +212,7 @@ contract AcrossAdapterTest is Test {
         token.approve(address(adapter), 100e18);
 
         BridgeParams memory params = BridgeParams({
-            dstChainId: 999,
-            token: address(token),
-            amount: 100e18,
-            recipient: alice,
-            minAmountOut: 0,
-            extraData: ""
+            dstChainId: 999, token: address(token), amount: 100e18, recipient: alice, minAmountOut: 0, extraData: ""
         });
 
         vm.expectRevert(abi.encodeWithSelector(AcrossAdapter.UnsupportedChain.selector, uint256(999)));
@@ -327,9 +317,9 @@ contract AcrossAdapterTest is Test {
     function test_receiveNative() public {
         vm.deal(alice, 1 ether);
         vm.prank(alice);
-        (bool ok,) = address(adapter).call{value: 0.1 ether}("");
+        (bool ok,) = address(adapter).call{ value: 0.1 ether }("");
         assertTrue(ok);
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

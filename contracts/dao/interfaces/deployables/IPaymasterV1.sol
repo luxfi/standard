@@ -28,13 +28,19 @@ pragma solidity ^0.8.30;
 interface IPaymasterV1 {
     // --- Errors ---
 
-    /** @notice Thrown when attempting to validate an operation without a configured validator */
+    /**
+     * @notice Thrown when attempting to validate an operation without a configured validator
+     */
     error NoValidatorSet(address target, bytes4 selector);
 
-    /** @notice Thrown when the validator rejects the operation */
+    /**
+     * @notice Thrown when the validator rejects the operation
+     */
     error ValidationFailed(address target, bytes4 selector);
 
-    /** @notice Thrown when setting an invalid validator (zero address or wrong interface) */
+    /**
+     * @notice Thrown when setting an invalid validator (zero address or wrong interface)
+     */
     error InvalidValidator();
 
     // --- Events ---
@@ -45,11 +51,7 @@ interface IPaymasterV1 {
      * @param selector The function selector (4-byte signature)
      * @param validator The address of the validator contract
      */
-    event FunctionValidatorSet(
-        address target,
-        bytes4 selector,
-        address validator
-    );
+    event FunctionValidatorSet(address target, bytes4 selector, address validator);
 
     /**
      * @notice Emitted when a validator is removed for a specific function
@@ -67,11 +69,7 @@ interface IPaymasterV1 {
      * @param entryPoint_ The ERC-4337 EntryPoint contract address
      * @param lightAccountFactory_ The factory contract for creating Light Accounts
      */
-    function initialize(
-        address owner_,
-        address entryPoint_,
-        address lightAccountFactory_
-    ) external;
+    function initialize(address owner_, address entryPoint_, address lightAccountFactory_) external;
 
     // --- View Functions ---
 
@@ -81,10 +79,10 @@ interface IPaymasterV1 {
      * @param selector_ The function selector to query
      * @return functionValidator The validator address (zero if none set)
      */
-    function getFunctionValidator(
-        address contractAddress_,
-        bytes4 selector_
-    ) external view returns (address functionValidator);
+    function getFunctionValidator(address contractAddress_, bytes4 selector_)
+        external
+        view
+        returns (address functionValidator);
 
     // --- State-Changing Functions ---
 
@@ -99,11 +97,7 @@ interface IPaymasterV1 {
      * @custom:throws InvalidValidator if validator is zero address or doesn't implement IFunctionValidator
      * @custom:emits FunctionValidatorSet
      */
-    function setFunctionValidator(
-        address contractAddress_,
-        bytes4 selector_,
-        address validator_
-    ) external;
+    function setFunctionValidator(address contractAddress_, bytes4 selector_, address validator_) external;
 
     /**
      * @notice Removes the validator for a specific function
@@ -114,8 +108,5 @@ interface IPaymasterV1 {
      * @custom:access Restricted to owner
      * @custom:emits FunctionValidatorRemoved
      */
-    function removeFunctionValidator(
-        address contractAddress_,
-        bytes4 selector_
-    ) external;
+    function removeFunctionValidator(address contractAddress_, bytes4 selector_) external;
 }

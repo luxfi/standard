@@ -14,9 +14,9 @@ pragma solidity ^0.8.24;
  * - Prisma: mkUSD collateralized stablecoin, vePRISMA boost
  */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SKY PROTOCOL INTERFACES (formerly MakerDAO)
@@ -292,12 +292,10 @@ interface IVePrisma {
 /// @notice Prisma boost calculator for emissions
 interface IPrismaBoostCalculator {
     /// @notice Calculate boosted amount based on vePRISMA
-    function getBoostedAmount(
-        address account,
-        uint256 amount,
-        uint256 previousAmount,
-        uint256 totalWeeklyEmissions
-    ) external view returns (uint256 boostedAmount);
+    function getBoostedAmount(address account, uint256 amount, uint256 previousAmount, uint256 totalWeeklyEmissions)
+        external
+        view
+        returns (uint256 boostedAmount);
 
     /// @notice Get claimable with boost applied
     function getClaimableWithBoost(address claimant) external view returns (uint256 maxBoosted, uint256 boosted);
@@ -446,7 +444,15 @@ contract SkyStrategy is Ownable {
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice
-    function deposit(uint256 amount, bytes calldata /* data */) external onlyVault whenActive returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        whenActive
+        returns (uint256 shares)
+    {
         if (amount == 0) revert ZeroAmount();
 
         // Transfer USDS from vault
@@ -461,7 +467,15 @@ contract SkyStrategy is Ownable {
     }
 
     /// @notice
-    function withdraw(uint256 shares, address recipient, bytes calldata /* data */) external onlyVault returns (uint256 amount) {
+    function withdraw(
+        uint256 shares,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        returns (uint256 amount)
+    {
         if (shares > totalShares) revert InsufficientShares();
 
         totalShares -= shares;
@@ -743,7 +757,15 @@ contract AngleStrategy is Ownable {
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice
-    function deposit(uint256 amount, bytes calldata /* data */) external onlyVault whenActive returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        whenActive
+        returns (uint256 shares)
+    {
         if (amount == 0) revert ZeroAmount();
 
         // Transfer agEUR from vault
@@ -763,7 +785,15 @@ contract AngleStrategy is Ownable {
     }
 
     /// @notice
-    function withdraw(uint256 shares, address recipient, bytes calldata /* data */) external onlyVault returns (uint256 amount) {
+    function withdraw(
+        uint256 shares,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        returns (uint256 amount)
+    {
         if (shares > totalShares) revert InsufficientShares();
 
         // Withdraw from gauge if staked
@@ -1066,7 +1096,15 @@ contract LiquityStrategy is Ownable {
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice
-    function deposit(uint256 amount, bytes calldata /* data */) external onlyVault whenActive returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        whenActive
+        returns (uint256 shares)
+    {
         if (amount == 0) revert ZeroAmount();
 
         // Transfer LUSD from vault
@@ -1083,7 +1121,15 @@ contract LiquityStrategy is Ownable {
     }
 
     /// @notice
-    function withdraw(uint256 shares, address recipient, bytes calldata /* data */) external onlyVault returns (uint256 amount) {
+    function withdraw(
+        uint256 shares,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        returns (uint256 amount)
+    {
         uint256 compounded = stabilityPool.getCompoundedLUSDDeposit(address(this));
         if (shares > compounded) revert InsufficientBalance();
 
@@ -1122,7 +1168,7 @@ contract LiquityStrategy is Ownable {
         if (ethBalance > 0) {
             accumulatedETH += ethBalance;
             // Send ETH to vault (vault should handle wrapping if needed)
-            (bool sent,) = vault.call{value: ethBalance}("");
+            (bool sent,) = vault.call{ value: ethBalance }("");
             require(sent, "ETH transfer failed");
             emit EthGainHarvested(ethBalance);
             harvested = ethBalance;
@@ -1152,7 +1198,7 @@ contract LiquityStrategy is Ownable {
 
                 uint256 ethFromStaking = address(this).balance;
                 if (ethFromStaking > 0) {
-                    (bool sent,) = vault.call{value: ethFromStaking}("");
+                    (bool sent,) = vault.call{ value: ethFromStaking }("");
                     require(sent, "ETH transfer failed");
                     harvested += ethFromStaking;
                 }
@@ -1279,7 +1325,7 @@ contract LiquityStrategy is Ownable {
 
         uint256 ethBalance = address(this).balance;
         if (ethBalance > 0) {
-            (bool sent,) = owner().call{value: ethBalance}("");
+            (bool sent,) = owner().call{ value: ethBalance }("");
             require(sent, "ETH transfer failed");
         }
 
@@ -1294,7 +1340,7 @@ contract LiquityStrategy is Ownable {
     }
 
     /// @notice Receive ETH from liquidations
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1404,7 +1450,15 @@ contract RaftStrategy is Ownable {
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice
-    function deposit(uint256 amount, bytes calldata /* data */) external onlyVault whenActive returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        whenActive
+        returns (uint256 shares)
+    {
         if (amount == 0) revert ZeroAmount();
 
         // Transfer R from vault
@@ -1422,7 +1476,15 @@ contract RaftStrategy is Ownable {
     }
 
     /// @notice
-    function withdraw(uint256 shares, address recipient, bytes calldata /* data */) external onlyVault returns (uint256 amount) {
+    function withdraw(
+        uint256 shares,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        returns (uint256 amount)
+    {
         if (shares > totalStaked) revert InsufficientBalance();
 
         // Unstake R
@@ -1671,7 +1733,15 @@ contract PrismaStrategy is Ownable {
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice
-    function deposit(uint256 amount, bytes calldata /* data */) external onlyVault whenActive returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        whenActive
+        returns (uint256 shares)
+    {
         if (amount == 0) revert ZeroAmount();
 
         // Transfer mkUSD from vault
@@ -1685,7 +1755,15 @@ contract PrismaStrategy is Ownable {
     }
 
     /// @notice
-    function withdraw(uint256 shares, address recipient, bytes calldata /* data */) external onlyVault returns (uint256 amount) {
+    function withdraw(
+        uint256 shares,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        returns (uint256 amount)
+    {
         if (shares > totalDeposited) revert InsufficientBalance();
 
         // Withdraw from Prisma vault

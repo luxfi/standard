@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20, SafeERC20} from "@luxfi/standard/tokens/ERC20.sol";
-import {Ownable} from "@luxfi/standard/access/Access.sol";
-import {ReentrancyGuard} from "@luxfi/standard/utils/Utils.sol";
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import { IERC20, SafeERC20 } from "@luxfi/standard/tokens/ERC20.sol";
+import { Ownable } from "@luxfi/standard/access/Access.sol";
+import { ReentrancyGuard } from "@luxfi/standard/utils/Utils.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title ProtocolLiquidity
@@ -77,31 +77,31 @@ contract ProtocolLiquidity is Ownable, ReentrancyGuard {
 
     /// @notice LP pool configuration
     struct PoolConfig {
-        address lpToken;           // LP token address
-        address token0;            // First token in pair
-        address token1;            // Second token in pair
-        uint256 discount;          // Discount in BPS (e.g., 1500 = 15%)
-        uint256 vestingPeriod;     // Vesting duration
-        uint256 maxCapacity;       // Max LP to accept
-        uint256 totalDeposited;    // Current deposits
-        bool active;               // Whether accepting deposits
+        address lpToken; // LP token address
+        address token0; // First token in pair
+        address token1; // Second token in pair
+        uint256 discount; // Discount in BPS (e.g., 1500 = 15%)
+        uint256 vestingPeriod; // Vesting duration
+        uint256 maxCapacity; // Max LP to accept
+        uint256 totalDeposited; // Current deposits
+        bool active; // Whether accepting deposits
     }
 
     /// @notice Single-sided deposit configuration
     struct SingleSidedConfig {
-        address token;             // Token to accept
-        uint256 discount;          // Discount (lower than LP)
-        uint256 vestingPeriod;     // Vesting duration
-        uint256 maxCapacity;       // Max to accept
-        uint256 totalDeposited;    // Current deposits
-        address pairedPool;        // LP pool to create liquidity in
+        address token; // Token to accept
+        uint256 discount; // Discount (lower than LP)
+        uint256 vestingPeriod; // Vesting duration
+        uint256 maxCapacity; // Max to accept
+        uint256 totalDeposited; // Current deposits
+        address pairedPool; // LP pool to create liquidity in
         bool active;
     }
 
     /// @notice User's vesting position
     struct VestingPosition {
-        uint256 totalOwed;         // Total ASHA owed
-        uint256 claimed;           // Amount claimed
+        uint256 totalOwed; // Total ASHA owed
+        uint256 claimed; // Amount claimed
         uint256 vestingStart;
         uint256 vestingEnd;
     }
@@ -119,8 +119,8 @@ contract ProtocolLiquidity is Ownable, ReentrancyGuard {
     mapping(address => uint256) public userPositionCount;
 
     /// @notice Protocol liquidity stats
-    uint256 public totalPOLValue;       // Total POL value in sats
-    uint256 public totalASHABonded;     // Total ASHA distributed via bonding
+    uint256 public totalPOLValue; // Total POL value in sats
+    uint256 public totalASHABonded; // Total ASHA distributed via bonding
 
     // ═══════════════════════════════════════════════════════════════════════
     // EVENTS
@@ -154,12 +154,7 @@ contract ProtocolLiquidity is Ownable, ReentrancyGuard {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(
-        address protocolToken_,
-        address treasury_,
-        address oracle_,
-        address owner_
-    ) Ownable(owner_) {
+    constructor(address protocolToken_, address treasury_, address oracle_, address owner_) Ownable(owner_) {
         if (protocolToken_ == address(0)) revert ZeroAddress();
         if (treasury_ == address(0)) revert ZeroAddress();
         if (oracle_ == address(0)) revert ZeroAddress();
@@ -180,12 +175,11 @@ contract ProtocolLiquidity is Ownable, ReentrancyGuard {
      * @param vestingPeriod Vesting duration
      * @param maxCapacity Maximum LP to accept
      */
-    function addPool(
-        address lpToken,
-        uint256 discount,
-        uint256 vestingPeriod,
-        uint256 maxCapacity
-    ) external onlyOwner returns (uint256 poolId) {
+    function addPool(address lpToken, uint256 discount, uint256 vestingPeriod, uint256 maxCapacity)
+        external
+        onlyOwner
+        returns (uint256 poolId)
+    {
         if (lpToken == address(0)) revert ZeroAddress();
         if (discount > MAX_DISCOUNT) revert InvalidDiscount();
 
@@ -472,12 +466,11 @@ contract ProtocolLiquidity is Ownable, ReentrancyGuard {
     /**
      * @notice Get protocol liquidity stats
      */
-    function getStats() external view returns (
-        uint256 polValue,
-        uint256 ashaBonded,
-        uint256 activePools,
-        uint256 activeSingleSided
-    ) {
+    function getStats()
+        external
+        view
+        returns (uint256 polValue, uint256 ashaBonded, uint256 activePools, uint256 activeSingleSided)
+    {
         polValue = totalPOLValue;
         ashaBonded = totalASHABonded;
 

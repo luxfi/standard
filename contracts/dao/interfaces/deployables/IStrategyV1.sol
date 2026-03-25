@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IVotingTypes} from "./IVotingTypes.sol";
+import { IVotingTypes } from "./IVotingTypes.sol";
 
 /**
  * @title IStrategyV1
@@ -36,37 +36,59 @@ import {IVotingTypes} from "./IVotingTypes.sol";
 interface IStrategyV1 {
     // --- Errors ---
 
-    /** @notice Thrown when attempting to use a proposer adapter that is not configured */
+    /**
+     * @notice Thrown when attempting to use a proposer adapter that is not configured
+     */
     error InvalidProposerAdapter();
 
-    /** @notice Thrown when attempting to initialize with no voting configs */
+    /**
+     * @notice Thrown when attempting to initialize with no voting configs
+     */
     error NoVotingConfigs();
 
-    /** @notice Thrown when attempting to initialize with no proposer adapters */
+    /**
+     * @notice Thrown when attempting to initialize with no proposer adapters
+     */
     error NoProposerAdapters();
 
-    /** @notice Thrown when basis numerator is >= 1,000,000 (100%) or < 500,000 (50%) */
+    /**
+     * @notice Thrown when basis numerator is >= 1,000,000 (100%) or < 500,000 (50%)
+     */
     error InvalidBasisNumerator();
 
-    /** @notice Thrown when a function restricted to strategyAdmin is called by another address */
+    /**
+     * @notice Thrown when a function restricted to strategyAdmin is called by another address
+     */
     error InvalidStrategyAdmin();
 
-    /** @notice Thrown when attempting to vote on a proposal after its voting period has ended */
+    /**
+     * @notice Thrown when attempting to vote on a proposal after its voting period has ended
+     */
     error ProposalNotActive();
 
-    /** @notice Thrown when a voting config returns zero voting weight for a voter */
+    /**
+     * @notice Thrown when a voting config returns zero voting weight for a voter
+     */
     error NoVotingWeight(uint256 configIndex);
 
-    /** @notice Thrown when an invalid vote type is provided (not 0=NO, 1=YES, 2=ABSTAIN) */
+    /**
+     * @notice Thrown when an invalid vote type is provided (not 0=NO, 1=YES, 2=ABSTAIN)
+     */
     error InvalidVoteType();
 
-    /** @notice Thrown when accessing a proposal that hasn't been initialized */
+    /**
+     * @notice Thrown when accessing a proposal that hasn't been initialized
+     */
     error ProposalNotInitialized();
 
-    /** @notice Thrown when using a voting config index that is out of bounds */
+    /**
+     * @notice Thrown when using a voting config index that is out of bounds
+     */
     error InvalidVotingConfig(uint256 configIndex);
 
-    /** @notice Thrown when attempting to add/remove address(0) as a freeze voter */
+    /**
+     * @notice Thrown when attempting to add/remove address(0) as a freeze voter
+     */
     error InvalidAddress();
 
     // --- Structs ---
@@ -115,12 +137,7 @@ interface IStrategyV1 {
      * @param voteType The type of vote cast (NO, YES, or ABSTAIN)
      * @param totalWeightCastedInTx Total voting weight used across all adapters in this transaction
      */
-    event Voted(
-        address indexed voter,
-        uint32 indexed proposalId,
-        VoteType voteType,
-        uint256 totalWeightCastedInTx
-    );
+    event Voted(address indexed voter, uint32 indexed proposalId, VoteType voteType, uint256 totalWeightCastedInTx);
 
     /**
      * @notice Emitted when a proposal's voting period is initialized
@@ -130,10 +147,7 @@ interface IStrategyV1 {
      * @param votingStartBlock Block number for voting snapshots
      */
     event ProposalInitialized(
-        uint32 indexed proposalId,
-        uint48 votingStartTimestamp,
-        uint48 votingEndTimestamp,
-        uint32 votingStartBlock
+        uint32 indexed proposalId, uint48 votingStartTimestamp, uint48 votingEndTimestamp, uint32 votingStartBlock
     );
 
     /**
@@ -141,10 +155,7 @@ interface IStrategyV1 {
      * @param freezeVoterContract The freeze voting contract address
      * @param isAuthorized Whether the contract is now authorized
      */
-    event FreezeVoterAuthorizationChanged(
-        address indexed freezeVoterContract,
-        bool isAuthorized
-    );
+    event FreezeVoterAuthorizationChanged(address indexed freezeVoterContract, bool isAuthorized);
 
     /**
      * @notice Emitted when a vote is cast after the voting period has ended
@@ -189,10 +200,7 @@ interface IStrategyV1 {
      * @param votingConfigs_ Array of voting configurations (weight strategy + vote tracker pairs)
      * @custom:throws NoVotingConfigs if votingConfigs_ array is empty
      */
-    function initialize2(
-        address strategyAdmin_,
-        IVotingTypes.VotingConfig[] calldata votingConfigs_
-    ) external;
+    function initialize2(address strategyAdmin_, IVotingTypes.VotingConfig[] calldata votingConfigs_) external;
 
     // --- View Functions ---
 
@@ -205,11 +213,10 @@ interface IStrategyV1 {
      * @return isProposer True if the address can create proposals through this adapter
      * @custom:throws InvalidProposerAdapter if the adapter is not configured
      */
-    function isProposer(
-        address address_,
-        address proposerAdapter_,
-        bytes calldata proposerAdapterData_
-    ) external view returns (bool isProposer);
+    function isProposer(address address_, address proposerAdapter_, bytes calldata proposerAdapterData_)
+        external
+        view
+        returns (bool isProposer);
 
     /**
      * @notice Determines if a proposal has passed all requirements
@@ -227,9 +234,7 @@ interface IStrategyV1 {
      * @return endTime When voting ends (Unix timestamp)
      * @custom:throws ProposalNotInitialized if the proposal doesn't exist
      */
-    function getVotingTimestamps(
-        uint32 proposalId_
-    ) external view returns (uint48 startTime, uint48 endTime);
+    function getVotingTimestamps(uint32 proposalId_) external view returns (uint48 startTime, uint48 endTime);
 
     /**
      * @notice Returns the block number when voting started (for snapshot purposes)
@@ -237,27 +242,20 @@ interface IStrategyV1 {
      * @return votingStartBlock The block number when voting began
      * @custom:throws ProposalNotInitialized if the proposal doesn't exist
      */
-    function getVotingStartBlock(
-        uint32 proposalId_
-    ) external view returns (uint32 votingStartBlock);
+    function getVotingStartBlock(uint32 proposalId_) external view returns (uint32 votingStartBlock);
 
     /**
      * @notice Returns all configured voting configurations
      * @return votingConfigs Array of voting configurations
      */
-    function votingConfigs()
-        external
-        view
-        returns (IVotingTypes.VotingConfig[] memory votingConfigs);
+    function votingConfigs() external view returns (IVotingTypes.VotingConfig[] memory votingConfigs);
 
     /**
      * @notice Checks if an address is a configured proposer adapter
      * @param proposerAdapter_ The address to check
      * @return isProposerAdapter True if this is a configured proposer adapter
      */
-    function isProposerAdapter(
-        address proposerAdapter_
-    ) external view returns (bool isProposerAdapter);
+    function isProposerAdapter(address proposerAdapter_) external view returns (bool isProposerAdapter);
 
     /**
      * @notice Returns the strategy admin address
@@ -291,9 +289,7 @@ interface IStrategyV1 {
      * @param proposalId_ The proposal to query
      * @return proposalVotingDetails Complete voting state including timestamps and vote tallies
      */
-    function proposalVotingDetails(
-        uint32 proposalId_
-    )
+    function proposalVotingDetails(uint32 proposalId_)
         external
         view
         returns (ProposalVotingDetails memory proposalVotingDetails);
@@ -303,18 +299,13 @@ interface IStrategyV1 {
      * @param configIndex_ The index of the voting config to retrieve
      * @return votingConfig The voting configuration at the specified index
      */
-    function votingConfig(
-        uint256 configIndex_
-    ) external view returns (IVotingTypes.VotingConfig memory votingConfig);
+    function votingConfig(uint256 configIndex_) external view returns (IVotingTypes.VotingConfig memory votingConfig);
 
     /**
      * @notice Returns all configured proposer adapter addresses
      * @return proposerAdapters Array of proposer adapter contract addresses
      */
-    function proposerAdapters()
-        external
-        view
-        returns (address[] memory proposerAdapters);
+    function proposerAdapters() external view returns (address[] memory proposerAdapters);
 
     /**
      * @notice Checks if a proposal has met the quorum requirement
@@ -323,9 +314,7 @@ interface IStrategyV1 {
      * @return isQuorumMet True if quorum threshold is reached
      * @custom:throws ProposalNotInitialized if the proposal doesn't exist
      */
-    function isQuorumMet(
-        uint32 proposalId_
-    ) external view returns (bool isQuorumMet);
+    function isQuorumMet(uint32 proposalId_) external view returns (bool isQuorumMet);
 
     /**
      * @notice Checks if a proposal has met the basis requirement
@@ -334,27 +323,20 @@ interface IStrategyV1 {
      * @return isBasisMet True if the approval percentage exceeds the required basis
      * @custom:throws ProposalNotInitialized if the proposal doesn't exist
      */
-    function isBasisMet(
-        uint32 proposalId_
-    ) external view returns (bool isBasisMet);
+    function isBasisMet(uint32 proposalId_) external view returns (bool isBasisMet);
 
     /**
      * @notice Checks if an address is authorized to participate in freeze voting
      * @param freezeVoterContract_ The freeze voting contract to check
      * @return isAuthorizedFreezeVoter True if authorized for freeze voting
      */
-    function isAuthorizedFreezeVoter(
-        address freezeVoterContract_
-    ) external view returns (bool isAuthorizedFreezeVoter);
+    function isAuthorizedFreezeVoter(address freezeVoterContract_) external view returns (bool isAuthorizedFreezeVoter);
 
     /**
      * @notice Returns all authorized freeze voter contract addresses
      * @return authorizedFreezeVoters Array of authorized freeze voting contracts
      */
-    function authorizedFreezeVoters()
-        external
-        view
-        returns (address[] memory authorizedFreezeVoters);
+    function authorizedFreezeVoters() external view returns (address[] memory authorizedFreezeVoters);
 
     /**
      * @notice Checks if a vote was cast after the voting period ended
@@ -362,9 +344,10 @@ interface IStrategyV1 {
      * @param proposalId_ The proposal to check
      * @return voteCastedAfterVotingPeriodEnded True if a late vote was attempted
      */
-    function voteCastedAfterVotingPeriodEnded(
-        uint32 proposalId_
-    ) external view returns (bool voteCastedAfterVotingPeriodEnded);
+    function voteCastedAfterVotingPeriodEnded(uint32 proposalId_)
+        external
+        view
+        returns (bool voteCastedAfterVotingPeriodEnded);
 
     /**
      * @notice Validates if a vote configuration would be valid without casting it

@@ -20,11 +20,10 @@ abstract contract ConfidentialLRC20WithErrorsMintable is Ownable2Step, Confident
      * @param symbol_   Symbol.
      * @param owner_    Owner address.
      */
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        address owner_
-    ) Ownable(owner_) ConfidentialLRC20WithErrors(name_, symbol_) {}
+    constructor(string memory name_, string memory symbol_, address owner_)
+        Ownable(owner_)
+        ConfidentialLRC20WithErrors(name_, symbol_)
+    { }
 
     /**
      * @notice       Mint tokens.

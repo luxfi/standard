@@ -2,7 +2,7 @@
 pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
-import {Karma} from "../../../contracts/governance/Karma.sol";
+import { Karma } from "../../../contracts/governance/Karma.sol";
 
 contract KarmaHandler is Test {
     Karma public karma;
@@ -85,10 +85,6 @@ contract InvariantKarmaTest is Test {
 
     /// @notice totalMinted - totalBurned == totalSupply
     function invariant_mintBurnAccounting() public view {
-        assertEq(
-            handler.totalMinted() - handler.totalBurned(),
-            karma.totalSupply(),
-            "Accounting mismatch"
-        );
+        assertEq(handler.totalMinted() - handler.totalBurned(), karma.totalSupply(), "Accounting mismatch");
     }
 }

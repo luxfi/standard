@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title StableSwap
@@ -104,49 +104,22 @@ contract StableSwap is ERC20, ReentrancyGuard, AccessControl {
     // ═══════════════════════════════════════════════════════════════════════
 
     event TokenExchange(
-        address indexed buyer,
-        uint256 soldId,
-        uint256 tokensSold,
-        uint256 boughtId,
-        uint256 tokensBought
+        address indexed buyer, uint256 soldId, uint256 tokensSold, uint256 boughtId, uint256 tokensBought
     );
 
     event AddLiquidity(
-        address indexed provider,
-        uint256[] tokenAmounts,
-        uint256[] fees,
-        uint256 invariant,
-        uint256 lpTokenSupply
+        address indexed provider, uint256[] tokenAmounts, uint256[] fees, uint256 invariant, uint256 lpTokenSupply
     );
 
-    event RemoveLiquidity(
-        address indexed provider,
-        uint256[] tokenAmounts,
-        uint256[] fees,
-        uint256 lpTokenSupply
-    );
+    event RemoveLiquidity(address indexed provider, uint256[] tokenAmounts, uint256[] fees, uint256 lpTokenSupply);
 
-    event RemoveLiquidityOne(
-        address indexed provider,
-        uint256 tokenIndex,
-        uint256 tokenAmount,
-        uint256 coinAmount
-    );
+    event RemoveLiquidityOne(address indexed provider, uint256 tokenIndex, uint256 tokenAmount, uint256 coinAmount);
 
     event RemoveLiquidityImbalance(
-        address indexed provider,
-        uint256[] tokenAmounts,
-        uint256[] fees,
-        uint256 invariant,
-        uint256 lpTokenSupply
+        address indexed provider, uint256[] tokenAmounts, uint256[] fees, uint256 invariant, uint256 lpTokenSupply
     );
 
-    event RampA(
-        uint256 oldA,
-        uint256 newA,
-        uint256 initialTime,
-        uint256 futureTime
-    );
+    event RampA(uint256 oldA, uint256 newA, uint256 initialTime, uint256 futureTime);
 
     event StopRampA(uint256 A, uint256 t);
 
@@ -258,27 +231,17 @@ contract StableSwap is ERC20, ReentrancyGuard, AccessControl {
     }
 
     /// @notice Calculate output amount for a swap
-    function getSwapAmount(
-        uint256 i,
-        uint256 j,
-        uint256 dx
-    ) external view returns (uint256) {
+    function getSwapAmount(uint256 i, uint256 j, uint256 dx) external view returns (uint256) {
         return _getSwapAmount(i, j, dx);
     }
 
     /// @notice Calculate LP tokens for adding liquidity
-    function calcTokenAmount(
-        uint256[] calldata amounts,
-        bool isDeposit
-    ) external view returns (uint256) {
+    function calcTokenAmount(uint256[] calldata amounts, bool isDeposit) external view returns (uint256) {
         return _calcTokenAmount(amounts, isDeposit);
     }
 
     /// @notice Calculate amount received for withdrawing single token
-    function calcWithdrawOneCoin(
-        uint256 tokenAmount,
-        uint256 i
-    ) external view returns (uint256) {
+    function calcWithdrawOneCoin(uint256 tokenAmount, uint256 i) external view returns (uint256) {
         return _calcWithdrawOneCoin(tokenAmount, i);
     }
 
@@ -295,13 +258,11 @@ contract StableSwap is ERC20, ReentrancyGuard, AccessControl {
      * @param deadline Transaction deadline
      * @return dy Amount of token j received
      */
-    function exchange(
-        uint256 i,
-        uint256 j,
-        uint256 dx,
-        uint256 minDy,
-        uint256 deadline
-    ) external nonReentrant returns (uint256 dy) {
+    function exchange(uint256 i, uint256 j, uint256 dx, uint256 minDy, uint256 deadline)
+        external
+        nonReentrant
+        returns (uint256 dy)
+    {
         if (isKilled) revert PoolKilled();
         if (block.timestamp > deadline) revert DeadlineExpired();
         if (dx == 0) revert ZeroAmount();
@@ -337,11 +298,11 @@ contract StableSwap is ERC20, ReentrancyGuard, AccessControl {
      * @param deadline Transaction deadline
      * @return mintAmount Amount of LP tokens minted
      */
-    function addLiquidity(
-        uint256[] calldata amounts,
-        uint256 minMintAmount,
-        uint256 deadline
-    ) external nonReentrant returns (uint256 mintAmount) {
+    function addLiquidity(uint256[] calldata amounts, uint256 minMintAmount, uint256 deadline)
+        external
+        nonReentrant
+        returns (uint256 mintAmount)
+    {
         if (isKilled) revert PoolKilled();
         if (block.timestamp > deadline) revert DeadlineExpired();
         if (amounts.length != tokens.length) revert InvalidTokenCount();
@@ -379,9 +340,8 @@ contract StableSwap is ERC20, ReentrancyGuard, AccessControl {
 
             for (uint256 i = 0; i < tokens.length; i++) {
                 uint256 idealBalance = (D1 * oldBalances[i]) / D0;
-                uint256 diff = idealBalance > newBalances[i]
-                    ? idealBalance - newBalances[i]
-                    : newBalances[i] - idealBalance;
+                uint256 diff =
+                    idealBalance > newBalances[i] ? idealBalance - newBalances[i] : newBalances[i] - idealBalance;
                 fees[i] = (_fee * diff) / FEE_DENOMINATOR;
                 adminBalances[i] += (fees[i] * _adminFee) / FEE_DENOMINATOR;
                 newBalances[i] -= fees[i];
@@ -411,11 +371,11 @@ contract StableSwap is ERC20, ReentrancyGuard, AccessControl {
      * @param deadline Transaction deadline
      * @return amounts Actual amounts received
      */
-    function removeLiquidity(
-        uint256 amount,
-        uint256[] calldata minAmounts,
-        uint256 deadline
-    ) external nonReentrant returns (uint256[] memory amounts) {
+    function removeLiquidity(uint256 amount, uint256[] calldata minAmounts, uint256 deadline)
+        external
+        nonReentrant
+        returns (uint256[] memory amounts)
+    {
         if (block.timestamp > deadline) revert DeadlineExpired();
         if (minAmounts.length != tokens.length) revert InvalidTokenCount();
 
@@ -446,12 +406,11 @@ contract StableSwap is ERC20, ReentrancyGuard, AccessControl {
      * @param deadline Transaction deadline
      * @return dy Amount of token received
      */
-    function removeLiquidityOneCoin(
-        uint256 tokenAmount,
-        uint256 i,
-        uint256 minAmount,
-        uint256 deadline
-    ) external nonReentrant returns (uint256 dy) {
+    function removeLiquidityOneCoin(uint256 tokenAmount, uint256 i, uint256 minAmount, uint256 deadline)
+        external
+        nonReentrant
+        returns (uint256 dy)
+    {
         if (block.timestamp > deadline) revert DeadlineExpired();
         if (i >= tokens.length) revert TokenIndexOutOfRange();
 
@@ -478,11 +437,11 @@ contract StableSwap is ERC20, ReentrancyGuard, AccessControl {
      * @param deadline Transaction deadline
      * @return burnAmount Actual LP tokens burned
      */
-    function removeLiquidityImbalance(
-        uint256[] calldata amounts,
-        uint256 maxBurnAmount,
-        uint256 deadline
-    ) external nonReentrant returns (uint256 burnAmount) {
+    function removeLiquidityImbalance(uint256[] calldata amounts, uint256 maxBurnAmount, uint256 deadline)
+        external
+        nonReentrant
+        returns (uint256 burnAmount)
+    {
         if (block.timestamp > deadline) revert DeadlineExpired();
         if (amounts.length != tokens.length) revert InvalidTokenCount();
 
@@ -506,9 +465,7 @@ contract StableSwap is ERC20, ReentrancyGuard, AccessControl {
 
         for (uint256 i = 0; i < tokens.length; i++) {
             uint256 idealBalance = (D1 * oldBalances[i]) / D0;
-            uint256 diff = idealBalance > newBalances[i]
-                ? idealBalance - newBalances[i]
-                : newBalances[i] - idealBalance;
+            uint256 diff = idealBalance > newBalances[i] ? idealBalance - newBalances[i] : newBalances[i] - idealBalance;
             fees[i] = (_fee * diff) / FEE_DENOMINATOR;
             adminBalances[i] += (fees[i] * _adminFee) / FEE_DENOMINATOR;
             newBalances[i] -= fees[i];
@@ -543,10 +500,7 @@ contract StableSwap is ERC20, ReentrancyGuard, AccessControl {
      * @param futureA_ Target A value
      * @param futureTime_ Time when ramp completes
      */
-    function rampA(
-        uint256 futureA_,
-        uint256 futureTime_
-    ) external onlyRole(ADMIN_ROLE) {
+    function rampA(uint256 futureA_, uint256 futureTime_) external onlyRole(ADMIN_ROLE) {
         if (block.timestamp < initialATime + MIN_RAMP_TIME) revert RampTooSoon();
         if (futureTime_ < block.timestamp + MIN_RAMP_TIME) revert RampTooSoon();
 
@@ -555,8 +509,8 @@ contract StableSwap is ERC20, ReentrancyGuard, AccessControl {
 
         if (_futureA == 0 || _futureA > MAX_A * A_PRECISION) revert InvalidA();
         if (
-            (_futureA > currentA && _futureA > currentA * MAX_A_CHANGE) ||
-            (_futureA < currentA && currentA > _futureA * MAX_A_CHANGE)
+            (_futureA > currentA && _futureA > currentA * MAX_A_CHANGE)
+                || (_futureA < currentA && currentA > _futureA * MAX_A_CHANGE)
         ) revert RampChangeTooLarge();
 
         initialA = currentA;
@@ -674,12 +628,7 @@ contract StableSwap is ERC20, ReentrancyGuard, AccessControl {
     }
 
     /// @notice Calculate y given x for swap
-    function _getY(
-        uint256 i,
-        uint256 j,
-        uint256 x,
-        uint256[] memory xp
-    ) internal view returns (uint256) {
+    function _getY(uint256 i, uint256 j, uint256 x, uint256[] memory xp) internal view returns (uint256) {
         uint256 n = xp.length;
         uint256 amp = _A();
         uint256 D = _getD(xp, amp);
@@ -720,11 +669,7 @@ contract StableSwap is ERC20, ReentrancyGuard, AccessControl {
     }
 
     /// @notice Execute exchange internally
-    function _exchange(
-        uint256 i,
-        uint256 j,
-        uint256 dx
-    ) internal returns (uint256 dy) {
+    function _exchange(uint256 i, uint256 j, uint256 dx) internal returns (uint256 dy) {
         uint256[] memory xp = balances;
         uint256 x = xp[i] + dx;
         uint256 y = _getY(i, j, x, xp);
@@ -740,11 +685,7 @@ contract StableSwap is ERC20, ReentrancyGuard, AccessControl {
     }
 
     /// @notice Calculate swap output amount (view)
-    function _getSwapAmount(
-        uint256 i,
-        uint256 j,
-        uint256 dx
-    ) internal view returns (uint256 dy) {
+    function _getSwapAmount(uint256 i, uint256 j, uint256 dx) internal view returns (uint256 dy) {
         uint256[] memory xp = balances;
         uint256 dxNorm = _normalize(dx, tokenDecimals[i]);
         uint256 x = xp[i] + dxNorm;
@@ -756,10 +697,7 @@ contract StableSwap is ERC20, ReentrancyGuard, AccessControl {
     }
 
     /// @notice Calculate LP tokens for deposit/withdraw
-    function _calcTokenAmount(
-        uint256[] calldata amounts,
-        bool isDeposit
-    ) internal view returns (uint256) {
+    function _calcTokenAmount(uint256[] calldata amounts, bool isDeposit) internal view returns (uint256) {
         uint256 _A = _A();
         uint256[] memory oldBalances = balances;
         uint256 D0 = _getD(oldBalances, _A);
@@ -785,19 +723,17 @@ contract StableSwap is ERC20, ReentrancyGuard, AccessControl {
     }
 
     /// @notice Calculate single coin withdrawal
-    function _calcWithdrawOneCoin(
-        uint256 tokenAmount,
-        uint256 i
-    ) internal view returns (uint256) {
+    function _calcWithdrawOneCoin(uint256 tokenAmount, uint256 i) internal view returns (uint256) {
         (uint256 dy,) = _calcWithdrawOneCoinWithFee(tokenAmount, i);
         return _denormalize(dy, tokenDecimals[i]);
     }
 
     /// @notice Calculate single coin withdrawal with fee
-    function _calcWithdrawOneCoinWithFee(
-        uint256 tokenAmount,
-        uint256 i
-    ) internal view returns (uint256 dy, uint256 dyFee) {
+    function _calcWithdrawOneCoinWithFee(uint256 tokenAmount, uint256 i)
+        internal
+        view
+        returns (uint256 dy, uint256 dyFee)
+    {
         uint256 _A = _A();
         uint256[] memory xp = balances;
         uint256 D0 = _getD(xp, _A);

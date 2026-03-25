@@ -28,10 +28,14 @@ pragma solidity ^0.8.30;
 interface IFreezeVotingMultisigV1 {
     // --- Errors ---
 
-    /** @notice Thrown when a signer attempts to vote twice on the same proposal */
+    /**
+     * @notice Thrown when a signer attempts to vote twice on the same proposal
+     */
     error AlreadyVoted();
 
-    /** @notice Thrown when a non-signer attempts to vote */
+    /**
+     * @notice Thrown when a non-signer attempts to vote
+     */
     error NoVotingWeight();
 
     // --- Events ---
@@ -75,10 +79,10 @@ interface IFreezeVotingMultisigV1 {
      * @param account_ The account to check
      * @return accountHasFreezeVoted True if the account has voted on this proposal
      */
-    function accountHasFreezeVoted(
-        uint48 freezeProposalCreated_,
-        address account_
-    ) external view returns (bool accountHasFreezeVoted);
+    function accountHasFreezeVoted(uint48 freezeProposalCreated_, address account_)
+        external
+        view
+        returns (bool accountHasFreezeVoted);
 
     // --- State-Changing Functions ---
 

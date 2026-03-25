@@ -148,11 +148,7 @@ bytes32 constant STRATEGY_PENDLE = keccak256("PENDLE");
  * @notice Factory for deploying yield strategies
  */
 interface IYieldStrategyFactory {
-    event StrategyDeployed(
-        bytes32 indexed strategyType,
-        address indexed strategy,
-        address indexed underlying
-    );
+    event StrategyDeployed(bytes32 indexed strategyType, address indexed strategy, address indexed underlying);
 
     /**
      * @notice Deploy a new yield strategy
@@ -161,11 +157,7 @@ interface IYieldStrategyFactory {
      * @param params Strategy-specific parameters
      * @return strategy Address of deployed strategy
      */
-    function deploy(
-        bytes32 strategyType,
-        address underlying,
-        bytes calldata params
-    ) external returns (address strategy);
+    function deploy(bytes32 strategyType, address underlying, bytes calldata params) external returns (address strategy);
 
     /**
      * @notice Get all deployed strategies for an underlying

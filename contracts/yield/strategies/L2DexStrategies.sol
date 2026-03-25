@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.24;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title L2 DEX Yield Strategies
 /// @notice Yield strategies for L2 DEX protocols with gauge staking and ve-tokenomics
@@ -168,12 +168,10 @@ interface INitroPool {
     function pendingRewards(address account) external view returns (uint256, uint256);
 
     /// @notice Get user deposit info
-    function userInfo(address account) external view returns (
-        uint256 amount,
-        uint256 rewardDebt,
-        uint256 pendingXGrail,
-        uint256 pendingGrail
-    );
+    function userInfo(address account)
+        external
+        view
+        returns (uint256 amount, uint256 rewardDebt, uint256 pendingXGrail, uint256 pendingGrail);
 }
 
 /// @notice Camelot xGRAIL - escrowed GRAIL with allocation
@@ -222,14 +220,16 @@ interface ILBRouter {
     }
 
     /// @notice Add liquidity to Liquidity Book pool
-    function addLiquidity(LiquidityParameters calldata liquidityParameters) external returns (
-        uint256 amountXAdded,
-        uint256 amountYAdded,
-        uint256 amountXLeft,
-        uint256 amountYLeft,
-        uint256[] memory depositIds,
-        uint256[] memory liquidityMinted
-    );
+    function addLiquidity(LiquidityParameters calldata liquidityParameters)
+        external
+        returns (
+            uint256 amountXAdded,
+            uint256 amountYAdded,
+            uint256 amountXLeft,
+            uint256 amountYLeft,
+            uint256[] memory depositIds,
+            uint256[] memory liquidityMinted
+        );
 
     /// @notice Remove liquidity from Liquidity Book pool
     function removeLiquidity(
@@ -254,18 +254,18 @@ interface IJoeStaking {
     function withdraw(uint256 _pid, uint256 _amount) external;
 
     /// @notice Get pending rewards
-    function pendingTokens(uint256 _pid, address _user) external view returns (
-        uint256 pendingJoe,
-        address bonusTokenAddress,
-        string memory bonusTokenSymbol,
-        uint256 pendingBonusToken
-    );
+    function pendingTokens(uint256 _pid, address _user)
+        external
+        view
+        returns (
+            uint256 pendingJoe,
+            address bonusTokenAddress,
+            string memory bonusTokenSymbol,
+            uint256 pendingBonusToken
+        );
 
     /// @notice Get user deposit info
-    function userInfo(uint256 _pid, address _user) external view returns (
-        uint256 amount,
-        uint256 rewardDebt
-    );
+    function userInfo(uint256 _pid, address _user) external view returns (uint256 amount, uint256 rewardDebt);
 }
 
 // =============================================================================
@@ -302,27 +302,18 @@ interface IBalancerVault {
     }
 
     /// @notice Join a Balancer pool
-    function joinPool(
-        bytes32 poolId,
-        address sender,
-        address recipient,
-        JoinPoolRequest memory request
-    ) external payable;
+    function joinPool(bytes32 poolId, address sender, address recipient, JoinPoolRequest memory request)
+        external
+        payable;
 
     /// @notice Exit a Balancer pool
-    function exitPool(
-        bytes32 poolId,
-        address sender,
-        address recipient,
-        ExitPoolRequest memory request
-    ) external;
+    function exitPool(bytes32 poolId, address sender, address recipient, ExitPoolRequest memory request) external;
 
     /// @notice Get pool tokens and balances
-    function getPoolTokens(bytes32 poolId) external view returns (
-        address[] memory tokens,
-        uint256[] memory balances,
-        uint256 lastChangeBlock
-    );
+    function getPoolTokens(bytes32 poolId)
+        external
+        view
+        returns (address[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock);
 }
 
 /// @notice Balancer Gauge for BPT staking
@@ -464,13 +455,9 @@ abstract contract L2DexBaseStrategy is Ownable, ReentrancyGuard {
     // CONSTRUCTOR
     // =========================================================================
 
-    constructor(
-        address _lpToken,
-        address _tokenA,
-        address _tokenB,
-        address _controller,
-        address _owner
-    ) Ownable(_owner) {
+    constructor(address _lpToken, address _tokenA, address _tokenB, address _controller, address _owner)
+        Ownable(_owner)
+    {
         if (_lpToken == address(0)) revert InvalidAddress();
         if (_tokenA == address(0)) revert InvalidAddress();
         if (_tokenB == address(0)) revert InvalidAddress();
@@ -601,7 +588,14 @@ contract VelodromeStrategy is L2DexBaseStrategy {
     // =========================================================================
 
     /// @notice
-    function deposit(uint256 amount) external payable onlyController whenNotPaused nonReentrant returns (uint256 shares) {
+    function deposit(uint256 amount)
+        external
+        payable
+        onlyController
+        whenNotPaused
+        nonReentrant
+        returns (uint256 shares)
+    {
         if (amount == 0) revert ZeroAmount();
 
         // Transfer LP tokens from controller
@@ -812,7 +806,14 @@ contract CamelotStrategy is L2DexBaseStrategy {
     // =========================================================================
 
     /// @notice
-    function deposit(uint256 amount) external payable onlyController whenNotPaused nonReentrant returns (uint256 shares) {
+    function deposit(uint256 amount)
+        external
+        payable
+        onlyController
+        whenNotPaused
+        nonReentrant
+        returns (uint256 shares)
+    {
         if (amount == 0) revert ZeroAmount();
 
         // Transfer LP tokens from controller
@@ -1035,7 +1036,14 @@ contract TraderJoeStrategy is L2DexBaseStrategy {
     // =========================================================================
 
     /// @notice
-    function deposit(uint256 amount) external payable onlyController whenNotPaused nonReentrant returns (uint256 shares) {
+    function deposit(uint256 amount)
+        external
+        payable
+        onlyController
+        whenNotPaused
+        nonReentrant
+        returns (uint256 shares)
+    {
         if (amount == 0) revert ZeroAmount();
 
         // Transfer LP tokens from controller
@@ -1111,12 +1119,11 @@ contract TraderJoeStrategy is L2DexBaseStrategy {
     /// @return bonusToken Bonus token address
     /// @return bonusSymbol Bonus token symbol
     /// @return pendingBonus Pending bonus token amount
-    function pendingRewards() external view returns (
-        uint256 pendingJoe,
-        address bonusToken,
-        string memory bonusSymbol,
-        uint256 pendingBonus
-    ) {
+    function pendingRewards()
+        external
+        view
+        returns (uint256 pendingJoe, address bonusToken, string memory bonusSymbol, uint256 pendingBonus)
+    {
         return IJoeStaking(JOE_STAKING).pendingTokens(poolId, address(this));
     }
 
@@ -1128,12 +1135,16 @@ contract TraderJoeStrategy is L2DexBaseStrategy {
 
     /// @notice Add concentrated liquidity via LB Router
     /// @param params Liquidity parameters
-    function addConcentratedLiquidity(ILBRouter.LiquidityParameters calldata params) external onlyOwner returns (
-        uint256 amountXAdded,
-        uint256 amountYAdded,
-        uint256[] memory depositIds,
-        uint256[] memory liquidityMinted
-    ) {
+    function addConcentratedLiquidity(ILBRouter.LiquidityParameters calldata params)
+        external
+        onlyOwner
+        returns (
+            uint256 amountXAdded,
+            uint256 amountYAdded,
+            uint256[] memory depositIds,
+            uint256[] memory liquidityMinted
+        )
+    {
         // Transfer tokens
         IERC20(params.tokenX).safeTransferFrom(msg.sender, address(this), params.amountX);
         IERC20(params.tokenY).safeTransferFrom(msg.sender, address(this), params.amountY);
@@ -1176,18 +1187,19 @@ contract TraderJoeStrategy is L2DexBaseStrategy {
         uint256 amountXMin,
         uint256 amountYMin
     ) external onlyOwner returns (uint256 amountX, uint256 amountY) {
-        (amountX, amountY) = ILBRouter(LB_ROUTER).removeLiquidity(
-            address(tokenA),
-            address(tokenB),
-            // forge-lint: disable-next-line(unsafe-typecast)
-            uint16(binStep),
-            amountXMin,
-            amountYMin,
-            ids,
-            amounts,
-            msg.sender,
-            block.timestamp
-        );
+        (amountX, amountY) = ILBRouter(LB_ROUTER)
+            .removeLiquidity(
+                address(tokenA),
+                address(tokenB),
+                // forge-lint: disable-next-line(unsafe-typecast)
+                uint16(binStep),
+                amountXMin,
+                amountYMin,
+                ids,
+                amounts,
+                msg.sender,
+                block.timestamp
+            );
 
         // Update tracking
         for (uint256 i = 0; i < ids.length; i++) {
@@ -1297,7 +1309,14 @@ contract BalancerStrategy is L2DexBaseStrategy {
     // =========================================================================
 
     /// @notice
-    function deposit(uint256 amount) external payable onlyController whenNotPaused nonReentrant returns (uint256 shares) {
+    function deposit(uint256 amount)
+        external
+        payable
+        onlyController
+        whenNotPaused
+        nonReentrant
+        returns (uint256 shares)
+    {
         if (amount == 0) revert ZeroAmount();
 
         // Transfer BPT from controller
@@ -1418,7 +1437,11 @@ contract BalancerStrategy is L2DexBaseStrategy {
     /// @notice Join Balancer pool with multiple tokens
     /// @param maxAmountsIn Maximum amounts of each token to deposit
     /// @param minBptOut Minimum BPT to receive
-    function joinPool(uint256[] calldata maxAmountsIn, uint256 minBptOut) external onlyOwner returns (uint256 bptReceived) {
+    function joinPool(uint256[] calldata maxAmountsIn, uint256 minBptOut)
+        external
+        onlyOwner
+        returns (uint256 bptReceived)
+    {
         require(maxAmountsIn.length == poolTokens.length, "Length mismatch");
 
         // Transfer and approve tokens
@@ -1430,17 +1453,10 @@ contract BalancerStrategy is L2DexBaseStrategy {
         }
 
         // Encode userData for EXACT_TOKENS_IN_FOR_BPT_OUT
-        bytes memory userData = abi.encode(
-            IBalancerVault.JoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
-            maxAmountsIn,
-            minBptOut
-        );
+        bytes memory userData = abi.encode(IBalancerVault.JoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT, maxAmountsIn, minBptOut);
 
         IBalancerVault.JoinPoolRequest memory request = IBalancerVault.JoinPoolRequest({
-            assets: poolTokens,
-            maxAmountsIn: maxAmountsIn,
-            userData: userData,
-            fromInternalBalance: false
+            assets: poolTokens, maxAmountsIn: maxAmountsIn, userData: userData, fromInternalBalance: false
         });
 
         uint256 bptBefore = lpToken.balanceOf(address(this));
@@ -1455,16 +1471,10 @@ contract BalancerStrategy is L2DexBaseStrategy {
         require(minAmountsOut.length == poolTokens.length, "Length mismatch");
 
         // Encode userData for EXACT_BPT_IN_FOR_TOKENS_OUT
-        bytes memory userData = abi.encode(
-            IBalancerVault.ExitKind.EXACT_BPT_IN_FOR_TOKENS_OUT,
-            bptIn
-        );
+        bytes memory userData = abi.encode(IBalancerVault.ExitKind.EXACT_BPT_IN_FOR_TOKENS_OUT, bptIn);
 
         IBalancerVault.ExitPoolRequest memory request = IBalancerVault.ExitPoolRequest({
-            assets: poolTokens,
-            minAmountsOut: minAmountsOut,
-            userData: userData,
-            toInternalBalance: false
+            assets: poolTokens, minAmountsOut: minAmountsOut, userData: userData, toInternalBalance: false
         });
 
         IBalancerVault(BALANCER_VAULT).exitPool(poolId, address(this), msg.sender, request);
@@ -1544,24 +1554,20 @@ contract BalancerStrategy is L2DexBaseStrategy {
 /// @title L2 DEX Strategy Factory
 /// @notice Factory for deploying L2 DEX yield strategies
 contract L2DexStrategyFactory is Ownable {
-
     // =========================================================================
     // EVENTS
     // =========================================================================
 
     /// @notice Emitted when a strategy is deployed
     event StrategyDeployed(
-        address indexed strategy,
-        string strategyType,
-        address indexed lpToken,
-        address indexed gauge
+        address indexed strategy, string strategyType, address indexed lpToken, address indexed gauge
     );
 
     // =========================================================================
     // CONSTRUCTOR
     // =========================================================================
 
-    constructor() Ownable(msg.sender) {}
+    constructor() Ownable(msg.sender) { }
 
     // =========================================================================
     // DEPLOYMENT FUNCTIONS
@@ -1583,15 +1589,8 @@ contract L2DexStrategyFactory is Ownable {
         bool isStable,
         address controller
     ) external onlyOwner returns (address strategy) {
-        VelodromeStrategy strat = new VelodromeStrategy(
-            lpToken,
-            tokenA,
-            tokenB,
-            gauge,
-            isStable,
-            controller,
-            msg.sender
-        );
+        VelodromeStrategy strat =
+            new VelodromeStrategy(lpToken, tokenA, tokenB, gauge, isStable, controller, msg.sender);
         strategy = address(strat);
         emit StrategyDeployed(strategy, "Velodrome", lpToken, gauge);
     }
@@ -1610,14 +1609,7 @@ contract L2DexStrategyFactory is Ownable {
         address nitroPool,
         address controller
     ) external onlyOwner returns (address strategy) {
-        CamelotStrategy strat = new CamelotStrategy(
-            lpToken,
-            tokenA,
-            tokenB,
-            nitroPool,
-            controller,
-            msg.sender
-        );
+        CamelotStrategy strat = new CamelotStrategy(lpToken, tokenA, tokenB, nitroPool, controller, msg.sender);
         strategy = address(strat);
         emit StrategyDeployed(strategy, "Camelot", lpToken, nitroPool);
     }
@@ -1638,15 +1630,8 @@ contract L2DexStrategyFactory is Ownable {
         uint256 binStep,
         address controller
     ) external onlyOwner returns (address strategy) {
-        TraderJoeStrategy strat = new TraderJoeStrategy(
-            lpToken,
-            tokenX,
-            tokenY,
-            poolId,
-            binStep,
-            controller,
-            msg.sender
-        );
+        TraderJoeStrategy strat =
+            new TraderJoeStrategy(lpToken, tokenX, tokenY, poolId, binStep, controller, msg.sender);
         strategy = address(strat);
         emit StrategyDeployed(strategy, "TraderJoe", lpToken, address(0));
     }
@@ -1670,14 +1655,7 @@ contract L2DexStrategyFactory is Ownable {
         address controller
     ) external onlyOwner returns (address strategy) {
         BalancerStrategy strat = new BalancerStrategy(
-            lpToken,
-            tokenA,
-            tokenB,
-            poolId,
-            gauge,
-            isWeightedPool,
-            controller,
-            msg.sender
+            lpToken, tokenA, tokenB, poolId, gauge, isWeightedPool, controller, msg.sender
         );
         strategy = address(strat);
         emit StrategyDeployed(strategy, "Balancer", lpToken, gauge);

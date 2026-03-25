@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IDeploymentBlock} from "./interfaces/IDeploymentBlock.sol";
-import {
-    Initializable
-} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { IDeploymentBlock } from "./interfaces/IDeploymentBlock.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @title DeploymentBlockInitializable
@@ -32,10 +30,7 @@ import {
  *
  * @custom:security-contact security@lux.network
  */
-abstract contract DeploymentBlockInitializable is
-    Initializable,
-    IDeploymentBlock
-{
+abstract contract DeploymentBlockInitializable is Initializable, IDeploymentBlock {
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
@@ -46,7 +41,9 @@ abstract contract DeploymentBlockInitializable is
      * @custom:storage-location erc7201:DAO.DeploymentBlockInitializable.main
      */
     struct DeploymentBlockInitializableStorage {
-        /** @notice The block number when this contract was deployed */
+        /**
+         * @notice The block number when this contract was deployed
+         */
         uint256 deploymentBlock;
     }
 
@@ -86,8 +83,7 @@ abstract contract DeploymentBlockInitializable is
      */
     function __DeploymentBlockInitializable_init() internal onlyInitializing {
         // solhint-disable-previous-line func-name-mixedcase
-        DeploymentBlockInitializableStorage
-            storage $ = _getDeploymentBlockInitializableStorage();
+        DeploymentBlockInitializableStorage storage $ = _getDeploymentBlockInitializableStorage();
         if ($.deploymentBlock != 0) {
             revert DeploymentBlockAlreadySet();
         }
@@ -105,8 +101,7 @@ abstract contract DeploymentBlockInitializable is
      * @inheritdoc IDeploymentBlock
      */
     function deploymentBlock() public view virtual override returns (uint256) {
-        DeploymentBlockInitializableStorage
-            storage $ = _getDeploymentBlockInitializableStorage();
+        DeploymentBlockInitializableStorage storage $ = _getDeploymentBlockInitializableStorage();
         return $.deploymentBlock;
     }
 }

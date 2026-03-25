@@ -38,13 +38,13 @@ enum ProofSystem {
 
 /// @notice Predefined circuit types
 enum CircuitType {
-    Transfer,      // Token transfer
-    Mint,          // Token minting
-    Burn,          // Token burning
-    Swap,          // DEX swap
-    Liquidity,     // Liquidity provision
-    RollupBatch,   // Rollup batch
-    Custom         // Custom circuit
+    Transfer, // Token transfer
+    Mint, // Token minting
+    Burn, // Token burning
+    Swap, // DEX swap
+    Liquidity, // Liquidity provision
+    RollupBatch, // Rollup batch
+    Custom // Custom circuit
 }
 
 /// @notice Commitment scheme types
@@ -66,9 +66,9 @@ struct VerificationResult {
 
 /// @notice Groth16 proof structure
 struct Groth16Proof {
-    uint256[2] a;     // G1 point
-    uint256[2][2] b;  // G2 point
-    uint256[2] c;     // G1 point
+    uint256[2] a; // G1 point
+    uint256[2][2] b; // G2 point
+    uint256[2] c; // G1 point
 }
 
 /// @notice PLONK proof structure (variable length)
@@ -116,33 +116,24 @@ struct RollupBatch {
  */
 interface IZKVerifier {
     /// @notice Register a new verifying key
-    function registerVerifyingKey(
-        ProofSystem proofSystem,
-        CircuitType circuitType,
-        bytes calldata vkData
-    ) external returns (bytes32 keyId);
+    function registerVerifyingKey(ProofSystem proofSystem, CircuitType circuitType, bytes calldata vkData)
+        external
+        returns (bytes32 keyId);
 
     /// @notice Get verifying key info
-    function getVerifyingKey(bytes32 keyId) external view returns (
-        ProofSystem proofSystem,
-        CircuitType circuitType,
-        address owner,
-        uint256 createdAt
-    );
+    function getVerifyingKey(bytes32 keyId)
+        external
+        view
+        returns (ProofSystem proofSystem, CircuitType circuitType, address owner, uint256 createdAt);
 
     /// @notice Verify a proof using registered key
-    function verify(
-        bytes32 keyId,
-        bytes calldata proof,
-        uint256[] calldata publicInputs
-    ) external view returns (bool valid);
+    function verify(bytes32 keyId, bytes calldata proof, uint256[] calldata publicInputs)
+        external
+        view
+        returns (bool valid);
 
     /// @notice Get verification statistics
-    function getStats() external view returns (
-        uint256 totalVerifications,
-        uint256 totalValid,
-        uint256 totalFailed
-    );
+    function getStats() external view returns (uint256 totalVerifications, uint256 totalValid, uint256 totalFailed);
 }
 
 /**
@@ -161,18 +152,16 @@ interface IGroth16Verifier {
     ) external view returns (bool);
 
     /// @notice Verify Groth16 proof with inline verifying key
-    function verifyWithVK(
-        Groth16VerifyingKey calldata vk,
-        Groth16Proof calldata proof,
-        uint256[] calldata publicInputs
-    ) external view returns (bool);
+    function verifyWithVK(Groth16VerifyingKey calldata vk, Groth16Proof calldata proof, uint256[] calldata publicInputs)
+        external
+        view
+        returns (bool);
 
     /// @notice Batch verify multiple proofs
-    function batchVerify(
-        bytes32[] calldata vkIds,
-        Groth16Proof[] calldata proofs,
-        uint256[][] calldata publicInputs
-    ) external view returns (bool[] memory results);
+    function batchVerify(bytes32[] calldata vkIds, Groth16Proof[] calldata proofs, uint256[][] calldata publicInputs)
+        external
+        view
+        returns (bool[] memory results);
 }
 
 /**
@@ -182,18 +171,13 @@ interface IGroth16Verifier {
  */
 interface IPlonkVerifier {
     /// @notice Verify PLONK proof
-    function verify(
-        bytes32 vkId,
-        bytes calldata proof,
-        uint256[] calldata publicInputs
-    ) external view returns (bool);
+    function verify(bytes32 vkId, bytes calldata proof, uint256[] calldata publicInputs) external view returns (bool);
 
     /// @notice Verify PLONK proof with custom gate constraints
-    function verifyCustom(
-        bytes calldata verifyingKey,
-        bytes calldata proof,
-        uint256[] calldata publicInputs
-    ) external view returns (bool);
+    function verifyCustom(bytes calldata verifyingKey, bytes calldata proof, uint256[] calldata publicInputs)
+        external
+        view
+        returns (bool);
 }
 
 /**
@@ -203,11 +187,10 @@ interface IPlonkVerifier {
  */
 interface IFflonkVerifier {
     /// @notice Verify fflonk proof
-    function verify(
-        bytes calldata verifyingKey,
-        bytes calldata proof,
-        uint256[] calldata publicInputs
-    ) external view returns (bool);
+    function verify(bytes calldata verifyingKey, bytes calldata proof, uint256[] calldata publicInputs)
+        external
+        view
+        returns (bool);
 }
 
 /**
@@ -217,18 +200,16 @@ interface IFflonkVerifier {
  */
 interface IHalo2Verifier {
     /// @notice Verify Halo2 proof
-    function verify(
-        bytes calldata verifyingKey,
-        bytes calldata proof,
-        bytes calldata instances
-    ) external view returns (bool);
+    function verify(bytes calldata verifyingKey, bytes calldata proof, bytes calldata instances)
+        external
+        view
+        returns (bool);
 
     /// @notice Verify recursively composed proof
-    function verifyRecursive(
-        bytes calldata outerVK,
-        bytes calldata outerProof,
-        bytes calldata innerInstances
-    ) external view returns (bool);
+    function verifyRecursive(bytes calldata outerVK, bytes calldata outerProof, bytes calldata innerInstances)
+        external
+        view
+        returns (bool);
 }
 
 // ============================================================================
@@ -247,19 +228,16 @@ interface IKZG {
     /// @param z The evaluation point
     /// @param y The claimed evaluation value
     /// @param proof The KZG proof (48 bytes)
-    function verifyEvaluation(
-        bytes calldata commitment,
-        bytes32 z,
-        bytes32 y,
-        bytes calldata proof
-    ) external view returns (bool);
+    function verifyEvaluation(bytes calldata commitment, bytes32 z, bytes32 y, bytes calldata proof)
+        external
+        view
+        returns (bool);
 
     /// @notice Verify EIP-4844 blob commitment
-    function verifyBlob(
-        bytes calldata blobCommitment,
-        bytes calldata blobProof,
-        bytes32 versionedHash
-    ) external view returns (bool);
+    function verifyBlob(bytes calldata blobCommitment, bytes calldata blobProof, bytes32 versionedHash)
+        external
+        view
+        returns (bool);
 
     /// @notice Batch verify multiple KZG proofs
     function batchVerify(
@@ -298,17 +276,10 @@ interface IIPA {
  */
 interface IPrivacyPool {
     /// @notice Create a new confidential pool
-    function createPool(
-        address token,
-        uint32 merkleDepth
-    ) external returns (bytes32 poolId);
+    function createPool(address token, uint32 merkleDepth) external returns (bytes32 poolId);
 
     /// @notice Deposit into confidential pool
-    function deposit(
-        bytes32 poolId,
-        bytes calldata commitment,
-        uint256 value
-    ) external returns (bytes32 commitmentId);
+    function deposit(bytes32 poolId, bytes calldata commitment, uint256 value) external returns (bytes32 commitmentId);
 
     /// @notice Withdraw from confidential pool with proof
     function withdraw(
@@ -324,13 +295,10 @@ interface IPrivacyPool {
     function getMerkleRoot(bytes32 poolId) external view returns (bytes32);
 
     /// @notice Get pool info
-    function getPoolInfo(bytes32 poolId) external view returns (
-        address token,
-        bytes32 merkleRoot,
-        uint32 merkleDepth,
-        uint256 totalDeposits,
-        bool enabled
-    );
+    function getPoolInfo(bytes32 poolId)
+        external
+        view
+        returns (address token, bytes32 merkleRoot, uint32 merkleDepth, uint256 totalDeposits, bool enabled);
 }
 
 /**
@@ -357,33 +325,22 @@ interface INullifier {
  */
 interface ICommitment {
     /// @notice Verify commitment opening
-    function verifyOpening(
-        CommitmentType commitType,
-        bytes calldata commitment,
-        uint256 value,
-        bytes calldata blinding
-    ) external view returns (bool);
+    function verifyOpening(CommitmentType commitType, bytes calldata commitment, uint256 value, bytes calldata blinding)
+        external
+        view
+        returns (bool);
 
     /// @notice Verify commitment is in merkle tree
-    function verifyInclusion(
-        bytes32 root,
-        bytes32 commitmentHash,
-        bytes32[] calldata proof,
-        uint256 leafIndex
-    ) external view returns (bool);
+    function verifyInclusion(bytes32 root, bytes32 commitmentHash, bytes32[] calldata proof, uint256 leafIndex)
+        external
+        view
+        returns (bool);
 
     /// @notice Compute Pedersen commitment
-    function pedersenCommit(
-        uint256 value,
-        uint256 blinding
-    ) external view returns (bytes memory commitment);
+    function pedersenCommit(uint256 value, uint256 blinding) external view returns (bytes memory commitment);
 
     /// @notice Verify Pedersen commitment
-    function pedersenVerify(
-        bytes calldata commitment,
-        uint256 value,
-        uint256 blinding
-    ) external view returns (bool);
+    function pedersenVerify(bytes calldata commitment, uint256 value, uint256 blinding) external view returns (bool);
 }
 
 /**
@@ -396,21 +353,19 @@ interface IRangeProof {
     /// @param commitment The value commitment
     /// @param proof The range proof
     /// @param bitLength Maximum bits in the value
-    function verifyRangeProof(
-        bytes calldata commitment,
-        bytes calldata proof,
-        uint32 bitLength
-    ) external view returns (bool);
+    function verifyRangeProof(bytes calldata commitment, bytes calldata proof, uint32 bitLength)
+        external
+        view
+        returns (bool);
 
     /// @notice Generate range proof (off-chain, returns estimated gas)
     function estimateGas(uint32 bitLength) external pure returns (uint256);
 
     /// @notice Batch verify multiple range proofs
-    function batchVerify(
-        bytes[] calldata commitments,
-        bytes[] calldata proofs,
-        uint32[] calldata bitLengths
-    ) external view returns (bool);
+    function batchVerify(bytes[] calldata commitments, bytes[] calldata proofs, uint32[] calldata bitLengths)
+        external
+        view
+        returns (bool);
 }
 
 // ============================================================================
@@ -433,37 +388,30 @@ interface IRollupVerifier {
     ) external returns (bytes32 rollupId);
 
     /// @notice Verify and submit a rollup batch
-    function verifyBatch(
-        bytes32 rollupId,
-        RollupBatch calldata batch
-    ) external returns (bool);
+    function verifyBatch(bytes32 rollupId, RollupBatch calldata batch) external returns (bool);
 
     /// @notice Get rollup state
-    function getRollupState(bytes32 rollupId) external view returns (
-        bytes32 lastBatchId,
-        bytes32 lastStateRoot,
-        uint64 lastL1Block,
-        uint64 totalBatches,
-        uint64 totalTxs
-    );
+    function getRollupState(bytes32 rollupId)
+        external
+        view
+        returns (bytes32 lastBatchId, bytes32 lastStateRoot, uint64 lastL1Block, uint64 totalBatches, uint64 totalTxs);
 
     /// @notice Get rollup configuration
-    function getRollupConfig(bytes32 rollupId) external view returns (
-        address owner,
-        ProofSystem proofSystem,
-        uint64 maxTxPerBatch,
-        uint64 batchInterval,
-        uint64 challengeWindow,
-        address sequencer,
-        bool enabled
-    );
+    function getRollupConfig(bytes32 rollupId)
+        external
+        view
+        returns (
+            address owner,
+            ProofSystem proofSystem,
+            uint64 maxTxPerBatch,
+            uint64 batchInterval,
+            uint64 challengeWindow,
+            address sequencer,
+            bool enabled
+        );
 
     /// @notice Challenge a fraudulent batch (for optimistic rollups)
-    function challenge(
-        bytes32 rollupId,
-        bytes32 batchId,
-        bytes calldata fraudProof
-    ) external returns (bool);
+    function challenge(bytes32 rollupId, bytes32 batchId, bytes calldata fraudProof) external returns (bool);
 
     /// @notice Events
     event RollupRegistered(bytes32 indexed rollupId, address indexed owner, ProofSystem proofSystem);
@@ -477,31 +425,22 @@ interface IRollupVerifier {
  */
 interface IStateRoot {
     /// @notice Verify state root transition
-    function verifyTransition(
-        bytes32 prevStateRoot,
-        bytes32 newStateRoot,
-        bytes32 txRoot,
-        bytes calldata proof
-    ) external view returns (bool);
+    function verifyTransition(bytes32 prevStateRoot, bytes32 newStateRoot, bytes32 txRoot, bytes calldata proof)
+        external
+        view
+        returns (bool);
 
     /// @notice Verify account proof against state root
-    function verifyAccountProof(
-        bytes32 stateRoot,
-        address account,
-        bytes calldata proof
-    ) external view returns (
-        uint256 nonce,
-        uint256 balance,
-        bytes32 storageRoot,
-        bytes32 codeHash
-    );
+    function verifyAccountProof(bytes32 stateRoot, address account, bytes calldata proof)
+        external
+        view
+        returns (uint256 nonce, uint256 balance, bytes32 storageRoot, bytes32 codeHash);
 
     /// @notice Verify storage proof against storage root
-    function verifyStorageProof(
-        bytes32 storageRoot,
-        bytes32 slot,
-        bytes calldata proof
-    ) external view returns (bytes32 value);
+    function verifyStorageProof(bytes32 storageRoot, bytes32 slot, bytes calldata proof)
+        external
+        view
+        returns (bytes32 value);
 }
 
 /**
@@ -510,11 +449,10 @@ interface IStateRoot {
  */
 interface IBatchProof {
     /// @notice Aggregate multiple proofs into one
-    function aggregate(
-        bytes32[] calldata vkIds,
-        bytes[] calldata proofs,
-        uint256[][] calldata publicInputs
-    ) external view returns (bytes memory aggregatedProof);
+    function aggregate(bytes32[] calldata vkIds, bytes[] calldata proofs, uint256[][] calldata publicInputs)
+        external
+        view
+        returns (bytes memory aggregatedProof);
 
     /// @notice Verify aggregated proof
     function verifyAggregated(
@@ -564,72 +502,48 @@ library ZKLib {
     }
 
     /// @notice Verify PLONK proof with automatic precompile call
-    function verifyPlonk(
-        bytes32 vkId,
-        bytes memory proof,
-        uint256[] memory publicInputs
-    ) internal view returns (bool) {
-        (bool success, bytes memory result) = PLONK.staticcall(
-            abi.encodeCall(IPlonkVerifier.verify, (vkId, proof, publicInputs))
-        );
+    function verifyPlonk(bytes32 vkId, bytes memory proof, uint256[] memory publicInputs) internal view returns (bool) {
+        (bool success, bytes memory result) =
+            PLONK.staticcall(abi.encodeCall(IPlonkVerifier.verify, (vkId, proof, publicInputs)));
         return success && abi.decode(result, (bool));
     }
 
     /// @notice Verify KZG point evaluation
-    function verifyKZG(
-        bytes memory commitment,
-        bytes32 z,
-        bytes32 y,
-        bytes memory proof
-    ) internal view returns (bool) {
-        (bool success, bytes memory result) = KZG.staticcall(
-            abi.encodeCall(IKZG.verifyEvaluation, (commitment, z, y, proof))
-        );
+    function verifyKZG(bytes memory commitment, bytes32 z, bytes32 y, bytes memory proof) internal view returns (bool) {
+        (bool success, bytes memory result) =
+            KZG.staticcall(abi.encodeCall(IKZG.verifyEvaluation, (commitment, z, y, proof)));
         return success && abi.decode(result, (bool));
     }
 
     /// @notice Verify range proof
-    function verifyRange(
-        bytes memory commitment,
-        bytes memory proof,
-        uint32 bitLength
-    ) internal view returns (bool) {
-        (bool success, bytes memory result) = RANGE_PROOF.staticcall(
-            abi.encodeCall(IRangeProof.verifyRangeProof, (commitment, proof, bitLength))
-        );
+    function verifyRange(bytes memory commitment, bytes memory proof, uint32 bitLength) internal view returns (bool) {
+        (bool success, bytes memory result) =
+            RANGE_PROOF.staticcall(abi.encodeCall(IRangeProof.verifyRangeProof, (commitment, proof, bitLength)));
         return success && abi.decode(result, (bool));
     }
 
     /// @notice Check if nullifier is spent
     function isNullifierSpent(bytes32 nullifierHash) internal view returns (bool) {
-        (bool success, bytes memory result) = NULLIFIER.staticcall(
-            abi.encodeCall(INullifier.isSpent, (nullifierHash))
-        );
+        (bool success, bytes memory result) = NULLIFIER.staticcall(abi.encodeCall(INullifier.isSpent, (nullifierHash)));
         return success && abi.decode(result, (bool));
     }
 
     /// @notice Verify rollup batch
-    function verifyRollupBatch(
-        bytes32 rollupId,
-        RollupBatch memory batch
-    ) internal view returns (bool) {
-        (bool success, bytes memory result) = ROLLUP_VERIFY.staticcall(
-            abi.encodeCall(IRollupVerifier.verifyBatch, (rollupId, batch))
-        );
+    function verifyRollupBatch(bytes32 rollupId, RollupBatch memory batch) internal view returns (bool) {
+        (bool success, bytes memory result) =
+            ROLLUP_VERIFY.staticcall(abi.encodeCall(IRollupVerifier.verifyBatch, (rollupId, batch)));
         return success && abi.decode(result, (bool));
     }
 
     /// @notice Verify or revert with error
-    function verifyOrRevert(
-        bytes32 vkId,
-        bytes memory proof,
-        uint256[] memory publicInputs,
-        ProofSystem system
-    ) internal view {
+    function verifyOrRevert(bytes32 vkId, bytes memory proof, uint256[] memory publicInputs, ProofSystem system)
+        internal
+        view
+    {
         bool valid;
         if (system == ProofSystem.Groth16) {
             // Decode Groth16 proof structure
-            (uint256[2] memory a, uint256[2][2] memory b, uint256[2] memory c) = 
+            (uint256[2] memory a, uint256[2][2] memory b, uint256[2] memory c) =
                 abi.decode(proof, (uint256[2], uint256[2][2], uint256[2]));
             valid = verifyGroth16(vkId, a, b, c, publicInputs);
         } else if (system == ProofSystem.Plonk) {

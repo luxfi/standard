@@ -3,13 +3,13 @@
 // Copyright (C) 2019-2025, Lux Industries Inc. All rights reserved.
 pragma solidity ^0.8.31;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-import {AIToken} from "./AIToken.sol";
-import {ChainConfig} from "./ChainConfig.sol";
+import { AIToken } from "./AIToken.sol";
+import { ChainConfig } from "./ChainConfig.sol";
 
 /**
  * @title AIMining
@@ -42,13 +42,13 @@ contract AIMining is Ownable, ReentrancyGuard {
 
     /// @notice Work proof submitted by miners
     struct WorkProof {
-        bytes32 sessionId;      // Unique session identifier
-        uint64 nonce;           // PoW nonce
-        bytes32 gpuId;          // Attested GPU identifier
-        bytes32 computeHash;    // Hash of compute work
-        uint64 timestamp;       // Proof timestamp
+        bytes32 sessionId; // Unique session identifier
+        uint64 nonce; // PoW nonce
+        bytes32 gpuId; // Attested GPU identifier
+        bytes32 computeHash; // Hash of compute work
+        uint64 timestamp; // Proof timestamp
         ChainConfig.GPUTier tier; // GPU hardware tier
-        bytes signature;        // ECDSA signature
+        bytes signature; // ECDSA signature
     }
 
     /// @notice Miner registration info
@@ -105,12 +105,7 @@ contract AIMining is Ownable, ReentrancyGuard {
 
     // ============ Events ============
 
-    event ProofSubmitted(
-        address indexed miner,
-        bytes32 indexed proofHash,
-        uint256 reward,
-        ChainConfig.GPUTier tier
-    );
+    event ProofSubmitted(address indexed miner, bytes32 indexed proofHash, uint256 reward, ChainConfig.GPUTier tier);
     event MinerRegistered(address indexed miner, bytes32 gpuId);
     event MiningEnabled(bool enabled);
     event VerifierUpdated(address indexed verifier, bool trusted);
@@ -136,10 +131,7 @@ contract AIMining is Ownable, ReentrancyGuard {
      * @param _aiToken AI Token contract address
      * @param _chainConfig Chain configuration contract address
      */
-    constructor(
-        address _aiToken,
-        address _chainConfig
-    ) Ownable(msg.sender) {
+    constructor(address _aiToken, address _chainConfig) Ownable(msg.sender) {
         aiToken = AIToken(_aiToken);
         chainConfig = ChainConfig(_chainConfig);
         CHAIN_ID = block.chainid;
@@ -248,10 +240,11 @@ contract AIMining is Ownable, ReentrancyGuard {
      * @param config Chain configuration
      * @return reward Calculated reward amount
      */
-    function calculateReward(
-        WorkProof calldata proof,
-        ChainConfig.Config memory config
-    ) public view returns (uint256 reward) {
+    function calculateReward(WorkProof calldata proof, ChainConfig.Config memory config)
+        public
+        view
+        returns (uint256 reward)
+    {
         // Get base reward from chain config (with halving applied)
         uint256 baseReward = chainConfig.getCurrentReward(CHAIN_ID);
 
@@ -281,9 +274,7 @@ contract AIMining is Ownable, ReentrancyGuard {
      * @param proofs Array of work proofs
      * @return rewards Array of rewards minted
      */
-    function submitProofsBatch(
-        WorkProof[] calldata proofs
-    ) external nonReentrant returns (uint256[] memory rewards) {
+    function submitProofsBatch(WorkProof[] calldata proofs) external nonReentrant returns (uint256[] memory rewards) {
         rewards = new uint256[](proofs.length);
 
         for (uint256 i = 0; i < proofs.length; i++) {
@@ -329,19 +320,13 @@ contract AIMining is Ownable, ReentrancyGuard {
      * @return _currentReward Current base reward
      * @return _difficulty Current difficulty
      */
-    function getMiningStats() external view returns (
-        uint256 _totalProofs,
-        uint256 _totalRewards,
-        uint256 _currentReward,
-        uint256 _difficulty
-    ) {
+    function getMiningStats()
+        external
+        view
+        returns (uint256 _totalProofs, uint256 _totalRewards, uint256 _currentReward, uint256 _difficulty)
+    {
         ChainConfig.Config memory config = chainConfig.getConfig(CHAIN_ID);
-        return (
-            totalProofs,
-            totalRewards,
-            chainConfig.getCurrentReward(CHAIN_ID),
-            config.difficultyTarget
-        );
+        return (totalProofs, totalRewards, chainConfig.getCurrentReward(CHAIN_ID), config.difficultyTarget);
     }
 
     // ============ Admin Functions ============
@@ -373,15 +358,11 @@ contract AIMining is Ownable, ReentrancyGuard {
      * @return hash Keccak256 hash of proof data
      */
     function _computeProofHash(WorkProof calldata proof) internal view returns (bytes32 hash) {
-        return keccak256(abi.encode(
-            proof.sessionId,
-            proof.nonce,
-            proof.gpuId,
-            proof.computeHash,
-            proof.timestamp,
-            proof.tier,
-            CHAIN_ID
-        ));
+        return keccak256(
+            abi.encode(
+                proof.sessionId, proof.nonce, proof.gpuId, proof.computeHash, proof.timestamp, proof.tier, CHAIN_ID
+            )
+        );
     }
 
     /**
@@ -390,10 +371,7 @@ contract AIMining is Ownable, ReentrancyGuard {
      * @param signature The ECDSA signature
      * @return signer Recovered signer address
      */
-    function _recoverSigner(
-        bytes32 proofHash,
-        bytes calldata signature
-    ) internal pure returns (address signer) {
+    function _recoverSigner(bytes32 proofHash, bytes calldata signature) internal pure returns (address signer) {
         bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(proofHash);
         return ECDSA.recover(ethSignedHash, signature);
     }

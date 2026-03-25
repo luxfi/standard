@@ -10,10 +10,10 @@ pragma solidity ^0.8.31;
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝        ╚═╝   ╚═╝     ╚═╝
  */
 
-import {LRC20B} from "../../bridge/LRC20B.sol";
+import { LRC20B } from "../../bridge/LRC20B.sol";
 
 contract LuxFTM is LRC20B {
-    constructor() LRC20B("Liquid FTM", "LFTM") {}
+    constructor() LRC20B("Liquid FTM", "LFTM") { }
 
     function mint(address account, uint256 amount) public onlyAdmin {
         _mint(account, amount);

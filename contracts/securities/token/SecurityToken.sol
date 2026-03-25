@@ -8,13 +8,13 @@
 // Copyright (c) 2019 Arca Labs Inc — https://arca.digital
 pragma solidity ^0.8.24;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import {ERC20Pausable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {IERC1404} from "../interfaces/IERC1404.sol";
-import {IST20} from "../interfaces/IST20.sol";
-import {ComplianceRegistry} from "../compliance/ComplianceRegistry.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import { ERC20Pausable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IERC1404 } from "../interfaces/IERC1404.sol";
+import { IST20 } from "../interfaces/IST20.sol";
+import { ComplianceRegistry } from "../compliance/ComplianceRegistry.sol";
 
 /**
  * @title SecurityToken
@@ -170,7 +170,12 @@ contract SecurityToken is ERC20, ERC20Burnable, ERC20Pausable, AccessControl, IE
     // ──────────────────────────────────────────────────────────────────────────
 
     /// @inheritdoc IST20
-    function verifyTransfer(address from, address to, uint256 value, bytes calldata /* data */ )
+    function verifyTransfer(
+        address from,
+        address to,
+        uint256 value,
+        bytes calldata /* data */
+    )
         external
         view
         override

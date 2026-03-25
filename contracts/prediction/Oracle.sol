@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {Multicall} from "@openzeppelin/contracts/utils/Multicall.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 
-import {IFinder} from "../oracle/registry/interfaces/IFinder.sol";
-import {IStore} from "../oracle/registry/interfaces/IStore.sol";
-import {IIdentifierWhitelist} from "../oracle/registry/interfaces/IIdentifierWhitelist.sol";
+import { IFinder } from "../oracle/registry/interfaces/IFinder.sol";
+import { IStore } from "../oracle/registry/interfaces/IStore.sol";
+import { IIdentifierWhitelist } from "../oracle/registry/interfaces/IIdentifierWhitelist.sol";
 import {
     IOracle,
     IOracleCallbacks,
@@ -34,20 +34,18 @@ library AncillaryData {
      * @notice Converts address to UTF-8 hex string (lowercase, no 0x prefix).
      */
     function toUtf8BytesAddress(address x) internal pure returns (bytes memory) {
-        return abi.encodePacked(
-            _toUtf8Bytes32Bottom(bytes32(bytes20(x)) >> 128),
-            bytes8(_toUtf8Bytes32Bottom(bytes20(x)))
-        );
+        return
+            abi.encodePacked(_toUtf8Bytes32Bottom(bytes32(bytes20(x)) >> 128), bytes8(_toUtf8Bytes32Bottom(bytes20(x))));
     }
 
     /**
      * @notice Appends key:value pair where value is bytes32.
      */
-    function appendKeyValueBytes32(
-        bytes memory currentAncillaryData,
-        bytes memory key,
-        bytes32 value
-    ) internal pure returns (bytes memory) {
+    function appendKeyValueBytes32(bytes memory currentAncillaryData, bytes memory key, bytes32 value)
+        internal
+        pure
+        returns (bytes memory)
+    {
         bytes memory prefix = _constructPrefix(currentAncillaryData, key);
         return abi.encodePacked(currentAncillaryData, prefix, toUtf8Bytes(value));
     }
@@ -55,11 +53,11 @@ library AncillaryData {
     /**
      * @notice Appends key:value pair where value is address.
      */
-    function appendKeyValueAddress(
-        bytes memory currentAncillaryData,
-        bytes memory key,
-        address value
-    ) internal pure returns (bytes memory) {
+    function appendKeyValueAddress(bytes memory currentAncillaryData, bytes memory key, address value)
+        internal
+        pure
+        returns (bytes memory)
+    {
         bytes memory prefix = _constructPrefix(currentAncillaryData, key);
         return abi.encodePacked(currentAncillaryData, prefix, toUtf8BytesAddress(value));
     }
@@ -154,12 +152,9 @@ contract Oracle is IOracle, ReentrancyGuard, Ownable, Multicall {
      * @param _defaultLiveness the default liveness for assertions in assertTruthWithDefaults.
      * @param _initialOwner the initial owner of this contract.
      */
-    constructor(
-        IFinder _finder,
-        IERC20 _defaultCurrency,
-        uint64 _defaultLiveness,
-        address _initialOwner
-    ) Ownable(_initialOwner) {
+    constructor(IFinder _finder, IERC20 _defaultCurrency, uint64 _defaultLiveness, address _initialOwner)
+        Ownable(_initialOwner)
+    {
         finder = _finder;
         setAdminProperties(_defaultCurrency, _defaultLiveness, 0.5e18);
     }
@@ -171,11 +166,10 @@ contract Oracle is IOracle, ReentrancyGuard, Ownable, Multicall {
      * @param _defaultLiveness the default liveness for assertions in assertTruthWithDefaults.
      * @param _burnedBondPercentage the percentage of the bond that is sent as fee to Store on disputes.
      */
-    function setAdminProperties(
-        IERC20 _defaultCurrency,
-        uint64 _defaultLiveness,
-        uint256 _burnedBondPercentage
-    ) public onlyOwner {
+    function setAdminProperties(IERC20 _defaultCurrency, uint64 _defaultLiveness, uint256 _burnedBondPercentage)
+        public
+        onlyOwner
+    {
         require(_burnedBondPercentage <= 1e18, "Burned bond percentage > 100");
         require(_burnedBondPercentage > 0, "Burned bond percentage is 0");
         burnedBondPercentage = _burnedBondPercentage;
@@ -266,7 +260,8 @@ contract Oracle is IOracle, ReentrancyGuard, Ownable, Multicall {
             IEscalationManager.AssertionPolicy memory assertionPolicy = _getAssertionPolicy(assertionId);
             require(!assertionPolicy.blockAssertion, "Assertion not allowed");
             EscalationManagerSettings storage emSettings = assertions[assertionId].escalationManagerSettings;
-            (emSettings.arbitrateViaEscalationManager, emSettings.discardOracle, emSettings.validateDisputers) = (
+            (emSettings.arbitrateViaEscalationManager, emSettings.discardOracle, emSettings.validateDisputers) =
+            (
                 assertionPolicy.arbitrateViaEscalationManager,
                 assertionPolicy.discardOracle,
                 assertionPolicy.validateDisputers
@@ -456,7 +451,9 @@ contract Oracle is IOracle, ReentrancyGuard, Ownable, Multicall {
         bytes32 identifier
     ) internal view returns (bytes32) {
         return keccak256(
-            abi.encode(claim, bond, time, liveness, currency, callbackRecipient, escalationManager, identifier, msg.sender)
+            abi.encode(
+                claim, bond, time, liveness, currency, callbackRecipient, escalationManager, identifier, msg.sender
+            )
         );
     }
 

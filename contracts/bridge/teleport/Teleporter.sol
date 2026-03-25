@@ -2,11 +2,11 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /**
  * @title Teleporter
@@ -58,7 +58,7 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
     }
 
     struct BackingAttestation {
-        uint256 totalBacking;     // Total ETH on source chain
+        uint256 totalBacking; // Total ETH on source chain
         uint256 timestamp;
         bytes signature;
     }
@@ -68,10 +68,10 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     uint256 public constant BASIS_POINTS = 10_000;
-    
+
     /// @notice Peg degradation threshold (99.5% = 9950 bps)
     uint256 public constant PEG_DEGRADE_THRESHOLD = 9950;
-    
+
     /// @notice Peg pause threshold (98.5% = 9850 bps)
     uint256 public constant PEG_PAUSE_THRESHOLD = 9850;
 
@@ -121,32 +121,17 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
 
     /// @notice Emitted when LETH minted for deposit
     event DepositMinted(
-        uint256 indexed srcChainId,
-        uint256 indexed depositNonce,
-        address indexed recipient,
-        uint256 amount
+        uint256 indexed srcChainId, uint256 indexed depositNonce, address indexed recipient, uint256 amount
     );
 
     /// @notice Emitted when LETH minted for yield
-    event YieldMinted(
-        uint256 indexed srcChainId,
-        uint256 indexed yieldNonce,
-        uint256 amount
-    );
+    event YieldMinted(uint256 indexed srcChainId, uint256 indexed yieldNonce, uint256 amount);
 
     /// @notice Emitted when LETH burned for withdrawal
-    event BurnedForWithdraw(
-        address indexed user,
-        uint256 amount,
-        uint256 indexed withdrawNonce
-    );
+    event BurnedForWithdraw(address indexed user, uint256 amount, uint256 indexed withdrawNonce);
 
     /// @notice Emitted when backing attestation updated
-    event BackingUpdated(
-        uint256 indexed srcChainId,
-        uint256 totalBacking,
-        uint256 timestamp
-    );
+    event BackingUpdated(uint256 indexed srcChainId, uint256 totalBacking, uint256 timestamp);
 
     /// @notice Emitted when MPC oracle updated
     event MPCOracleSet(address indexed oracle, bool active);
@@ -187,18 +172,15 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(
-        address _leth,
-        address _mpcOracle
-    ) Ownable(msg.sender) {
+    constructor(address _leth, address _mpcOracle) Ownable(msg.sender) {
         if (_leth == address(0) || _mpcOracle == address(0)) revert ZeroAddress();
-        
+
         token = IBridgedToken(_leth);
-        
+
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MPC_ROLE, _mpcOracle);
         mpcOracles[_mpcOracle] = true;
-        
+
         emit MPCOracleSet(_mpcOracle, true);
     }
 
@@ -226,16 +208,10 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
         if (processedDeposits[srcChainId][depositNonce]) revert NonceAlreadyProcessed();
 
         // Verify MPC signature
-        bytes32 messageHash = keccak256(abi.encodePacked(
-            "DEPOSIT",
-            srcChainId,
-            depositNonce,
-            recipient,
-            amount
-        ));
+        bytes32 messageHash = keccak256(abi.encodePacked("DEPOSIT", srcChainId, depositNonce, recipient, amount));
         bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
         address signer = ECDSA.recover(ethSignedHash, signature);
-        
+
         if (!mpcOracles[signer]) revert InvalidSignature();
 
         // Check backing ratio
@@ -258,26 +234,20 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
      * @param amount Amount of yield LETH to mint
      * @param signature MPC signature of yield proof
      */
-    function mintYield(
-        uint256 srcChainId,
-        uint256 yieldNonce,
-        uint256 amount,
-        bytes calldata signature
-    ) external nonReentrant whenNotPaused {
+    function mintYield(uint256 srcChainId, uint256 yieldNonce, uint256 amount, bytes calldata signature)
+        external
+        nonReentrant
+        whenNotPaused
+    {
         if (amount == 0) revert ZeroAmount();
         if (liquidYield == address(0)) revert ZeroAddress();
         if (processedYields[srcChainId][yieldNonce]) revert NonceAlreadyProcessed();
 
         // Verify MPC signature
-        bytes32 messageHash = keccak256(abi.encodePacked(
-            "YIELD",
-            srcChainId,
-            yieldNonce,
-            amount
-        ));
+        bytes32 messageHash = keccak256(abi.encodePacked("YIELD", srcChainId, yieldNonce, amount));
         bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
         address signer = ECDSA.recover(ethSignedHash, signature);
-        
+
         if (!mpcOracles[signer]) revert InvalidSignature();
 
         // Mark as processed
@@ -304,11 +274,12 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
      * @param recipient ETH recipient on source chain
      * @return withdrawNonce Unique withdraw nonce for tracking
      */
-    function burnForWithdraw(
-        uint256 amount,
-        uint256 srcChainId,
-        address recipient
-    ) external nonReentrant whenNotPaused returns (uint256 withdrawNonce) {
+    function burnForWithdraw(uint256 amount, uint256 srcChainId, address recipient)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (uint256 withdrawNonce)
+    {
         if (amount == 0) revert ZeroAmount();
         if (recipient == address(0)) revert ZeroAddress();
 
@@ -316,13 +287,8 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
         token.burnFrom(msg.sender, amount);
 
         // Generate withdraw nonce
-        withdrawNonce = uint256(keccak256(abi.encodePacked(
-            block.timestamp,
-            msg.sender,
-            amount,
-            srcChainId,
-            block.number
-        )));
+        withdrawNonce =
+            uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, amount, srcChainId, block.number)));
 
         pendingWithdraws[withdrawNonce] = true;
         totalBurned += amount;
@@ -342,28 +308,16 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
      * @param totalBacking Total ETH backing on source chain
      * @param signature MPC signature
      */
-    function updateBacking(
-        uint256 srcChainId,
-        uint256 totalBacking,
-        bytes calldata signature
-    ) external {
+    function updateBacking(uint256 srcChainId, uint256 totalBacking, bytes calldata signature) external {
         // Verify MPC signature
-        bytes32 messageHash = keccak256(abi.encodePacked(
-            "BACKING",
-            srcChainId,
-            totalBacking,
-            block.timestamp
-        ));
+        bytes32 messageHash = keccak256(abi.encodePacked("BACKING", srcChainId, totalBacking, block.timestamp));
         bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
         address signer = ECDSA.recover(ethSignedHash, signature);
-        
+
         if (!mpcOracles[signer]) revert InvalidSignature();
 
-        backingAttestations[srcChainId] = BackingAttestation({
-            totalBacking: totalBacking,
-            timestamp: block.timestamp,
-            signature: signature
-        });
+        backingAttestations[srcChainId] =
+            BackingAttestation({ totalBacking: totalBacking, timestamp: block.timestamp, signature: signature });
 
         emit BackingUpdated(srcChainId, totalBacking, block.timestamp);
 
@@ -404,15 +358,15 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
      */
     function setMPCOracle(address oracle, bool active) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (oracle == address(0)) revert ZeroAddress();
-        
+
         mpcOracles[oracle] = active;
-        
+
         if (active) {
             _grantRole(MPC_ROLE, oracle);
         } else {
             _revokeRole(MPC_ROLE, oracle);
         }
-        
+
         emit MPCOracleSet(oracle, active);
     }
 

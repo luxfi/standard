@@ -2,9 +2,9 @@
 pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
-import {Registry} from "../../../contracts/did/Registry.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {MockERC20} from "../TestMocks.sol";
+import { Registry } from "../../../contracts/did/Registry.sol";
+import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { MockERC20 } from "../TestMocks.sol";
 
 /// @title MockIdentityNFT
 /// @notice Minimal NFT for Registry fuzz testing
@@ -55,23 +55,18 @@ contract RegistryFuzzTest is Test {
 
         // Deploy Registry via proxy
         Registry impl = new Registry();
-        bytes memory initData = abi.encodeWithSelector(
-            Registry.initialize.selector,
-            owner,
-            address(stakingToken),
-            address(identityNft)
-        );
+        bytes memory initData =
+            abi.encodeWithSelector(Registry.initialize.selector, owner, address(stakingToken), address(identityNft));
         ERC1967Proxy proxy = new ERC1967Proxy(address(impl), initData);
         registry = Registry(address(proxy));
     }
 
     /// @notice Helper to perform commit-reveal claim
     /// @dev Advances time to satisfy commit-reveal timing requirements
-    function _commitRevealClaim(
-        address claimer,
-        Registry.ClaimParams memory params,
-        bytes32 secret
-    ) internal returns (string memory did) {
+    function _commitRevealClaim(address claimer, Registry.ClaimParams memory params, bytes32 secret)
+        internal
+        returns (string memory did)
+    {
         // Step 1: Commit
         bytes32 commitment = registry.computeCommitment(params.name, params.chainId, params.owner, secret);
         vm.prank(claimer);
@@ -104,11 +99,7 @@ contract RegistryFuzzTest is Test {
         stakingToken.approve(address(registry), stakeAmount);
 
         Registry.ClaimParams memory params = Registry.ClaimParams({
-            name: name,
-            chainId: LUX_CHAIN_ID,
-            stakeAmount: stakeAmount,
-            owner: alice,
-            referrer: ""
+            name: name, chainId: LUX_CHAIN_ID, stakeAmount: stakeAmount, owner: alice, referrer: ""
         });
 
         bytes32 secret = keccak256("secret");
@@ -177,11 +168,7 @@ contract RegistryFuzzTest is Test {
         stakingToken.approve(address(registry), stakeAmount);
 
         Registry.ClaimParams memory params = Registry.ClaimParams({
-            name: name,
-            chainId: LUX_CHAIN_ID,
-            stakeAmount: stakeAmount,
-            owner: alice,
-            referrer: ""
+            name: name, chainId: LUX_CHAIN_ID, stakeAmount: stakeAmount, owner: alice, referrer: ""
         });
 
         _commitRevealClaim(alice, params, secret);
@@ -192,11 +179,7 @@ contract RegistryFuzzTest is Test {
         stakingToken.approve(address(registry), stakeAmount);
 
         Registry.ClaimParams memory params2 = Registry.ClaimParams({
-            name: name,
-            chainId: LUX_CHAIN_ID,
-            stakeAmount: stakeAmount,
-            owner: bob,
-            referrer: ""
+            name: name, chainId: LUX_CHAIN_ID, stakeAmount: stakeAmount, owner: bob, referrer: ""
         });
 
         bytes32 secret2 = keccak256("secret2");
@@ -205,10 +188,7 @@ contract RegistryFuzzTest is Test {
         registry.commit(commitment);
         vm.warp(block.timestamp + 61);
 
-        vm.expectRevert(abi.encodeWithSelector(
-            Registry.IdentityNotAvailable.selector,
-            "did:lux:uniquename"
-        ));
+        vm.expectRevert(abi.encodeWithSelector(Registry.IdentityNotAvailable.selector, "did:lux:uniquename"));
         vm.prank(bob);
         registry.claim(params2, secret2);
     }
@@ -230,11 +210,7 @@ contract RegistryFuzzTest is Test {
         stakingToken.approve(address(registry), stakeAmount);
 
         Registry.ClaimParams memory params = Registry.ClaimParams({
-            name: name,
-            chainId: LUX_CHAIN_ID,
-            stakeAmount: stakeAmount,
-            owner: alice,
-            referrer: ""
+            name: name, chainId: LUX_CHAIN_ID, stakeAmount: stakeAmount, owner: alice, referrer: ""
         });
 
         string memory did = _commitRevealClaim(alice, params, secret);
@@ -269,11 +245,7 @@ contract RegistryFuzzTest is Test {
         stakingToken.approve(address(registry), stakeAmount);
 
         Registry.ClaimParams memory params = Registry.ClaimParams({
-            name: name,
-            chainId: LUX_CHAIN_ID,
-            stakeAmount: stakeAmount,
-            owner: alice,
-            referrer: ""
+            name: name, chainId: LUX_CHAIN_ID, stakeAmount: stakeAmount, owner: alice, referrer: ""
         });
 
         string memory did = _commitRevealClaim(alice, params, secret);
@@ -297,8 +269,8 @@ contract RegistryFuzzTest is Test {
         // Check all chars are valid (lowercase a-z and digits 0-9 only)
         for (uint256 i = 0; i < b.length; i++) {
             bytes1 c = b[i];
-            bool valid = (c >= 0x30 && c <= 0x39) ||  // 0-9
-                        (c >= 0x61 && c <= 0x7A);      // a-z only
+            bool valid = (c >= 0x30 && c <= 0x39) // 0-9
+                || (c >= 0x61 && c <= 0x7A); // a-z only
             vm.assume(valid);
         }
 
@@ -345,11 +317,7 @@ contract RegistryFuzzTest is Test {
         stakingToken.approve(address(registry), required);
 
         Registry.ClaimParams memory params = Registry.ClaimParams({
-            name: name,
-            chainId: LUX_CHAIN_ID,
-            stakeAmount: required,
-            owner: alice,
-            referrer: ""
+            name: name, chainId: LUX_CHAIN_ID, stakeAmount: required, owner: alice, referrer: ""
         });
 
         string memory did = _commitRevealClaim(alice, params, secret);
@@ -373,11 +341,7 @@ contract RegistryFuzzTest is Test {
         stakingToken.approve(address(registry), required);
 
         Registry.ClaimParams memory params = Registry.ClaimParams({
-            name: name,
-            chainId: LUX_CHAIN_ID,
-            stakeAmount: required,
-            owner: alice,
-            referrer: ""
+            name: name, chainId: LUX_CHAIN_ID, stakeAmount: required, owner: alice, referrer: ""
         });
 
         string memory did = _commitRevealClaim(alice, params, secret);
@@ -389,11 +353,7 @@ contract RegistryFuzzTest is Test {
     function test_Claim_EmptyNameRejected() public {
         bytes32 secret = keccak256("secret1");
         Registry.ClaimParams memory params = Registry.ClaimParams({
-            name: "",
-            chainId: LUX_CHAIN_ID,
-            stakeAmount: 100 * 1e18,
-            owner: alice,
-            referrer: ""
+            name: "", chainId: LUX_CHAIN_ID, stakeAmount: 100 * 1e18, owner: alice, referrer: ""
         });
 
         bytes32 commitment = registry.computeCommitment(params.name, params.chainId, params.owner, secret);
@@ -416,11 +376,7 @@ contract RegistryFuzzTest is Test {
 
         bytes32 secret = keccak256("secret2");
         Registry.ClaimParams memory params = Registry.ClaimParams({
-            name: longName,
-            chainId: LUX_CHAIN_ID,
-            stakeAmount: 100 * 1e18,
-            owner: alice,
-            referrer: ""
+            name: longName, chainId: LUX_CHAIN_ID, stakeAmount: 100 * 1e18, owner: alice, referrer: ""
         });
 
         bytes32 commitment = registry.computeCommitment(params.name, params.chainId, params.owner, secret);
@@ -437,11 +393,7 @@ contract RegistryFuzzTest is Test {
     function test_Claim_UppercaseRejected() public {
         bytes32 secret = keccak256("secret3");
         Registry.ClaimParams memory params = Registry.ClaimParams({
-            name: "ALICE",
-            chainId: LUX_CHAIN_ID,
-            stakeAmount: 100 * 1e18,
-            owner: alice,
-            referrer: ""
+            name: "ALICE", chainId: LUX_CHAIN_ID, stakeAmount: 100 * 1e18, owner: alice, referrer: ""
         });
 
         bytes32 commitment = registry.computeCommitment(params.name, params.chainId, params.owner, secret);
@@ -458,11 +410,7 @@ contract RegistryFuzzTest is Test {
     function test_Claim_UnderscoreRejected() public {
         bytes32 secret = keccak256("secret4");
         Registry.ClaimParams memory params = Registry.ClaimParams({
-            name: "alice_bob",
-            chainId: LUX_CHAIN_ID,
-            stakeAmount: 100 * 1e18,
-            owner: alice,
-            referrer: ""
+            name: "alice_bob", chainId: LUX_CHAIN_ID, stakeAmount: 100 * 1e18, owner: alice, referrer: ""
         });
 
         bytes32 commitment = registry.computeCommitment(params.name, params.chainId, params.owner, secret);
@@ -478,24 +426,20 @@ contract RegistryFuzzTest is Test {
     /// @notice Test claim with invalid chain ID
     function testFuzz_Claim_InvalidChainId(uint256 invalidChainId) public {
         // Assume chain ID is not one of the valid ones
-        vm.assume(invalidChainId != 96369);   // lux
-        vm.assume(invalidChainId != 96368);   // lux-test
-        vm.assume(invalidChainId != 494949);  // pars
-        vm.assume(invalidChainId != 494950);  // pars-test
-        vm.assume(invalidChainId != 200200);  // zoo
-        vm.assume(invalidChainId != 200201);  // zoo-test
-        vm.assume(invalidChainId != 36963);   // ai
-        vm.assume(invalidChainId != 36962);   // ai-test
-        vm.assume(invalidChainId != 31337);   // local
+        vm.assume(invalidChainId != 96369); // lux
+        vm.assume(invalidChainId != 96368); // lux-test
+        vm.assume(invalidChainId != 494949); // pars
+        vm.assume(invalidChainId != 494950); // pars-test
+        vm.assume(invalidChainId != 200200); // zoo
+        vm.assume(invalidChainId != 200201); // zoo-test
+        vm.assume(invalidChainId != 36963); // ai
+        vm.assume(invalidChainId != 36962); // ai-test
+        vm.assume(invalidChainId != 31337); // local
 
         bytes32 secret = keccak256("secret");
 
         Registry.ClaimParams memory params = Registry.ClaimParams({
-            name: "test",
-            chainId: invalidChainId,
-            stakeAmount: 100 * 1e18,
-            owner: alice,
-            referrer: ""
+            name: "test", chainId: invalidChainId, stakeAmount: 100 * 1e18, owner: alice, referrer: ""
         });
 
         bytes32 commitment = registry.computeCommitment(params.name, params.chainId, params.owner, secret);
@@ -522,11 +466,7 @@ contract RegistryFuzzTest is Test {
         stakingToken.approve(address(registry), stakeAmount);
 
         Registry.ClaimParams memory params = Registry.ClaimParams({
-            name: "test",
-            chainId: LUX_CHAIN_ID,
-            stakeAmount: stakeAmount,
-            owner: alice,
-            referrer: ""
+            name: "test", chainId: LUX_CHAIN_ID, stakeAmount: stakeAmount, owner: alice, referrer: ""
         });
 
         // Try to claim without committing first
@@ -545,11 +485,7 @@ contract RegistryFuzzTest is Test {
         stakingToken.approve(address(registry), stakeAmount);
 
         Registry.ClaimParams memory params = Registry.ClaimParams({
-            name: "test",
-            chainId: LUX_CHAIN_ID,
-            stakeAmount: stakeAmount,
-            owner: alice,
-            referrer: ""
+            name: "test", chainId: LUX_CHAIN_ID, stakeAmount: stakeAmount, owner: alice, referrer: ""
         });
 
         // Commit
@@ -573,11 +509,7 @@ contract RegistryFuzzTest is Test {
         stakingToken.approve(address(registry), stakeAmount);
 
         Registry.ClaimParams memory params = Registry.ClaimParams({
-            name: "test",
-            chainId: LUX_CHAIN_ID,
-            stakeAmount: stakeAmount,
-            owner: alice,
-            referrer: ""
+            name: "test", chainId: LUX_CHAIN_ID, stakeAmount: stakeAmount, owner: alice, referrer: ""
         });
 
         // Commit
@@ -612,11 +544,7 @@ contract RegistryFuzzTest is Test {
         stakingToken.approve(address(registry), initialStake);
 
         Registry.ClaimParams memory params = Registry.ClaimParams({
-            name: name,
-            chainId: LUX_CHAIN_ID,
-            stakeAmount: initialStake,
-            owner: alice,
-            referrer: ""
+            name: name, chainId: LUX_CHAIN_ID, stakeAmount: initialStake, owner: alice, referrer: ""
         });
 
         string memory did = _commitRevealClaim(alice, params, secret);
@@ -650,11 +578,7 @@ contract RegistryFuzzTest is Test {
         stakingToken.approve(address(registry), stakeAmount);
 
         Registry.ClaimParams memory params = Registry.ClaimParams({
-            name: name,
-            chainId: LUX_CHAIN_ID,
-            stakeAmount: stakeAmount,
-            owner: alice,
-            referrer: ""
+            name: name, chainId: LUX_CHAIN_ID, stakeAmount: stakeAmount, owner: alice, referrer: ""
         });
 
         string memory did = _commitRevealClaim(alice, params, secret);

@@ -1,45 +1,27 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IVotesERC20V1
-} from "../../interfaces/deployables/IVotesERC20V1.sol";
-import {IVersion} from "../../interfaces/deployables/IVersion.sol";
-import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {
-    IERC20Permit
-} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
-import {IDeploymentBlock} from "../../interfaces/IDeploymentBlock.sol";
-import {
-    DeploymentBlockInitializable
-} from "../../DeploymentBlockInitializable.sol";
-import {InitializerEventEmitter} from "../../InitializerEventEmitter.sol";
-import {
-    IAccessControl
-} from "@openzeppelin/contracts/access/IAccessControl.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {
-    ERC20Upgradeable
-} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {
-    NoncesUpgradeable
-} from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
+import { IVotesERC20V1 } from "../../interfaces/deployables/IVotesERC20V1.sol";
+import { IVersion } from "../../interfaces/deployables/IVersion.sol";
+import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import { IDeploymentBlock } from "../../interfaces/IDeploymentBlock.sol";
+import { DeploymentBlockInitializable } from "../../DeploymentBlockInitializable.sol";
+import { InitializerEventEmitter } from "../../InitializerEventEmitter.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import { NoncesUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
 import {
     ERC20VotesUpgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
 import {
     ERC20PermitUpgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
-import {
-    VotesUpgradeable
-} from "@openzeppelin/contracts-upgradeable/governance/utils/VotesUpgradeable.sol";
-import {
-    UUPSUpgradeable
-} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {
-    AccessControlUpgradeable
-} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { VotesUpgradeable } from "@openzeppelin/contracts-upgradeable/governance/utils/VotesUpgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 /**
  * @title VotesERC20V1
@@ -91,13 +73,21 @@ contract VotesERC20V1 is
      * @custom:storage-location erc7201:DAO.VotesERC20.main
      */
     struct VotesERC20Storage {
-        /** @notice Whether token transfers are locked */
+        /**
+         * @notice Whether token transfers are locked
+         */
         bool locked;
-        /** @notice Whether token minting is renounced */
+        /**
+         * @notice Whether token minting is renounced
+         */
         bool mintingRenounced;
-        /** @notice Maximum total supply cap for the token */
+        /**
+         * @notice Maximum total supply cap for the token
+         */
         uint256 maxTotalSupply;
-        /** @notice Timestamp when the token was last unlocked */
+        /**
+         * @notice Timestamp when the token was last unlocked
+         */
         uint48 unlockTime;
     }
 
@@ -113,25 +103,26 @@ contract VotesERC20V1 is
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      * @return $ The storage struct for VotesERC20V1
      */
-    function _getVotesERC20Storage()
-        internal
-        pure
-        returns (VotesERC20Storage storage $)
-    {
+    function _getVotesERC20Storage() internal pure returns (VotesERC20Storage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := VOTES_ERC20_STORAGE_LOCATION
         }
     }
 
-    /** @notice Role that allows transferring tokens when locked */
-    bytes32 public constant TRANSFER_FROM_ROLE =
-        keccak256("TRANSFER_FROM_ROLE");
+    /**
+     * @notice Role that allows transferring tokens when locked
+     */
+    bytes32 public constant TRANSFER_FROM_ROLE = keccak256("TRANSFER_FROM_ROLE");
 
-    /** @notice Role that allows receiving tokens when locked */
+    /**
+     * @notice Role that allows receiving tokens when locked
+     */
     bytes32 public constant TRANSFER_TO_ROLE = keccak256("TRANSFER_TO_ROLE");
 
-    /** @notice Role that allows minting new tokens */
+    /**
+     * @notice Role that allows minting new tokens
+     */
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     // ======================================================================
@@ -147,10 +138,10 @@ contract VotesERC20V1 is
     modifier isTransferable(address from_, address to_) {
         VotesERC20Storage storage $ = _getVotesERC20Storage();
         if (
-            $.locked &&
-            // overrides while locked
-            !hasRole(TRANSFER_FROM_ROLE, from_) && // whitelisted addresses can always transfer
-            !hasRole(TRANSFER_TO_ROLE, to_)
+            $.locked && 
+                // overrides while locked
+                !hasRole(TRANSFER_FROM_ROLE, from_) // whitelisted addresses can always transfer
+                && !hasRole(TRANSFER_TO_ROLE, to_)
         ) {
             revert IsLocked();
         }
@@ -180,15 +171,7 @@ contract VotesERC20V1 is
         bool locked_,
         uint256 maxTotalSupply_
     ) public virtual override initializer {
-        __InitializerEventEmitter_init(
-            abi.encode(
-                metadata_,
-                allocations_,
-                owner_,
-                locked_,
-                maxTotalSupply_
-            )
-        );
+        __InitializerEventEmitter_init(abi.encode(metadata_, allocations_, owner_, locked_, maxTotalSupply_));
         __ERC20_init(metadata_.name, metadata_.symbol);
         __ERC20Permit_init(metadata_.name);
         __ERC20Votes_init();
@@ -215,7 +198,7 @@ contract VotesERC20V1 is
 
         // Process initial allocations
         uint256 holderCount = allocations_.length;
-        for (uint256 i; i < holderCount; ) {
+        for (uint256 i; i < holderCount;) {
             _mint(allocations_[i].to, allocations_[i].amount);
             unchecked {
                 ++i;
@@ -233,9 +216,7 @@ contract VotesERC20V1 is
      * @inheritdoc UUPSUpgradeable
      * @dev Restricts upgrades to DEFAULT_ADMIN_ROLE
      */
-    function _authorizeUpgrade(
-        address newImplementation_
-    ) internal virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
+    function _authorizeUpgrade(address newImplementation_) internal virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
         // solhint-disable-previous-line no-empty-blocks
         // Intentionally empty - authorization logic handled by onlyRole modifier
     }
@@ -265,13 +246,7 @@ contract VotesERC20V1 is
     /**
      * @inheritdoc IVotesERC20V1
      */
-    function clock()
-        public
-        view
-        virtual
-        override(IVotesERC20V1, VotesUpgradeable)
-        returns (uint48)
-    {
+    function clock() public view virtual override(IVotesERC20V1, VotesUpgradeable) returns (uint48) {
         return uint48(block.timestamp);
     }
 
@@ -312,9 +287,7 @@ contract VotesERC20V1 is
     /**
      * @inheritdoc IVotesERC20V1
      */
-    function lock(
-        bool locked_
-    ) public virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
+    function lock(bool locked_) public virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
         VotesERC20Storage storage $ = _getVotesERC20Storage();
         if (locked_ && !$.locked) {
             revert LockFromUnlockedState();
@@ -329,12 +302,7 @@ contract VotesERC20V1 is
     /**
      * @inheritdoc IVotesERC20V1
      */
-    function renounceMinting()
-        public
-        virtual
-        override
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function renounceMinting() public virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
         VotesERC20Storage storage $ = _getVotesERC20Storage();
         if (!$.mintingRenounced) {
             $.mintingRenounced = true;
@@ -345,9 +313,7 @@ contract VotesERC20V1 is
     /**
      * @inheritdoc IVotesERC20V1
      */
-    function setMaxTotalSupply(
-        uint256 newMaxTotalSupply_
-    ) public virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setMaxTotalSupply(uint256 newMaxTotalSupply_) public virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
         if (newMaxTotalSupply_ < totalSupply()) {
             revert InvalidMaxTotalSupply();
         }
@@ -362,10 +328,7 @@ contract VotesERC20V1 is
      * @dev Minted tokens are automatically delegated to the recipient
      * through the ERC20Votes _update hook.
      */
-    function mint(
-        address to_,
-        uint256 amount_
-    ) public virtual override onlyRole(MINTER_ROLE) {
+    function mint(address to_, uint256 amount_) public virtual override onlyRole(MINTER_ROLE) {
         VotesERC20Storage storage $ = _getVotesERC20Storage();
         if ($.mintingRenounced) {
             revert MintingDisabled();
@@ -398,11 +361,7 @@ contract VotesERC20V1 is
      * @dev Overrides both ERC20Upgradeable and ERC20VotesUpgradeable to add
      * transfer restrictions via the isTransferable modifier.
      */
-    function _update(
-        address from_,
-        address to_,
-        uint256 value_
-    )
+    function _update(address from_, address to_, uint256 value_)
         internal
         virtual
         override(ERC20Upgradeable, ERC20VotesUpgradeable)
@@ -423,9 +382,7 @@ contract VotesERC20V1 is
      * @param owner_ The address to get the nonce for
      * @return The current nonce
      */
-    function nonces(
-        address owner_
-    )
+    function nonces(address owner_)
         public
         view
         virtual
@@ -459,23 +416,16 @@ contract VotesERC20V1 is
      * @dev Supports IVotesERC20V1, IERC20, IERC20Permit, IVotes, IVersion,
      * IDeploymentBlock, IAccessControl, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    )
+    function supportsInterface(bytes4 interfaceId_)
         public
         view
         virtual
         override(AccessControlUpgradeable, ERC165)
         returns (bool)
     {
-        return
-            interfaceId_ == type(IVotesERC20V1).interfaceId ||
-            interfaceId_ == type(IERC20).interfaceId ||
-            interfaceId_ == type(IERC20Permit).interfaceId ||
-            interfaceId_ == type(IVotes).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            interfaceId_ == type(IAccessControl).interfaceId ||
-            super.supportsInterface(interfaceId_);
+        return interfaceId_ == type(IVotesERC20V1).interfaceId || interfaceId_ == type(IERC20).interfaceId
+            || interfaceId_ == type(IERC20Permit).interfaceId || interfaceId_ == type(IVotes).interfaceId
+            || interfaceId_ == type(IVersion).interfaceId || interfaceId_ == type(IDeploymentBlock).interfaceId
+            || interfaceId_ == type(IAccessControl).interfaceId || super.supportsInterface(interfaceId_);
     }
 }

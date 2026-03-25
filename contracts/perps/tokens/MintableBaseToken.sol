@@ -2,15 +2,16 @@
 
 pragma solidity ^0.8.31;
 
-import {BaseToken} from "./BaseToken.sol";
-import {IMintable} from "./interfaces/IMintable.sol";
+import { BaseToken } from "./BaseToken.sol";
+import { IMintable } from "./interfaces/IMintable.sol";
 
 contract MintableBaseToken is BaseToken, IMintable {
+    mapping(address => bool) public override isMinter;
 
-    mapping (address => bool) public override isMinter;
-
-    constructor(string memory _name, string memory _symbol, uint256 _initialSupply) public BaseToken(_name, _symbol, _initialSupply) {
-    }
+    constructor(string memory _name, string memory _symbol, uint256 _initialSupply)
+        public
+        BaseToken(_name, _symbol, _initialSupply)
+    { }
 
     modifier onlyMinter() {
         require(isMinter[msg.sender], "MintableBaseToken: forbidden");

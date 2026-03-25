@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {SimpleAccount} from "@account-abstraction/accounts/SimpleAccount.sol";
-import {IEntryPoint} from "@account-abstraction/interfaces/IEntryPoint.sol";
+import { SimpleAccount } from "@account-abstraction/accounts/SimpleAccount.sol";
+import { IEntryPoint } from "@account-abstraction/interfaces/IEntryPoint.sol";
 
 /**
  * @title EOA
@@ -19,7 +19,7 @@ contract EOA is SimpleAccount {
 
     /// @notice Constructor
     /// @param anEntryPoint The ERC-4337 EntryPoint contract
-    constructor(IEntryPoint anEntryPoint) SimpleAccount(anEntryPoint) {}
+    constructor(IEntryPoint anEntryPoint) SimpleAccount(anEntryPoint) { }
 
     /// @notice Returns the account implementation version
     function version() external pure returns (string memory) {

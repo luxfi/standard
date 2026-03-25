@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IBridgeAdapter, BridgeParams, BridgeRoute, BridgeStatus} from "../../interfaces/adapters/IBridgeAdapter.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IBridgeAdapter, BridgeParams, BridgeRoute, BridgeStatus } from "../../interfaces/adapters/IBridgeAdapter.sol";
 
 // =============================================================================
 // ACROSS PROTOCOL INTERFACES
@@ -126,7 +126,10 @@ contract AcrossAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
         emit ChainRemoved(_chainId);
     }
 
-    function setTokenMapping(address localToken, uint256 destChainId, address destToken) external onlyRole(BRIDGE_ADMIN_ROLE) {
+    function setTokenMapping(address localToken, uint256 destChainId, address destToken)
+        external
+        onlyRole(BRIDGE_ADMIN_ROLE)
+    {
         tokenMapping[localToken][destChainId] = destToken;
         emit TokenMapped(localToken, destChainId, destToken);
     }
@@ -143,11 +146,25 @@ contract AcrossAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     // IBridgeAdapter: metadata
     // -------------------------------------------------------------------------
 
-    function version() external pure override returns (string memory) { return "1.0.0"; }
-    function protocol() external pure override returns (string memory) { return "Across V3"; }
-    function chainId() external view override returns (uint256) { return srcChainId; }
-    function endpoint() external view override returns (address) { return address(spokePool); }
-    function supportedChains() external view override returns (uint256[] memory) { return _supportedChains; }
+    function version() external pure override returns (string memory) {
+        return "1.0.0";
+    }
+
+    function protocol() external pure override returns (string memory) {
+        return "Across V3";
+    }
+
+    function chainId() external view override returns (uint256) {
+        return srcChainId;
+    }
+
+    function endpoint() external view override returns (address) {
+        return address(spokePool);
+    }
+
+    function supportedChains() external view override returns (uint256[] memory) {
+        return _supportedChains;
+    }
 
     function isRouteSupported(uint256 dstChainId, address token) external view override returns (bool) {
         return isSupportedChain[dstChainId] && tokenMapping[token][dstChainId] != address(0);
@@ -197,18 +214,18 @@ contract AcrossAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
 
         // Deposit via Across SpokePool
         spokePool.depositV3(
-            msg.sender,                // depositor
-            params.recipient,          // recipient
-            params.token,              // inputToken
-            destToken,                 // outputToken
-            params.amount,             // inputAmount
-            outputAmount,              // outputAmount
-            params.dstChainId,         // destinationChainId
-            address(0),                // exclusiveRelayer (none)
-            uint32(block.timestamp),   // quoteTimestamp
-            fillDeadline,              // fillDeadline
-            0,                         // exclusivityDeadline
-            params.extraData           // message
+            msg.sender, // depositor
+            params.recipient, // recipient
+            params.token, // inputToken
+            destToken, // outputToken
+            params.amount, // inputAmount
+            outputAmount, // outputAmount
+            params.dstChainId, // destinationChainId
+            address(0), // exclusiveRelayer (none)
+            uint32(block.timestamp), // quoteTimestamp
+            fillDeadline, // fillDeadline
+            0, // exclusivityDeadline
+            params.extraData // message
         );
 
         // Track bridge status
@@ -237,7 +254,10 @@ contract AcrossAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     // -------------------------------------------------------------------------
 
     function estimateFees(uint256 dstChainId, address, uint256 amount)
-        external view override returns (uint256 bridgeFee, uint256 protocolFee)
+        external
+        view
+        override
+        returns (uint256 bridgeFee, uint256 protocolFee)
     {
         if (!isSupportedChain[dstChainId]) revert UnsupportedChain(dstChainId);
         bridgeFee = amount * defaultRelayerFeeBps / 10_000;
@@ -253,5 +273,5 @@ contract AcrossAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     }
 
     /// @notice Allow contract to receive native tokens
-    receive() external payable {}
+    receive() external payable { }
 }

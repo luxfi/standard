@@ -2,12 +2,12 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import {ERC1155Burnable} from "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
-import {ERC1155Pausable} from "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Pausable.sol";
-import {ERC1155Supply} from "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
-import {ERC2981} from "@openzeppelin/contracts/token/common/ERC2981.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ERC1155 } from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import { ERC1155Burnable } from "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
+import { ERC1155Pausable } from "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Pausable.sol";
+import { ERC1155Supply } from "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
+import { ERC2981 } from "@openzeppelin/contracts/token/common/ERC2981.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title LRC1155
@@ -20,14 +20,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  * - ERC2981: Royalty support
  * - AccessControl: Role-based permissions
  */
-contract LRC1155 is
-    ERC1155,
-    ERC1155Burnable,
-    ERC1155Pausable,
-    ERC1155Supply,
-    ERC2981,
-    AccessControl
-{
+contract LRC1155 is ERC1155, ERC1155Burnable, ERC1155Pausable, ERC1155Supply, ERC2981, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant URI_SETTER_ROLE = keccak256("URI_SETTER_ROLE");
@@ -97,10 +90,7 @@ contract LRC1155 is
     /**
      * @notice Mint tokens
      */
-    function mint(address to, uint256 id, uint256 amount, bytes memory data)
-        public
-        onlyRole(MINTER_ROLE)
-    {
+    function mint(address to, uint256 id, uint256 amount, bytes memory data) public onlyRole(MINTER_ROLE) {
         _mint(to, id, amount, data);
     }
 
@@ -124,7 +114,10 @@ contract LRC1155 is
     /**
      * @notice Set token-specific royalty
      */
-    function setTokenRoyalty(uint256 tokenId, address receiver, uint96 feeNumerator) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setTokenRoyalty(uint256 tokenId, address receiver, uint96 feeNumerator)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         _setTokenRoyalty(tokenId, receiver, feeNumerator);
     }
 

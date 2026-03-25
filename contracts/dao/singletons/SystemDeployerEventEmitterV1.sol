@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    ISystemDeployerEventEmitterV1
-} from "../interfaces/singletons/ISystemDeployerEventEmitterV1.sol";
-import {IVersion} from "../interfaces/deployables/IVersion.sol";
-import {IDeploymentBlock} from "../interfaces/IDeploymentBlock.sol";
-import {
-    DeploymentBlockNonInitializable
-} from "../DeploymentBlockNonInitializable.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { ISystemDeployerEventEmitterV1 } from "../interfaces/singletons/ISystemDeployerEventEmitterV1.sol";
+import { IVersion } from "../interfaces/deployables/IVersion.sol";
+import { IDeploymentBlock } from "../interfaces/IDeploymentBlock.sol";
+import { DeploymentBlockNonInitializable } from "../DeploymentBlockNonInitializable.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
  * @title SystemDeployerEventEmitterV1
@@ -51,11 +47,11 @@ contract SystemDeployerEventEmitterV1 is
      * @dev The msg.sender is the newly deployed Safe proxy, which becomes
      * the indexed safeProxy parameter in the event.
      */
-    function emitSystemDeployed(
-        address safeProxyFactory_,
-        bytes32 salt_,
-        bytes calldata initData_
-    ) public virtual override {
+    function emitSystemDeployed(address safeProxyFactory_, bytes32 salt_, bytes calldata initData_)
+        public
+        virtual
+        override
+    {
         emit SystemDeployed(msg.sender, safeProxyFactory_, salt_, initData_);
     }
 
@@ -82,13 +78,9 @@ contract SystemDeployerEventEmitterV1 is
      * @inheritdoc ERC165
      * @dev Supports ISystemDeployerEventEmitterV1, IVersion, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(ISystemDeployerEventEmitterV1).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(ISystemDeployerEventEmitterV1).interfaceId
+            || interfaceId_ == type(IVersion).interfaceId || interfaceId_ == type(IDeploymentBlock).interfaceId
+            || super.supportsInterface(interfaceId_);
     }
 }

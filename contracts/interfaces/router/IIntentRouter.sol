@@ -14,10 +14,10 @@ interface IIntentRouter {
 
     /// @notice Order type
     enum OrderType {
-        LIMIT,          // Standard limit order
-        RFQ,            // Request for quote (private)
-        DUTCH_AUCTION,  // Decaying price limit
-        FILL_OR_KILL    // All or nothing
+        LIMIT, // Standard limit order
+        RFQ, // Request for quote (private)
+        DUTCH_AUCTION, // Decaying price limit
+        FILL_OR_KILL // All or nothing
     }
 
     /// @notice Order status
@@ -164,10 +164,7 @@ interface IIntentRouter {
      * @param maker Order maker
      * @param nonce Canceled nonce
      */
-    event OrderCanceled(
-        address indexed maker,
-        uint256 indexed nonce
-    );
+    event OrderCanceled(address indexed maker, uint256 indexed nonce);
 
     /**
      * @notice Emitted when a quote is filled
@@ -178,11 +175,7 @@ interface IIntentRouter {
      * @param amountOut Output amount
      */
     event QuoteFilled(
-        bytes32 indexed quoteHash,
-        address indexed maker,
-        address indexed taker,
-        uint256 amountIn,
-        uint256 amountOut
+        bytes32 indexed quoteHash, address indexed maker, address indexed taker, uint256 amountIn, uint256 amountOut
     );
 
     /**

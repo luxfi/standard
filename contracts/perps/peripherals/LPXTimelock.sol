@@ -2,24 +2,23 @@
 
 pragma solidity ^0.8.31;
 
-import {ITimelockTarget} from "./interfaces/ITimelockTarget.sol";
-import {ILPXTimelock} from "./interfaces/ILPXTimelock.sol";
-import {IAdmin} from "../access/interfaces/IAdmin.sol";
-import {IVault} from "../core/interfaces/IVault.sol";
-import {IVaultUtils} from "../core/interfaces/IVaultUtils.sol";
-import {IVaultPriceFeed} from "../core/interfaces/IVaultPriceFeed.sol";
-import {IRouter} from "../core/interfaces/IRouter.sol";
-import {IYieldToken} from "../tokens/interfaces/IYieldToken.sol";
-import {IBaseToken} from "../tokens/interfaces/IBaseToken.sol";
-import {IMintable} from "../tokens/interfaces/IMintable.sol";
-import {ILPUSD} from "../tokens/interfaces/ILPUSD.sol";
+import { ITimelockTarget } from "./interfaces/ITimelockTarget.sol";
+import { ILPXTimelock } from "./interfaces/ILPXTimelock.sol";
+import { IAdmin } from "../access/interfaces/IAdmin.sol";
+import { IVault } from "../core/interfaces/IVault.sol";
+import { IVaultUtils } from "../core/interfaces/IVaultUtils.sol";
+import { IVaultPriceFeed } from "../core/interfaces/IVaultPriceFeed.sol";
+import { IRouter } from "../core/interfaces/IRouter.sol";
+import { IYieldToken } from "../tokens/interfaces/IYieldToken.sol";
+import { IBaseToken } from "../tokens/interfaces/IBaseToken.sol";
+import { IMintable } from "../tokens/interfaces/IMintable.sol";
+import { ILPUSD } from "../tokens/interfaces/ILPUSD.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract LPXTimelock is ILPXTimelock {
     using SafeERC20 for IERC20;
-
 
     uint256 public constant PRICE_PRECISION = 10 ** 30;
     uint256 public constant MAX_BUFFER = 7 days;
@@ -36,10 +35,10 @@ contract LPXTimelock is ILPXTimelock {
     address public mintReceiver;
     uint256 public maxTokenSupply;
 
-    mapping (bytes32 => uint256) public pendingActions;
-    mapping (address => bool) public excludedTokens;
+    mapping(bytes32 => uint256) public pendingActions;
+    mapping(address => bool) public excludedTokens;
 
-    mapping (address => bool) public isHandler;
+    mapping(address => bool) public isHandler;
 
     event SignalPendingAction(bytes32 action);
     event SignalApprove(address token, address spender, uint256 amount, bytes32 action);
@@ -60,11 +59,7 @@ contract LPXTimelock is ILPXTimelock {
         bool isShortable
     );
     event SignalPriceFeedSetTokenConfig(
-        address vaultPriceFeed,
-        address token,
-        address priceFeed,
-        uint256 priceDecimals,
-        bool isStrictStable
+        address vaultPriceFeed, address token, address priceFeed, uint256 priceDecimals, bool isStrictStable
     );
     event ClearAction(bytes32 action);
 
@@ -128,11 +123,16 @@ contract LPXTimelock is ILPXTimelock {
     }
 
     function setMaxLeverage(address _vault, uint256 _maxLeverage) external onlyAdmin {
-      require(_maxLeverage > MAX_LEVERAGE_VALIDATION, "LPXTimelock: invalid _maxLeverage");
-      IVault(_vault).setMaxLeverage(_maxLeverage);
+        require(_maxLeverage > MAX_LEVERAGE_VALIDATION, "LPXTimelock: invalid _maxLeverage");
+        IVault(_vault).setMaxLeverage(_maxLeverage);
     }
 
-    function setFundingRate(address _vault, uint256 _fundingInterval, uint256 _fundingRateFactor, uint256 _stableFundingRateFactor) external onlyAdmin {
+    function setFundingRate(
+        address _vault,
+        uint256 _fundingInterval,
+        uint256 _fundingRateFactor,
+        uint256 _stableFundingRateFactor
+    ) external onlyAdmin {
         require(_fundingRateFactor < MAX_FUNDING_RATE_FACTOR, "LPXTimelock: invalid _fundingRateFactor");
         require(_stableFundingRateFactor < MAX_FUNDING_RATE_FACTOR, "LPXTimelock: invalid _stableFundingRateFactor");
         IVault(_vault).setFundingRate(_fundingInterval, _fundingRateFactor, _stableFundingRateFactor);
@@ -158,17 +158,18 @@ contract LPXTimelock is ILPXTimelock {
         require(_marginFeeBasisPoints < MAX_FEE_BASIS_POINTS, "LPXTimelock: invalid _marginFeeBasisPoints");
         require(_liquidationFeeUsd < 10 * PRICE_PRECISION, "LPXTimelock: invalid _liquidationFeeUsd");
 
-        IVault(_vault).setFees(
-            _taxBasisPoints,
-            _stableTaxBasisPoints,
-            _mintBurnFeeBasisPoints,
-            _swapFeeBasisPoints,
-            _stableSwapFeeBasisPoints,
-            _marginFeeBasisPoints,
-            _liquidationFeeUsd,
-            _minProfitTime,
-            _hasDynamicFees
-        );
+        IVault(_vault)
+            .setFees(
+                _taxBasisPoints,
+                _stableTaxBasisPoints,
+                _mintBurnFeeBasisPoints,
+                _swapFeeBasisPoints,
+                _stableSwapFeeBasisPoints,
+                _marginFeeBasisPoints,
+                _liquidationFeeUsd,
+                _minProfitTime,
+                _hasDynamicFees
+            );
     }
 
     function setTokenConfig(
@@ -189,15 +190,8 @@ contract LPXTimelock is ILPXTimelock {
         bool isStable = vault.stableTokens(_token);
         bool isShortable = vault.shortableTokens(_token);
 
-        IVault(_vault).setTokenConfig(
-            _token,
-            tokenDecimals,
-            _tokenWeight,
-            _minProfitBps,
-            _maxLpusdAmount,
-            isStable,
-            isShortable
-        );
+        IVault(_vault)
+            .setTokenConfig(_token, tokenDecimals, _tokenWeight, _minProfitBps, _maxLpusdAmount, isStable, isShortable);
 
         IVault(_vault).setBufferAmount(_token, _bufferAmount);
 
@@ -224,7 +218,10 @@ contract LPXTimelock is ILPXTimelock {
         IVaultPriceFeed(_priceFeed).setMaxStrictPriceDeviation(_maxStrictPriceDeviation);
     }
 
-    function setAdjustment(address _priceFeed, address _token, bool _isAdditive, uint256 _adjustmentBps) external onlyAdmin {
+    function setAdjustment(address _priceFeed, address _token, bool _isAdditive, uint256 _adjustmentBps)
+        external
+        onlyAdmin
+    {
         IVaultPriceFeed(_priceFeed).setAdjustment(_token, _isAdditive, _adjustmentBps);
     }
 
@@ -240,7 +237,7 @@ contract LPXTimelock is ILPXTimelock {
         IVaultPriceFeed(_priceFeed).setFavorPrimaryPrice(_favorPrimaryPrice);
     }
 
-    function setPriceSampleSpace(address _priceFeed,uint256 _priceSampleSpace) external onlyAdmin {
+    function setPriceSampleSpace(address _priceFeed, uint256 _priceSampleSpace) external onlyAdmin {
         require(_priceSampleSpace <= 5, "Invalid _priceSampleSpace");
         IVaultPriceFeed(_priceFeed).setPriceSampleSpace(_priceSampleSpace);
     }
@@ -257,12 +254,12 @@ contract LPXTimelock is ILPXTimelock {
         IVault(_vault).setVaultUtils(_vaultUtils);
     }
 
-    function setMaxGasPrice(address _vault,uint256 _maxGasPrice) external onlyAdmin {
+    function setMaxGasPrice(address _vault, uint256 _maxGasPrice) external onlyAdmin {
         require(_maxGasPrice > 5000000000, "Invalid _maxGasPrice");
         IVault(_vault).setMaxGasPrice(_maxGasPrice);
     }
 
-    function withdrawFees(address _vault,address _token, address _receiver) external onlyAdmin {
+    function withdrawFees(address _vault, address _token, address _receiver) external onlyAdmin {
         IVault(_vault).withdrawFees(_token, _receiver);
     }
 
@@ -304,7 +301,10 @@ contract LPXTimelock is ILPXTimelock {
         IERC20(_token).approve(_spender, _amount);
     }
 
-    function signalWithdrawToken(address _target, address _token, address _receiver, uint256 _amount) external onlyAdmin {
+    function signalWithdrawToken(address _target, address _token, address _receiver, uint256 _amount)
+        external
+        onlyAdmin
+    {
         bytes32 action = keccak256(abi.encodePacked("withdrawToken", _target, _token, _receiver, _amount));
         _setPendingAction(action);
         emit SignalWithdrawToken(_target, _token, _receiver, _amount, action);
@@ -404,29 +404,24 @@ contract LPXTimelock is ILPXTimelock {
         bool _isStable,
         bool _isShortable
     ) external onlyAdmin {
-        bytes32 action = keccak256(abi.encodePacked(
-            "vaultSetTokenConfig",
-            _vault,
-            _token,
-            _tokenDecimals,
-            _tokenWeight,
-            _minProfitBps,
-            _maxLpusdAmount,
-            _isStable,
-            _isShortable
-        ));
+        bytes32 action = keccak256(
+            abi.encodePacked(
+                "vaultSetTokenConfig",
+                _vault,
+                _token,
+                _tokenDecimals,
+                _tokenWeight,
+                _minProfitBps,
+                _maxLpusdAmount,
+                _isStable,
+                _isShortable
+            )
+        );
 
         _setPendingAction(action);
 
         emit SignalVaultSetTokenConfig(
-            _vault,
-            _token,
-            _tokenDecimals,
-            _tokenWeight,
-            _minProfitBps,
-            _maxLpusdAmount,
-            _isStable,
-            _isShortable
+            _vault, _token, _tokenDecimals, _tokenWeight, _minProfitBps, _maxLpusdAmount, _isStable, _isShortable
         );
     }
 
@@ -440,30 +435,27 @@ contract LPXTimelock is ILPXTimelock {
         bool _isStable,
         bool _isShortable
     ) external onlyAdmin {
-        bytes32 action = keccak256(abi.encodePacked(
-            "vaultSetTokenConfig",
-            _vault,
-            _token,
-            _tokenDecimals,
-            _tokenWeight,
-            _minProfitBps,
-            _maxLpusdAmount,
-            _isStable,
-            _isShortable
-        ));
+        bytes32 action = keccak256(
+            abi.encodePacked(
+                "vaultSetTokenConfig",
+                _vault,
+                _token,
+                _tokenDecimals,
+                _tokenWeight,
+                _minProfitBps,
+                _maxLpusdAmount,
+                _isStable,
+                _isShortable
+            )
+        );
 
         _validateAction(action);
         _clearAction(action);
 
-        IVault(_vault).setTokenConfig(
-            _token,
-            _tokenDecimals,
-            _tokenWeight,
-            _minProfitBps,
-            _maxLpusdAmount,
-            _isStable,
-            _isShortable
-        );
+        IVault(_vault)
+            .setTokenConfig(
+                _token, _tokenDecimals, _tokenWeight, _minProfitBps, _maxLpusdAmount, _isStable, _isShortable
+            );
     }
 
     function signalPriceFeedSetTokenConfig(
@@ -473,24 +465,15 @@ contract LPXTimelock is ILPXTimelock {
         uint256 _priceDecimals,
         bool _isStrictStable
     ) external onlyAdmin {
-        bytes32 action = keccak256(abi.encodePacked(
-            "priceFeedSetTokenConfig",
-            _vaultPriceFeed,
-            _token,
-            _priceFeed,
-            _priceDecimals,
-            _isStrictStable
-        ));
+        bytes32 action = keccak256(
+            abi.encodePacked(
+                "priceFeedSetTokenConfig", _vaultPriceFeed, _token, _priceFeed, _priceDecimals, _isStrictStable
+            )
+        );
 
         _setPendingAction(action);
 
-        emit SignalPriceFeedSetTokenConfig(
-            _vaultPriceFeed,
-            _token,
-            _priceFeed,
-            _priceDecimals,
-            _isStrictStable
-        );
+        emit SignalPriceFeedSetTokenConfig(_vaultPriceFeed, _token, _priceFeed, _priceDecimals, _isStrictStable);
     }
 
     function priceFeedSetTokenConfig(
@@ -500,24 +483,16 @@ contract LPXTimelock is ILPXTimelock {
         uint256 _priceDecimals,
         bool _isStrictStable
     ) external onlyAdmin {
-        bytes32 action = keccak256(abi.encodePacked(
-            "priceFeedSetTokenConfig",
-            _vaultPriceFeed,
-            _token,
-            _priceFeed,
-            _priceDecimals,
-            _isStrictStable
-        ));
+        bytes32 action = keccak256(
+            abi.encodePacked(
+                "priceFeedSetTokenConfig", _vaultPriceFeed, _token, _priceFeed, _priceDecimals, _isStrictStable
+            )
+        );
 
         _validateAction(action);
         _clearAction(action);
 
-        IVaultPriceFeed(_vaultPriceFeed).setTokenConfig(
-            _token,
-            _priceFeed,
-            _priceDecimals,
-            _isStrictStable
-        );
+        IVaultPriceFeed(_vaultPriceFeed).setTokenConfig(_token, _priceFeed, _priceDecimals, _isStrictStable);
     }
 
     function cancelAction(bytes32 _action) external onlyAdmin {

@@ -37,20 +37,23 @@ contract LiquidTeleportTest is Test {
     // HELPER FUNCTIONS
     // ═══════════════════════════════════════════════════════════════════════════
 
-    function _signRelease(address recipient, uint256 amount, uint256 withdrawNonce) internal view returns (bytes memory) {
+    function _signRelease(address recipient, uint256 amount, uint256 withdrawNonce)
+        internal
+        view
+        returns (bytes memory)
+    {
         // H-03 fix: Include operationNonce in signature for replay protection
-        bytes32 messageHash = keccak256(abi.encodePacked(
-            "RELEASE",
-            recipient,
-            amount,
-            withdrawNonce,
-            vault.operationNonce(), // H-03: Include operation nonce
-            block.chainid
-        ));
-        bytes32 ethSignedHash = keccak256(abi.encodePacked(
-            "\x19Ethereum Signed Message:\n32",
-            messageHash
-        ));
+        bytes32 messageHash = keccak256(
+            abi.encodePacked(
+                "RELEASE",
+                recipient,
+                amount,
+                withdrawNonce,
+                vault.operationNonce(), // H-03: Include operation nonce
+                block.chainid
+            )
+        );
+        bytes32 ethSignedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(mpcPrivateKey, ethSignedHash);
         return abi.encodePacked(r, s, v);
     }
@@ -63,7 +66,7 @@ contract LiquidTeleportTest is Test {
         uint256 depositAmount = 1 ether;
 
         vm.prank(user);
-        uint256 nonce = vault.depositETH{value: depositAmount}(luxRecipient);
+        uint256 nonce = vault.depositETH{ value: depositAmount }(luxRecipient);
 
         assertEq(nonce, 1, "First deposit should have nonce 1");
         assertEq(vault.totalDeposited(), depositAmount, "Total deposited should match");
@@ -73,9 +76,9 @@ contract LiquidTeleportTest is Test {
     function test_DepositETH_MultipleTimes() public {
         vm.startPrank(user);
 
-        uint256 nonce1 = vault.depositETH{value: 1 ether}(luxRecipient);
-        uint256 nonce2 = vault.depositETH{value: 2 ether}(luxRecipient);
-        uint256 nonce3 = vault.depositETH{value: 3 ether}(luxRecipient);
+        uint256 nonce1 = vault.depositETH{ value: 1 ether }(luxRecipient);
+        uint256 nonce2 = vault.depositETH{ value: 2 ether }(luxRecipient);
+        uint256 nonce3 = vault.depositETH{ value: 3 ether }(luxRecipient);
 
         vm.stopPrank();
 
@@ -88,13 +91,13 @@ contract LiquidTeleportTest is Test {
     function test_DepositETH_RevertOnZero() public {
         vm.prank(user);
         vm.expectRevert(TeleportVault.ZeroAmount.selector);
-        vault.depositETH{value: 0}(luxRecipient);
+        vault.depositETH{ value: 0 }(luxRecipient);
     }
 
     function test_DepositETH_RevertOnZeroRecipient() public {
         vm.prank(user);
         vm.expectRevert(TeleportVault.ZeroAddress.selector);
-        vault.depositETH{value: 1 ether}(address(0));
+        vault.depositETH{ value: 1 ether }(address(0));
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -104,7 +107,7 @@ contract LiquidTeleportTest is Test {
     function test_ReleaseETH() public {
         // First deposit
         vm.prank(user);
-        vault.depositETH{value: 10 ether}(luxRecipient);
+        vault.depositETH{ value: 10 ether }(luxRecipient);
 
         uint256 recipientBalanceBefore = user.balance;
         uint256 totalDepositedBefore = vault.totalDeposited();
@@ -122,7 +125,7 @@ contract LiquidTeleportTest is Test {
 
     function test_ReleaseETH_RevertInvalidSignature() public {
         vm.prank(user);
-        vault.depositETH{value: 10 ether}(luxRecipient);
+        vault.depositETH{ value: 10 ether }(luxRecipient);
 
         // Invalid signature (random bytes)
         bytes memory invalidSig = new bytes(65);
@@ -133,7 +136,7 @@ contract LiquidTeleportTest is Test {
 
     function test_ReleaseETH_RevertReplayAttack() public {
         vm.prank(user);
-        vault.depositETH{value: 10 ether}(luxRecipient);
+        vault.depositETH{ value: 10 ether }(luxRecipient);
 
         bytes memory signature = _signRelease(user, 1 ether, 1);
 
@@ -186,7 +189,7 @@ contract LiquidTeleportTest is Test {
 
     function test_CurrentBuffer() public {
         vm.prank(user);
-        vault.depositETH{value: 10 ether}(luxRecipient);
+        vault.depositETH{ value: 10 ether }(luxRecipient);
 
         uint256 buffer = vault.currentBuffer();
         assertEq(buffer, 10 ether, "All ETH should be in buffer initially");
@@ -194,7 +197,7 @@ contract LiquidTeleportTest is Test {
 
     function test_RequiredBuffer() public {
         vm.prank(user);
-        vault.depositETH{value: 100 ether}(luxRecipient);
+        vault.depositETH{ value: 100 ether }(luxRecipient);
 
         // Default buffer is 20% (2000 bps)
         uint256 required = vault.requiredBuffer();
@@ -206,7 +209,7 @@ contract LiquidTeleportTest is Test {
         vault.setBufferBps(3000); // 30%
 
         vm.prank(user);
-        vault.depositETH{value: 100 ether}(luxRecipient);
+        vault.depositETH{ value: 100 ether }(luxRecipient);
 
         assertEq(vault.requiredBuffer(), 30 ether, "Required buffer should be 30%");
     }
@@ -262,7 +265,7 @@ contract LiquidTeleportTest is Test {
         amount = bound(amount, 1, INITIAL_BALANCE);
 
         vm.prank(user);
-        uint256 nonce = vault.depositETH{value: amount}(luxRecipient);
+        uint256 nonce = vault.depositETH{ value: amount }(luxRecipient);
 
         assertEq(nonce, 1, "Nonce should be 1");
         assertEq(vault.totalDeposited(), amount, "Total deposited should match");
@@ -274,7 +277,7 @@ contract LiquidTeleportTest is Test {
 
         vm.startPrank(user);
         for (uint256 i = 0; i < count; i++) {
-            vault.depositETH{value: perDeposit}(luxRecipient);
+            vault.depositETH{ value: perDeposit }(luxRecipient);
         }
         vm.stopPrank();
 

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IOracle} from "./IOracle.sol";
-import {IOracleSource} from "./interfaces/IOracleSource.sol";
-import {IOracleStrategy} from "./interfaces/IOracleStrategy.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import { IOracle } from "./IOracle.sol";
+import { IOracleSource } from "./interfaces/IOracleSource.sol";
+import { IOracleStrategy } from "./interfaces/IOracleStrategy.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /// @title Oracle
 /// @notice THE standard oracle for all Lux DeFi protocols
@@ -174,7 +174,10 @@ contract Oracle is IOracle, AccessControl, Pausable {
 
     /// @inheritdoc IOracle
     function getPrices(address[] calldata assets)
-        external view override returns (uint256[] memory prices_, uint256[] memory timestamps)
+        external
+        view
+        override
+        returns (uint256[] memory prices_, uint256[] memory timestamps)
     {
         prices_ = new uint256[](assets.length);
         timestamps = new uint256[](assets.length);
@@ -235,7 +238,7 @@ contract Oracle is IOracle, AccessControl, Pausable {
         activeSourceCount = 0;
 
         for (uint256 i = 0; i < sources.length; i++) {
-            (bool srcHealthy, ) = sources[i].health();
+            (bool srcHealthy,) = sources[i].health();
             if (srcHealthy) activeSourceCount++;
         }
 
@@ -277,9 +280,7 @@ contract Oracle is IOracle, AccessControl, Pausable {
     }
 
     /// @notice Update configuration
-    function setConfig(uint256 _maxAge, uint256 _maxDeviationBps, uint256 _minSources)
-        external onlyRole(ORACLE_ADMIN)
-    {
+    function setConfig(uint256 _maxAge, uint256 _maxDeviationBps, uint256 _minSources) external onlyRole(ORACLE_ADMIN) {
         defaultMaxAge = _maxAge;
         maxDeviationBps = _maxDeviationBps;
         minSources = _minSources;
@@ -293,7 +294,8 @@ contract Oracle is IOracle, AccessControl, Pausable {
 
     /// @notice Set circuit breaker parameters
     function setCircuitBreakerConfig(uint256 _maxPriceChangeBps, uint256 _cooldownPeriod)
-        external onlyRole(GUARDIAN_ROLE)
+        external
+        onlyRole(GUARDIAN_ROLE)
     {
         maxPriceChangeBps = _maxPriceChangeBps;
         cooldownPeriod = _cooldownPeriod;
@@ -366,7 +368,9 @@ contract Oracle is IOracle, AccessControl, Pausable {
 
     /// @notice Get all prices from all sources for an asset
     function getAllPrices(address asset)
-        external view returns (uint256[] memory allPrices, string[] memory sourceNames)
+        external
+        view
+        returns (uint256[] memory allPrices, string[] memory sourceNames)
     {
         allPrices = new uint256[](sources.length);
         sourceNames = new string[](sources.length);
@@ -400,7 +404,9 @@ contract Oracle is IOracle, AccessControl, Pausable {
     }
 
     function _collectPrices(address asset)
-        internal view returns (uint256[] memory prices, uint256[] memory timestamps, uint256 count)
+        internal
+        view
+        returns (uint256[] memory prices, uint256[] memory timestamps, uint256 count)
     {
         prices = new uint256[](sources.length);
         timestamps = new uint256[](sources.length);
@@ -414,7 +420,7 @@ contract Oracle is IOracle, AccessControl, Pausable {
                         timestamps[count] = t;
                         count++;
                     }
-                } catch {}
+                } catch { }
             }
         }
     }
@@ -477,13 +483,10 @@ contract Oracle is IOracle, AccessControl, Pausable {
         }
     }
 
-    function _maxDeviation(uint256[] memory arr, uint256 len, uint256 refPrice)
-        internal pure returns (uint256 maxDev)
-    {
+    function _maxDeviation(uint256[] memory arr, uint256 len, uint256 refPrice) internal pure returns (uint256 maxDev) {
         for (uint256 i = 0; i < len; i++) {
-            uint256 dev = arr[i] > refPrice
-                ? ((arr[i] - refPrice) * 10000) / refPrice
-                : ((refPrice - arr[i]) * 10000) / refPrice;
+            uint256 dev =
+                arr[i] > refPrice ? ((arr[i] - refPrice) * 10000) / refPrice : ((refPrice - arr[i]) * 10000) / refPrice;
             if (dev > maxDev) maxDev = dev;
         }
     }

@@ -47,22 +47,11 @@ interface IRelay {
         bytes32 questionId
     );
 
-    event AssertionForwarded(
-        bytes32 indexed assertionId,
-        bytes32 indexed oracleQuestionId
-    );
+    event AssertionForwarded(bytes32 indexed assertionId, bytes32 indexed oracleQuestionId);
 
-    event AssertionResolved(
-        bytes32 indexed assertionId,
-        bytes32 indexed marketId,
-        uint256[] payouts
-    );
+    event AssertionResolved(bytes32 indexed assertionId, bytes32 indexed marketId, uint256[] payouts);
 
-    event ResolutionBroadcast(
-        bytes32 indexed assertionId,
-        bytes32 indexed targetChainId,
-        bytes32 messageId
-    );
+    event ResolutionBroadcast(bytes32 indexed assertionId, bytes32 indexed targetChainId, bytes32 messageId);
 
     // ═══════════════════════════════════════════════════════════════════════
     // FUNCTIONS

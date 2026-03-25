@@ -28,9 +28,9 @@ pragma solidity ^0.8.24;
  * - Enables DeFi composability while earning staking yield
  */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // BABYLON INTERFACES
@@ -59,12 +59,10 @@ interface IBabylonStaking {
     /// @return lockTime Original lock duration
     /// @return unlockTime Timestamp when stake can be withdrawn
     /// @return active Whether stake is still active
-    function getStake(bytes32 stakeId) external view returns (
-        uint256 amount,
-        uint64 lockTime,
-        uint64 unlockTime,
-        bool active
-    );
+    function getStake(bytes32 stakeId)
+        external
+        view
+        returns (uint256 amount, uint64 lockTime, uint64 unlockTime, bool active);
 
     /// @notice Get pending rewards for a stake
     /// @param stakeId Stake identifier
@@ -164,7 +162,7 @@ interface ILombardStaking {
  * - Slashing enforced on-chain for validator misbehavior
  * - No custody risk - self-custodial staking
  */
-contract BabylonBTCStrategy is Ownable{
+contract BabylonBTCStrategy is Ownable {
     using SafeERC20 for IERC20;
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -298,12 +296,7 @@ contract BabylonBTCStrategy is Ownable{
      * @param _btcToken WBTC or wrapped BTC token address
      * @param _lockPeriod Default lock period in seconds
      */
-    constructor(
-        address _vault,
-        address _babylonStaking,
-        address _btcToken,
-        uint64 _lockPeriod
-    ) Ownable(msg.sender) {
+    constructor(address _vault, address _babylonStaking, address _btcToken, uint64 _lockPeriod) Ownable(msg.sender) {
         if (_lockPeriod < MIN_LOCK || _lockPeriod > MAX_LOCK) {
             revert InvalidLockPeriod();
         }
@@ -343,7 +336,7 @@ contract BabylonBTCStrategy is Ownable{
         shares = amount;
 
         // Get stake details for event
-        (, , uint64 unlockTime, ) = babylonStaking.getStake(stakeId);
+        (,, uint64 unlockTime,) = babylonStaking.getStake(stakeId);
         emit Staked(stakeId, amount, defaultLockPeriod, unlockTime);
     }
 
@@ -358,7 +351,7 @@ contract BabylonBTCStrategy is Ownable{
 
         while (remaining > 0 && i < activeStakes.length) {
             bytes32 stakeId = activeStakes[i];
-            (uint256 stakeAmount, , uint64 unlockTime, bool stakeActive) = babylonStaking.getStake(stakeId);
+            (uint256 stakeAmount,, uint64 unlockTime, bool stakeActive) = babylonStaking.getStake(stakeId);
 
             // Skip if locked or inactive
             if (!stakeActive || block.timestamp < unlockTime) {
@@ -470,14 +463,18 @@ contract BabylonBTCStrategy is Ownable{
     }
 
     /// @notice Get stake details by index
-    function getStakeByIndex(uint256 index) external view returns (
-        bytes32 stakeId,
-        uint256 amount,
-        uint64 lockTime,
-        uint64 unlockTime,
-        bool stakeActive,
-        uint256 pendingRewards
-    ) {
+    function getStakeByIndex(uint256 index)
+        external
+        view
+        returns (
+            bytes32 stakeId,
+            uint256 amount,
+            uint64 lockTime,
+            uint64 unlockTime,
+            bool stakeActive,
+            uint256 pendingRewards
+        )
+    {
         if (index >= activeStakes.length) revert StakeNotFound();
         stakeId = activeStakes[index];
         (amount, lockTime, unlockTime, stakeActive) = babylonStaking.getStake(stakeId);
@@ -490,7 +487,7 @@ contract BabylonBTCStrategy is Ownable{
 
         // First pass: count unlocked
         for (uint256 i = 0; i < activeStakes.length; i++) {
-            (, , uint64 unlockTime, bool stakeActive) = babylonStaking.getStake(activeStakes[i]);
+            (,, uint64 unlockTime, bool stakeActive) = babylonStaking.getStake(activeStakes[i]);
             if (stakeActive && block.timestamp >= unlockTime) {
                 count++;
             }
@@ -500,7 +497,7 @@ contract BabylonBTCStrategy is Ownable{
         bytes32[] memory unlocked = new bytes32[](count);
         uint256 j = 0;
         for (uint256 i = 0; i < activeStakes.length; i++) {
-            (uint256 stakeAmount, , uint64 unlockTime, bool stakeActive) = babylonStaking.getStake(activeStakes[i]);
+            (uint256 stakeAmount,, uint64 unlockTime, bool stakeActive) = babylonStaking.getStake(activeStakes[i]);
             if (stakeActive && block.timestamp >= unlockTime) {
                 unlocked[j] = activeStakes[i];
                 totalUnlocked += stakeAmount;
@@ -546,7 +543,7 @@ contract BabylonBTCStrategy is Ownable{
 
         for (uint256 i = activeStakes.length; i > 0; i--) {
             bytes32 stakeId = activeStakes[i - 1];
-            (uint256 stakeAmount, , uint64 unlockTime, bool stakeActive) = babylonStaking.getStake(stakeId);
+            (uint256 stakeAmount,, uint64 unlockTime, bool stakeActive) = babylonStaking.getStake(stakeId);
 
             if (stakeActive && block.timestamp >= unlockTime) {
                 // Claim rewards
@@ -744,12 +741,7 @@ contract LombardLBTCStrategy is Ownable {
      * @param _btcToken WBTC token address
      * @param _lombardStaking Lombard staking contract (address(0) to skip)
      */
-    constructor(
-        address _vault,
-        address _lbtc,
-        address _btcToken,
-        address _lombardStaking
-    ) Ownable(msg.sender) {
+    constructor(address _vault, address _lbtc, address _btcToken, address _lombardStaking) Ownable(msg.sender) {
         vault = _vault;
         lbtc = ILBTC(_lbtc);
         btcToken = IERC20(_btcToken);
@@ -921,12 +913,11 @@ contract LombardLBTCStrategy is Ownable {
     }
 
     /// @notice Get LBTC balance breakdown
-    function balanceBreakdown() external view returns (
-        uint256 lbtcTotal,
-        uint256 lbtcHeld,
-        uint256 lbtcStaked,
-        uint256 btcValue
-    ) {
+    function balanceBreakdown()
+        external
+        view
+        returns (uint256 lbtcTotal, uint256 lbtcHeld, uint256 lbtcStaked, uint256 btcValue)
+    {
         lbtcTotal = totalLBTC;
         lbtcHeld = hasLombardStaking ? 0 : totalLBTC;
         lbtcStaked = hasLombardStaking ? lombardStaking.stakedBalance(address(this)) : 0;
@@ -999,19 +990,11 @@ contract LombardLBTCStrategy is Ownable {
 contract BabylonStrategyFactory {
     /// @notice Emitted when a Babylon strategy is deployed
     event BabylonStrategyDeployed(
-        address indexed strategy,
-        address indexed vault,
-        address babylonStaking,
-        uint64 lockPeriod
+        address indexed strategy, address indexed vault, address babylonStaking, uint64 lockPeriod
     );
 
     /// @notice Emitted when a Lombard strategy is deployed
-    event LombardStrategyDeployed(
-        address indexed strategy,
-        address indexed vault,
-        address lbtc,
-        bool hasStaking
-    );
+    event LombardStrategyDeployed(address indexed strategy, address indexed vault, address lbtc, bool hasStaking);
 
     /**
      * @notice Deploy a Babylon BTC staking strategy
@@ -1020,18 +1003,11 @@ contract BabylonStrategyFactory {
      * @param btcToken WBTC token address
      * @param lockPeriod Default lock period in seconds
      */
-    function deployBabylon(
-        address vault,
-        address babylonStaking,
-        address btcToken,
-        uint64 lockPeriod
-    ) external returns (address strategy) {
-        strategy = address(new BabylonBTCStrategy(
-            vault,
-            babylonStaking,
-            btcToken,
-            lockPeriod
-        ));
+    function deployBabylon(address vault, address babylonStaking, address btcToken, uint64 lockPeriod)
+        external
+        returns (address strategy)
+    {
+        strategy = address(new BabylonBTCStrategy(vault, babylonStaking, btcToken, lockPeriod));
 
         emit BabylonStrategyDeployed(strategy, vault, babylonStaking, lockPeriod);
     }
@@ -1043,18 +1019,11 @@ contract BabylonStrategyFactory {
      * @param btcToken WBTC token address
      * @param lombardStaking Lombard staking contract (address(0) to skip)
      */
-    function deployLombard(
-        address vault,
-        address lbtc,
-        address btcToken,
-        address lombardStaking
-    ) external returns (address strategy) {
-        strategy = address(new LombardLBTCStrategy(
-            vault,
-            lbtc,
-            btcToken,
-            lombardStaking
-        ));
+    function deployLombard(address vault, address lbtc, address btcToken, address lombardStaking)
+        external
+        returns (address strategy)
+    {
+        strategy = address(new LombardLBTCStrategy(vault, lbtc, btcToken, lombardStaking));
 
         emit LombardStrategyDeployed(strategy, vault, lbtc, lombardStaking != address(0));
     }

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.31;
 
-import {IProposerAdapter} from "../interfaces/IProposerAdapter.sol";
-import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { IProposerAdapter } from "../interfaces/IProposerAdapter.sol";
+import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @title ProposerAdapterLRC20
@@ -65,10 +65,7 @@ contract ProposerAdapterLRC20 is IProposerAdapter, ERC165, Initializable {
      * @param token_ The IVotes token address
      * @param proposerThreshold_ Minimum voting power to propose (0 = anyone)
      */
-    function initialize(
-        address token_,
-        uint256 proposerThreshold_
-    ) public virtual initializer {
+    function initialize(address token_, uint256 proposerThreshold_) public virtual initializer {
         ProposerStorage storage $ = _getStorage();
         $.token = IVotes(token_);
         $.proposerThreshold = proposerThreshold_;
@@ -97,10 +94,7 @@ contract ProposerAdapterLRC20 is IProposerAdapter, ERC165, Initializable {
      * @param data Ignored for LRC20 adapters
      * @return True if proposer has sufficient voting power
      */
-    function isProposer(
-        address proposer,
-        bytes calldata data
-    ) public view virtual override returns (bool) {
+    function isProposer(address proposer, bytes calldata data) public view virtual override returns (bool) {
         ProposerStorage storage $ = _getStorage();
         return $.token.getVotes(proposer) >= $.proposerThreshold;
     }
@@ -110,8 +104,6 @@ contract ProposerAdapterLRC20 is IProposerAdapter, ERC165, Initializable {
     // ======================================================================
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return
-            interfaceId == type(IProposerAdapter).interfaceId ||
-            super.supportsInterface(interfaceId);
+        return interfaceId == type(IProposerAdapter).interfaceId || super.supportsInterface(interfaceId);
     }
 }

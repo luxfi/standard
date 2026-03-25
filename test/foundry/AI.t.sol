@@ -3,7 +3,7 @@ pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
 import "../../contracts/tokens/AI.sol";
-import {ILRC20} from "../../contracts/tokens/interfaces/ILRC20.sol";
+import { ILRC20 } from "../../contracts/tokens/interfaces/ILRC20.sol";
 
 /**
  * @title MockWarp
@@ -46,9 +46,7 @@ contract MockWarp {
         bool valid
     ) external {
         verifiedMessages[index] = IWarp.WarpMessage({
-            sourceChainID: sourceChainID,
-            originSenderAddress: originSender,
-            payload: payload
+            sourceChainID: sourceChainID, originSenderAddress: originSender, payload: payload
         });
         messageValidity[index] = valid;
     }
@@ -71,7 +69,11 @@ contract MockAttestation {
         quotePrivacyLevels[quoteHash] = privacyLevel;
     }
 
-    function verifyTEEQuote(bytes calldata quote) external view returns (bool valid, bytes32 gpuId, uint8 privacyLevel) {
+    function verifyTEEQuote(bytes calldata quote)
+        external
+        view
+        returns (bool valid, bytes32 gpuId, uint8 privacyLevel)
+    {
         bytes32 quoteHash = keccak256(quote);
         return (validQuotes[quoteHash], quoteGpuIds[quoteHash], quotePrivacyLevels[quoteHash]);
     }
@@ -118,7 +120,11 @@ contract MockDEXRouter {
         address[] calldata path,
         address to,
         uint256 /* deadline */
-    ) external payable returns (uint256[] memory amounts) {
+    )
+        external
+        payable
+        returns (uint256[] memory amounts)
+    {
         require(path.length >= 2, "Invalid path");
 
         amounts = new uint256[](path.length);
@@ -155,7 +161,7 @@ contract MockDEXRouter {
         return amounts;
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }
 
 /**
@@ -287,7 +293,7 @@ contract AITest is Test {
             address(dexRouter),
             A_CHAIN_ID,
             address(aiRemote),
-            1 ether  // 1 LUX attestation cost
+            1 ether // 1 LUX attestation cost
         );
 
         // Set up trusted router on AINative
@@ -410,13 +416,8 @@ contract AITest is Test {
         // Mock the warp precompile at expected address
         vm.etch(0x0200000000000000000000000000000000000005, address(warpC).code);
 
-        MockWarp(0x0200000000000000000000000000000000000005).setVerifiedMessage(
-            0,
-            A_CHAIN_ID,
-            address(aiNative),
-            payload,
-            true
-        );
+        MockWarp(0x0200000000000000000000000000000000000005)
+            .setVerifiedMessage(0, A_CHAIN_ID, address(aiNative), payload, true);
 
         // Claim teleport
         vm.prank(user);
@@ -469,7 +470,7 @@ contract AITest is Test {
         assertTrue(requestId != bytes32(0));
 
         // Verify request stored
-        (address requester, bytes32 storedSessionId, uint256 luxPaid, , bool bridged) = paymentRouter.requests(requestId);
+        (address requester, bytes32 storedSessionId, uint256 luxPaid,, bool bridged) = paymentRouter.requests(requestId);
         assertEq(requester, user);
         assertEq(storedSessionId, sessionId);
         assertEq(luxPaid, 1 ether);
@@ -482,7 +483,7 @@ contract AITest is Test {
         bytes32 sessionId = keccak256("eth-payment-session");
 
         vm.prank(user);
-        bytes32 requestId = paymentRouter.payWithETH{value: 0.1 ether}(
+        bytes32 requestId = paymentRouter.payWithETH{ value: 0.1 ether }(
             0.9 ether, // minLuxOut (0.1 ETH * 10 rate = 1 LUX)
             sessionId
         );
@@ -540,7 +541,7 @@ contract AITest is Test {
 
         uint256 totalMined = 0;
         uint256 currentTime = block.timestamp;
-        for (uint i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 5; i++) {
             currentTime += 60;
             vm.warp(currentTime);
             vm.prank(miner);
@@ -583,13 +584,8 @@ contract AITest is Test {
         // Set up the warp message for claiming
         vm.etch(0x0200000000000000000000000000000000000005, address(warpC).code);
 
-        MockWarp(0x0200000000000000000000000000000000000005).setVerifiedMessage(
-            0,
-            A_CHAIN_ID,
-            address(aiNative),
-            abi.encode(miner, teleportAmount),
-            true
-        );
+        MockWarp(0x0200000000000000000000000000000000000005)
+            .setVerifiedMessage(0, A_CHAIN_ID, address(aiNative), abi.encode(miner, teleportAmount), true);
 
         vm.prank(miner);
         uint256 claimed = aiRemote.claimTeleport(0);
@@ -639,13 +635,8 @@ contract AITest is Test {
     function test_RevertWhen_ClaimTeleportTwice() public {
         vm.etch(0x0200000000000000000000000000000000000005, address(warpC).code);
 
-        MockWarp(0x0200000000000000000000000000000000000005).setVerifiedMessage(
-            0,
-            A_CHAIN_ID,
-            address(aiNative),
-            abi.encode(user, 1 ether),
-            true
-        );
+        MockWarp(0x0200000000000000000000000000000000000005)
+            .setVerifiedMessage(0, A_CHAIN_ID, address(aiNative), abi.encode(user, 1 ether), true);
 
         vm.prank(user);
         aiRemote.claimTeleport(0);

@@ -2,15 +2,13 @@
 
 pragma solidity ^0.8.31;
 
-import {ITimelock} from "../peripherals/interfaces/ITimelock.sol";
+import { ITimelock } from "../peripherals/interfaces/ITimelock.sol";
 
-import {IVault} from "./interfaces/IVault.sol";
-import {IRouter} from "./interfaces/IRouter.sol";
-import {IShortsTracker} from "./interfaces/IShortsTracker.sol";
+import { IVault } from "./interfaces/IVault.sol";
+import { IRouter } from "./interfaces/IRouter.sol";
+import { IShortsTracker } from "./interfaces/IShortsTracker.sol";
 
 library PositionUtils {
-    
-
     uint256 public constant BASIS_POINTS_DIVISOR = 10000;
 
     event LeverageDecreased(uint256 collateralDelta, uint256 prevLeverage, uint256 nextLeverage);
@@ -26,18 +24,18 @@ library PositionUtils {
         uint256 _increasePositionBufferBps
     ) external returns (bool) {
         // if the position is a short, do not charge a fee
-        if (!_isLong) { return false; }
+        if (!_isLong) return false;
 
         // if the position size is not increasing, this is a collateral deposit
-        if (_sizeDelta == 0) { return true; }
+        if (_sizeDelta == 0) return true;
 
         address collateralToken = _path[_path.length - 1];
 
         IVault vault = IVault(_vault);
-        (uint256 size, uint256 collateral, , , , , , ) = vault.getPosition(_account, collateralToken, _indexToken, _isLong);
+        (uint256 size, uint256 collateral,,,,,,) = vault.getPosition(_account, collateralToken, _indexToken, _isLong);
 
         // if there is no existing position, do not charge a fee
-        if (size == 0) { return false; }
+        if (size == 0) return false;
 
         uint256 nextSize = size + _sizeDelta;
         uint256 collateralDelta = vault.tokenToUsdMin(collateralToken, _amountIn);
@@ -74,7 +72,8 @@ library PositionUtils {
         address timelock = IVault(_vault).gov();
 
         // should be called strictly before position is updated in Vault
-        IShortsTracker(_shortsTracker).updateGlobalShortData(_account, _collateralToken, _indexToken, _isLong, _sizeDelta, markPrice, true);
+        IShortsTracker(_shortsTracker)
+            .updateGlobalShortData(_account, _collateralToken, _indexToken, _isLong, _sizeDelta, markPrice, true);
 
         ITimelock(timelock).enableLeverage(_vault);
         IRouter(_router).pluginIncreasePosition(_account, _collateralToken, _indexToken, _sizeDelta, _isLong);

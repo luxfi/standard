@@ -6,4 +6,5 @@ pragma solidity ^0.8.31;
 /// @dev TODO: Implement exchange proxy integration
 abstract contract ZeroXAdapter {
     // 0x-specific implementation pending
-}
+
+    }

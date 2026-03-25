@@ -2,14 +2,13 @@
 
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {IYieldTracker} from "./interfaces/IYieldTracker.sol";
-import {IBaseToken} from "./interfaces/IBaseToken.sol";
+import { IYieldTracker } from "./interfaces/IYieldTracker.sol";
+import { IBaseToken } from "./interfaces/IBaseToken.sol";
 
 contract BaseToken is IERC20, IBaseToken {
-    
     using SafeERC20 for IERC20;
 
     string public name;
@@ -21,15 +20,15 @@ contract BaseToken is IERC20, IBaseToken {
 
     address public gov;
 
-    mapping (address => uint256) public balances;
-    mapping (address => mapping (address => uint256)) public allowances;
+    mapping(address => uint256) public balances;
+    mapping(address => mapping(address => uint256)) public allowances;
 
     address[] public yieldTrackers;
-    mapping (address => bool) public nonStakingAccounts;
-    mapping (address => bool) public admins;
+    mapping(address => bool) public nonStakingAccounts;
+    mapping(address => bool) public admins;
 
     bool public inPrivateTransferMode;
-    mapping (address => bool) public isHandler;
+    mapping(address => bool) public isHandler;
 
     modifier onlyGov() {
         require(msg.sender == gov, "BaseToken: forbidden");
@@ -201,7 +200,7 @@ contract BaseToken is IERC20, IBaseToken {
             nonStakingSupply = nonStakingSupply + _amount;
         }
 
-        emit Transfer(_sender, _recipient,_amount);
+        emit Transfer(_sender, _recipient, _amount);
     }
 
     function _approve(address _owner, address _spender, uint256 _amount) private {

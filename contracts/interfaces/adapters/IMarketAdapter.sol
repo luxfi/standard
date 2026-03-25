@@ -6,59 +6,59 @@ pragma solidity ^0.8.31;
 /// @title Position Parameters
 /// @notice Common position parameters for perpetual markets
 struct OpenPositionParams {
-    address market;           // Market/pair address or identifier
-    address collateralToken;  // Collateral asset (USDC, USDT, ETH, etc.)
+    address market; // Market/pair address or identifier
+    address collateralToken; // Collateral asset (USDC, USDT, ETH, etc.)
     uint256 collateralAmount; // Amount of collateral
-    uint256 sizeDelta;        // Position size delta (notional)
-    bool isLong;              // True for long, false for short
-    uint256 acceptablePrice;  // Worst acceptable execution price (slippage protection)
-    uint256 leverage;         // Leverage multiplier (1e18 = 1x)
-    bytes referralCode;       // Optional referral/broker code
+    uint256 sizeDelta; // Position size delta (notional)
+    bool isLong; // True for long, false for short
+    uint256 acceptablePrice; // Worst acceptable execution price (slippage protection)
+    uint256 leverage; // Leverage multiplier (1e18 = 1x)
+    bytes referralCode; // Optional referral/broker code
 }
 
-/// @title Close Position Parameters  
+/// @title Close Position Parameters
 struct ClosePositionParams {
-    bytes32 positionId;       // Position identifier
-    uint256 sizeDelta;        // Size to close (0 = full close)
-    uint256 acceptablePrice;  // Worst acceptable execution price
+    bytes32 positionId; // Position identifier
+    uint256 sizeDelta; // Size to close (0 = full close)
+    uint256 acceptablePrice; // Worst acceptable execution price
 }
 
 /// @title Modify Position Parameters
 struct ModifyPositionParams {
-    bytes32 positionId;       // Position identifier
-    int256 collateralDelta;   // Change in collateral (positive = add, negative = remove)
-    int256 sizeDelta;         // Change in size (positive = increase, negative = decrease)
-    uint256 acceptablePrice;  // Worst acceptable execution price
+    bytes32 positionId; // Position identifier
+    int256 collateralDelta; // Change in collateral (positive = add, negative = remove)
+    int256 sizeDelta; // Change in size (positive = increase, negative = decrease)
+    uint256 acceptablePrice; // Worst acceptable execution price
 }
 
 /// @title Position Info
 /// @notice Read-only position data returned by adapters
 struct Position {
-    bytes32 id;               // Position identifier
-    address market;           // Market address
-    address collateralToken;  // Collateral asset
-    uint256 collateral;       // Current collateral amount
-    uint256 size;             // Position size (notional)
-    uint256 entryPrice;       // Average entry price
-    uint256 leverage;         // Current leverage
-    bool isLong;              // Direction
-    int256 unrealizedPnL;     // Current unrealized P&L
+    bytes32 id; // Position identifier
+    address market; // Market address
+    address collateralToken; // Collateral asset
+    uint256 collateral; // Current collateral amount
+    uint256 size; // Position size (notional)
+    uint256 entryPrice; // Average entry price
+    uint256 leverage; // Current leverage
+    bool isLong; // Direction
+    int256 unrealizedPnL; // Current unrealized P&L
     uint256 liquidationPrice; // Estimated liquidation price
-    uint256 lastUpdated;      // Timestamp of last update
+    uint256 lastUpdated; // Timestamp of last update
 }
 
 /// @title Market Info
 /// @notice Market/pair metadata
 struct MarketInfo {
-    address market;           // Market address or identifier
-    address indexToken;       // Index/underlying asset
-    address longToken;        // Token for long positions
-    address shortToken;       // Token for short positions
-    uint256 maxLeverage;      // Maximum allowed leverage
-    uint256 minCollateral;    // Minimum collateral requirement
-    bool isActive;            // Whether market is accepting trades
-    uint256 fundingRate;      // Current funding rate (1e18 = 100%)
-    uint256 borrowRate;       // Current borrow rate (1e18 = 100%)
+    address market; // Market address or identifier
+    address indexToken; // Index/underlying asset
+    address longToken; // Token for long positions
+    address shortToken; // Token for short positions
+    uint256 maxLeverage; // Maximum allowed leverage
+    uint256 minCollateral; // Minimum collateral requirement
+    bool isActive; // Whether market is accepting trades
+    uint256 fundingRate; // Current funding rate (1e18 = 100%)
+    uint256 borrowRate; // Current borrow rate (1e18 = 100%)
 }
 
 /// @title IMarketAdapter
@@ -79,23 +79,11 @@ interface IMarketAdapter {
         uint256 collateral
     );
 
-    event PositionClosed(
-        bytes32 indexed positionId,
-        address indexed account,
-        int256 realizedPnL
-    );
+    event PositionClosed(bytes32 indexed positionId, address indexed account, int256 realizedPnL);
 
-    event PositionModified(
-        bytes32 indexed positionId,
-        int256 collateralDelta,
-        int256 sizeDelta
-    );
+    event PositionModified(bytes32 indexed positionId, int256 collateralDelta, int256 sizeDelta);
 
-    event PositionLiquidated(
-        bytes32 indexed positionId,
-        address indexed account,
-        address liquidator
-    );
+    event PositionLiquidated(bytes32 indexed positionId, address indexed account, address liquidator);
 
     /*//////////////////////////////////////////////////////////////
                               METADATA
@@ -147,17 +135,12 @@ interface IMarketAdapter {
     /// @notice Open a new perpetual position
     /// @param params Position parameters
     /// @return positionId Unique identifier for the position
-    function openPosition(OpenPositionParams calldata params) 
-        external 
-        payable 
-        returns (bytes32 positionId);
+    function openPosition(OpenPositionParams calldata params) external payable returns (bytes32 positionId);
 
     /// @notice Close an existing position
     /// @param params Close parameters
     /// @return realizedPnL Profit/loss from closing
-    function closePosition(ClosePositionParams calldata params) 
-        external 
-        returns (int256 realizedPnL);
+    function closePosition(ClosePositionParams calldata params) external returns (int256 realizedPnL);
 
     /// @notice Modify an existing position (add/remove collateral or size)
     /// @param params Modification parameters
@@ -206,10 +189,8 @@ interface IMarketAdapter {
     /// @param size Position size
     /// @param isLong Position direction
     /// @return Estimated liquidation price
-    function estimateLiquidationPrice(
-        address market,
-        uint256 collateral,
-        uint256 size,
-        bool isLong
-    ) external view returns (uint256);
+    function estimateLiquidationPrice(address market, uint256 collateral, uint256 size, bool isLong)
+        external
+        view
+        returns (uint256);
 }

@@ -8,7 +8,7 @@
 // Copyright (c) 2019 Arca Labs Inc — https://arca.digital
 pragma solidity ^0.8.24;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title DocumentRegistry
@@ -79,7 +79,7 @@ contract DocumentRegistry is AccessControl {
             _documentNames.push(name);
         }
 
-        _documents[name] = Document({uri: uri, documentHash: documentHash, lastModified: block.timestamp});
+        _documents[name] = Document({ uri: uri, documentHash: documentHash, lastModified: block.timestamp });
 
         emit DocumentUpdated(name, uri, documentHash);
     }
@@ -110,7 +110,11 @@ contract DocumentRegistry is AccessControl {
     // Queries
     // ──────────────────────────────────────────────────────────────────────────
 
-    function getDocument(bytes32 name) external view returns (string memory uri, bytes32 documentHash, uint256 lastModified) {
+    function getDocument(bytes32 name)
+        external
+        view
+        returns (string memory uri, bytes32 documentHash, uint256 lastModified)
+    {
         if (!_documentExists[name]) revert DocumentNotFound(name);
         Document storage doc = _documents[name];
         return (doc.uri, doc.documentHash, doc.lastModified);

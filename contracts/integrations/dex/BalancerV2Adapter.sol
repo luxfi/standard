@@ -6,4 +6,5 @@ pragma solidity ^0.8.31;
 /// @dev TODO: Implement batch swap and pool interactions
 abstract contract BalancerV2Adapter {
     // BalancerV2-specific implementation pending
-}
+
+    }

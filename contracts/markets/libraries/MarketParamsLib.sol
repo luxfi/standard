@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {MarketParams, Id} from "../interfaces/IMarkets.sol";
+import { MarketParams, Id } from "../interfaces/IMarkets.sol";
 
 /// @title MarketParamsLib
 /// @notice Library for MarketParams operations

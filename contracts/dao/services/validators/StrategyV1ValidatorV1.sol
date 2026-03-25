@@ -1,19 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IFunctionValidator
-} from "../../interfaces/services/IFunctionValidator.sol";
-import {IStrategyV1} from "../../interfaces/deployables/IStrategyV1.sol";
-import {
-    IVotingTypes
-} from "../../interfaces/deployables/IVotingTypes.sol";
-import {IVersion} from "../../interfaces/deployables/IVersion.sol";
-import {IDeploymentBlock} from "../../interfaces/IDeploymentBlock.sol";
-import {
-    DeploymentBlockNonInitializable
-} from "../../DeploymentBlockNonInitializable.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { IFunctionValidator } from "../../interfaces/services/IFunctionValidator.sol";
+import { IStrategyV1 } from "../../interfaces/deployables/IStrategyV1.sol";
+import { IVotingTypes } from "../../interfaces/deployables/IVotingTypes.sol";
+import { IVersion } from "../../interfaces/deployables/IVersion.sol";
+import { IDeploymentBlock } from "../../interfaces/IDeploymentBlock.sol";
+import { DeploymentBlockNonInitializable } from "../../DeploymentBlockNonInitializable.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
  * @title StrategyV1ValidatorV1
@@ -39,12 +33,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  *
  * @custom:security-contact security@lux.network
  */
-contract StrategyV1ValidatorV1 is
-    IFunctionValidator,
-    IVersion,
-    DeploymentBlockNonInitializable,
-    ERC165
-{
+contract StrategyV1ValidatorV1 is IFunctionValidator, IVersion, DeploymentBlockNonInitializable, ERC165 {
     // ======================================================================
     // IFunctionValidator
     // ======================================================================
@@ -61,12 +50,13 @@ contract StrategyV1ValidatorV1 is
      * getVotingWeightForPaymaster() to calculate voting weight without triggering
      * ERC-4337 banned opcodes (block.timestamp, block.number).
      */
-    function validateOperation(
-        address,
-        address lightAccountOwner_,
-        address strategy_,
-        bytes calldata callData_
-    ) public view virtual override returns (bool) {
+    function validateOperation(address, address lightAccountOwner_, address strategy_, bytes calldata callData_)
+        public
+        view
+        virtual
+        override
+        returns (bool)
+    {
         // confirm here that the calldata selector is correct: `castVote(uint32,uint8,(address,bytes)[],uint256)`
         // forge-lint: disable-next-line(unsafe-typecast)
         if (bytes4(callData_) != IStrategyV1.castVote.selector) {
@@ -75,23 +65,13 @@ contract StrategyV1ValidatorV1 is
 
         // Decode vote parameters from callData
         // castVote(uint32 proposalId_, uint8 voteType_, (tuple(uint256,bytes))[] votingConfigsData_, uint256 lightAccountIndex_)
-        (
-            uint32 proposalId,
-            uint8 voteType,
-            IVotingTypes.VotingConfigVoteData[] memory votingConfigsData,
-
-        ) = abi.decode(
+        (uint32 proposalId, uint8 voteType, IVotingTypes.VotingConfigVoteData[] memory votingConfigsData,) =
+            abi.decode(
                 callData_[4:], // skip selector
                 (uint32, uint8, IVotingTypes.VotingConfigVoteData[], uint256)
             );
 
-        return
-            IStrategyV1(strategy_).validStrategyVote(
-                lightAccountOwner_,
-                proposalId,
-                voteType,
-                votingConfigsData
-            );
+        return IStrategyV1(strategy_).validStrategyVote(lightAccountOwner_, proposalId, voteType, votingConfigsData);
     }
 
     // ======================================================================
@@ -117,13 +97,8 @@ contract StrategyV1ValidatorV1 is
      * @inheritdoc ERC165
      * @dev Supports IFunctionValidator, IVersion, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(IFunctionValidator).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(IFunctionValidator).interfaceId || interfaceId_ == type(IVersion).interfaceId
+            || interfaceId_ == type(IDeploymentBlock).interfaceId || super.supportsInterface(interfaceId_);
     }
 }

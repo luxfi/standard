@@ -16,7 +16,9 @@ pragma solidity ^0.8.30;
 interface IDeploymentBlock {
     // --- Errors ---
 
-    /** @notice Thrown when attempting to set deployment block after it's already set */
+    /**
+     * @notice Thrown when attempting to set deployment block after it's already set
+     */
     error DeploymentBlockAlreadySet();
 
     // --- View Functions ---

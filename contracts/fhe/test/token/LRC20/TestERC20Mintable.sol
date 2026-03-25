@@ -12,12 +12,10 @@ contract ERC20Mintable is ERC20, Ownable2Step {
     /// @dev override number of decimals
     uint8 private immutable _DECIMALS;
 
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        uint8 decimals_,
-        address owner_
-    ) ERC20(name_, symbol_) Ownable(owner_) {
+    constructor(string memory name_, string memory symbol_, uint8 decimals_, address owner_)
+        ERC20(name_, symbol_)
+        Ownable(owner_)
+    {
         _DECIMALS = decimals_;
     }
 

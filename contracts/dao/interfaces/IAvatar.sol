@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {Enum} from "@gnosis.pm/safe-contracts/interfaces/Enum.sol";
+import { Enum } from "@gnosis.pm/safe-contracts/interfaces/Enum.sol";
 
 /**
  * @title IAvatar
@@ -36,12 +36,9 @@ interface IAvatar {
      * @return success True if transaction was successful
      * @dev Only enabled modules should be able to execute transactions
      */
-    function execTransactionFromModule(
-        address to,
-        uint256 value,
-        bytes calldata data,
-        Enum.Operation operation
-    ) external returns (bool success);
+    function execTransactionFromModule(address to, uint256 value, bytes calldata data, Enum.Operation operation)
+        external
+        returns (bool success);
 
     /**
      * @notice Executes a transaction from a module and returns data
@@ -75,8 +72,8 @@ interface IAvatar {
      * @return next Start of the next page
      * @dev Pagination is implemented using linked list traversal
      */
-    function getModulesPaginated(
-        address start,
-        uint256 pageSize
-    ) external view returns (address[] memory array, address next);
+    function getModulesPaginated(address start, uint256 pageSize)
+        external
+        view
+        returns (address[] memory array, address next);
 }

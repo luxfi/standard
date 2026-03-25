@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.24;
 
-import {IYieldStrategy} from "../IYieldStrategy.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IYieldStrategy } from "../IYieldStrategy.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title Liquid Restaking Token (LRT) Strategies
 /// @notice Yield strategies for LRT protocols that restake ETH via EigenLayer
@@ -68,10 +68,7 @@ interface IKelpLRTDepositPool {
         string calldata referralId
     ) external;
 
-    function depositETH(
-        uint256 minRSETHAmountExpected,
-        string calldata referralId
-    ) external payable;
+    function depositETH(uint256 minRSETHAmountExpected, string calldata referralId) external payable;
 
     function getAssetCurrentLimit(address asset) external view returns (uint256);
     function getTotalAssetDeposits(address asset) external view returns (uint256);
@@ -150,11 +147,14 @@ interface IRenzoRestakeManager {
     function deposit(address _collateralToken, uint256 _amount) external returns (uint256);
     function deposit(address _collateralToken, uint256 _amount, uint256 _referralId) external returns (uint256);
 
-    function calculateTVLs() external view returns (
-        uint256[][] memory operatorDelegatorTVLs,
-        uint256[] memory operatorDelegatorTokenTVLs,
-        uint256 totalTVL
-    );
+    function calculateTVLs()
+        external
+        view
+        returns (
+            uint256[][] memory operatorDelegatorTVLs,
+            uint256[] memory operatorDelegatorTokenTVLs,
+            uint256 totalTVL
+        );
 }
 
 /// @notice ezETH token interface
@@ -237,15 +237,24 @@ contract EtherFiEETHStrategy is Ownable, ReentrancyGuard {
         referral = _referral;
     }
 
-    function deposit(uint256 amount, bytes calldata /* data */) external payable onlyVault whenNotPaused returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        payable
+        onlyVault
+        whenNotPaused
+        returns (uint256 shares)
+    {
         if (msg.value != amount) revert InvalidAmount();
 
         uint256 eethBefore = IERC20(EETH).balanceOf(address(this));
 
         if (referral != address(0)) {
-            IEtherFiLiquidityPool(LIQUIDITY_POOL).deposit{value: amount}(referral);
+            IEtherFiLiquidityPool(LIQUIDITY_POOL).deposit{ value: amount }(referral);
         } else {
-            IEtherFiLiquidityPool(LIQUIDITY_POOL).deposit{value: amount}();
+            IEtherFiLiquidityPool(LIQUIDITY_POOL).deposit{ value: amount }();
         }
 
         shares = IERC20(EETH).balanceOf(address(this)) - eethBefore;
@@ -255,7 +264,15 @@ contract EtherFiEETHStrategy is Ownable, ReentrancyGuard {
         emit Deposited(msg.sender, amount, shares);
     }
 
-    function withdraw(uint256 shares, address recipient, bytes calldata /* data */) external onlyVault returns (uint256 amount) {
+    function withdraw(
+        uint256 shares,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        returns (uint256 amount)
+    {
         if (shares > eethShares) revert InsufficientBalance();
         if (recipient == address(0)) recipient = vault;
 
@@ -336,7 +353,7 @@ contract EtherFiEETHStrategy is Ownable, ReentrancyGuard {
         }
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -373,13 +390,21 @@ contract EtherFiWeETHStrategy is Ownable, ReentrancyGuard {
         IERC20(EETH).approve(WEETH, type(uint256).max);
     }
 
-    function deposit(uint256 amount, bytes calldata /* data */) external payable onlyVault returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        payable
+        onlyVault
+        returns (uint256 shares)
+    {
         if (isPaused) revert StrategyPaused();
         if (msg.value != amount) revert InvalidAmount();
 
         // Deposit ETH -> eETH
         uint256 eethBefore = IERC20(EETH).balanceOf(address(this));
-        IEtherFiLiquidityPool(LIQUIDITY_POOL).deposit{value: amount}();
+        IEtherFiLiquidityPool(LIQUIDITY_POOL).deposit{ value: amount }();
         uint256 eethReceived = IERC20(EETH).balanceOf(address(this)) - eethBefore;
 
         // Wrap eETH -> weETH
@@ -391,7 +416,15 @@ contract EtherFiWeETHStrategy is Ownable, ReentrancyGuard {
         totalDeposited += amount;
     }
 
-    function withdraw(uint256 shares, address recipient, bytes calldata /* data */) external onlyVault returns (uint256 amount) {
+    function withdraw(
+        uint256 shares,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        returns (uint256 amount)
+    {
         if (shares > weethBalance) revert InsufficientBalance();
         if (recipient == address(0)) recipient = vault;
 
@@ -410,8 +443,8 @@ contract EtherFiWeETHStrategy is Ownable, ReentrancyGuard {
 
     function harvest() external returns (uint256 harvested) {
         uint256 currentValue = IweETH(WEETH).getEETHByWeETH(weethBalance);
-        uint256 ethValue = IEtherFiLiquidityPool(LIQUIDITY_POOL).getTotalPooledEther() *
-            currentValue / IeETH(EETH).totalShares();
+        uint256 ethValue =
+            IEtherFiLiquidityPool(LIQUIDITY_POOL).getTotalPooledEther() * currentValue / IeETH(EETH).totalShares();
 
         if (ethValue > totalDeposited) {
             harvested = ethValue - totalDeposited;
@@ -420,8 +453,7 @@ contract EtherFiWeETHStrategy is Ownable, ReentrancyGuard {
 
     function totalAssets() external view returns (uint256) {
         uint256 eethValue = IweETH(WEETH).getEETHByWeETH(weethBalance);
-        return IEtherFiLiquidityPool(LIQUIDITY_POOL).getTotalPooledEther() *
-            eethValue / IeETH(EETH).totalShares();
+        return IEtherFiLiquidityPool(LIQUIDITY_POOL).getTotalPooledEther() * eethValue / IeETH(EETH).totalShares();
     }
 
     function currentAPY() external pure returns (uint256) {
@@ -440,8 +472,6 @@ contract EtherFiWeETHStrategy is Ownable, ReentrancyGuard {
         return "Ether.fi weETH Strategy";
     }
 
-
-
     function setVault(address _vault) external onlyOwner {
         vault = _vault;
     }
@@ -457,7 +487,7 @@ contract EtherFiWeETHStrategy is Ownable, ReentrancyGuard {
         }
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -497,12 +527,20 @@ contract KelpRsETHStrategy is Ownable, ReentrancyGuard {
         vault = _vault;
     }
 
-    function deposit(uint256 amount, bytes calldata /* data */) external payable onlyVault returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        payable
+        onlyVault
+        returns (uint256 shares)
+    {
         if (isPaused) revert StrategyPaused();
         if (msg.value != amount) revert InvalidAmount();
 
         uint256 rsethBefore = IERC20(RSETH).balanceOf(address(this));
-        IKelpLRTDepositPool(DEPOSIT_POOL).depositETH{value: amount}(0, "lux_bridge");
+        IKelpLRTDepositPool(DEPOSIT_POOL).depositETH{ value: amount }(0, "lux_bridge");
         shares = IERC20(RSETH).balanceOf(address(this)) - rsethBefore;
 
         rsethBalance += shares;
@@ -525,7 +563,15 @@ contract KelpRsETHStrategy is Ownable, ReentrancyGuard {
         totalDeposited += ethValue;
     }
 
-    function withdraw(uint256 shares, address recipient, bytes calldata /* data */) external onlyVault returns (uint256 amount) {
+    function withdraw(
+        uint256 shares,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        returns (uint256 amount)
+    {
         if (shares > rsethBalance) revert InsufficientBalance();
         if (recipient == address(0)) recipient = vault;
 
@@ -568,8 +614,6 @@ contract KelpRsETHStrategy is Ownable, ReentrancyGuard {
         return "Kelp rsETH Strategy";
     }
 
-
-
     function setVault(address _vault) external onlyOwner {
         vault = _vault;
     }
@@ -585,7 +629,7 @@ contract KelpRsETHStrategy is Ownable, ReentrancyGuard {
         }
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -622,16 +666,24 @@ contract SwellSwETHStrategy is Ownable, ReentrancyGuard {
         referral = _referral;
     }
 
-    function deposit(uint256 amount, bytes calldata /* data */) external payable onlyVault returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        payable
+        onlyVault
+        returns (uint256 shares)
+    {
         if (isPaused) revert StrategyPaused();
         if (msg.value != amount) revert InvalidAmount();
 
         uint256 swethBefore = IERC20(SWETH).balanceOf(address(this));
 
         if (referral != address(0)) {
-            ISwellStaking(SWELL_STAKING).depositWithReferral{value: amount}(referral);
+            ISwellStaking(SWELL_STAKING).depositWithReferral{ value: amount }(referral);
         } else {
-            ISwellStaking(SWELL_STAKING).deposit{value: amount}();
+            ISwellStaking(SWELL_STAKING).deposit{ value: amount }();
         }
 
         shares = IERC20(SWETH).balanceOf(address(this)) - swethBefore;
@@ -639,7 +691,15 @@ contract SwellSwETHStrategy is Ownable, ReentrancyGuard {
         totalDeposited += amount;
     }
 
-    function withdraw(uint256 shares, address recipient, bytes calldata /* data */) external onlyVault returns (uint256 amount) {
+    function withdraw(
+        uint256 shares,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        returns (uint256 amount)
+    {
         if (shares > swethBalance) revert InsufficientBalance();
         if (recipient == address(0)) recipient = vault;
 
@@ -683,7 +743,6 @@ contract SwellSwETHStrategy is Ownable, ReentrancyGuard {
         return "Swell swETH Strategy";
     }
 
-
     function setVault(address _vault) external onlyOwner {
         vault = _vault;
     }
@@ -703,7 +762,7 @@ contract SwellSwETHStrategy is Ownable, ReentrancyGuard {
         }
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -740,13 +799,21 @@ contract SwellRswETHStrategy is Ownable, ReentrancyGuard {
         IERC20(SWETH).approve(RSWETH, type(uint256).max);
     }
 
-    function deposit(uint256 amount, bytes calldata /* data */) external payable onlyVault returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        payable
+        onlyVault
+        returns (uint256 shares)
+    {
         if (isPaused) revert StrategyPaused();
         if (msg.value != amount) revert InvalidAmount();
 
         // First stake ETH -> swETH
         uint256 swethBefore = IERC20(SWETH).balanceOf(address(this));
-        ISwellStaking(SWELL_STAKING).deposit{value: amount}();
+        ISwellStaking(SWELL_STAKING).deposit{ value: amount }();
         uint256 swethReceived = IERC20(SWETH).balanceOf(address(this)) - swethBefore;
 
         // Then restake swETH -> rswETH
@@ -758,7 +825,15 @@ contract SwellRswETHStrategy is Ownable, ReentrancyGuard {
         totalDeposited += amount;
     }
 
-    function withdraw(uint256 shares, address recipient, bytes calldata /* data */) external onlyVault returns (uint256 amount) {
+    function withdraw(
+        uint256 shares,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        returns (uint256 amount)
+    {
         if (shares > rswethBalance) revert InsufficientBalance();
         if (recipient == address(0)) recipient = vault;
 
@@ -819,7 +894,7 @@ contract SwellRswETHStrategy is Ownable, ReentrancyGuard {
         }
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -857,11 +932,19 @@ contract PufferPufETHStrategy is Ownable, ReentrancyGuard {
         IERC20(STETH).approve(PUFFER_VAULT, type(uint256).max);
     }
 
-    function deposit(uint256 amount, bytes calldata /* data */) external payable onlyVault returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        payable
+        onlyVault
+        returns (uint256 shares)
+    {
         if (isPaused) revert StrategyPaused();
         if (msg.value != amount) revert InvalidAmount();
 
-        shares = IPufferVault(PUFFER_VAULT).depositETH{value: amount}(address(this));
+        shares = IPufferVault(PUFFER_VAULT).depositETH{ value: amount }(address(this));
 
         pufethBalance += shares;
         totalDeposited += amount;
@@ -878,7 +961,15 @@ contract PufferPufETHStrategy is Ownable, ReentrancyGuard {
         totalDeposited += amount;
     }
 
-    function withdraw(uint256 shares, address recipient, bytes calldata /* data */) external onlyVault returns (uint256 amount) {
+    function withdraw(
+        uint256 shares,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        returns (uint256 amount)
+    {
         if (shares > pufethBalance) revert InsufficientBalance();
         if (recipient == address(0)) recipient = vault;
 
@@ -936,7 +1027,7 @@ contract PufferPufETHStrategy is Ownable, ReentrancyGuard {
         }
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -983,9 +1074,9 @@ contract RenzoEzETHStrategy is Ownable, ReentrancyGuard {
         uint256 ezethBefore = IERC20(EZETH).balanceOf(address(this));
 
         if (referralId != 0) {
-            IRenzoRestakeManager(RESTAKE_MANAGER).depositETH{value: amount}(referralId);
+            IRenzoRestakeManager(RESTAKE_MANAGER).depositETH{ value: amount }(referralId);
         } else {
-            IRenzoRestakeManager(RESTAKE_MANAGER).depositETH{value: amount}();
+            IRenzoRestakeManager(RESTAKE_MANAGER).depositETH{ value: amount }();
         }
 
         shares = IERC20(EZETH).balanceOf(address(this)) - ezethBefore;
@@ -1063,7 +1154,6 @@ contract RenzoEzETHStrategy is Ownable, ReentrancyGuard {
         return "Renzo ezETH Strategy";
     }
 
-
     function setVault(address _vault) external onlyOwner {
         vault = _vault;
     }
@@ -1083,7 +1173,7 @@ contract RenzoEzETHStrategy is Ownable, ReentrancyGuard {
         }
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1115,17 +1205,14 @@ contract LRTStrategyAggregator is Ownable, ReentrancyGuard {
     error InvalidAllocation();
     error BelowMinimum();
 
-    constructor(address _owner) Ownable(_owner) {}
+    constructor(address _owner) Ownable(_owner) { }
 
     function addStrategy(address _strategy, uint256 _allocation, string calldata _protocolName) external onlyOwner {
         if (_allocation > maxSingleAllocation) revert InvalidAllocation();
 
-        strategies.push(StrategyInfo({
-            strategy: _strategy,
-            allocation: _allocation,
-            active: true,
-            protocolName: _protocolName
-        }));
+        strategies.push(
+            StrategyInfo({ strategy: _strategy, allocation: _allocation, active: true, protocolName: _protocolName })
+        );
 
         emit StrategyAdded(_strategy, _protocolName);
     }
@@ -1156,7 +1243,7 @@ contract LRTStrategyAggregator is Ownable, ReentrancyGuard {
             if (amount > remaining) amount = remaining;
 
             if (amount > 0) {
-                shares[i] = IYieldStrategy(strategies[i].strategy).deposit{value: amount}(amount);
+                shares[i] = IYieldStrategy(strategies[i].strategy).deposit{ value: amount }(amount);
                 remaining -= amount;
             }
         }
@@ -1207,5 +1294,5 @@ contract LRTStrategyAggregator is Ownable, ReentrancyGuard {
         minDeposit = _min;
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

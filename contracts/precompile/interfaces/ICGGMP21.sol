@@ -78,13 +78,7 @@ library CGGMP21Lib {
             revert InvalidSignature();
         }
 
-        bytes memory input = abi.encodePacked(
-            threshold,
-            totalSigners,
-            publicKey,
-            messageHash,
-            signature
-        );
+        bytes memory input = abi.encodePacked(threshold, totalSigners, publicKey, messageHash, signature);
 
         (bool success, bytes memory result) = CGGMP21_PRECOMPILE.staticcall(input);
         require(success, "CGGMP21 precompile call failed");
@@ -131,12 +125,7 @@ library CGGMP21Lib {
 abstract contract CGGMP21Verifier {
     using CGGMP21Lib for *;
 
-    event CGGMP21SignatureVerified(
-        uint32 threshold,
-        uint32 totalSigners,
-        bytes publicKey,
-        bytes32 indexed messageHash
-    );
+    event CGGMP21SignatureVerified(uint32 threshold, uint32 totalSigners, bytes publicKey, bytes32 indexed messageHash);
 
     /**
      * @notice Verify CGGMP21 threshold signature
@@ -153,13 +142,7 @@ abstract contract CGGMP21Verifier {
         bytes32 messageHash,
         bytes calldata signature
     ) internal view {
-        CGGMP21Lib.verifyOrRevert(
-            threshold,
-            totalSigners,
-            publicKey,
-            messageHash,
-            signature
-        );
+        CGGMP21Lib.verifyOrRevert(threshold, totalSigners, publicKey, messageHash, signature);
     }
 
     /**
@@ -188,13 +171,7 @@ abstract contract CGGMP21Verifier {
         bytes calldata signature
     ) internal {
         // Encode input for precompile
-        bytes memory input = abi.encodePacked(
-            threshold,
-            totalSigners,
-            publicKey,
-            messageHash,
-            signature
-        );
+        bytes memory input = abi.encodePacked(threshold, totalSigners, publicKey, messageHash, signature);
 
         // Call precompile
         (bool success, bytes memory result) = CGGMP21Lib.CGGMP21_PRECOMPILE.staticcall(input);
@@ -236,21 +213,12 @@ contract ThresholdWallet is CGGMP21Verifier {
      * @param totalSigners Total number of signers
      * @param publicKey Aggregated ECDSA public key
      */
-    function initialize(
-        uint32 threshold,
-        uint32 totalSigners,
-        bytes calldata publicKey
-    ) external {
+    function initialize(uint32 threshold, uint32 totalSigners, bytes calldata publicKey) external {
         require(config.threshold == 0, "Already initialized");
         require(CGGMP21Lib.isValidThreshold(threshold, totalSigners), "Invalid threshold");
         require(CGGMP21Lib.isValidPublicKey(publicKey), "Invalid public key");
 
-        config = WalletConfig({
-            threshold: threshold,
-            totalSigners: totalSigners,
-            publicKey: publicKey,
-            nonce: 0
-        });
+        config = WalletConfig({ threshold: threshold, totalSigners: totalSigners, publicKey: publicKey, nonce: 0 });
 
         emit WalletInitialized(threshold, totalSigners);
     }
@@ -262,44 +230,27 @@ contract ThresholdWallet is CGGMP21Verifier {
      * @param data Transaction data
      * @param signature CGGMP21 threshold signature
      */
-    function executeTransaction(
-        address to,
-        uint256 value,
-        bytes calldata data,
-        bytes calldata signature
-    ) external {
+    function executeTransaction(address to, uint256 value, bytes calldata data, bytes calldata signature) external {
         // Create transaction hash
-        bytes32 txHash = keccak256(abi.encodePacked(
-            address(this),
-            to,
-            value,
-            data,
-            config.nonce
-        ));
+        bytes32 txHash = keccak256(abi.encodePacked(address(this), to, value, data, config.nonce));
 
         // Ensure not already executed
         require(!executedTxs[txHash], "Transaction already executed");
 
         // Verify threshold signature (copy storage to memory for internal call)
         bytes memory pubKey = config.publicKey;
-        verifyCGGMP21SignatureWithEventMem(
-            config.threshold,
-            config.totalSigners,
-            pubKey,
-            txHash,
-            signature
-        );
+        verifyCGGMP21SignatureWithEventMem(config.threshold, config.totalSigners, pubKey, txHash, signature);
 
         // Mark as executed
         executedTxs[txHash] = true;
         config.nonce++;
 
         // Execute transaction
-        (bool success, ) = to.call{value: value}(data);
+        (bool success,) = to.call{ value: value }(data);
         require(success, "Transaction failed");
 
         emit TransactionExecuted(txHash, to, value);
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

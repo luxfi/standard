@@ -2,8 +2,8 @@
 pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
-import {MockERC20} from "../TestMocks.sol";
-import {LiquidLUX} from "../../../contracts/liquid/LiquidLUX.sol";
+import { MockERC20 } from "../TestMocks.sol";
+import { LiquidLUX } from "../../../contracts/liquid/LiquidLUX.sol";
 
 // ============================================================================
 // Handler for LiquidLUX invariant testing
@@ -147,7 +147,7 @@ contract InvariantLiquidLUXTest is Test {
         selectors[0] = LiquidLUXHandler.deposit.selector;
         selectors[1] = LiquidLUXHandler.withdraw.selector;
         selectors[2] = LiquidLUXHandler.donate.selector;
-        targetSelector(FuzzSelector({addr: address(handler), selectors: selectors}));
+        targetSelector(FuzzSelector({ addr: address(handler), selectors: selectors }));
     }
 
     /// @notice No single share holder can redeem more than totalAssets
@@ -181,8 +181,8 @@ contract InvariantLiquidLUXTest is Test {
     /// @dev Accounting check: vault balance should be consistent with operations
     function invariant_totalAssetsConsistent() public view {
         uint256 totalAssets = vault.totalAssets();
-        uint256 netDeposits = handler.ghost_totalDeposited() + handler.ghost_totalDonated()
-            - handler.ghost_totalWithdrawn();
+        uint256 netDeposits =
+            handler.ghost_totalDeposited() + handler.ghost_totalDonated() - handler.ghost_totalWithdrawn();
 
         // totalAssets should equal net deposits (no fees taken in our test setup)
         // Allow 1 wei tolerance per operation for rounding
@@ -191,11 +191,7 @@ contract InvariantLiquidLUXTest is Test {
 
         // We allow the assets to be >= netDeposits - ops (rounding down per operation)
         // and <= netDeposits + ops (rounding up per operation)
-        assertGe(
-            totalAssets + ops,
-            netDeposits,
-            "totalAssets too low vs net deposits (accounting error)"
-        );
+        assertGe(totalAssets + ops, netDeposits, "totalAssets too low vs net deposits (accounting error)");
     }
 
     /// @notice Share price (assets per share) must not change by > 100x between operations

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title IntentRouter
@@ -32,41 +32,41 @@ contract IntentRouter is EIP712, ReentrancyGuard, AccessControl, Pausable {
 
     /// @notice Order type
     enum OrderType {
-        LIMIT,          // Standard limit order
-        RFQ,            // Request for quote (private)
-        DUTCH_AUCTION,  // Decaying price limit
-        FILL_OR_KILL    // All or nothing
+        LIMIT, // Standard limit order
+        RFQ, // Request for quote (private)
+        DUTCH_AUCTION, // Decaying price limit
+        FILL_OR_KILL // All or nothing
     }
 
     /// @notice A signed order/intent
     struct Order {
-        address maker;           // Order creator
-        address taker;           // Specific taker (address(0) for open)
-        address tokenIn;         // Token being sold
-        address tokenOut;        // Token being bought
-        uint256 amountIn;        // Amount being sold
-        uint256 amountOutMin;    // Minimum amount to receive
-        uint256 amountOutMax;    // Maximum amount (for dutch auction)
-        uint256 nonce;           // Unique nonce for cancellation
-        uint256 deadline;        // Order expiry
-        uint256 startTime;       // Start time (for dutch auction)
-        OrderType orderType;     // Type of order
-        bytes32 partnerCode;     // Partner/affiliate code
+        address maker; // Order creator
+        address taker; // Specific taker (address(0) for open)
+        address tokenIn; // Token being sold
+        address tokenOut; // Token being bought
+        uint256 amountIn; // Amount being sold
+        uint256 amountOutMin; // Minimum amount to receive
+        uint256 amountOutMax; // Maximum amount (for dutch auction)
+        uint256 nonce; // Unique nonce for cancellation
+        uint256 deadline; // Order expiry
+        uint256 startTime; // Start time (for dutch auction)
+        OrderType orderType; // Type of order
+        bytes32 partnerCode; // Partner/affiliate code
     }
 
     /// @notice Fill data for execution
     struct Fill {
         Order order;
         bytes signature;
-        uint256 fillAmount;      // Amount of tokenIn to fill
-        address solver;          // Solver executing the trade
-        bytes solverData;        // Calldata for solver execution
+        uint256 fillAmount; // Amount of tokenIn to fill
+        address solver; // Solver executing the trade
+        bytes solverData; // Calldata for solver execution
     }
 
     /// @notice Quote from market maker
     struct Quote {
-        address maker;           // Market maker
-        address taker;           // Quote requester
+        address maker; // Market maker
+        address taker; // Quote requester
         address tokenIn;
         address tokenOut;
         uint256 amountIn;
@@ -140,17 +140,10 @@ contract IntentRouter is EIP712, ReentrancyGuard, AccessControl, Pausable {
         bytes32 partnerCode
     );
 
-    event OrderCanceled(
-        address indexed maker,
-        uint256 indexed nonce
-    );
+    event OrderCanceled(address indexed maker, uint256 indexed nonce);
 
     event QuoteFilled(
-        bytes32 indexed quoteHash,
-        address indexed maker,
-        address indexed taker,
-        uint256 amountIn,
-        uint256 amountOut
+        bytes32 indexed quoteHash, address indexed maker, address indexed taker, uint256 amountIn, uint256 amountOut
     );
 
     event SolverUpdated(address indexed solver, bool approved);
@@ -175,10 +168,7 @@ contract IntentRouter is EIP712, ReentrancyGuard, AccessControl, Pausable {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(
-        address _feeReceiver,
-        address _admin
-    ) EIP712("Lux Intent Router", "1") {
+    constructor(address _feeReceiver, address _admin) EIP712("Lux Intent Router", "1") {
         feeReceiver = _feeReceiver;
 
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
@@ -195,9 +185,7 @@ contract IntentRouter is EIP712, ReentrancyGuard, AccessControl, Pausable {
      * @param fill Fill details including order and solver data
      * @return amountOut Amount of tokenOut received by maker
      */
-    function fillOrder(
-        Fill calldata fill
-    ) external nonReentrant whenNotPaused returns (uint256 amountOut) {
+    function fillOrder(Fill calldata fill) external nonReentrant whenNotPaused returns (uint256 amountOut) {
         Order calldata order = fill.order;
 
         // Validate order
@@ -283,9 +271,12 @@ contract IntentRouter is EIP712, ReentrancyGuard, AccessControl, Pausable {
      * @param fills Array of fills
      * @return amountsOut Array of output amounts
      */
-    function fillOrders(
-        Fill[] calldata fills
-    ) external nonReentrant whenNotPaused returns (uint256[] memory amountsOut) {
+    function fillOrders(Fill[] calldata fills)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (uint256[] memory amountsOut)
+    {
         amountsOut = new uint256[](fills.length);
         for (uint256 i = 0; i < fills.length; i++) {
             amountsOut[i] = _fillOrderInternal(fills[i]);
@@ -296,9 +287,7 @@ contract IntentRouter is EIP712, ReentrancyGuard, AccessControl, Pausable {
      * @notice Fill an RFQ quote
      * @param quote Quote from market maker
      */
-    function fillQuote(
-        Quote calldata quote
-    ) external nonReentrant whenNotPaused returns (uint256) {
+    function fillQuote(Quote calldata quote) external nonReentrant whenNotPaused returns (uint256) {
         // Validate
         if (block.timestamp > quote.deadline) revert OrderExpired();
         if (quote.taker != msg.sender && quote.taker != address(0)) revert InvalidTaker();
@@ -360,10 +349,7 @@ contract IntentRouter is EIP712, ReentrancyGuard, AccessControl, Pausable {
     }
 
     /// @notice Check if order is valid
-    function isOrderValid(
-        Order calldata order,
-        bytes calldata signature
-    ) external view returns (bool) {
+    function isOrderValid(Order calldata order, bytes calldata signature) external view returns (bool) {
         bytes32 orderHash = _hashOrder(order);
         address signer = ECDSA.recover(_hashTypedDataV4(orderHash), signature);
 
@@ -377,18 +363,13 @@ contract IntentRouter is EIP712, ReentrancyGuard, AccessControl, Pausable {
     }
 
     /// @notice Get remaining fillable amount
-    function getRemainingAmount(
-        Order calldata order
-    ) external view returns (uint256) {
+    function getRemainingAmount(Order calldata order) external view returns (uint256) {
         bytes32 orderHash = _hashOrder(order);
         return order.amountIn - filledAmounts[orderHash];
     }
 
     /// @notice Calculate expected output for current time
-    function getExpectedOutput(
-        Order calldata order,
-        uint256 fillAmount
-    ) external view returns (uint256) {
+    function getExpectedOutput(Order calldata order, uint256 fillAmount) external view returns (uint256) {
         return _calculateExpectedOutput(order, fillAmount);
     }
 
@@ -401,11 +382,7 @@ contract IntentRouter is EIP712, ReentrancyGuard, AccessControl, Pausable {
         emit SolverUpdated(solver, approved);
     }
 
-    function registerPartner(
-        bytes32 code,
-        address receiver,
-        uint256 feeBps
-    ) external onlyRole(ADMIN_ROLE) {
+    function registerPartner(bytes32 code, address receiver, uint256 feeBps) external onlyRole(ADMIN_ROLE) {
         require(feeBps <= 500, "Fee too high"); // Max 5%
         partnerFees[code] = feeBps;
         partnerReceivers[code] = receiver;
@@ -442,41 +419,42 @@ contract IntentRouter is EIP712, ReentrancyGuard, AccessControl, Pausable {
     }
 
     function _hashOrder(Order calldata order) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            ORDER_TYPEHASH,
-            order.maker,
-            order.taker,
-            order.tokenIn,
-            order.tokenOut,
-            order.amountIn,
-            order.amountOutMin,
-            order.amountOutMax,
-            order.nonce,
-            order.deadline,
-            order.startTime,
-            uint8(order.orderType),
-            order.partnerCode
-        ));
+        return keccak256(
+            abi.encode(
+                ORDER_TYPEHASH,
+                order.maker,
+                order.taker,
+                order.tokenIn,
+                order.tokenOut,
+                order.amountIn,
+                order.amountOutMin,
+                order.amountOutMax,
+                order.nonce,
+                order.deadline,
+                order.startTime,
+                uint8(order.orderType),
+                order.partnerCode
+            )
+        );
     }
 
     function _hashQuote(Quote calldata quote) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            QUOTE_TYPEHASH,
-            quote.maker,
-            quote.taker,
-            quote.tokenIn,
-            quote.tokenOut,
-            quote.amountIn,
-            quote.amountOut,
-            quote.deadline,
-            quote.nonce
-        ));
+        return keccak256(
+            abi.encode(
+                QUOTE_TYPEHASH,
+                quote.maker,
+                quote.taker,
+                quote.tokenIn,
+                quote.tokenOut,
+                quote.amountIn,
+                quote.amountOut,
+                quote.deadline,
+                quote.nonce
+            )
+        );
     }
 
-    function _calculateExpectedOutput(
-        Order calldata order,
-        uint256 fillAmount
-    ) internal view returns (uint256) {
+    function _calculateExpectedOutput(Order calldata order, uint256 fillAmount) internal view returns (uint256) {
         // Pro-rata for partial fills
         uint256 baseOutput = (order.amountOutMin * fillAmount) / order.amountIn;
 
@@ -503,10 +481,11 @@ contract IntentRouter is EIP712, ReentrancyGuard, AccessControl, Pausable {
         return maxOutput - decay;
     }
 
-    function _calculateFees(
-        uint256 amount,
-        bytes32 partnerCode
-    ) internal view returns (uint256 protocolFee, uint256 partnerFee) {
+    function _calculateFees(uint256 amount, bytes32 partnerCode)
+        internal
+        view
+        returns (uint256 protocolFee, uint256 partnerFee)
+    {
         protocolFee = (amount * protocolFeeBps) / BPS;
 
         if (partnerCode != bytes32(0) && partnerFees[partnerCode] > 0) {

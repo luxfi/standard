@@ -5,12 +5,11 @@ pragma solidity ^0.8.31;
 
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { ERC20Burnable  } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
 
 contract LUX is ERC20, ERC20Burnable, Pausable, Ownable, AccessControl {
     using SafeERC20 for IERC20;
@@ -19,7 +18,7 @@ contract LUX is ERC20, ERC20Burnable, Pausable, Ownable, AccessControl {
     address public bridge;
     uint256 airdropEnd;
 
-    constructor () ERC20("LUX", "LUX") Ownable(msg.sender) {
+    constructor() ERC20("LUX", "LUX") Ownable(msg.sender) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         // _pause(); // mainnet launch in paused state
     }
@@ -40,20 +39,20 @@ contract LUX is ERC20, ERC20Burnable, Pausable, Ownable, AccessControl {
         require(hasRole(BLACKLIST, _addr) == false, "Address is on blacklist");
     }
 
-    function transfer(address _to, uint256 _value) public whenNotPaused override returns (bool) {
+    function transfer(address _to, uint256 _value) public override whenNotPaused returns (bool) {
         _transferAllowed(_to);
         _transferAllowed(msg.sender);
         return super.transfer(_to, _value);
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public  override whenNotPaused returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) public override whenNotPaused returns (bool) {
         _transferAllowed(_to);
         _transferAllowed(_from);
         _transferAllowed(msg.sender);
         return super.transferFrom(_from, _to, _value);
     }
 
-    modifier onlyBridge {
+    modifier onlyBridge() {
         require(msg.sender == address(bridge), "Caller is not the bridge");
         _;
     }
@@ -88,12 +87,14 @@ contract LUX is ERC20, ERC20Burnable, Pausable, Ownable, AccessControl {
 
     function airdrop(address[] memory addresses, uint256[] memory amounts) public onlyOwner returns (uint256) {
         require(airdropEnd == 0, "Airdrop cannot be run again after being completed");
-        require(addresses.length > 0 && addresses.length == amounts.length, "addresses and amounts must be equal in length");
+        require(
+            addresses.length > 0 && addresses.length == amounts.length, "addresses and amounts must be equal in length"
+        );
 
         uint256 i;
         for (i = 0; i < addresses.length; i++) {
             require(addresses[i] != address(0), "An address is equal to 0x0"); // ensure no zero address
-            require(amounts[i] > 0, "A zero amount is being transfered");             // cannot assign zero amount
+            require(amounts[i] > 0, "A zero amount is being transfered"); // cannot assign zero amount
         }
 
         // Token distribution

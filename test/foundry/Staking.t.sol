@@ -4,13 +4,13 @@ pragma solidity ^0.8.31;
 import "forge-std/Test.sol";
 
 // Staking contracts
-import {sLUX} from "../../contracts/staking/sLUX.sol";
+import { sLUX } from "../../contracts/staking/sLUX.sol";
 
 // Token contracts
-import {WLUX} from "../../contracts/tokens/WLUX.sol";
+import { WLUX } from "../../contracts/tokens/WLUX.sol";
 
 // Import shared mocks
-import {MockERC20Solmate as MockRewardToken} from "./TestMocks.sol";
+import { MockERC20Solmate as MockRewardToken } from "./TestMocks.sol";
 
 /// @title StakingTest
 /// @notice Comprehensive tests for sLUX staking contract
@@ -61,18 +61,18 @@ contract StakingTest is Test {
 
         // Wrap LUX to WLUX for each user
         vm.prank(alice);
-        wlux.deposit{value: INITIAL_LUX}();
+        wlux.deposit{ value: INITIAL_LUX }();
 
         vm.prank(bob);
-        wlux.deposit{value: INITIAL_LUX}();
+        wlux.deposit{ value: INITIAL_LUX }();
 
         vm.prank(carol);
-        wlux.deposit{value: INITIAL_LUX}();
+        wlux.deposit{ value: INITIAL_LUX }();
 
         // Fund protocol vault with WLUX for rewards
         vm.deal(protocolVault, INITIAL_LUX);
         vm.prank(protocolVault);
-        wlux.deposit{value: INITIAL_LUX}();
+        wlux.deposit{ value: INITIAL_LUX }();
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -398,7 +398,7 @@ contract StakingTest is Test {
         // Owner can also add rewards (for testing/bootstrapping)
         vm.deal(owner, 10 ether);
         vm.startPrank(owner);
-        wlux.deposit{value: 10 ether}();
+        wlux.deposit{ value: 10 ether }();
         wlux.approve(address(slux), 10 ether);
         slux.addRewards(10 ether);
         vm.stopPrank();

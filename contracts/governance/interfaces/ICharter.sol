@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.31;
 
-import {IVotingTypes} from "./IVotingTypes.sol";
+import { IVotingTypes } from "./IVotingTypes.sol";
 
 /**
  * @title ICharter
@@ -73,24 +73,13 @@ interface ICharter {
 
     // --- Events ---
 
-    event Voted(
-        address indexed voter,
-        uint32 indexed proposalId,
-        VoteType voteType,
-        uint256 totalWeightCastedInTx
-    );
+    event Voted(address indexed voter, uint32 indexed proposalId, VoteType voteType, uint256 totalWeightCastedInTx);
 
     event ProposalInitialized(
-        uint32 indexed proposalId,
-        uint48 votingStartTimestamp,
-        uint48 votingEndTimestamp,
-        uint32 votingStartBlock
+        uint32 indexed proposalId, uint48 votingStartTimestamp, uint48 votingEndTimestamp, uint32 votingStartBlock
     );
 
-    event VetoVoterAuthorizationChanged(
-        address indexed vetoVoterContract,
-        bool isAuthorized
-    );
+    event VetoVoterAuthorizationChanged(address indexed vetoVoterContract, bool isAuthorized);
 
     event VotingPeriodEnded(uint32 indexed proposalId);
 
@@ -117,28 +106,20 @@ interface ICharter {
      * @param charterAdmin_ Admin address (typically the Council)
      * @param votingConfigs_ Voting configurations
      */
-    function initialize2(
-        address charterAdmin_,
-        IVotingTypes.VotingConfig[] calldata votingConfigs_
-    ) external;
+    function initialize2(address charterAdmin_, IVotingTypes.VotingConfig[] calldata votingConfigs_) external;
 
     // --- View Functions ---
 
-    function isProposer(
-        address address_,
-        address proposerAdapter_,
-        bytes calldata proposerAdapterData_
-    ) external view returns (bool);
+    function isProposer(address address_, address proposerAdapter_, bytes calldata proposerAdapterData_)
+        external
+        view
+        returns (bool);
 
     function isPassed(uint32 proposalId_) external view returns (bool);
 
-    function getVotingTimestamps(
-        uint32 proposalId_
-    ) external view returns (uint48 startTime, uint48 endTime);
+    function getVotingTimestamps(uint32 proposalId_) external view returns (uint48 startTime, uint48 endTime);
 
-    function getVotingStartBlock(
-        uint32 proposalId_
-    ) external view returns (uint32);
+    function getVotingStartBlock(uint32 proposalId_) external view returns (uint32);
 
     function votingConfigs() external view returns (IVotingTypes.VotingConfig[] memory);
 
@@ -152,13 +133,9 @@ interface ICharter {
 
     function basisNumerator() external view returns (uint256);
 
-    function proposalVotingDetails(
-        uint32 proposalId_
-    ) external view returns (ProposalVotingDetails memory);
+    function proposalVotingDetails(uint32 proposalId_) external view returns (ProposalVotingDetails memory);
 
-    function votingConfig(
-        uint256 configIndex_
-    ) external view returns (IVotingTypes.VotingConfig memory);
+    function votingConfig(uint256 configIndex_) external view returns (IVotingTypes.VotingConfig memory);
 
     function proposerAdapters() external view returns (address[] memory);
 
@@ -166,15 +143,11 @@ interface ICharter {
 
     function isBasisMet(uint32 proposalId_) external view returns (bool);
 
-    function isAuthorizedVetoVoter(
-        address vetoVoterContract_
-    ) external view returns (bool);
+    function isAuthorizedVetoVoter(address vetoVoterContract_) external view returns (bool);
 
     function authorizedVetoVoters() external view returns (address[] memory);
 
-    function voteCastedAfterVotingPeriodEnded(
-        uint32 proposalId_
-    ) external view returns (bool);
+    function voteCastedAfterVotingPeriodEnded(uint32 proposalId_) external view returns (bool);
 
     function validCharterVote(
         address voter_,

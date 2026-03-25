@@ -3,22 +3,22 @@
 pragma solidity ^0.8.31;
 
 /**
-    ██████╗ ██████╗ ██╗██████╗  ██████╗ ███████╗    ██╗   ██╗ █████╗ ██╗   ██╗██╗  ████████╗
-    ██╔══██╗██╔══██╗██║██╔══██╗██╔════╝ ██╔════╝    ██║   ██║██╔══██╗██║   ██║██║  ╚══██╔══╝
-    ██████╔╝██████╔╝██║██║  ██║██║  ███╗█████╗      ██║   ██║███████║██║   ██║██║     ██║
-    ██╔══██╗██╔══██╗██║██║  ██║██║   ██║██╔══╝      ╚██╗ ██╔╝██╔══██║██║   ██║██║     ██║
-    ██████╔╝██║  ██║██║██████╔╝╚██████╔╝███████╗     ╚████╔╝ ██║  ██║╚██████╔╝███████╗██║
-    ╚═════╝ ╚═╝  ╚═╝╚═╝╚═════╝  ╚═════╝ ╚══════╝      ╚═══╝  ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝
-
-    Unified Bridge Vault - Used by Lux, Zoo, and all ecosystem chains
+ *     ██████╗ ██████╗ ██╗██████╗  ██████╗ ███████╗    ██╗   ██╗ █████╗ ██╗   ██╗██╗  ████████╗
+ *     ██╔══██╗██╔══██╗██║██╔══██╗██╔════╝ ██╔════╝    ██║   ██║██╔══██╗██║   ██║██║  ╚══██╔══╝
+ *     ██████╔╝██████╔╝██║██║  ██║██║  ███╗█████╗      ██║   ██║███████║██║   ██║██║     ██║
+ *     ██╔══██╗██╔══██╗██║██║  ██║██║   ██║██╔══╝      ╚██╗ ██╔╝██╔══██║██║   ██║██║     ██║
+ *     ██████╔╝██║  ██║██║██████╔╝╚██████╔╝███████╗     ╚████╔╝ ██║  ██║╚██████╔╝███████╗██║
+ *     ╚═════╝ ╚═╝  ╚═╝╚═╝╚═════╝  ╚═════╝ ╚══════╝      ╚═══╝  ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝
+ *
+ *     Unified Bridge Vault - Used by Lux, Zoo, and all ecosystem chains
  */
 
-import {LRC4626} from "../tokens/LRC4626/LRC4626.sol";
-import {ETHVault} from "./ETHVault.sol";
-import {LRC20} from "../tokens/LRC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { LRC4626 } from "../tokens/LRC4626/LRC4626.sol";
+import { ETHVault } from "./ETHVault.sol";
+import { LRC20 } from "../tokens/LRC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title BridgeVault
@@ -32,10 +32,7 @@ contract BridgeVault is Ownable, ReentrancyGuard {
     uint256 public totalVaultLength;
     address[] public assets;
 
-    event ERC20VaultCreated(
-        address indexed asset,
-        address indexed vaultAddress
-    );
+    event ERC20VaultCreated(address indexed asset, address indexed vaultAddress);
     event ETHVaultCreated(address indexed vaultAddress);
 
     constructor() Ownable(msg.sender) {
@@ -47,10 +44,7 @@ contract BridgeVault is Ownable, ReentrancyGuard {
      * @notice Uses abi.encode instead of abi.encodePacked to prevent hash collision
      *         attacks when used with dynamic-length arguments
      */
-    function concat(
-        string memory a,
-        string memory b
-    ) internal pure returns (string memory) {
+    function concat(string memory a, string memory b) internal pure returns (string memory) {
         return string(abi.encode(a, b));
     }
 
@@ -80,11 +74,8 @@ contract BridgeVault is Ownable, ReentrancyGuard {
      */
     function _addNewERC20Vault(address asset_) private {
         require(erc20Vault[asset_] == address(0), "Vault already exists.");
-        LRC4626 newERC20Vault = new LRC4626(
-            IERC20(asset_),
-            concat(LRC20(asset_).name(), " Vault"),
-            concat("v", LRC20(asset_).symbol())
-        );
+        LRC4626 newERC20Vault =
+            new LRC4626(IERC20(asset_), concat(LRC20(asset_).name(), " Vault"), concat("v", LRC20(asset_).symbol()));
         address newVaultAddress = address(newERC20Vault);
         erc20Vault[asset_] = newVaultAddress;
         IERC20(asset_).approve(newVaultAddress, type(uint256).max);
@@ -108,16 +99,13 @@ contract BridgeVault is Ownable, ReentrancyGuard {
      * @param asset_ Token address (address(0) for ETH)
      * @param amount_ Amount to deposit
      */
-    function deposit(
-        address asset_,
-        uint256 amount_
-    ) external payable onlyOwner nonReentrant {
+    function deposit(address asset_, uint256 amount_) external payable onlyOwner nonReentrant {
         if (asset_ == address(0)) {
             if (ethVaultAddress == payable(0)) {
                 _addNewVault(address(0));
             }
             require(msg.value >= amount_, "Insufficient ETH amount");
-            ETHVault(ethVaultAddress).deposit{value: amount_}(amount_, owner());
+            ETHVault(ethVaultAddress).deposit{ value: amount_ }(amount_, owner());
         } else {
             if (erc20Vault[asset_] == address(0)) {
                 _addNewVault(asset_);
@@ -132,11 +120,7 @@ contract BridgeVault is Ownable, ReentrancyGuard {
      * @param receiver_ Recipient address
      * @param amount_ Amount to withdraw
      */
-    function withdraw(
-        address asset_,
-        address receiver_,
-        uint256 amount_
-    ) external onlyOwner nonReentrant {
+    function withdraw(address asset_, address receiver_, uint256 amount_) external onlyOwner nonReentrant {
         if (asset_ == address(0)) {
             require(ethVaultAddress != payable(0), "ETH vault does not exist!");
             ETHVault(ethVaultAddress).withdraw(amount_, receiver_, owner());
@@ -151,9 +135,7 @@ contract BridgeVault is Ownable, ReentrancyGuard {
      * @param asset_ Asset address
      * @return Maximum withdrawable amount
      */
-    function previewWithdraw(
-        address asset_
-    ) public view returns (uint256) {
+    function previewWithdraw(address asset_) public view returns (uint256) {
         if (asset_ == address(0)) {
             if (ethVaultAddress == payable(0)) {
                 return 0;
@@ -179,9 +161,7 @@ contract BridgeVault is Ownable, ReentrancyGuard {
      * @return vaultAddress Vault contract address
      * @return totalAssets Total assets in vault
      */
-    function getVaultInfo(
-        address asset_
-    )
+    function getVaultInfo(address asset_)
         external
         view
         returns (
@@ -222,5 +202,5 @@ contract BridgeVault is Ownable, ReentrancyGuard {
         return assets;
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

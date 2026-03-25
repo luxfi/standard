@@ -30,11 +30,7 @@ interface IDead {
     /// @param burnedAmount Amount actually burned
     /// @param treasuryAmount Amount sent to treasury
     event BurnRouted(
-        address indexed token,
-        address indexed sender,
-        uint256 totalAmount,
-        uint256 burnedAmount,
-        uint256 treasuryAmount
+        address indexed token, address indexed sender, uint256 totalAmount, uint256 burnedAmount, uint256 treasuryAmount
     );
 
     /// @notice Emitted when native LUX is routed through Dead Precompile
@@ -42,12 +38,7 @@ interface IDead {
     /// @param totalAmount Total amount sent
     /// @param burnedAmount Amount actually burned
     /// @param treasuryAmount Amount sent to treasury
-    event NativeBurnRouted(
-        address indexed sender,
-        uint256 totalAmount,
-        uint256 burnedAmount,
-        uint256 treasuryAmount
-    );
+    event NativeBurnRouted(address indexed sender, uint256 totalAmount, uint256 burnedAmount, uint256 treasuryAmount);
 
     /// @notice Emitted when admin is changed
     /// @param previousAdmin The previous admin address
@@ -188,11 +179,7 @@ interface IDead {
     /// @return nativeBurned Total native LUX burned
     /// @return nativeToTreasury Total native LUX to treasury
     /// @return tokenCount Number of unique tokens routed
-    function stats() external view returns (
-        uint256 nativeBurned,
-        uint256 nativeToTreasury,
-        uint256 tokenCount
-    );
+    function stats() external view returns (uint256 nativeBurned, uint256 nativeToTreasury, uint256 tokenCount);
 
     /// @notice Calculate split amounts for a given value
     /// @param amount The total amount to split

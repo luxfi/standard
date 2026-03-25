@@ -1,15 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import {
-    IDIDRegistry,
-    DIDDocument,
-    VerificationMethod,
-    Service
-} from "./interfaces/IDID.sol";
+import { IDIDRegistry, DIDDocument, VerificationMethod, Service } from "./interfaces/IDID.sol";
 
 /**
  * @title PremiumDIDRegistry - Paid DID Registration with Tiered Pricing
@@ -131,19 +126,10 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
     // ============ Events ============
 
     event DIDRegistered(
-        string indexed didHash,
-        string did,
-        address indexed controller,
-        uint256 price,
-        uint256 expiresAt
+        string indexed didHash, string did, address indexed controller, uint256 price, uint256 expiresAt
     );
 
-    event DIDRenewed(
-        string indexed didHash,
-        string did,
-        uint256 newExpiry,
-        uint256 price
-    );
+    event DIDRenewed(string indexed didHash, string did, uint256 newExpiry, uint256 price);
 
     event DIDExpired(string indexed didHash, string did);
 
@@ -186,12 +172,7 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
      * @param _method DID method (lux, ai, zoo)
      * @param _treasury Treasury address for fees
      */
-    constructor(
-        address admin,
-        string memory _network,
-        string memory _method,
-        address _treasury
-    ) {
+    constructor(address admin, string memory _network, string memory _method, address _treasury) {
         if (admin == address(0)) revert ZeroAddress();
         if (_treasury == address(0)) revert ZeroAddress();
         if (bytes(_network).length == 0) revert EmptyIdentifier();
@@ -283,10 +264,12 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
      * @param identifier The identifier to register
      * @return did The full DID string
      */
-    function createDID(
-        string calldata _method,
-        string calldata identifier
-    ) external payable nonReentrant returns (string memory did) {
+    function createDID(string calldata _method, string calldata identifier)
+        external
+        payable
+        nonReentrant
+        returns (string memory did)
+    {
         if (keccak256(bytes(_method)) != keccak256(bytes(method))) {
             revert InvalidDID();
         }
@@ -313,7 +296,7 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
 
         // Refund excess payment
         if (msg.value > price) {
-            (bool success, ) = msg.sender.call{value: msg.value - price}("");
+            (bool success,) = msg.sender.call{ value: msg.value - price }("");
             if (!success) revert WithdrawalFailed();
         }
     }
@@ -324,10 +307,12 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
      * @param controller The controller address
      * @return did The full DID string
      */
-    function createDIDFree(
-        string calldata identifier,
-        address controller
-    ) external onlyRole(REGISTRAR_ROLE) nonReentrant returns (string memory did) {
+    function createDIDFree(string calldata identifier, address controller)
+        external
+        onlyRole(REGISTRAR_ROLE)
+        nonReentrant
+        returns (string memory did)
+    {
         if (!_isValidIdentifier(identifier)) revert InvalidIdentifier();
         return _createDID(identifier, controller, 0);
     }
@@ -335,11 +320,10 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
     /**
      * @notice Internal DID creation
      */
-    function _createDID(
-        string calldata identifier,
-        address controller,
-        uint256 pricePaid
-    ) internal returns (string memory did) {
+    function _createDID(string calldata identifier, address controller, uint256 pricePaid)
+        internal
+        returns (string memory did)
+    {
         if (bytes(identifier).length == 0) revert EmptyIdentifier();
         if (controller == address(0)) revert ZeroAddress();
 
@@ -420,7 +404,7 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
 
         // Refund excess
         if (msg.value > price) {
-            (bool success, ) = msg.sender.call{value: msg.value - price}("");
+            (bool success,) = msg.sender.call{ value: msg.value - price }("");
             if (!success) revert WithdrawalFailed();
         }
     }
@@ -484,11 +468,7 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
      * @return isExpired Whether currently expired
      * @return inGracePeriod Whether in grace period
      */
-    function getExpiry(string calldata did) external view returns (
-        uint256 expiry,
-        bool isExpired,
-        bool inGracePeriod
-    ) {
+    function getExpiry(string calldata did) external view returns (uint256 expiry, bool isExpired, bool inGracePeriod) {
         bytes32 didHash = keccak256(bytes(did));
         expiry = expiresAt[didHash];
         isExpired = expiry < block.timestamp;
@@ -497,10 +477,7 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
 
     // ============ Verification Methods ============
 
-    function addVerificationMethod(
-        string calldata did,
-        VerificationMethod calldata _method
-    ) external nonReentrant {
+    function addVerificationMethod(string calldata did, VerificationMethod calldata _method) external nonReentrant {
         bytes32 didHash = keccak256(bytes(did));
         _requireActiveController(didHash);
 
@@ -514,10 +491,7 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
         emit VerificationMethodAdded(did, _method.id, _method.methodType);
     }
 
-    function removeVerificationMethod(
-        string calldata did,
-        bytes32 methodId
-    ) external nonReentrant {
+    function removeVerificationMethod(string calldata did, bytes32 methodId) external nonReentrant {
         bytes32 didHash = keccak256(bytes(did));
         _requireActiveController(didHash);
 
@@ -539,9 +513,7 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
         emit VerificationMethodRemoved(did, methodId);
     }
 
-    function getVerificationMethods(
-        string calldata did
-    ) external view returns (VerificationMethod[] memory) {
+    function getVerificationMethods(string calldata did) external view returns (VerificationMethod[] memory) {
         bytes32 didHash = keccak256(bytes(did));
         if (_documents[didHash].created == 0) revert DIDNotFound();
         return _verificationMethods[didHash];
@@ -549,10 +521,7 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
 
     // ============ Services ============
 
-    function addService(
-        string calldata did,
-        Service calldata service
-    ) external nonReentrant {
+    function addService(string calldata did, Service calldata service) external nonReentrant {
         bytes32 didHash = keccak256(bytes(did));
         _requireActiveController(didHash);
 
@@ -564,10 +533,7 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
         emit ServiceAdded(did, service.id, service.serviceType);
     }
 
-    function removeService(
-        string calldata did,
-        bytes32 serviceId
-    ) external nonReentrant {
+    function removeService(string calldata did, bytes32 serviceId) external nonReentrant {
         bytes32 didHash = keccak256(bytes(did));
         _requireActiveController(didHash);
 
@@ -597,10 +563,7 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
 
     // ============ Also Known As ============
 
-    function addAlsoKnownAs(
-        string calldata did,
-        string calldata aliasUri
-    ) external nonReentrant {
+    function addAlsoKnownAs(string calldata did, string calldata aliasUri) external nonReentrant {
         bytes32 didHash = keccak256(bytes(did));
         _requireActiveController(didHash);
 
@@ -671,10 +634,7 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
      * @param identifiers List of identifiers to reserve
      * @param _reserved Whether to reserve or unreserve
      */
-    function setReserved(
-        string[] calldata identifiers,
-        bool _reserved
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setReserved(string[] calldata identifiers, bool _reserved) external onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < identifiers.length; i++) {
             bytes32 idHash = keccak256(bytes(identifiers[i]));
             reserved[idHash] = _reserved;
@@ -717,7 +677,7 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
         uint256 balance = address(this).balance;
         if (balance == 0) return;
 
-        (bool success, ) = treasury.call{value: balance}("");
+        (bool success,) = treasury.call{ value: balance }("");
         if (!success) revert WithdrawalFailed();
 
         emit RevenueWithdrawn(treasury, balance);
@@ -726,14 +686,18 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
     /**
      * @notice Get registry stats
      */
-    function getStats() external view returns (
-        uint256 _totalDIDs,
-        uint256 _totalRevenue,
-        uint256 _contractBalance,
-        string memory _network,
-        string memory _method,
-        uint256 _chainId
-    ) {
+    function getStats()
+        external
+        view
+        returns (
+            uint256 _totalDIDs,
+            uint256 _totalRevenue,
+            uint256 _contractBalance,
+            string memory _network,
+            string memory _method,
+            uint256 _chainId
+        )
+    {
         return (totalDIDs, totalRevenue, address(this).balance, network, method, chainId);
     }
 
@@ -803,7 +767,7 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
         uint256 start = 0;
 
         for (uint256 i = 0; i < didBytes.length; i++) {
-            if (didBytes[i] == ':') {
+            if (didBytes[i] == ":") {
                 colonCount++;
                 if (colonCount == 2) {
                     start = i + 1;
@@ -822,5 +786,5 @@ contract PremiumDIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
 
     // ============ Receive Function ============
 
-    receive() external payable {}
+    receive() external payable { }
 }

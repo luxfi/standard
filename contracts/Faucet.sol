@@ -13,10 +13,7 @@ contract Faucet is Ownable {
 
     IERC20 token;
 
-    event Fund(
-        address indexed _address,
-        uint256 indexed _amount
-    );
+    event Fund(address indexed _address, uint256 indexed _amount);
 
     constructor(address luxAddress) Ownable(msg.sender) {
         token = IERC20(luxAddress);

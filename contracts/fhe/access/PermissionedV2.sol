@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.19 <0.9.0;
 
-import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-import {EIP712} from "./EIP712.sol";
+import { SignatureChecker } from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import { EIP712 } from "./EIP712.sol";
 
 /**
  * @dev Permission body that must be passed to a contract to allow access to sensitive data.
- * 
+ *
  * The minimum permission to access a user's own data requires the fields
  * < issuer, expiration, contracts, projects, sealingKey, issuerSignature >
  *
@@ -41,7 +41,7 @@ import {EIP712} from "./EIP712.sol";
  *
  *   ---
  *
- * `validatorId` and `validatorContract` are optional and can be used together to 
+ * `validatorId` and `validatorContract` are optional and can be used together to
  * increase security and control by disabling a permission after it has been created.
  * Useful when sharing permits to provide external access to sensitive data (eg auditors).
  */
@@ -65,7 +65,7 @@ struct PermissionV2 {
     address validatorContract;
     // (base) The publicKey of a sealingPair used to re-encrypt `issuer`s confidential data
     //   (non-sharing) Populated by `issuer`
-    //   (sharing)     Populated by `recipient` 
+    //   (sharing)     Populated by `recipient`
     bytes32 sealingKey;
     // (base) `signTypedData` signature created by `issuer`.
     // (base) Shared- and Self- permissions differ in signature format: (`sealingKey` absent in shared signature)
@@ -78,15 +78,11 @@ struct PermissionV2 {
     bytes recipientSignature;
 }
 
-
 /// @dev Minimum required interface to create a custom permission validator.
 /// Permission validators are optional, and provide extra security and control when sharing permits.
 interface IPermissionValidator {
     /// @dev Checks whether a permission is valid, returning `false` disables the permission.
-    function disabled(
-        address issuer,
-        uint256 id
-    ) external view returns (bool);
+    function disabled(address issuer, uint256 id) external view returns (bool);
 }
 
 /// @dev Uses a modified version of openzeppelin's EIP712 contract which disables the `verifyingContract`.
@@ -106,9 +102,7 @@ contract PermissionedV2 is EIP712 {
     ///
     /// @param proj The project identifier string to be associated with this contract. Any Permission with this project identifier
     /// in `permission.projects` list will be granted access to this contract's data. Use an empty string for no project identifier.
-    constructor(
-        string memory proj
-    ) EIP712(string.concat("LuxFHE Permission ", version), version) {
+    constructor(string memory proj) EIP712(string.concat("LuxFHE Permission ", version), version) {
         project = proj;
     }
 
@@ -140,40 +134,33 @@ contract PermissionedV2 is EIP712 {
     /// !! Returning data of `msg.sender` will leak sensitive values - `msg.sender` cannot be trusted in view functions !!
     modifier withPermission(PermissionV2 memory permission) {
         // Access
-        if (!permission.satisfies(address(this), project))
+        if (!permission.satisfies(address(this), project)) {
             revert PermissionInvalid_ContractUnauthorized();
+        }
 
         // Expiration
-        if (permission.expiration < block.timestamp)
+        if (permission.expiration < block.timestamp) {
             revert PermissionInvalid_Expired();
+        }
 
         // Issuer signature
-        if (
-            !SignatureChecker.isValidSignatureNow(
-                permission.issuer,
-                _hashTypedDataV4(permission.issuerHash()),
-                permission.issuerSignature
-            )
-        ) revert PermissionInvalid_IssuerSignature();
+        if (!SignatureChecker.isValidSignatureNow(
+                permission.issuer, _hashTypedDataV4(permission.issuerHash()), permission.issuerSignature
+            )) revert PermissionInvalid_IssuerSignature();
 
         // (if applicable) Recipient signature
         if (
-            permission.recipient != address(0) &&
-            !SignatureChecker.isValidSignatureNow(
-                permission.recipient,
-                _hashTypedDataV4(permission.recipientHash()),
-                permission.recipientSignature
-            )
+            permission.recipient != address(0)
+                && !SignatureChecker.isValidSignatureNow(
+                    permission.recipient, _hashTypedDataV4(permission.recipientHash()), permission.recipientSignature
+                )
         ) revert PermissionInvalid_RecipientSignature();
 
         // (if applicable) Externally disabled
         if (
-            permission.validatorId != 0 &&
-            permission.validatorContract != address(0) &&
-            IPermissionValidator(permission.validatorContract).disabled(
-                permission.issuer,
-                permission.validatorId
-            )
+            permission.validatorId != 0 && permission.validatorContract != address(0)
+                && IPermissionValidator(permission.validatorContract)
+                    .disabled(permission.issuer, permission.validatorId)
         ) revert PermissionInvalid_Disabled();
 
         _;
@@ -181,9 +168,7 @@ contract PermissionedV2 is EIP712 {
 
     /// @dev Utility function used to check whether a permission provides access to this contract.
     /// Intended to be used before real data is fetched to preempt a reversion, but is not necessary to use.
-    function checkPermissionSatisfies(
-        PermissionV2 memory permission
-    ) external view returns (bool) {
+    function checkPermissionSatisfies(PermissionV2 memory permission) external view returns (bool) {
         return permission.satisfies(address(this), project);
     }
 }
@@ -191,80 +176,61 @@ contract PermissionedV2 is EIP712 {
 /// @dev Internal utility library to improve the readability of PermissionedV2
 /// Primarily focused on signature type hashes
 library PermissionV2Utils {
-    function issuerHash(
-        PermissionV2 memory permission
-    ) internal pure returns (bytes32) {
-        if (permission.recipient == address(0))
+    function issuerHash(PermissionV2 memory permission) internal pure returns (bytes32) {
+        if (permission.recipient == address(0)) {
             return issuerSelfHash(permission);
+        }
         return issuerSharedHash(permission);
     }
 
-    function issuerSelfHash(
-        PermissionV2 memory permission
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    keccak256(
-                        "PermissionedV2IssuerSelf(address issuer,uint64 expiration,address[] contracts,string[] projects,address recipient,uint256 validatorId,address validatorContract,bytes32 sealingKey)"
-                    ),
-                    permission.issuer,
-                    permission.expiration,
-                    encodeArray(permission.contracts),
-                    encodeArray(permission.projects),
-                    permission.recipient,
-                    permission.validatorId,
-                    permission.validatorContract,
-                    permission.sealingKey
-                )
-            );
+    function issuerSelfHash(PermissionV2 memory permission) internal pure returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                keccak256(
+                    "PermissionedV2IssuerSelf(address issuer,uint64 expiration,address[] contracts,string[] projects,address recipient,uint256 validatorId,address validatorContract,bytes32 sealingKey)"
+                ),
+                permission.issuer,
+                permission.expiration,
+                encodeArray(permission.contracts),
+                encodeArray(permission.projects),
+                permission.recipient,
+                permission.validatorId,
+                permission.validatorContract,
+                permission.sealingKey
+            )
+        );
     }
 
-    function issuerSharedHash(
-        PermissionV2 memory permission
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    keccak256(
-                        "PermissionedV2IssuerShared(address issuer,uint64 expiration,address[] contracts,string[] projects,address recipient,uint256 validatorId,address validatorContract)"
-                    ),
-                    permission.issuer,
-                    permission.expiration,
-                    encodeArray(permission.contracts),
-                    encodeArray(permission.projects),
-                    permission.recipient,
-                    permission.validatorId,
-                    permission.validatorContract
-                )
-            );
+    function issuerSharedHash(PermissionV2 memory permission) internal pure returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                keccak256(
+                    "PermissionedV2IssuerShared(address issuer,uint64 expiration,address[] contracts,string[] projects,address recipient,uint256 validatorId,address validatorContract)"
+                ),
+                permission.issuer,
+                permission.expiration,
+                encodeArray(permission.contracts),
+                encodeArray(permission.projects),
+                permission.recipient,
+                permission.validatorId,
+                permission.validatorContract
+            )
+        );
     }
 
-    function recipientHash(
-        PermissionV2 memory permission
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    keccak256(
-                        "PermissionedV2Recipient(bytes32 sealingKey,bytes issuerSignature)"
-                    ),
-                    permission.sealingKey,
-                    keccak256(permission.issuerSignature)
-                )
-            );
+    function recipientHash(PermissionV2 memory permission) internal pure returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                keccak256("PermissionedV2Recipient(bytes32 sealingKey,bytes issuerSignature)"),
+                permission.sealingKey,
+                keccak256(permission.issuerSignature)
+            )
+        );
     }
 
-    function satisfies(
-        PermissionV2 memory permission,
-        address addr,
-        string memory proj
-    ) internal pure returns (bool) {
+    function satisfies(PermissionV2 memory permission, address addr, string memory proj) internal pure returns (bool) {
         for (uint256 i = 0; i < permission.projects.length; i++) {
-            if (
-                keccak256(abi.encodePacked(proj)) ==
-                keccak256(abi.encodePacked(permission.projects[i]))
-            ) return true;
+            if (keccak256(abi.encodePacked(proj)) == keccak256(abi.encodePacked(permission.projects[i]))) return true;
         }
         for (uint256 i = 0; i < permission.contracts.length; i++) {
             if (addr == permission.contracts[i]) return true;
@@ -272,15 +238,11 @@ library PermissionV2Utils {
         return false;
     }
 
-    function encodeArray(
-        address[] memory items
-    ) internal pure returns (bytes32) {
+    function encodeArray(address[] memory items) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(items));
     }
 
-    function encodeArray(
-        string[] memory items
-    ) internal pure returns (bytes32) {
+    function encodeArray(string[] memory items) internal pure returns (bytes32) {
         bytes32[] memory result = new bytes32[](items.length);
         for (uint256 i = 0; i < items.length; i++) {
             result[i] = keccak256(bytes(items[i]));

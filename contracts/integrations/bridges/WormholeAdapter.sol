@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title WormholeAdapter
@@ -42,11 +42,10 @@ interface IWormhole {
     /// @param payload Message payload
     /// @param consistencyLevel Finality requirement (1 = instant, 200+ = finalized)
     /// @return sequence Message sequence number
-    function publishMessage(
-        uint32 nonce,
-        bytes memory payload,
-        uint8 consistencyLevel
-    ) external payable returns (uint64 sequence);
+    function publishMessage(uint32 nonce, bytes memory payload, uint8 consistencyLevel)
+        external
+        payable
+        returns (uint64 sequence);
 
     /// @notice Parse and verify a VAA
     /// @param encodedVM The VAA bytes
@@ -124,11 +123,10 @@ interface IWormholeRelayer {
     /// @param gasLimit Gas limit for execution
     /// @return nativePriceQuote Price in native tokens
     /// @return targetChainRefundPerGasUnused Refund rate
-    function quoteEVMDeliveryPrice(
-        uint16 targetChain,
-        uint256 receiverValue,
-        uint256 gasLimit
-    ) external view returns (uint256 nativePriceQuote, uint256 targetChainRefundPerGasUnused);
+    function quoteEVMDeliveryPrice(uint16 targetChain, uint256 receiverValue, uint256 gasLimit)
+        external
+        view
+        returns (uint256 nativePriceQuote, uint256 targetChainRefundPerGasUnused);
 
     /// @notice Resend a failed delivery
     function resendToEvm(
@@ -160,12 +158,10 @@ interface ITokenBridge {
     ) external payable returns (uint64 sequence);
 
     /// @notice Transfer native tokens
-    function wrapAndTransferETH(
-        uint16 recipientChain,
-        bytes32 recipient,
-        uint256 arbiterFee,
-        uint32 nonce
-    ) external payable returns (uint64 sequence);
+    function wrapAndTransferETH(uint16 recipientChain, bytes32 recipient, uint256 arbiterFee, uint32 nonce)
+        external
+        payable
+        returns (uint64 sequence);
 
     /// @notice Complete a token transfer
     function completeTransfer(bytes memory encodedVm) external;
@@ -250,33 +246,15 @@ contract WormholeAdapter is Ownable, ReentrancyGuard {
     // EVENTS
     // ═══════════════════════════════════════════════════════════════════════
 
-    event MessageSent(
-        uint16 indexed targetChain,
-        bytes32 indexed targetAddress,
-        uint64 sequence,
-        bytes payload
-    );
+    event MessageSent(uint16 indexed targetChain, bytes32 indexed targetAddress, uint64 sequence, bytes payload);
 
-    event MessageReceived(
-        uint16 indexed sourceChain,
-        bytes32 indexed sourceAddress,
-        bytes payload
-    );
+    event MessageReceived(uint16 indexed sourceChain, bytes32 indexed sourceAddress, bytes payload);
 
     event TokensSent(
-        uint16 indexed targetChain,
-        address indexed token,
-        uint256 amount,
-        bytes32 recipient,
-        uint64 sequence
+        uint16 indexed targetChain, address indexed token, uint256 amount, bytes32 recipient, uint64 sequence
     );
 
-    event TokensReceived(
-        uint16 indexed sourceChain,
-        address indexed token,
-        uint256 amount,
-        address recipient
-    );
+    event TokensReceived(uint16 indexed sourceChain, address indexed token, uint256 amount, address recipient);
 
     event SenderRegistered(uint16 indexed chainId, bytes32 sender);
     event GasLimitUpdated(uint16 indexed chainId, uint256 gasLimit);
@@ -296,11 +274,7 @@ contract WormholeAdapter is Ownable, ReentrancyGuard {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(
-        address _wormhole,
-        address _relayer,
-        address _tokenBridge
-    ) Ownable(msg.sender) {
+    constructor(address _wormhole, address _relayer, address _tokenBridge) Ownable(msg.sender) {
         wormhole = IWormhole(_wormhole);
         relayer = IWormholeRelayer(_relayer);
         tokenBridge = ITokenBridge(_tokenBridge);
@@ -347,19 +321,13 @@ contract WormholeAdapter is Ownable, ReentrancyGuard {
         (uint256 fee,) = relayer.quoteEVMDeliveryPrice(targetChain, receiverValue, gasLimit);
         if (msg.value < fee) revert InsufficientFee();
 
-        sequence = relayer.sendPayloadToEvm{value: fee}(
-            targetChain,
-            targetAddress,
-            payload,
-            receiverValue,
-            gasLimit
-        );
+        sequence = relayer.sendPayloadToEvm{ value: fee }(targetChain, targetAddress, payload, receiverValue, gasLimit);
 
         emit MessageSent(targetChain, bytes32(uint256(uint160(targetAddress))), sequence, payload);
 
         // Refund excess
         if (msg.value > fee) {
-            (bool success,) = msg.sender.call{value: msg.value - fee}("");
+            (bool success,) = msg.sender.call{ value: msg.value - fee }("");
             if (!success) revert TransferFailed();
         }
     }
@@ -392,23 +360,21 @@ contract WormholeAdapter is Ownable, ReentrancyGuard {
     /// @param payload Message payload
     /// @param consistencyLevel Finality requirement
     /// @return sequence Message sequence number
-    function sendMessageManual(
-        bytes memory payload,
-        uint8 consistencyLevel
-    ) external payable nonReentrant returns (uint64 sequence) {
+    function sendMessageManual(bytes memory payload, uint8 consistencyLevel)
+        external
+        payable
+        nonReentrant
+        returns (uint64 sequence)
+    {
         uint256 fee = wormhole.messageFee();
         if (msg.value < fee) revert InsufficientFee();
 
-        sequence = wormhole.publishMessage{value: fee}(
-            nonce++,
-            payload,
-            consistencyLevel
-        );
+        sequence = wormhole.publishMessage{ value: fee }(nonce++, payload, consistencyLevel);
 
         emit MessageSent(0, bytes32(0), sequence, payload);
 
         if (msg.value > fee) {
-            (bool success,) = msg.sender.call{value: msg.value - fee}("");
+            (bool success,) = msg.sender.call{ value: msg.value - fee }("");
             if (!success) revert TransferFailed();
         }
     }
@@ -416,11 +382,7 @@ contract WormholeAdapter is Ownable, ReentrancyGuard {
     /// @notice Receive and verify a VAA manually
     /// @param encodedVAA The VAA bytes
     /// @return payload The decoded payload
-    function receiveMessageManual(bytes calldata encodedVAA)
-        external
-        nonReentrant
-        returns (bytes memory payload)
-    {
+    function receiveMessageManual(bytes calldata encodedVAA) external nonReentrant returns (bytes memory payload) {
         (VM memory vm, bool valid, string memory reason) = wormhole.parseAndVerifyVM(encodedVAA);
         if (!valid) revert InvalidVAA();
         if (registeredSenders[vm.emitterChainId] != vm.emitterAddress) revert UnregisteredSender();
@@ -444,19 +406,19 @@ contract WormholeAdapter is Ownable, ReentrancyGuard {
     /// @param targetChain Destination chain ID
     /// @param recipient Recipient address as bytes32
     /// @return sequence Message sequence number
-    function transferTokens(
-        address token,
-        uint256 amount,
-        uint16 targetChain,
-        bytes32 recipient
-    ) external payable nonReentrant returns (uint64 sequence) {
+    function transferTokens(address token, uint256 amount, uint16 targetChain, bytes32 recipient)
+        external
+        payable
+        nonReentrant
+        returns (uint64 sequence)
+    {
         uint256 fee = wormhole.messageFee();
         if (msg.value < fee) revert InsufficientFee();
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         IERC20(token).forceApprove(address(tokenBridge), amount);
 
-        sequence = tokenBridge.transferTokens{value: fee}(
+        sequence = tokenBridge.transferTokens{ value: fee }(
             token,
             amount,
             targetChain,
@@ -468,7 +430,7 @@ contract WormholeAdapter is Ownable, ReentrancyGuard {
         emit TokensSent(targetChain, token, amount, recipient, sequence);
 
         if (msg.value > fee) {
-            (bool success,) = msg.sender.call{value: msg.value - fee}("");
+            (bool success,) = msg.sender.call{ value: msg.value - fee }("");
             if (!success) revert TransferFailed();
         }
     }
@@ -477,16 +439,18 @@ contract WormholeAdapter is Ownable, ReentrancyGuard {
     /// @param targetChain Destination chain ID
     /// @param recipient Recipient address as bytes32
     /// @return sequence Message sequence number
-    function transferNative(
-        uint16 targetChain,
-        bytes32 recipient
-    ) external payable nonReentrant returns (uint64 sequence) {
+    function transferNative(uint16 targetChain, bytes32 recipient)
+        external
+        payable
+        nonReentrant
+        returns (uint64 sequence)
+    {
         uint256 fee = wormhole.messageFee();
         if (msg.value <= fee) revert InsufficientFee();
 
         uint256 amount = msg.value - fee;
 
-        sequence = tokenBridge.wrapAndTransferETH{value: msg.value}(
+        sequence = tokenBridge.wrapAndTransferETH{ value: msg.value }(
             targetChain,
             recipient,
             0, // No arbiter fee
@@ -516,10 +480,7 @@ contract WormholeAdapter is Ownable, ReentrancyGuard {
     /// @param targetChain Destination chain ID
     /// @param receiverValue Native tokens for receiver
     /// @return fee Required fee in native tokens
-    function quoteDelivery(
-        uint16 targetChain,
-        uint256 receiverValue
-    ) external view returns (uint256 fee) {
+    function quoteDelivery(uint16 targetChain, uint256 receiverValue) external view returns (uint256 fee) {
         uint256 gasLimit = _getGasLimit(targetChain);
         (fee,) = relayer.quoteEVMDeliveryPrice(targetChain, receiverValue, gasLimit);
     }
@@ -534,11 +495,7 @@ contract WormholeAdapter is Ownable, ReentrancyGuard {
     /// @param tokenChainId Source chain ID
     /// @param tokenAddress Token address as bytes32
     /// @return wrapped Wrapped token address on this chain
-    function getWrappedAsset(uint16 tokenChainId, bytes32 tokenAddress)
-        external
-        view
-        returns (address wrapped)
-    {
+    function getWrappedAsset(uint16 tokenChainId, bytes32 tokenAddress) external view returns (address wrapped) {
         return tokenBridge.wrappedAsset(tokenChainId, tokenAddress);
     }
 
@@ -582,16 +539,12 @@ contract WormholeAdapter is Ownable, ReentrancyGuard {
     }
 
     /// @notice Handle received message - override in derived contracts
-    function _handleMessage(
-        uint16 sourceChain,
-        bytes32 sourceAddress,
-        bytes memory payload
-    ) internal virtual {
+    function _handleMessage(uint16 sourceChain, bytes32 sourceAddress, bytes memory payload) internal virtual {
         // Override to implement custom message handling
     }
 
     /// @notice Receive native tokens
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -636,9 +589,5 @@ abstract contract WormholeReceiverBase {
     }
 
     /// @notice Handle the received message
-    function _receiveWormholeMessage(
-        bytes memory payload,
-        uint16 sourceChain,
-        bytes32 sourceAddress
-    ) internal virtual;
+    function _receiveWormholeMessage(bytes memory payload, uint16 sourceChain, bytes32 sourceAddress) internal virtual;
 }

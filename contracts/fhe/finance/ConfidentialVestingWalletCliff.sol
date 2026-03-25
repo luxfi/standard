@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {euint64} from "../FHE.sol";
+import { euint64 } from "../FHE.sol";
 import { ConfidentialVestingWallet } from "./ConfidentialVestingWallet.sol";
 
 /**
@@ -25,12 +25,9 @@ abstract contract ConfidentialVestingWalletCliff is ConfidentialVestingWallet {
      * @param duration_         Duration (in seconds).
      * @param cliffSeconds_     Cliff (in seconds).
      */
-    constructor(
-        address beneficiary_,
-        uint128 startTimestamp_,
-        uint128 duration_,
-        uint128 cliffSeconds_
-    ) ConfidentialVestingWallet(beneficiary_, startTimestamp_, duration_) {
+    constructor(address beneficiary_, uint128 startTimestamp_, uint128 duration_, uint128 cliffSeconds_)
+        ConfidentialVestingWallet(beneficiary_, startTimestamp_, duration_)
+    {
         if (cliffSeconds_ > duration_) {
             revert InvalidCliffDuration(cliffSeconds_, duration_);
         }

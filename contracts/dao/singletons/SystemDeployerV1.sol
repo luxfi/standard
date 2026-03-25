@@ -1,66 +1,30 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    ISystemDeployerV1
-} from "../interfaces/singletons/ISystemDeployerV1.sol";
-import {ISafe} from "../interfaces/safe/ISafe.sol";
-import {
-    IVotesERC20V1
-} from "../interfaces/deployables/IVotesERC20V1.sol";
-import {
-    IProposerAdapterERC20V1
-} from "../interfaces/deployables/IProposerAdapterERC20V1.sol";
-import {
-    IProposerAdapterERC721V1
-} from "../interfaces/deployables/IProposerAdapterERC721V1.sol";
-import {
-    IProposerAdapterHatsV1
-} from "../interfaces/deployables/IProposerAdapterHatsV1.sol";
-import {IStrategyV1} from "../interfaces/deployables/IStrategyV1.sol";
-import {IVotingTypes} from "../interfaces/deployables/IVotingTypes.sol";
-import {
-    IVotingWeightERC20V1
-} from "../interfaces/deployables/IVotingWeightERC20V1.sol";
-import {
-    IVotingWeightERC721V1
-} from "../interfaces/deployables/IVotingWeightERC721V1.sol";
-import {
-    IVoteTrackerV1
-} from "../interfaces/deployables/IVoteTrackerV1.sol";
-import {
-    IModuleGovernorV1
-} from "../interfaces/deployables/IModuleGovernorV1.sol";
-import {
-    IModuleFractalV1
-} from "../interfaces/deployables/IModuleFractalV1.sol";
-import {
-    IFreezeVotingMultisigV1
-} from "../interfaces/deployables/IFreezeVotingMultisigV1.sol";
-import {
-    IFreezeVotingGovernorV1
-} from "../interfaces/deployables/IFreezeVotingGovernorV1.sol";
-import {
-    IFreezeVotingStandaloneV1
-} from "../interfaces/deployables/IFreezeVotingStandaloneV1.sol";
-import {
-    IFreezeGuardMultisigV1
-} from "../interfaces/deployables/IFreezeGuardMultisigV1.sol";
-import {
-    IFreezeGuardGovernorV1
-} from "../interfaces/deployables/IFreezeGuardGovernorV1.sol";
-import {
-    ISystemDeployerEventEmitterV1
-} from "../interfaces/singletons/ISystemDeployerEventEmitterV1.sol";
-import {IVersion} from "../interfaces/deployables/IVersion.sol";
-import {IDeploymentBlock} from "../interfaces/IDeploymentBlock.sol";
-import {
-    DeploymentBlockNonInitializable
-} from "../DeploymentBlockNonInitializable.sol";
-import {
-    ERC1967Proxy
-} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { ISystemDeployerV1 } from "../interfaces/singletons/ISystemDeployerV1.sol";
+import { ISafe } from "../interfaces/safe/ISafe.sol";
+import { IVotesERC20V1 } from "../interfaces/deployables/IVotesERC20V1.sol";
+import { IProposerAdapterERC20V1 } from "../interfaces/deployables/IProposerAdapterERC20V1.sol";
+import { IProposerAdapterERC721V1 } from "../interfaces/deployables/IProposerAdapterERC721V1.sol";
+import { IProposerAdapterHatsV1 } from "../interfaces/deployables/IProposerAdapterHatsV1.sol";
+import { IStrategyV1 } from "../interfaces/deployables/IStrategyV1.sol";
+import { IVotingTypes } from "../interfaces/deployables/IVotingTypes.sol";
+import { IVotingWeightERC20V1 } from "../interfaces/deployables/IVotingWeightERC20V1.sol";
+import { IVotingWeightERC721V1 } from "../interfaces/deployables/IVotingWeightERC721V1.sol";
+import { IVoteTrackerV1 } from "../interfaces/deployables/IVoteTrackerV1.sol";
+import { IModuleGovernorV1 } from "../interfaces/deployables/IModuleGovernorV1.sol";
+import { IModuleFractalV1 } from "../interfaces/deployables/IModuleFractalV1.sol";
+import { IFreezeVotingMultisigV1 } from "../interfaces/deployables/IFreezeVotingMultisigV1.sol";
+import { IFreezeVotingGovernorV1 } from "../interfaces/deployables/IFreezeVotingGovernorV1.sol";
+import { IFreezeVotingStandaloneV1 } from "../interfaces/deployables/IFreezeVotingStandaloneV1.sol";
+import { IFreezeGuardMultisigV1 } from "../interfaces/deployables/IFreezeGuardMultisigV1.sol";
+import { IFreezeGuardGovernorV1 } from "../interfaces/deployables/IFreezeGuardGovernorV1.sol";
+import { ISystemDeployerEventEmitterV1 } from "../interfaces/singletons/ISystemDeployerEventEmitterV1.sol";
+import { IVersion } from "../interfaces/deployables/IVersion.sol";
+import { IDeploymentBlock } from "../interfaces/IDeploymentBlock.sol";
+import { DeploymentBlockNonInitializable } from "../DeploymentBlockNonInitializable.sol";
+import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
  * @title SystemDeployerV1
@@ -96,17 +60,14 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  *
  * @custom:security-contact security@lux.network
  */
-contract SystemDeployerV1 is
-    ISystemDeployerV1,
-    IVersion,
-    DeploymentBlockNonInitializable,
-    ERC165
-{
+contract SystemDeployerV1 is ISystemDeployerV1, IVersion, DeploymentBlockNonInitializable, ERC165 {
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
 
-    /** @notice Stores the SystemDeployer's address to detect delegatecall vs direct call */
+    /**
+     * @notice Stores the SystemDeployer's address to detect delegatecall vs direct call
+     */
     address private immutable SYSTEM_DEPLOYER_ADDRESS;
 
     // ======================================================================
@@ -141,31 +102,22 @@ contract SystemDeployerV1 is
     /**
      * @inheritdoc ISystemDeployerV1
      */
-    function predictProxyAddress(
-        address implementation_,
-        bytes memory initData_,
-        bytes32 salt_,
-        address deployer_
-    ) public view override returns (address) {
+    function predictProxyAddress(address implementation_, bytes memory initData_, bytes32 salt_, address deployer_)
+        public
+        view
+        override
+        returns (address)
+    {
         if (implementation_.code.length == 0) {
             revert ImplementationMustBeAContract();
         }
 
         // Calculate the proxy bytecode (implementation address + init data)
-        bytes memory bytecode = abi.encodePacked(
-            type(ERC1967Proxy).creationCode,
-            abi.encode(implementation_, initData_)
-        );
+        bytes memory bytecode =
+            abi.encodePacked(type(ERC1967Proxy).creationCode, abi.encode(implementation_, initData_));
 
         // Calculate the CREATE2 address
-        bytes32 hash = keccak256(
-            abi.encodePacked(
-                bytes1(0xff),
-                deployer_,
-                salt_,
-                keccak256(bytecode)
-            )
-        );
+        bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), deployer_, salt_, keccak256(bytecode)));
 
         return address(uint160(uint256(hash)));
     }
@@ -177,22 +129,17 @@ contract SystemDeployerV1 is
      * @dev Checks if a contract already exists at the predicted address and returns it if so.
      * Also enforces that this function must be called via delegatecall.
      */
-    function deployProxy(
-        address implementation_,
-        bytes memory initData_,
-        bytes32 salt_
-    ) public onlyDelegatecall returns (address) {
+    function deployProxy(address implementation_, bytes memory initData_, bytes32 salt_)
+        public
+        onlyDelegatecall
+        returns (address)
+    {
         if (implementation_.code.length == 0) {
             revert ImplementationMustBeAContract();
         }
 
         // Predict the proxy address using the existing function
-        address predictedAddress = predictProxyAddress(
-            implementation_,
-            initData_,
-            salt_,
-            address(this)
-        );
+        address predictedAddress = predictProxyAddress(implementation_, initData_, salt_, address(this));
 
         // Check if a contract already exists at the predicted address
         if (predictedAddress.code.length > 0) {
@@ -201,9 +148,7 @@ contract SystemDeployerV1 is
         }
 
         // Deploy new proxy
-        address proxy = address(
-            new ERC1967Proxy{salt: salt_}(implementation_, initData_)
-        );
+        address proxy = address(new ERC1967Proxy{ salt: salt_ }(implementation_, initData_));
 
         emit ProxyDeployed(proxy, implementation_);
 
@@ -226,37 +171,19 @@ contract SystemDeployerV1 is
         FreezeParams calldata freezeParams_
     ) public virtual override {
         // create an array to hold the new VotesERC20V1 addresses
-        address[] memory newVotesERC20V1Addresses = new address[](
-            votesERC20V1Params_.length
-        );
+        address[] memory newVotesERC20V1Addresses = new address[](votesERC20V1Params_.length);
 
-        _deployVotesERC20V1(
-            salt_,
-            votesERC20V1Params_,
-            newVotesERC20V1Addresses
-        );
+        _deployVotesERC20V1(salt_, votesERC20V1Params_, newVotesERC20V1Addresses);
 
-        address governorModuleAddress = _deployGovernorGovernance(
-            salt_,
-            governorGovernanceParams_,
-            newVotesERC20V1Addresses
-        );
+        address governorModuleAddress =
+            _deployGovernorGovernance(salt_, governorGovernanceParams_, newVotesERC20V1Addresses);
 
         _deployModuleFractal(salt_, moduleFractalV1Params_);
 
-        _deployFreezeContracts(
-            salt_,
-            freezeParams_,
-            governorModuleAddress,
-            newVotesERC20V1Addresses
-        );
+        _deployFreezeContracts(salt_, freezeParams_, governorModuleAddress, newVotesERC20V1Addresses);
 
-        bytes memory initData = abi.encode(
-            votesERC20V1Params_,
-            governorGovernanceParams_,
-            moduleFractalV1Params_,
-            freezeParams_
-        );
+        bytes memory initData =
+            abi.encode(votesERC20V1Params_, governorGovernanceParams_, moduleFractalV1Params_, freezeParams_);
 
         ISystemDeployerEventEmitterV1(systemDeployerEventEmitter_)
             .emitSystemDeployed(safeProxyFactory_, salt_, initData);
@@ -287,14 +214,9 @@ contract SystemDeployerV1 is
      * @inheritdoc ERC165
      * @dev Supports ISystemDeployerV1, IVersion, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(ISystemDeployerV1).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(ISystemDeployerV1).interfaceId || interfaceId_ == type(IVersion).interfaceId
+            || interfaceId_ == type(IDeploymentBlock).interfaceId || super.supportsInterface(interfaceId_);
     }
 
     // ======================================================================
@@ -317,56 +239,33 @@ contract SystemDeployerV1 is
     ) internal returns (address) {
         address governorModuleAddress;
 
-        ModuleGovernorV1Params
-            memory moduleGovernorV1Params = governorGovernanceParams_
-                .moduleGovernorV1Params;
+        ModuleGovernorV1Params memory moduleGovernorV1Params = governorGovernanceParams_.moduleGovernorV1Params;
 
         // Skip deployment if no implementation provided
         if (moduleGovernorV1Params.implementation != address(0)) {
             // Step 1: Deploy proposer adapters (who can create proposals)
-            ProposerAdapterParams
-                memory proposerAdapterParams = governorGovernanceParams_
-                    .proposerAdapterParams;
+            ProposerAdapterParams memory proposerAdapterParams = governorGovernanceParams_.proposerAdapterParams;
 
-            address[] memory proposerAdapterAddresses = _deployProposerAdapters(
-                salt_,
-                proposerAdapterParams,
-                newVotesERC20V1Addresses
-            );
+            address[] memory proposerAdapterAddresses =
+                _deployProposerAdapters(salt_, proposerAdapterParams, newVotesERC20V1Addresses);
 
             // Step 2: Deploy strategy with proposer adapters
             // Note: Strategy is partially initialized - needs Governor and voting adapters
-            StrategyV1Params memory strategyV1Params = governorGovernanceParams_
-                .strategyV1Params;
+            StrategyV1Params memory strategyV1Params = governorGovernanceParams_.strategyV1Params;
 
-            address strategyProxyAddress = _deployStrategy(
-                salt_,
-                strategyV1Params,
-                proposerAdapterAddresses
-            );
+            address strategyProxyAddress = _deployStrategy(salt_, strategyV1Params, proposerAdapterAddresses);
 
             // Step 3: Deploy voting configurations (weight strategies + vote trackers)
-            IVotingTypes.VotingConfig[]
-                memory votingConfigs = _deployVotingConfigs(
-                    salt_,
-                    governorGovernanceParams_.votingConfigParams,
-                    newVotesERC20V1Addresses,
-                    strategyProxyAddress
-                );
+            IVotingTypes.VotingConfig[] memory votingConfigs = _deployVotingConfigs(
+                salt_, governorGovernanceParams_.votingConfigParams, newVotesERC20V1Addresses, strategyProxyAddress
+            );
 
             // Step 4: Deploy Governor module with strategy reference
-            governorModuleAddress = _deployModuleGovernor(
-                salt_,
-                moduleGovernorV1Params,
-                strategyProxyAddress
-            );
+            governorModuleAddress = _deployModuleGovernor(salt_, moduleGovernorV1Params, strategyProxyAddress);
 
             // Step 5: Complete strategy initialization with circular dependencies
             // This sets the Governor module and voting configurations on the strategy
-            IStrategyV1(strategyProxyAddress).initialize2(
-                governorModuleAddress,
-                votingConfigs
-            );
+            IStrategyV1(strategyProxyAddress).initialize2(governorModuleAddress, votingConfigs);
 
             // Step 6: Enable Governor as a module on the Safe
             // This gives Governor permission to execute transactions
@@ -389,19 +288,16 @@ contract SystemDeployerV1 is
         VotesERC20V1Params[] memory votesERC20V1Params,
         address[] memory newVotesERC20V1Addresses
     ) internal {
-        for (uint256 i = 0; i < votesERC20V1Params.length; ) {
+        for (uint256 i = 0; i < votesERC20V1Params.length;) {
             VotesERC20V1Params memory votesERC20V1Param = votesERC20V1Params[i];
 
             uint256 allocationsLength = votesERC20V1Param.allocations.length;
 
             // Create array with space for user allocations + Safe allocation
-            IVotesERC20V1.Allocation[]
-                memory totalAllocations = new IVotesERC20V1.Allocation[](
-                    allocationsLength + 1
-                );
+            IVotesERC20V1.Allocation[] memory totalAllocations = new IVotesERC20V1.Allocation[](allocationsLength + 1);
 
             // Copy user-specified allocations
-            for (uint256 j = 0; j < allocationsLength; ) {
+            for (uint256 j = 0; j < allocationsLength;) {
                 totalAllocations[j] = votesERC20V1Param.allocations[j];
 
                 unchecked {
@@ -411,10 +307,8 @@ contract SystemDeployerV1 is
 
             // Add Safe's allocation at the end
             // This ensures the DAO treasury has initial tokens
-            totalAllocations[allocationsLength] = IVotesERC20V1.Allocation({
-                to: address(this),
-                amount: votesERC20V1Param.safeSupply
-            });
+            totalAllocations[allocationsLength] =
+                IVotesERC20V1.Allocation({ to: address(this), amount: votesERC20V1Param.safeSupply });
 
             // Deploy the token proxy with all allocations
             address votesERC20V1ProxyAddress = deployProxy(
@@ -455,31 +349,23 @@ contract SystemDeployerV1 is
         ProposerAdapterParams memory proposerAdapterParams,
         address[] memory newVotesERC20V1Addresses
     ) internal returns (address[] memory) {
-        ProposerAdapterERC20V1Params[]
-            memory proposerAdapterERC20V1Params = proposerAdapterParams
-                .proposerAdapterERC20V1Params;
+        ProposerAdapterERC20V1Params[] memory proposerAdapterERC20V1Params =
+        proposerAdapterParams.proposerAdapterERC20V1Params;
 
-        uint256 proposerAdapterERC20V1ParamsLength = proposerAdapterERC20V1Params
-                .length;
+        uint256 proposerAdapterERC20V1ParamsLength = proposerAdapterERC20V1Params.length;
 
-        ProposerAdapterERC721V1Params[]
-            memory proposerAdapterERC721V1Params = proposerAdapterParams
-                .proposerAdapterERC721V1Params;
+        ProposerAdapterERC721V1Params[] memory proposerAdapterERC721V1Params =
+        proposerAdapterParams.proposerAdapterERC721V1Params;
 
-        uint256 proposerAdapterERC721V1ParamsLength = proposerAdapterERC721V1Params
-                .length;
+        uint256 proposerAdapterERC721V1ParamsLength = proposerAdapterERC721V1Params.length;
 
-        ProposerAdapterHatsV1Params[]
-            memory proposerAdapterHatsV1Params = proposerAdapterParams
-                .proposerAdapterHatsV1Params;
+        ProposerAdapterHatsV1Params[] memory proposerAdapterHatsV1Params =
+        proposerAdapterParams.proposerAdapterHatsV1Params;
 
-        uint256 proposerAdapterHatsV1ParamsLength = proposerAdapterHatsV1Params
-            .length;
+        uint256 proposerAdapterHatsV1ParamsLength = proposerAdapterHatsV1Params.length;
 
         address[] memory proposerAdapterAddresses = new address[](
-            proposerAdapterERC20V1ParamsLength +
-                proposerAdapterERC721V1ParamsLength +
-                proposerAdapterHatsV1ParamsLength
+            proposerAdapterERC20V1ParamsLength + proposerAdapterERC721V1ParamsLength + proposerAdapterHatsV1ParamsLength
         );
 
         _deployProposerAdapterERC20(
@@ -527,11 +413,8 @@ contract SystemDeployerV1 is
         address[] memory newVotesERC20V1Addresses,
         address[] memory proposerAdapterAddresses
     ) internal {
-        for (uint256 i = 0; i < proposerAdapterERC20V1ParamsLength; ) {
-            ProposerAdapterERC20V1Params
-                memory proposerAdapterERC20V1Param = proposerAdapterERC20V1Params[
-                    i
-                ];
+        for (uint256 i = 0; i < proposerAdapterERC20V1ParamsLength;) {
+            ProposerAdapterERC20V1Params memory proposerAdapterERC20V1Param = proposerAdapterERC20V1Params[i];
 
             address tokenAddress;
             uint256 newTokenIndex = proposerAdapterERC20V1Param.newTokenIndex;
@@ -552,11 +435,7 @@ contract SystemDeployerV1 is
             proposerAdapterAddresses[i] = deployProxy(
                 proposerAdapterERC20V1Param.implementation,
                 abi.encodeCall(
-                    IProposerAdapterERC20V1.initialize,
-                    (
-                        tokenAddress,
-                        proposerAdapterERC20V1Param.proposerThreshold
-                    )
+                    IProposerAdapterERC20V1.initialize, (tokenAddress, proposerAdapterERC20V1Param.proposerThreshold)
                 ),
                 salt_
             );
@@ -584,23 +463,15 @@ contract SystemDeployerV1 is
         ProposerAdapterERC721V1Params[] memory proposerAdapterERC721V1Params,
         address[] memory proposerAdapterAddresses
     ) internal {
-        for (uint256 i = 0; i < proposerAdapterERC721V1ParamsLength; ) {
-            ProposerAdapterERC721V1Params
-                memory proposerAdapterERC721V1Param = proposerAdapterERC721V1Params[
-                    i
-                ];
+        for (uint256 i = 0; i < proposerAdapterERC721V1ParamsLength;) {
+            ProposerAdapterERC721V1Params memory proposerAdapterERC721V1Param = proposerAdapterERC721V1Params[i];
 
             // Store at position after ERC20 adapters
-            proposerAdapterAddresses[
-                proposerAdapterERC20V1ParamsLength + i
-            ] = deployProxy(
+            proposerAdapterAddresses[proposerAdapterERC20V1ParamsLength + i] = deployProxy(
                 proposerAdapterERC721V1Param.implementation,
                 abi.encodeCall(
                     IProposerAdapterERC721V1.initialize,
-                    (
-                        proposerAdapterERC721V1Param.token,
-                        proposerAdapterERC721V1Param.proposerThreshold
-                    )
+                    (proposerAdapterERC721V1Param.token, proposerAdapterERC721V1Param.proposerThreshold)
                 ),
                 salt_
             );
@@ -630,28 +501,19 @@ contract SystemDeployerV1 is
         ProposerAdapterHatsV1Params[] memory proposerAdapterHatsV1Params,
         address[] memory proposerAdapterAddresses
     ) internal {
-        for (uint256 i = 0; i < proposerAdapterHatsV1ParamsLength; ) {
-            ProposerAdapterHatsV1Params
-                memory proposerAdapterHatsV1Param = proposerAdapterHatsV1Params[
-                    i
-                ];
+        for (uint256 i = 0; i < proposerAdapterHatsV1ParamsLength;) {
+            ProposerAdapterHatsV1Params memory proposerAdapterHatsV1Param = proposerAdapterHatsV1Params[i];
 
             // Store at position after ERC20 and ERC721 adapters
-            proposerAdapterAddresses[
-                proposerAdapterERC20V1ParamsLength +
-                    proposerAdapterERC721V1ParamsLength +
-                    i
-            ] = deployProxy(
-                proposerAdapterHatsV1Param.implementation,
-                abi.encodeCall(
-                    IProposerAdapterHatsV1.initialize,
-                    (
-                        proposerAdapterHatsV1Param.hatsContract,
-                        proposerAdapterHatsV1Param.whitelistedHatIds
-                    )
-                ),
-                salt_
-            );
+            proposerAdapterAddresses[proposerAdapterERC20V1ParamsLength + proposerAdapterERC721V1ParamsLength + i] =
+                deployProxy(
+                    proposerAdapterHatsV1Param.implementation,
+                    abi.encodeCall(
+                        IProposerAdapterHatsV1.initialize,
+                        (proposerAdapterHatsV1Param.hatsContract, proposerAdapterHatsV1Param.whitelistedHatIds)
+                    ),
+                    salt_
+                );
 
             unchecked {
                 ++i;
@@ -673,21 +535,20 @@ contract SystemDeployerV1 is
         StrategyV1Params memory strategyV1Params,
         address[] memory proposerAdapterAddresses
     ) internal returns (address) {
-        return
-            deployProxy(
-                strategyV1Params.implementation,
-                abi.encodeCall(
-                    IStrategyV1.initialize,
-                    (
-                        strategyV1Params.votingPeriod,
-                        strategyV1Params.quorumThreshold,
-                        strategyV1Params.basisNumerator,
-                        proposerAdapterAddresses,
-                        strategyV1Params.lightAccountFactory
-                    )
-                ),
-                salt_
-            );
+        return deployProxy(
+            strategyV1Params.implementation,
+            abi.encodeCall(
+                IStrategyV1.initialize,
+                (
+                    strategyV1Params.votingPeriod,
+                    strategyV1Params.quorumThreshold,
+                    strategyV1Params.basisNumerator,
+                    proposerAdapterAddresses,
+                    strategyV1Params.lightAccountFactory
+                )
+            ),
+            salt_
+        );
     }
 
     /**
@@ -705,25 +566,16 @@ contract SystemDeployerV1 is
         address[] memory newVotesERC20V1Addresses,
         address strategyAddress
     ) internal returns (IVotingTypes.VotingConfig[] memory) {
-        VotingConfigERC20V1Params[]
-            memory votingConfigERC20V1Params = votingConfigParams
-                .votingConfigERC20V1Params;
+        VotingConfigERC20V1Params[] memory votingConfigERC20V1Params = votingConfigParams.votingConfigERC20V1Params;
 
-        uint256 votingConfigERC20V1ParamsLength = votingConfigERC20V1Params
-            .length;
+        uint256 votingConfigERC20V1ParamsLength = votingConfigERC20V1Params.length;
 
-        VotingConfigERC721V1Params[]
-            memory votingConfigERC721V1Params = votingConfigParams
-                .votingConfigERC721V1Params;
+        VotingConfigERC721V1Params[] memory votingConfigERC721V1Params = votingConfigParams.votingConfigERC721V1Params;
 
-        uint256 votingConfigERC721V1ParamsLength = votingConfigERC721V1Params
-            .length;
+        uint256 votingConfigERC721V1ParamsLength = votingConfigERC721V1Params.length;
 
-        IVotingTypes.VotingConfig[]
-            memory votingConfigs = new IVotingTypes.VotingConfig[](
-                votingConfigERC20V1ParamsLength +
-                    votingConfigERC721V1ParamsLength
-            );
+        IVotingTypes.VotingConfig[] memory votingConfigs =
+            new IVotingTypes.VotingConfig[](votingConfigERC20V1ParamsLength + votingConfigERC721V1ParamsLength);
 
         _deployVotingConfigsERC20(
             salt_,
@@ -764,10 +616,8 @@ contract SystemDeployerV1 is
         IVotingTypes.VotingConfig[] memory votingConfigs,
         address strategyAddress
     ) internal {
-        for (uint256 i = 0; i < votingConfigERC20V1ParamsLength; ) {
-            VotingConfigERC20V1Params memory param = votingConfigERC20V1Params[
-                i
-            ];
+        for (uint256 i = 0; i < votingConfigERC20V1ParamsLength;) {
+            VotingConfigERC20V1Params memory param = votingConfigERC20V1Params[i];
             address tokenAddress;
 
             // Resolve token address - either existing or newly deployed
@@ -787,10 +637,7 @@ contract SystemDeployerV1 is
             // Deploy weight strategy
             address votingWeight = deployProxy(
                 param.votingWeightImplementation,
-                abi.encodeCall(
-                    IVotingWeightERC20V1.initialize,
-                    (tokenAddress, param.weightPerToken)
-                ),
+                abi.encodeCall(IVotingWeightERC20V1.initialize, (tokenAddress, param.weightPerToken)),
                 salt_
             );
 
@@ -808,10 +655,7 @@ contract SystemDeployerV1 is
             );
 
             // Create voting config
-            votingConfigs[i] = IVotingTypes.VotingConfig({
-                votingWeight: votingWeight,
-                voteTracker: voteTracker
-            });
+            votingConfigs[i] = IVotingTypes.VotingConfig({ votingWeight: votingWeight, voteTracker: voteTracker });
 
             unchecked {
                 ++i;
@@ -838,17 +682,13 @@ contract SystemDeployerV1 is
         IVotingTypes.VotingConfig[] memory votingConfigs,
         address strategyAddress
     ) internal {
-        for (uint256 i = 0; i < votingConfigERC721V1ParamsLength; ) {
-            VotingConfigERC721V1Params
-                memory param = votingConfigERC721V1Params[i];
+        for (uint256 i = 0; i < votingConfigERC721V1ParamsLength;) {
+            VotingConfigERC721V1Params memory param = votingConfigERC721V1Params[i];
 
             // Deploy weight strategy
             address votingWeight = deployProxy(
                 param.votingWeightImplementation,
-                abi.encodeCall(
-                    IVotingWeightERC721V1.initialize,
-                    (param.token, param.weightPerToken)
-                ),
+                abi.encodeCall(IVotingWeightERC721V1.initialize, (param.token, param.weightPerToken)),
                 salt_
             );
 
@@ -866,11 +706,8 @@ contract SystemDeployerV1 is
             );
 
             // Store at position after ERC20 configs
-            votingConfigs[votingConfigERC20V1ParamsLength + i] = IVotingTypes
-                .VotingConfig({
-                    votingWeight: votingWeight,
-                    voteTracker: voteTracker
-                });
+            votingConfigs[votingConfigERC20V1ParamsLength + i] =
+                IVotingTypes.VotingConfig({ votingWeight: votingWeight, voteTracker: voteTracker });
 
             unchecked {
                 ++i;
@@ -892,22 +729,21 @@ contract SystemDeployerV1 is
         ModuleGovernorV1Params memory moduleGovernorV1Params,
         address strategyProxyAddress
     ) internal returns (address) {
-        return
-            deployProxy(
-                moduleGovernorV1Params.implementation,
-                abi.encodeCall(
-                    IModuleGovernorV1.initialize,
-                    (
-                        address(this),
-                        address(this),
-                        address(this),
-                        strategyProxyAddress,
-                        moduleGovernorV1Params.timelockPeriod,
-                        moduleGovernorV1Params.executionPeriod
-                    )
-                ),
-                salt_
-            );
+        return deployProxy(
+            moduleGovernorV1Params.implementation,
+            abi.encodeCall(
+                IModuleGovernorV1.initialize,
+                (
+                    address(this),
+                    address(this),
+                    address(this),
+                    strategyProxyAddress,
+                    moduleGovernorV1Params.timelockPeriod,
+                    moduleGovernorV1Params.executionPeriod
+                )
+            ),
+            salt_
+        );
     }
 
     /**
@@ -917,16 +753,12 @@ contract SystemDeployerV1 is
      * @param salt_ Salt for deterministic deployment
      * @param moduleFractalV1Params_ Fractal module configuration
      */
-    function _deployModuleFractal(
-        bytes32 salt_,
-        ModuleFractalV1Params memory moduleFractalV1Params_
-    ) internal {
+    function _deployModuleFractal(bytes32 salt_, ModuleFractalV1Params memory moduleFractalV1Params_) internal {
         if (moduleFractalV1Params_.implementation != address(0)) {
             address moduleFractalProxyAddress = deployProxy(
                 moduleFractalV1Params_.implementation,
                 abi.encodeCall(
-                    IModuleFractalV1.initialize,
-                    (moduleFractalV1Params_.owner, address(this), address(this))
+                    IModuleFractalV1.initialize, (moduleFractalV1Params_.owner, address(this), address(this))
                 ),
                 salt_
             );
@@ -953,35 +785,19 @@ contract SystemDeployerV1 is
     ) internal {
         // Validate that FreezeVotingStandaloneV1 is not paired with FreezeGuardGovernorV1
         if (
-            freezeParams_
-                .freezeVotingParams
-                .freezeVotingStandaloneParams
-                .freezeVotingStandaloneV1Params
-                .implementation !=
-            address(0) &&
-            freezeParams_
-                .freezeGuardParams
-                .freezeGuardGovernorV1Params
-                .implementation !=
-            address(0)
+            freezeParams_.freezeVotingParams.freezeVotingStandaloneParams.freezeVotingStandaloneV1Params.implementation
+                    != address(0)
+                && freezeParams_.freezeGuardParams.freezeGuardGovernorV1Params.implementation != address(0)
         ) {
             revert InvalidFreezeVotingGuardPairing();
         }
 
         // Deploy freeze voting contract (controls when child can be frozen)
-        address freezeVotingAddress = _deployFreezeVoting(
-            salt_,
-            freezeParams_.freezeVotingParams,
-            newVotesERC20V1Addresses
-        );
+        address freezeVotingAddress =
+            _deployFreezeVoting(salt_, freezeParams_.freezeVotingParams, newVotesERC20V1Addresses);
 
         // Deploy freeze guard (enforces freeze when activated)
-        _deployFreezeGuard(
-            salt_,
-            freezeParams_.freezeGuardParams,
-            freezeVotingAddress,
-            governorModuleAddress
-        );
+        _deployFreezeGuard(salt_, freezeParams_.freezeGuardParams, freezeVotingAddress, governorModuleAddress);
     }
 
     /**
@@ -998,29 +814,26 @@ contract SystemDeployerV1 is
         FreezeVotingParams memory freezeVotingParams_,
         address[] memory newVotesERC20V1Addresses_
     ) internal returns (address) {
-        FreezeVotingMultisigV1Params
-            memory freezeVotingMultisigV1Params = freezeVotingParams_
-                .freezeVotingMultisigV1Params;
+        FreezeVotingMultisigV1Params memory freezeVotingMultisigV1Params =
+        freezeVotingParams_.freezeVotingMultisigV1Params;
 
-        FreezeVotingGovernorV1Params
-            memory freezeVotingGovernorV1Params = freezeVotingParams_
-                .freezeVotingGovernorV1Params;
+        FreezeVotingGovernorV1Params memory freezeVotingGovernorV1Params =
+        freezeVotingParams_.freezeVotingGovernorV1Params;
 
-        FreezeVotingStandaloneParams
-            memory freezeVotingStandaloneParams = freezeVotingParams_
-                .freezeVotingStandaloneParams;
+        FreezeVotingStandaloneParams memory freezeVotingStandaloneParams =
+        freezeVotingParams_.freezeVotingStandaloneParams;
 
         // Count how many freeze voting types are specified
         uint8 freezeVotingCount = 0;
-        if (freezeVotingMultisigV1Params.implementation != address(0))
+        if (freezeVotingMultisigV1Params.implementation != address(0)) {
             freezeVotingCount++;
-        if (freezeVotingGovernorV1Params.implementation != address(0))
+        }
+        if (freezeVotingGovernorV1Params.implementation != address(0)) {
             freezeVotingCount++;
-        if (
-            freezeVotingStandaloneParams
-                .freezeVotingStandaloneV1Params
-                .implementation != address(0)
-        ) freezeVotingCount++;
+        }
+        if (freezeVotingStandaloneParams.freezeVotingStandaloneV1Params.implementation != address(0)) {
+            freezeVotingCount++;
+        }
 
         if (freezeVotingCount > 1) {
             revert CannotDeployMultipleFreezeVotingContracts();
@@ -1062,16 +875,9 @@ contract SystemDeployerV1 is
             );
         }
 
-        if (
-            freezeVotingStandaloneParams
-                .freezeVotingStandaloneV1Params
-                .implementation != address(0)
-        ) {
-            freezeVotingAddress = _deployFreezeVotingStandalone(
-                salt_,
-                freezeVotingStandaloneParams,
-                newVotesERC20V1Addresses_
-            );
+        if (freezeVotingStandaloneParams.freezeVotingStandaloneV1Params.implementation != address(0)) {
+            freezeVotingAddress =
+                _deployFreezeVotingStandalone(salt_, freezeVotingStandaloneParams, newVotesERC20V1Addresses_);
         }
 
         return freezeVotingAddress;
@@ -1092,26 +898,13 @@ contract SystemDeployerV1 is
         address freezeVotingAddress,
         address governorModuleAddress
     ) internal {
-        FreezeGuardMultisigV1Params
-            memory freezeGuardMultisigV1Params = freezeGuardParams_
-                .freezeGuardMultisigV1Params;
+        FreezeGuardMultisigV1Params memory freezeGuardMultisigV1Params = freezeGuardParams_.freezeGuardMultisigV1Params;
 
-        _deployFreezeGuardMultisig(
-            salt_,
-            freezeGuardMultisigV1Params,
-            freezeVotingAddress
-        );
+        _deployFreezeGuardMultisig(salt_, freezeGuardMultisigV1Params, freezeVotingAddress);
 
-        FreezeGuardGovernorV1Params
-            memory freezeGuardGovernorV1Params = freezeGuardParams_
-                .freezeGuardGovernorV1Params;
+        FreezeGuardGovernorV1Params memory freezeGuardGovernorV1Params = freezeGuardParams_.freezeGuardGovernorV1Params;
 
-        _deployFreezeGuardGovernor(
-            salt_,
-            freezeGuardGovernorV1Params,
-            freezeVotingAddress,
-            governorModuleAddress
-        );
+        _deployFreezeGuardGovernor(salt_, freezeGuardGovernorV1Params, freezeVotingAddress, governorModuleAddress);
     }
 
     /**
@@ -1179,8 +972,7 @@ contract SystemDeployerV1 is
             address governorFreezeGuardAddress = deployProxy(
                 freezeGuardGovernorV1Params.implementation,
                 abi.encodeCall(
-                    IFreezeGuardGovernorV1.initialize,
-                    (freezeGuardGovernorV1Params.owner, freezeVotingAddress)
+                    IFreezeGuardGovernorV1.initialize, (freezeGuardGovernorV1Params.owner, freezeVotingAddress)
                 ),
                 salt_
             );
@@ -1208,27 +1000,15 @@ contract SystemDeployerV1 is
         // Step 1: Deploy FreezeVotingStandalone without voting configs
         // This gives us a deterministic address we can use for vote tracker authorization
         address freezeVotingAddress = deployProxy(
-            freezeVotingStandaloneParams
-                .freezeVotingStandaloneV1Params
-                .implementation,
+            freezeVotingStandaloneParams.freezeVotingStandaloneV1Params.implementation,
             abi.encodeCall(
                 IFreezeVotingStandaloneV1.initialize,
                 (
-                    freezeVotingStandaloneParams
-                        .freezeVotingStandaloneV1Params
-                        .freezeVotesThreshold,
-                    freezeVotingStandaloneParams
-                        .freezeVotingStandaloneV1Params
-                        .unfreezeVotesThreshold,
-                    freezeVotingStandaloneParams
-                        .freezeVotingStandaloneV1Params
-                        .freezeProposalPeriod,
-                    freezeVotingStandaloneParams
-                        .freezeVotingStandaloneV1Params
-                        .unfreezeProposalPeriod,
-                    freezeVotingStandaloneParams
-                        .freezeVotingStandaloneV1Params
-                        .lightAccountFactory
+                    freezeVotingStandaloneParams.freezeVotingStandaloneV1Params.freezeVotesThreshold,
+                    freezeVotingStandaloneParams.freezeVotingStandaloneV1Params.unfreezeVotesThreshold,
+                    freezeVotingStandaloneParams.freezeVotingStandaloneV1Params.freezeProposalPeriod,
+                    freezeVotingStandaloneParams.freezeVotingStandaloneV1Params.unfreezeProposalPeriod,
+                    freezeVotingStandaloneParams.freezeVotingStandaloneV1Params.lightAccountFactory
                 )
             ),
             salt_
@@ -1243,9 +1023,7 @@ contract SystemDeployerV1 is
         );
 
         // Step 3: Complete initialization by setting the voting configs
-        IFreezeVotingStandaloneV1(freezeVotingAddress).initialize2(
-            votingConfigs
-        );
+        IFreezeVotingStandaloneV1(freezeVotingAddress).initialize2(votingConfigs);
 
         return freezeVotingAddress;
     }

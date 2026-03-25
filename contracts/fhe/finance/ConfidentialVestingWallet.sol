@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {FHE, euint64} from "../FHE.sol";
+import { FHE, euint64 } from "../FHE.sol";
 import { IConfidentialLRC20 } from "../token/LRC20/IConfidentialLRC20.sol";
 
 /**
@@ -94,8 +94,7 @@ abstract contract ConfidentialVestingWallet {
      * @return vestedAmount     Vested amount.
      */
     function _vestedAmount(address token, uint128 timestamp) internal virtual returns (euint64 vestedAmount) {
-        return
-            _vestingSchedule(FHE.add(IConfidentialLRC20(token).balanceOf(address(this)), released(token)), timestamp);
+        return _vestingSchedule(FHE.add(IConfidentialLRC20(token).balanceOf(address(this)), released(token)), timestamp);
     }
 
     /**
@@ -105,20 +104,23 @@ abstract contract ConfidentialVestingWallet {
      * @param timestamp         Current timestamp.
      * @return vestedAmount     Vested amount.
      */
-    function _vestingSchedule(
-        euint64 totalAllocation,
-        uint128 timestamp
-    ) internal virtual returns (euint64 vestedAmount) {
+    function _vestingSchedule(euint64 totalAllocation, uint128 timestamp)
+        internal
+        virtual
+        returns (euint64 vestedAmount)
+    {
         if (timestamp < START_TIMESTAMP) {
             return _EUINT64_ZERO;
         } else if (timestamp >= END_TIMESTAMP) {
             return totalAllocation;
         } else {
             /// @dev It casts to euint128 to prevent overflow with the multiplication.
-            return
-                FHE.asEuint64(
-                    FHE.div(FHE.mul(FHE.asEuint128(totalAllocation), FHE.asEuint128(timestamp - START_TIMESTAMP)), FHE.asEuint128(DURATION))
-                );
+            return FHE.asEuint64(
+                FHE.div(
+                    FHE.mul(FHE.asEuint128(totalAllocation), FHE.asEuint128(timestamp - START_TIMESTAMP)),
+                    FHE.asEuint128(DURATION)
+                )
+            );
         }
     }
 }

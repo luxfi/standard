@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IOracleSource} from "@luxfi/contracts/interfaces/oracle/IOracleSource.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IOracleSource } from "@luxfi/contracts/interfaces/oracle/IOracleSource.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /// @notice Pyth price feed interface
 interface IPyth {
@@ -83,7 +83,7 @@ contract PythAdapter is IOracleSource, AccessControl {
     /// @param updateData Price update data from Pyth API
     function updatePrices(bytes[] calldata updateData) external payable {
         uint256 fee = pyth.getUpdateFee(updateData);
-        pyth.updatePriceFeeds{value: fee}(updateData);
+        pyth.updatePriceFeeds{ value: fee }(updateData);
         lastGlobalHeartbeat = block.timestamp;
 
         // Refund excess
@@ -147,7 +147,9 @@ contract PythAdapter is IOracleSource, AccessControl {
     /// @return confidence The confidence interval in 18 decimals
     /// @return timestamp The publish time
     function getPriceWithConfidence(address asset)
-        external view returns (uint256 price, uint256 confidence, uint256 timestamp)
+        external
+        view
+        returns (uint256 price, uint256 confidence, uint256 timestamp)
     {
         bytes32 priceId = priceIds[asset];
         if (priceId == bytes32(0)) revert FeedNotConfigured(asset);

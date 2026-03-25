@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title Committee
@@ -28,7 +28,6 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  * └─────────────────────────────────────────────────────────────────────────────┘
  */
 contract Committee is ReentrancyGuard, AccessControl {
-
     // ═══════════════════════════════════════════════════════════════════════
     // ROLES
     // ═══════════════════════════════════════════════════════════════════════
@@ -205,17 +204,21 @@ contract Committee is ReentrancyGuard, AccessControl {
         return ProposalState.Succeeded;
     }
 
-    function getProposal(uint256 proposalId) external view returns (
-        address proposer,
-        string memory description,
-        uint256 forVotes,
-        uint256 againstVotes,
-        uint256 abstainVotes,
-        uint256 startBlock,
-        uint256 endBlock,
-        bool canceled,
-        bool executed
-    ) {
+    function getProposal(uint256 proposalId)
+        external
+        view
+        returns (
+            address proposer,
+            string memory description,
+            uint256 forVotes,
+            uint256 againstVotes,
+            uint256 abstainVotes,
+            uint256 startBlock,
+            uint256 endBlock,
+            bool canceled,
+            bool executed
+        )
+    {
         Proposal storage p = proposals[proposalId];
         return (
             p.proposer,

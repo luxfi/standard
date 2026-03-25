@@ -1,19 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    ILightAccountValidator
-} from "../../interfaces/deployables/ILightAccountValidator.sol";
-import {ILightAccount} from "../../interfaces/light-account/ILightAccount.sol";
-import {
-    ILightAccountFactory
-} from "../../interfaces/light-account/ILightAccountFactory.sol";
-import {
-    PackedUserOperation
-} from "@account-abstraction/interfaces/IPaymaster.sol";
-import {
-    Initializable
-} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { ILightAccountValidator } from "../../interfaces/deployables/ILightAccountValidator.sol";
+import { ILightAccount } from "../../interfaces/light-account/ILightAccount.sol";
+import { ILightAccountFactory } from "../../interfaces/light-account/ILightAccountFactory.sol";
+import { PackedUserOperation } from "@account-abstraction/interfaces/IPaymaster.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @title LightAccountValidator
@@ -43,10 +35,7 @@ import {
  *
  * @custom:security-contact security@lux.network
  */
-abstract contract LightAccountValidator is
-    ILightAccountValidator,
-    Initializable
-{
+abstract contract LightAccountValidator is ILightAccountValidator, Initializable {
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
@@ -57,7 +46,9 @@ abstract contract LightAccountValidator is
      * @custom:storage-location erc7201:DAO.LightAccountValidator.main
      */
     struct LightAccountValidatorStorage {
-        /** @notice The authorized Light Account Factory for address verification */
+        /**
+         * @notice The authorized Light Account Factory for address verification
+         */
         ILightAccountFactory lightAccountFactory;
     }
 
@@ -73,11 +64,7 @@ abstract contract LightAccountValidator is
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      * @return $ The storage struct for LightAccountValidator
      */
-    function _getLightAccountValidatorStorage()
-        internal
-        pure
-        returns (LightAccountValidatorStorage storage $)
-    {
+    function _getLightAccountValidatorStorage() internal pure returns (LightAccountValidatorStorage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := LIGHT_ACCOUNT_VALIDATOR_STORAGE_LOCATION
@@ -101,9 +88,11 @@ abstract contract LightAccountValidator is
     function __LightAccountValidator_init(
         // solhint-disable-previous-line func-name-mixedcase
         address lightAccountFactory_
-    ) internal onlyInitializing {
-        LightAccountValidatorStorage
-            storage $ = _getLightAccountValidatorStorage();
+    )
+        internal
+        onlyInitializing
+    {
+        LightAccountValidatorStorage storage $ = _getLightAccountValidatorStorage();
         $.lightAccountFactory = ILightAccountFactory(lightAccountFactory_);
     }
 
@@ -116,15 +105,8 @@ abstract contract LightAccountValidator is
     /**
      * @inheritdoc ILightAccountValidator
      */
-    function lightAccountFactory()
-        public
-        view
-        virtual
-        override
-        returns (address)
-    {
-        LightAccountValidatorStorage
-            storage $ = _getLightAccountValidatorStorage();
+    function lightAccountFactory() public view virtual override returns (address) {
+        LightAccountValidatorStorage storage $ = _getLightAccountValidatorStorage();
         return address($.lightAccountFactory);
     }
 
@@ -133,14 +115,14 @@ abstract contract LightAccountValidator is
      * @dev Useful for handling addresses that could be either EOAs or Light Accounts.
      * Returns the Light Account owner if valid, otherwise returns the input address.
      */
-    function potentialLightAccountResolvedOwner(
-        address potentialLightAccount_,
-        uint256 lightAccountIndex_
-    ) public view virtual override returns (address) {
-        (bool _isValid, address _lightAccountOwner) = _validateLightAccount(
-            potentialLightAccount_,
-            lightAccountIndex_
-        );
+    function potentialLightAccountResolvedOwner(address potentialLightAccount_, uint256 lightAccountIndex_)
+        public
+        view
+        virtual
+        override
+        returns (address)
+    {
+        (bool _isValid, address _lightAccountOwner) = _validateLightAccount(potentialLightAccount_, lightAccountIndex_);
 
         // If not a valid Light Account, assume it's an EOA
         if (!_isValid) {
@@ -166,10 +148,12 @@ abstract contract LightAccountValidator is
      * @return isValid True if the address is a valid Light Account
      * @return owner The owner address of the Light Account (zero if invalid)
      */
-    function _validateLightAccount(
-        address lightAccount_,
-        uint256 lightAccountIndex_
-    ) internal view virtual returns (bool, address) {
+    function _validateLightAccount(address lightAccount_, uint256 lightAccountIndex_)
+        internal
+        view
+        virtual
+        returns (bool, address)
+    {
         // Check 1: Verify the address has code (is a contract)
         uint256 size;
         // solhint-disable-next-line no-inline-assembly
@@ -183,18 +167,12 @@ abstract contract LightAccountValidator is
         }
 
         // Check 2: Try to call owner() function
-        try ILightAccount(lightAccount_).owner() returns (
-            address lightAccountOwner_
-        ) {
-            LightAccountValidatorStorage
-                storage $ = _getLightAccountValidatorStorage();
+        try ILightAccount(lightAccount_).owner() returns (address lightAccountOwner_) {
+            LightAccountValidatorStorage storage $ = _getLightAccountValidatorStorage();
 
             // Check 3: Verify this Light Account was created by our factory
             // Regenerate the expected light account address
-            address lightAccountAddress = $.lightAccountFactory.getAddress(
-                lightAccountOwner_,
-                lightAccountIndex_
-            );
+            address lightAccountAddress = $.lightAccountFactory.getAddress(lightAccountOwner_, lightAccountIndex_);
 
             // If the given address matches the factory-generated address,
             // we know it was created by the authorized factory and can be trusted
@@ -219,19 +197,17 @@ abstract contract LightAccountValidator is
      * @custom:throws InvalidCallData if not calling Light Account execute()
      * @custom:throws InvalidInnerCallDataLength if inner calldata too short
      */
-    function _validateUserOp(
-        PackedUserOperation calldata userOp_
-    ) internal view virtual returns (address, address, bytes memory) {
+    function _validateUserOp(PackedUserOperation calldata userOp_)
+        internal
+        view
+        virtual
+        returns (address, address, bytes memory)
+    {
         // Step 1: Extract the light account index from paymaster data
-        uint256 lightAccountIndex = _extractLightAccountIndex(
-            userOp_.paymasterAndData
-        );
+        uint256 lightAccountIndex = _extractLightAccountIndex(userOp_.paymasterAndData);
 
         // Step 2: Validate the sender is a legitimate Light Account
-        (bool _isValid, address _lightAccountOwner) = _validateLightAccount(
-            userOp_.sender,
-            lightAccountIndex
-        );
+        (bool _isValid, address _lightAccountOwner) = _validateLightAccount(userOp_.sender, lightAccountIndex);
 
         if (!_isValid) {
             revert InvalidLightAccount();
@@ -253,10 +229,7 @@ abstract contract LightAccountValidator is
         }
 
         // Step 5: Decode the execute() function parameters
-        (address target, , bytes memory innerCallData) = abi.decode(
-            userOp_.callData[4:],
-            (address, uint256, bytes)
-        );
+        (address target,, bytes memory innerCallData) = abi.decode(userOp_.callData[4:], (address, uint256, bytes));
 
         // Step 6: Validate inner calldata has a function selector
         if (innerCallData.length < 4) {
@@ -276,9 +249,7 @@ abstract contract LightAccountValidator is
      * @param paymasterAndData_ The paymaster and data from UserOperation
      * @return The Light Account index, or 0 if not present
      */
-    function _extractLightAccountIndex(
-        bytes calldata paymasterAndData_
-    ) internal pure virtual returns (uint256) {
+    function _extractLightAccountIndex(bytes calldata paymasterAndData_) internal pure virtual returns (uint256) {
         // Check if we have paymaster data beyond the standard fields
         // Standard fields take up 52 bytes (20 + 16 + 16)
         // We need at least 84 bytes to have the index (52 + 32)

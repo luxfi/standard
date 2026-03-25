@@ -1,38 +1,24 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IUtilityRolesManagementV1
-} from "../interfaces/utilities/IUtilityRolesManagementV1.sol";
-import {
-    IAutonomousAdminV1
-} from "../interfaces/deployables/IAutonomousAdminV1.sol";
-import {
-    ISystemDeployerV1
-} from "../interfaces/singletons/ISystemDeployerV1.sol";
-import {
-    IKeyValuePairsV1
-} from "../interfaces/singletons/IKeyValuePairsV1.sol";
-import {IHatsExtended} from "../interfaces/hats/IHatsExtended.sol";
-import {IERC6551Registry} from "../interfaces/erc6551/IERC6551Registry.sol";
-import {IHats} from "../interfaces/hats/IHats.sol";
-import {
-    IHatsElectionsEligibility
-} from "../interfaces/hats/modules/IHatsElectionsEligibility.sol";
-import {IHatsModuleFactory} from "../interfaces/hats/IHatsModuleFactory.sol";
-import {
-    ISablierV2LockupLinear
-} from "../interfaces/sablier/ISablierV2LockupLinear.sol";
-import {ISablierV2Lockup} from "../interfaces/sablier/ISablierV2Lockup.sol";
-import {LockupLinear, Lockup} from "../interfaces/sablier/types/DataTypes.sol";
-import {IERC6551Executable} from "../interfaces/erc6551/IERC6551Executable.sol";
-import {IDeploymentBlock} from "../interfaces/IDeploymentBlock.sol";
-import {
-    DeploymentBlockNonInitializable
-} from "../DeploymentBlockNonInitializable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import { IUtilityRolesManagementV1 } from "../interfaces/utilities/IUtilityRolesManagementV1.sol";
+import { IAutonomousAdminV1 } from "../interfaces/deployables/IAutonomousAdminV1.sol";
+import { ISystemDeployerV1 } from "../interfaces/singletons/ISystemDeployerV1.sol";
+import { IKeyValuePairsV1 } from "../interfaces/singletons/IKeyValuePairsV1.sol";
+import { IHatsExtended } from "../interfaces/hats/IHatsExtended.sol";
+import { IERC6551Registry } from "../interfaces/erc6551/IERC6551Registry.sol";
+import { IHats } from "../interfaces/hats/IHats.sol";
+import { IHatsElectionsEligibility } from "../interfaces/hats/modules/IHatsElectionsEligibility.sol";
+import { IHatsModuleFactory } from "../interfaces/hats/IHatsModuleFactory.sol";
+import { ISablierV2LockupLinear } from "../interfaces/sablier/ISablierV2LockupLinear.sol";
+import { ISablierV2Lockup } from "../interfaces/sablier/ISablierV2Lockup.sol";
+import { LockupLinear, Lockup } from "../interfaces/sablier/types/DataTypes.sol";
+import { IERC6551Executable } from "../interfaces/erc6551/IERC6551Executable.sol";
+import { IDeploymentBlock } from "../interfaces/IDeploymentBlock.sol";
+import { DeploymentBlockNonInitializable } from "../DeploymentBlockNonInitializable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title UtilityRolesManagementV1
@@ -67,11 +53,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
  *
  * @custom:security-contact security@lux.network
  */
-contract UtilityRolesManagementV1 is
-    IUtilityRolesManagementV1,
-    DeploymentBlockNonInitializable,
-    ERC165
-{
+contract UtilityRolesManagementV1 is IUtilityRolesManagementV1, DeploymentBlockNonInitializable, ERC165 {
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
@@ -125,9 +107,7 @@ contract UtilityRolesManagementV1 is
      * All role hats are created with their specified configurations and payment streams.
      * Reverts if called directly rather than via delegatecall.
      */
-    function createAndDeclareTree(
-        CreateTreeParams calldata treeParams_
-    ) public virtual override onlyDelegatecall {
+    function createAndDeclareTree(CreateTreeParams calldata treeParams_) public virtual override onlyDelegatecall {
         // Generate a salt from the Safe address
         bytes32 salt = bytes32(uint256(uint160(address(this))));
         address topHatWearer = address(this);
@@ -161,13 +141,11 @@ contract UtilityRolesManagementV1 is
             CreateRoleHatsParams({
                 hatsProtocol: treeParams_.hatsProtocol,
                 erc6551Registry: treeParams_.erc6551Registry,
-                hatsAccountImplementation: treeParams_
-                    .hatsAccountImplementation,
+                hatsAccountImplementation: treeParams_.hatsAccountImplementation,
                 topHatId: topHatId,
                 topHatWearer: topHatWearer,
                 hatsModuleFactory: treeParams_.hatsModuleFactory,
-                hatsElectionsEligibilityImplementation: treeParams_
-                    .hatsElectionsEligibilityImplementation,
+                hatsElectionsEligibilityImplementation: treeParams_.hatsElectionsEligibilityImplementation,
                 adminHatId: adminHatId,
                 hats: treeParams_.hats,
                 keyValuePairs: treeParams_.keyValuePairs
@@ -175,12 +153,8 @@ contract UtilityRolesManagementV1 is
         );
 
         // Emit key-value pair to associate this Safe with the top hat ID
-        IKeyValuePairsV1.KeyValuePair[]
-            memory kvPairs = new IKeyValuePairsV1.KeyValuePair[](1);
-        kvPairs[0] = IKeyValuePairsV1.KeyValuePair({
-            key: "topHatId",
-            value: Strings.toString(topHatId)
-        });
+        IKeyValuePairsV1.KeyValuePair[] memory kvPairs = new IKeyValuePairsV1.KeyValuePair[](1);
+        kvPairs[0] = IKeyValuePairsV1.KeyValuePair({ key: "topHatId", value: Strings.toString(topHatId) });
         IKeyValuePairsV1(treeParams_.keyValuePairs).updateValues(kvPairs);
     }
 
@@ -190,9 +164,7 @@ contract UtilityRolesManagementV1 is
      * which handles all the complex logic for creating roles with payment streams.
      * Reverts if called directly rather than via delegatecall.
      */
-    function createRoleHats(
-        CreateRoleHatsParams calldata roleHatsParams_
-    ) public virtual override onlyDelegatecall {
+    function createRoleHats(CreateRoleHatsParams calldata roleHatsParams_) public virtual override onlyDelegatecall {
         // Generate a salt from the Safe address
         bytes32 salt = bytes32(uint256(uint160(address(this))));
 
@@ -206,12 +178,12 @@ contract UtilityRolesManagementV1 is
      * the recipientHatAccount_.execute() call.
      * Reverts if called directly rather than via delegatecall.
      */
-    function withdrawMaxFromStream(
-        address sablier_,
-        address recipientHatAccount_,
-        uint256 streamId_,
-        address to_
-    ) public virtual override onlyDelegatecall {
+    function withdrawMaxFromStream(address sablier_, address recipientHatAccount_, uint256 streamId_, address to_)
+        public
+        virtual
+        override
+        onlyDelegatecall
+    {
         // Check if there are funds to withdraw
         // This prevents reverts when stream has no withdrawable amount
         if (ISablierV2Lockup(sablier_).withdrawableAmountOf(streamId_) == 0) {
@@ -220,31 +192,24 @@ contract UtilityRolesManagementV1 is
 
         // Execute nested call through Hat account
         // Safe (via delegatecall) -> recipientHatAccount.execute() -> sablier.withdrawMax()
-        IERC6551Executable(recipientHatAccount_).execute(
-            sablier_,
-            0,
-            abi.encodeCall(ISablierV2Lockup.withdrawMax, (streamId_, to_)),
-            0 // operation type
-        );
+        IERC6551Executable(recipientHatAccount_)
+            .execute(
+                sablier_,
+                0,
+                abi.encodeCall(ISablierV2Lockup.withdrawMax, (streamId_, to_)),
+                0 // operation type
+            );
     }
 
     /**
      * @inheritdoc IUtilityRolesManagementV1
      * @dev Reverts if called directly rather than via delegatecall.
      */
-    function cancelStream(
-        address sablier_,
-        uint256 streamId_
-    ) public virtual override onlyDelegatecall {
+    function cancelStream(address sablier_, uint256 streamId_) public virtual override onlyDelegatecall {
         // Verify stream is cancellable
         // Only PENDING and STREAMING statuses can be cancelled
-        Lockup.Status streamStatus = ISablierV2Lockup(sablier_).statusOf(
-            streamId_
-        );
-        if (
-            streamStatus != Lockup.Status.PENDING &&
-            streamStatus != Lockup.Status.STREAMING
-        ) {
+        Lockup.Status streamStatus = ISablierV2Lockup(sablier_).statusOf(streamId_);
+        if (streamStatus != Lockup.Status.PENDING && streamStatus != Lockup.Status.STREAMING) {
             return;
         }
 
@@ -278,26 +243,15 @@ contract UtilityRolesManagementV1 is
         TopHatParams memory topHatParams_
     ) internal virtual returns (uint256) {
         // Mint top hat to the Safe (topHatWearer_ in delegatecall context)
-        IHats(hatsProtocol_).mintTopHat(
-            topHatWearer_,
-            topHatParams_.details,
-            topHatParams_.imageURI
-        );
+        IHats(hatsProtocol_).mintTopHat(topHatWearer_, topHatParams_.details, topHatParams_.imageURI);
 
         // Get the top hat ID of the newly minted top hat from Hats Protocol
-        uint256 topHatId = uint256(
-            IHatsExtended(hatsProtocol_).lastTopHatId()
-        ) << 224; // Top hats occupy the first 32 bits
+        uint256 topHatId = uint256(IHatsExtended(hatsProtocol_).lastTopHatId()) << 224; // Top hats occupy the first 32 bits
 
         // Create ERC6551 account for the top hat
         // Salt derived from Safe address for deterministic, Safe-specific addresses
-        IERC6551Registry(erc6551Registry_).createAccount(
-            hatsAccountImplementation_,
-            salt_,
-            block.chainid,
-            hatsProtocol_,
-            topHatId
-        );
+        IERC6551Registry(erc6551Registry_)
+            .createAccount(hatsAccountImplementation_, salt_, block.chainid, hatsProtocol_, topHatId);
 
         return topHatId;
     }
@@ -328,41 +282,32 @@ contract UtilityRolesManagementV1 is
         uint256 topHatId_
     ) internal virtual returns (uint256) {
         // Create admin hat
-        uint256 adminHatId = IHats(hatsProtocol_).createHat(
-            topHatId_, // parentHatId
-            adminHatParams_.details,
-            1, // maxSupply
-            topHatWearer_, // eligibility
-            topHatWearer_, // toggle
-            adminHatParams_.isMutable,
-            adminHatParams_.imageURI
-        );
+        uint256 adminHatId = IHats(hatsProtocol_)
+            .createHat(
+                topHatId_, // parentHatId
+                adminHatParams_.details,
+                1, // maxSupply
+                topHatWearer_, // eligibility
+                topHatWearer_, // toggle
+                adminHatParams_.isMutable,
+                adminHatParams_.imageURI
+            );
 
         // Create ERC6551 account for the admin hat
-        IERC6551Registry(erc6551Registry_).createAccount(
-            hatsAccountImplementation_,
-            salt_,
-            block.chainid,
-            hatsProtocol_,
-            adminHatId
-        );
+        IERC6551Registry(erc6551Registry_)
+            .createAccount(hatsAccountImplementation_, salt_, block.chainid, hatsProtocol_, adminHatId);
 
         // Deploy autonomous admin proxy through SystemDeployer using delegatecall.
         // This ensures the proxy is deployed from the Safe's address, making it Safe-specific.
         // Making an assumption about the caller: the salt_ is the bytes32 representation of the Safe address.
         // Which creates proxy addresses that are Safe-specific without a shared salt.
         // solhint-disable-next-line avoid-low-level-calls
-        (bool success, bytes memory proxyAddressData) = systemDeployer_
-            .delegatecall(
-                abi.encodeCall(
-                    ISystemDeployerV1.deployProxy,
-                    (
-                        daoAutonomousAdminImplementation_,
-                        abi.encodeCall(IAutonomousAdminV1.initialize, ()),
-                        salt_
-                    )
-                )
-            );
+        (bool success, bytes memory proxyAddressData) = systemDeployer_.delegatecall(
+            abi.encodeCall(
+                ISystemDeployerV1.deployProxy,
+                (daoAutonomousAdminImplementation_, abi.encodeCall(IAutonomousAdminV1.initialize, ()), salt_)
+            )
+        );
         if (!success) revert ProxyDeploymentFailed();
 
         address autonomousAdmin = abi.decode(proxyAddressData, (address));
@@ -379,11 +324,8 @@ contract UtilityRolesManagementV1 is
      * For each Hat: creates eligibility module, mints Hat, sets up recipient, creates streams.
      * @param roleHatsParams_ Complete configuration for all Hats to create
      */
-    function _processRoleHats(
-        bytes32 salt_,
-        CreateRoleHatsParams memory roleHatsParams_
-    ) internal virtual {
-        for (uint256 i = 0; i < roleHatsParams_.hats.length; ) {
+    function _processRoleHats(bytes32 salt_, CreateRoleHatsParams memory roleHatsParams_) internal virtual {
+        for (uint256 i = 0; i < roleHatsParams_.hats.length;) {
             HatParams memory hatParams = roleHatsParams_.hats[i];
 
             // Step 1: Create eligibility module for termed positions
@@ -422,10 +364,7 @@ contract UtilityRolesManagementV1 is
 
             // Step 4: Create payment streams for this role
             _processSablierStreams(
-                hatParams.sablierStreamsParams,
-                streamRecipient,
-                roleHatsParams_.keyValuePairs,
-                hatId
+                hatParams.sablierStreamsParams, streamRecipient, roleHatsParams_.keyValuePairs, hatId
             );
 
             unchecked {
@@ -460,8 +399,8 @@ contract UtilityRolesManagementV1 is
     ) internal virtual returns (address) {
         // If the Hat is termed, create the eligibility module
         if (termEndDateTs_ != 0) {
-            return
-                IHatsModuleFactory(hatsModuleFactory_).createHatsModule(
+            return IHatsModuleFactory(hatsModuleFactory_)
+                .createHatsModule(
                     hatsElectionsEligibilityImplementation_,
                     IHats(hatsProtocol_).getNextId(adminHatId_),
                     abi.encode(topHatId_, uint256(0)), // [BALLOT_BOX_ID, ADMIN_HAT_ID]
@@ -493,15 +432,16 @@ contract UtilityRolesManagementV1 is
         address topHatWearer_
     ) internal virtual returns (uint256) {
         // Create the Hat with specified parameters
-        uint256 hatId = IHats(hatsProtocol_).createHat(
-            adminHatId_,
-            hat_.details,
-            hat_.maxSupply,
-            eligibilityAddress_,
-            topHatWearer_,
-            hat_.isMutable,
-            hat_.imageURI
-        );
+        uint256 hatId = IHats(hatsProtocol_)
+            .createHat(
+                adminHatId_,
+                hat_.details,
+                hat_.maxSupply,
+                eligibilityAddress_,
+                topHatWearer_,
+                hat_.isMutable,
+                hat_.imageURI
+            );
 
         // For termed positions, elect the initial wearer
         if (hat_.termEndDateTs != 0) {
@@ -509,10 +449,7 @@ contract UtilityRolesManagementV1 is
             nominatedWearers[0] = hat_.wearer;
 
             // Elect through the eligibility module
-            IHatsElectionsEligibility(eligibilityAddress_).elect(
-                hat_.termEndDateTs,
-                nominatedWearers
-            );
+            IHatsElectionsEligibility(eligibilityAddress_).elect(hat_.termEndDateTs, nominatedWearers);
         }
 
         // Mint the Hat to the wearer
@@ -550,14 +487,8 @@ contract UtilityRolesManagementV1 is
         }
 
         // Otherwise, the Hat's smart account is the stream recipient
-        return
-            IERC6551Registry(erc6551Registry_).createAccount(
-                hatsAccountImplementation_,
-                salt_,
-                block.chainid,
-                hatsProtocol_,
-                hatId_
-            );
+        return IERC6551Registry(erc6551Registry_)
+            .createAccount(hatsAccountImplementation_, salt_, block.chainid, hatsProtocol_, hatId_);
     }
 
     /**
@@ -575,19 +506,14 @@ contract UtilityRolesManagementV1 is
         address keyValuePairs_,
         uint256 hatId_
     ) internal virtual {
-        for (uint256 i = 0; i < streamParams_.length; ) {
+        for (uint256 i = 0; i < streamParams_.length;) {
             SablierStreamParams memory sablierStreamParams = streamParams_[i];
 
             // Step 1: Approve Sablier to spend tokens
-            IERC20(sablierStreamParams.asset).approve(
-                sablierStreamParams.sablier,
-                sablierStreamParams.totalAmount
-            );
+            IERC20(sablierStreamParams.asset).approve(sablierStreamParams.sablier, sablierStreamParams.totalAmount);
 
             // Get the stream ID that will be created
-            uint256 streamId = ISablierV2LockupLinear(
-                sablierStreamParams.sablier
-            ).nextStreamId();
+            uint256 streamId = ISablierV2LockupLinear(sablierStreamParams.sablier).nextStreamId();
 
             // Step 2: Create the Sablier stream
             ISablierV2LockupLinear(sablierStreamParams.sablier)
@@ -606,17 +532,10 @@ contract UtilityRolesManagementV1 is
 
             // Step 3: Emit metadata linking Hat ID to stream ID
             // Format: "hatId:streamId" for easy parsing
-            IKeyValuePairsV1.KeyValuePair[]
-                memory keyValuePairs = new IKeyValuePairsV1.KeyValuePair[](1);
+            IKeyValuePairsV1.KeyValuePair[] memory keyValuePairs = new IKeyValuePairsV1.KeyValuePair[](1);
             keyValuePairs[0] = IKeyValuePairsV1.KeyValuePair({
                 key: "hatIdToStreamId",
-                value: string(
-                    abi.encodePacked(
-                        Strings.toString(hatId_),
-                        ":",
-                        Strings.toString(streamId)
-                    )
-                )
+                value: string(abi.encodePacked(Strings.toString(hatId_), ":", Strings.toString(streamId)))
             });
 
             IKeyValuePairsV1(keyValuePairs_).updateValues(keyValuePairs);
@@ -637,12 +556,8 @@ contract UtilityRolesManagementV1 is
      * @inheritdoc ERC165
      * @dev Supports IUtilityRolesManagementV1, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(IUtilityRolesManagementV1).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(IUtilityRolesManagementV1).interfaceId
+            || interfaceId_ == type(IDeploymentBlock).interfaceId || super.supportsInterface(interfaceId_);
     }
 }

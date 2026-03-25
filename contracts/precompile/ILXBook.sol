@@ -12,14 +12,14 @@ interface ILXBook {
     // -------------------------------------------------------------------------
 
     type MarketId is uint32;
-    type OrderId  is uint64;
-    type TwapId   is uint64;
+    type OrderId is uint64;
+    type TwapId is uint64;
 
     /// @notice Time-in-force semantics
     enum TIF {
         GTC, // good-til-canceled (resting)
         IOC, // immediate-or-cancel
-        ALO  // add-liquidity-only (post-only)
+        ALO // add-liquidity-only (post-only)
     }
 
     /// @notice Order kind (covers limit, market, and trigger variants)
@@ -42,21 +42,21 @@ interface ILXBook {
     /// @notice Optional grouping for OCO/bracket-style orders
     enum GroupType {
         NONE,
-        OCO,     // one-cancels-other
-        BRACKET  // bracket order (entry + TP + SL)
+        OCO, // one-cancels-other
+        BRACKET // bracket order (entry + TP + SL)
     }
 
     /// @notice Action types for execute() endpoint
     enum ActionType {
-        PLACE,           // place one or many orders
-        CANCEL,          // cancel by oid
+        PLACE, // place one or many orders
+        CANCEL, // cancel by oid
         CANCEL_BY_CLOID, // cancel by client order id
-        MODIFY,          // cancel+replace semantics
-        TWAP_CREATE,     // create TWAP program
-        TWAP_CANCEL,     // cancel TWAP program
+        MODIFY, // cancel+replace semantics
+        TWAP_CREATE, // create TWAP program
+        TWAP_CANCEL, // cancel TWAP program
         SCHEDULE_CANCEL, // dead-man switch / cancel-all at time
-        NOOP,            // mark nonce used (no-op)
-        RESERVE_WEIGHT   // buy extra action weight (optional)
+        NOOP, // mark nonce used (no-op)
+        RESERVE_WEIGHT // buy extra action weight (optional)
     }
 
     // -------------------------------------------------------------------------
@@ -64,13 +64,13 @@ interface ILXBook {
     // -------------------------------------------------------------------------
 
     struct MarketConfig {
-        bytes32 baseAsset;       // e.g., keccak256("ETH")
-        bytes32 quoteAsset;      // e.g., keccak256("USDC")
-        uint128 tickSizeX18;     // minimum price increment (1e18 scaled)
-        uint128 lotSizeX18;      // minimum size increment (1e18 scaled)
-        uint32  makerFeePpm;     // maker fee in ppm (e.g., 100 = 0.01%)
-        uint32  takerFeePpm;     // taker fee in ppm (e.g., 500 = 0.05%)
-        bytes32 feedId;          // optional oracle/feed linkage
+        bytes32 baseAsset; // e.g., keccak256("ETH")
+        bytes32 quoteAsset; // e.g., keccak256("USDC")
+        uint128 tickSizeX18; // minimum price increment (1e18 scaled)
+        uint128 lotSizeX18; // minimum size increment (1e18 scaled)
+        uint32 makerFeePpm; // maker fee in ppm (e.g., 100 = 0.01%)
+        uint32 takerFeePpm; // taker fee in ppm (e.g., 500 = 0.05%)
+        bytes32 feedId; // optional oracle/feed linkage
         MarketStatus initialStatus;
     }
 
@@ -107,7 +107,7 @@ interface ILXBook {
     /// @notice Order placement result
     struct PlaceResult {
         OrderId oid;
-        uint8 status;           // 0=rejected, 1=filled, 2=resting, 3=partial+resting
+        uint8 status; // 0=rejected, 1=filled, 2=resting, 3=partial+resting
         uint128 filledSizeX18;
         uint128 avgPxX18;
     }
@@ -128,8 +128,8 @@ interface ILXBook {
     /// @notice Modify (cancel+replace)
     struct Modify {
         MarketId marketId;
-        OrderId oid;        // if 0, use cloid+owner
-        address owner;      // optional selector for cloid path
+        OrderId oid; // if 0, use cloid+owner
+        address owner; // optional selector for cloid path
         bytes32 cloid;
         Order newOrder;
     }
@@ -141,13 +141,13 @@ interface ILXBook {
     struct Twap {
         MarketId marketId;
         bool isBuy;
-        OrderKind childKind;     // typically MARKET or LIMIT
+        OrderKind childKind; // typically MARKET or LIMIT
         uint128 totalSizeX18;
-        uint128 limitPxX18;      // 0 for market child orders
-        uint32  durationSec;
-        uint32  intervalSec;
-        uint32  maxSlippagePpm;  // e.g., 30000 = 3%
-        bool    reduceOnly;
+        uint128 limitPxX18; // 0 for market child orders
+        uint32 durationSec;
+        uint32 intervalSec;
+        uint32 maxSlippagePpm; // e.g., 30000 = 3%
+        bool reduceOnly;
         bytes32 cloid;
     }
 
@@ -157,7 +157,7 @@ interface ILXBook {
 
     /// @notice Dead-man switch: cancel all orders at specified time
     struct ScheduleCancel {
-        uint32 time;  // unix seconds; 0 clears schedule
+        uint32 time; // unix seconds; 0 clears schedule
     }
 
     /// @notice Reserve extra action weight (rate limit credit)
@@ -172,9 +172,9 @@ interface ILXBook {
     /// @notice Generic action envelope for execute()
     struct Action {
         ActionType actionType;
-        uint64 nonce;         // anti-replay (recommended: ms timestamp or monotonic)
-        uint64 expiresAfter;  // unix seconds; 0 = no expiry
-        bytes data;           // ABI-encoded payload based on actionType
+        uint64 nonce; // anti-replay (recommended: ms timestamp or monotonic)
+        uint64 expiresAfter; // unix seconds; 0 = no expiry
+        bytes data; // ABI-encoded payload based on actionType
     }
 
     // -------------------------------------------------------------------------
@@ -266,12 +266,12 @@ interface ILXBook {
         OrderId takerOid;
         address maker;
         address taker;
-        bool takerIsBuy;         // taker's direction
-        uint128 sizeX18;         // base amount
-        uint128 priceX18;        // execution price
-        uint128 quoteAmountX18;  // quote amount (size * price)
-        uint128 makerFeeX18;     // fee charged to maker
-        uint128 takerFeeX18;     // fee charged to taker
+        bool takerIsBuy; // taker's direction
+        uint128 sizeX18; // base amount
+        uint128 priceX18; // execution price
+        uint128 quoteAmountX18; // quote amount (size * price)
+        uint128 makerFeeX18; // fee charged to maker
+        uint128 takerFeeX18; // fee charged to taker
         bytes32 makerCloid;
         bytes32 takerCloid;
     }
@@ -279,11 +279,7 @@ interface ILXBook {
     /// @notice Emitted when a trade is settled (for indexers/UIs)
     /// @dev LXVault listens to this or receives direct callback
     event TradeSettled(
-        MarketId indexed marketId,
-        address indexed maker,
-        address indexed taker,
-        uint128 sizeX18,
-        uint128 priceX18
+        MarketId indexed marketId, address indexed maker, address indexed taker, uint128 sizeX18, uint128 priceX18
     );
 
     // -------------------------------------------------------------------------
@@ -309,12 +305,7 @@ interface ILXBook {
         bytes32 cloid
     );
 
-    event OrderCanceled(
-        MarketId indexed marketId,
-        OrderId indexed oid,
-        address indexed owner,
-        bytes32 cloid
-    );
+    event OrderCanceled(MarketId indexed marketId, OrderId indexed oid, address indexed owner, bytes32 cloid);
 
     event Trade(
         MarketId indexed marketId,
@@ -334,11 +325,7 @@ interface ILXBook {
         uint32 durationSec
     );
 
-    event TwapCanceled(
-        MarketId indexed marketId,
-        TwapId indexed twapId,
-        address indexed owner
-    );
+    event TwapCanceled(MarketId indexed marketId, TwapId indexed twapId, address indexed owner);
 }
 
 /// @dev LXBook precompile address constant

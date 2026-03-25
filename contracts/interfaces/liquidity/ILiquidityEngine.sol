@@ -12,29 +12,29 @@ interface ILiquidityEngine {
 
     /// @notice Supported chains
     enum Chain {
-        ETHEREUM,       // 1
-        BSC,            // 56
-        ARBITRUM,       // 42161
-        BASE,           // 8453
-        POLYGON,        // 137
-        OPTIMISM,       // 10
-        AVALANCHE,      // 43114
-        LUX_CCHAIN,     // 96369
-        LUX_HANZO,      // TBD
-        LUX_ZOO,        // TBD
-        SOLANA,         // Non-EVM
-        TON             // Non-EVM
+        ETHEREUM, // 1
+        BSC, // 56
+        ARBITRUM, // 42161
+        BASE, // 8453
+        POLYGON, // 137
+        OPTIMISM, // 10
+        AVALANCHE, // 43114
+        LUX_CCHAIN, // 96369
+        LUX_HANZO, // TBD
+        LUX_ZOO, // TBD
+        SOLANA, // Non-EVM
+        TON // Non-EVM
     }
 
     /// @notice Protocol types
     enum ProtocolType {
-        DEX_AMM,        // Uniswap, Raydium, STON.fi
-        DEX_ORDERBOOK,  // dYdX, Serum
+        DEX_AMM, // Uniswap, Raydium, STON.fi
+        DEX_ORDERBOOK, // dYdX, Serum
         DEX_AGGREGATOR, // 1inch, Jupiter
-        LENDING,        // Aave, Compound, Solend
-        PERPS,          // GMX, Aster
-        STAKING,        // Lido, Marinade
-        BRIDGE          // Warp, Wormhole
+        LENDING, // Aave, Compound, Solend
+        PERPS, // GMX, Aster
+        STAKING, // Lido, Marinade
+        BRIDGE // Warp, Wormhole
     }
 
     /// @notice Swap quote
@@ -43,9 +43,9 @@ interface ILiquidityEngine {
         address tokenOut;
         uint256 amountIn;
         uint256 amountOut;
-        uint256 priceImpact;    // basis points
+        uint256 priceImpact; // basis points
         uint256 gasEstimate;
-        bytes route;            // encoded route data
+        bytes route; // encoded route data
         uint256 validUntil;
     }
 
@@ -53,9 +53,9 @@ interface ILiquidityEngine {
     struct LendingQuote {
         address token;
         uint256 amount;
-        uint256 apy;            // annual percentage yield (1e18 = 100%)
+        uint256 apy; // annual percentage yield (1e18 = 100%)
         uint256 utilizationRate;
-        uint256 ltv;            // loan-to-value ratio
+        uint256 ltv; // loan-to-value ratio
         uint256 liquidationThreshold;
     }
 
@@ -66,7 +66,7 @@ interface ILiquidityEngine {
         address token1;
         uint256 reserve0;
         uint256 reserve1;
-        uint256 fee;            // basis points
+        uint256 fee; // basis points
         uint256 tvl;
         uint256 volume24h;
     }
@@ -85,34 +85,16 @@ interface ILiquidityEngine {
     );
 
     event LiquidityAdded(
-        address indexed user,
-        address indexed pool,
-        uint256 amount0,
-        uint256 amount1,
-        uint256 liquidity
+        address indexed user, address indexed pool, uint256 amount0, uint256 amount1, uint256 liquidity
     );
 
     event LiquidityRemoved(
-        address indexed user,
-        address indexed pool,
-        uint256 amount0,
-        uint256 amount1,
-        uint256 liquidity
+        address indexed user, address indexed pool, uint256 amount0, uint256 amount1, uint256 liquidity
     );
 
-    event Supplied(
-        address indexed user,
-        address indexed token,
-        uint256 amount,
-        bytes32 protocol
-    );
+    event Supplied(address indexed user, address indexed token, uint256 amount, bytes32 protocol);
 
-    event Borrowed(
-        address indexed user,
-        address indexed token,
-        uint256 amount,
-        bytes32 protocol
-    );
+    event Borrowed(address indexed user, address indexed token, uint256 amount, bytes32 protocol);
 
     /*//////////////////////////////////////////////////////////////
                               SWAP FUNCTIONS
@@ -120,11 +102,7 @@ interface ILiquidityEngine {
 
     /// @notice Get best swap quote across all protocols
     /// @dev Some protocols (e.g., Uniswap Quoter) require state simulation
-    function getSwapQuote(
-        address tokenIn,
-        address tokenOut,
-        uint256 amountIn
-    ) external returns (SwapQuote memory quote);
+    function getSwapQuote(address tokenIn, address tokenOut, uint256 amountIn) external returns (SwapQuote memory quote);
 
     /// @notice Execute swap with best route
     function swap(
@@ -178,25 +156,16 @@ interface ILiquidityEngine {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Get lending quote
-    function getLendingQuote(
-        address token,
-        uint256 amount,
-        bool isSupply
-    ) external view returns (LendingQuote memory quote);
+    function getLendingQuote(address token, uint256 amount, bool isSupply)
+        external
+        view
+        returns (LendingQuote memory quote);
 
     /// @notice Supply tokens to lending protocol
-    function supply(
-        address token,
-        uint256 amount,
-        address onBehalfOf
-    ) external returns (uint256 shares);
+    function supply(address token, uint256 amount, address onBehalfOf) external returns (uint256 shares);
 
     /// @notice Withdraw tokens from lending protocol
-    function withdraw(
-        address token,
-        uint256 amount,
-        address recipient
-    ) external returns (uint256 withdrawn);
+    function withdraw(address token, uint256 amount, address recipient) external returns (uint256 withdrawn);
 
     /// @notice Borrow tokens from lending protocol
     function borrow(
@@ -204,15 +173,13 @@ interface ILiquidityEngine {
         uint256 amount,
         uint256 rateMode, // 1 = stable, 2 = variable
         address onBehalfOf
-    ) external;
+    )
+        external;
 
     /// @notice Repay borrowed tokens
-    function repay(
-        address token,
-        uint256 amount,
-        uint256 rateMode,
-        address onBehalfOf
-    ) external returns (uint256 repaid);
+    function repay(address token, uint256 amount, uint256 rateMode, address onBehalfOf)
+        external
+        returns (uint256 repaid);
 
     /*//////////////////////////////////////////////////////////////
                               VIEW FUNCTIONS

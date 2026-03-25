@@ -2,15 +2,15 @@
 pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
-import {Markets} from "../../contracts/markets/Markets.sol";
-import {AdaptiveCurveRateModel} from "../../contracts/markets/ratemodel/AdaptiveCurveRateModel.sol";
-import {MockChainlinkOracle} from "../../contracts/mocks/MockChainlinkOracle.sol";
-import {MarketParams, Id} from "../../contracts/markets/interfaces/IMarkets.sol";
-import {MarketParamsLib} from "../../contracts/markets/libraries/MarketParamsLib.sol";
-import {ILRC20} from "../../contracts/tokens/interfaces/ILRC20.sol";
+import { Markets } from "../../contracts/markets/Markets.sol";
+import { AdaptiveCurveRateModel } from "../../contracts/markets/ratemodel/AdaptiveCurveRateModel.sol";
+import { MockChainlinkOracle } from "../../contracts/mocks/MockChainlinkOracle.sol";
+import { MarketParams, Id } from "../../contracts/markets/interfaces/IMarkets.sol";
+import { MarketParamsLib } from "../../contracts/markets/libraries/MarketParamsLib.sol";
+import { ILRC20 } from "../../contracts/tokens/interfaces/ILRC20.sol";
 
 // Shared test mocks
-import {MockERC20Minimal as MockERC20} from "./TestMocks.sol";
+import { MockERC20Minimal as MockERC20 } from "./TestMocks.sol";
 
 /// @title MarketsTest
 /// @notice Comprehensive test suite for Lux Markets lending protocol
@@ -50,12 +50,37 @@ contract MarketsTest is Test {
     // Events for testing
     event MarketCreated(Id indexed id, MarketParams marketParams);
     event Supply(Id indexed id, address indexed caller, address indexed onBehalf, uint256 assets, uint256 shares);
-    event Withdraw(Id indexed id, address indexed caller, address indexed onBehalf, address receiver, uint256 assets, uint256 shares);
-    event Borrow(Id indexed id, address indexed caller, address indexed onBehalf, address receiver, uint256 assets, uint256 shares);
+    event Withdraw(
+        Id indexed id,
+        address indexed caller,
+        address indexed onBehalf,
+        address receiver,
+        uint256 assets,
+        uint256 shares
+    );
+    event Borrow(
+        Id indexed id,
+        address indexed caller,
+        address indexed onBehalf,
+        address receiver,
+        uint256 assets,
+        uint256 shares
+    );
     event Repay(Id indexed id, address indexed caller, address indexed onBehalf, uint256 assets, uint256 shares);
     event SupplyCollateral(Id indexed id, address indexed caller, address indexed onBehalf, uint256 assets);
-    event WithdrawCollateral(Id indexed id, address indexed caller, address indexed onBehalf, address receiver, uint256 assets);
-    event Liquidate(Id indexed id, address indexed caller, address indexed borrower, uint256 repaidAssets, uint256 repaidShares, uint256 seizedAssets, uint256 badDebtAssets, uint256 badDebtShares);
+    event WithdrawCollateral(
+        Id indexed id, address indexed caller, address indexed onBehalf, address receiver, uint256 assets
+    );
+    event Liquidate(
+        Id indexed id,
+        address indexed caller,
+        address indexed borrower,
+        uint256 repaidAssets,
+        uint256 repaidShares,
+        uint256 seizedAssets,
+        uint256 badDebtAssets,
+        uint256 badDebtShares
+    );
     event AccrueInterest(Id indexed id, uint256 prevBorrowRate, uint256 interest, uint256 feeShares);
 
     function setUp() public {

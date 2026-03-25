@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IWarp, WarpLib} from "../../bridge/interfaces/IWarpMessenger.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IWarp, WarpLib } from "../../bridge/interfaces/IWarpMessenger.sol";
 
 /**
  * @title Hub
@@ -38,18 +38,18 @@ contract Hub is Ownable, ReentrancyGuard {
 
     /// @notice Cross-chain market data
     struct Market {
-        bytes32 marketId;           // Unique market identifier
-        bytes32 sourceChainId;      // Chain where market was created
-        address sourceMarket;       // Market contract on source chain
-        bytes32 questionId;         // CTF question ID
-        bytes32 conditionId;        // Claims condition ID
-        address oracle;             // Oracle adapter address (e.g., Resolver)
-        uint256 outcomeSlotCount;   // Number of outcomes
-        uint256 createdAt;          // Registration timestamp
-        uint256 resolvedAt;         // Resolution timestamp (0 if unresolved)
-        MarketStatus status;        // Current status
-        uint256[] payouts;          // Resolution payouts (empty until resolved)
-        bytes ancillaryData;        // Market description/metadata
+        bytes32 marketId; // Unique market identifier
+        bytes32 sourceChainId; // Chain where market was created
+        address sourceMarket; // Market contract on source chain
+        bytes32 questionId; // CTF question ID
+        bytes32 conditionId; // Claims condition ID
+        address oracle; // Oracle adapter address (e.g., Resolver)
+        uint256 outcomeSlotCount; // Number of outcomes
+        uint256 createdAt; // Registration timestamp
+        uint256 resolvedAt; // Resolution timestamp (0 if unresolved)
+        MarketStatus status; // Current status
+        uint256[] payouts; // Resolution payouts (empty until resolved)
+        bytes ancillaryData; // Market description/metadata
     }
 
     /// @notice Warp message types
@@ -63,7 +63,7 @@ contract Hub is Ownable, ReentrancyGuard {
     /// @notice Registered spoke chain
     struct SpokeChain {
         bytes32 chainId;
-        address hubContract;        // WarpMarketHub on spoke chain
+        address hubContract; // WarpMarketHub on spoke chain
         bool active;
     }
 
@@ -105,35 +105,17 @@ contract Hub is Ownable, ReentrancyGuard {
         uint256 outcomeSlotCount
     );
 
-    event MarketStatusUpdated(
-        bytes32 indexed marketId,
-        MarketStatus oldStatus,
-        MarketStatus newStatus
-    );
+    event MarketStatusUpdated(bytes32 indexed marketId, MarketStatus oldStatus, MarketStatus newStatus);
 
-    event MarketResolved(
-        bytes32 indexed marketId,
-        uint256[] payouts,
-        uint256 timestamp
-    );
+    event MarketResolved(bytes32 indexed marketId, uint256[] payouts, uint256 timestamp);
 
-    event SpokeChainRegistered(
-        bytes32 indexed chainId,
-        address hubContract
-    );
+    event SpokeChainRegistered(bytes32 indexed chainId, address hubContract);
 
-    event SpokeChainUpdated(
-        bytes32 indexed chainId,
-        bool active
-    );
+    event SpokeChainUpdated(bytes32 indexed chainId, bool active);
 
     event OracleRelaySet(address indexed oracleRelay);
 
-    event ResolutionBroadcast(
-        bytes32 indexed marketId,
-        bytes32 indexed targetChainId,
-        bytes32 messageId
-    );
+    event ResolutionBroadcast(bytes32 indexed marketId, bytes32 indexed targetChainId, bytes32 messageId);
 
     // ═══════════════════════════════════════════════════════════════════════
     // ERRORS
@@ -209,8 +191,7 @@ contract Hub is Ownable, ReentrancyGuard {
      * @notice Handle market registration from spoke chain
      */
     function _handleRegisterMarket(bytes32 sourceChainId, bytes memory payload) internal {
-        (
-            ,  // MessageType
+        (, // MessageType
             bytes32 marketId,
             address sourceMarket,
             bytes32 questionId,
@@ -243,22 +224,14 @@ contract Hub is Ownable, ReentrancyGuard {
         marketsByChain[sourceChainId].push(marketId);
         totalMarkets++;
 
-        emit MarketRegistered(
-            marketId,
-            sourceChainId,
-            sourceMarket,
-            questionId,
-            conditionId,
-            outcomeSlotCount
-        );
+        emit MarketRegistered(marketId, sourceChainId, sourceMarket, questionId, conditionId, outcomeSlotCount);
     }
 
     /**
      * @notice Handle market update from spoke chain
      */
     function _handleUpdateMarket(bytes memory payload) internal {
-        (
-            ,  // MessageType
+        (, // MessageType
             bytes32 marketId,
             MarketStatus newStatus
         ) = abi.decode(payload, (MessageType, bytes32, MarketStatus));
@@ -278,7 +251,7 @@ contract Hub is Ownable, ReentrancyGuard {
      */
     function _handleSyncState(bytes memory payload) internal {
         // Future: Handle state sync for recovery scenarios
-        (payload);  // Suppress unused warning
+        (payload); // Suppress unused warning
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -324,14 +297,7 @@ contract Hub is Ownable, ReentrancyGuard {
         marketsByChain[thisChainId].push(marketId);
         totalMarkets++;
 
-        emit MarketRegistered(
-            marketId,
-            thisChainId,
-            msg.sender,
-            questionId,
-            conditionId,
-            outcomeSlotCount
-        );
+        emit MarketRegistered(marketId, thisChainId, msg.sender, questionId, conditionId, outcomeSlotCount);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -343,10 +309,7 @@ contract Hub is Ownable, ReentrancyGuard {
      * @param marketId Market ID
      * @param payouts Resolution payouts
      */
-    function recordResolution(
-        bytes32 marketId,
-        uint256[] calldata payouts
-    ) external nonReentrant {
+    function recordResolution(bytes32 marketId, uint256[] calldata payouts) external nonReentrant {
         // Only oracle relay can record resolutions
         if (msg.sender != oracleRelay) revert UnauthorizedSender();
 
@@ -376,10 +339,11 @@ contract Hub is Ownable, ReentrancyGuard {
      * @param targetChainId Target spoke chain
      * @return messageId Warp message ID
      */
-    function broadcastResolution(
-        bytes32 marketId,
-        bytes32 targetChainId
-    ) external nonReentrant returns (bytes32 messageId) {
+    function broadcastResolution(bytes32 marketId, bytes32 targetChainId)
+        external
+        nonReentrant
+        returns (bytes32 messageId)
+    {
         Market storage market = markets[marketId];
         if (market.status != MarketStatus.Resolved) revert MarketNotFound();
 
@@ -388,11 +352,7 @@ contract Hub is Ownable, ReentrancyGuard {
 
         // Encode resolution message
         bytes memory payload = abi.encode(
-            MessageType.RESOLUTION_BROADCAST,
-            marketId,
-            market.questionId,
-            market.conditionId,
-            market.payouts
+            MessageType.RESOLUTION_BROADCAST, marketId, market.questionId, market.conditionId, market.payouts
         );
 
         // Send via Warp
@@ -410,17 +370,10 @@ contract Hub is Ownable, ReentrancyGuard {
      * @param chainId Spoke chain's blockchain ID
      * @param hubContract Hub contract address on spoke chain
      */
-    function registerSpokeChain(
-        bytes32 chainId,
-        address hubContract
-    ) external onlyOwner {
+    function registerSpokeChain(bytes32 chainId, address hubContract) external onlyOwner {
         if (hubContract == address(0)) revert ZeroAddress();
 
-        spokeChains[chainId] = SpokeChain({
-            chainId: chainId,
-            hubContract: hubContract,
-            active: true
-        });
+        spokeChains[chainId] = SpokeChain({ chainId: chainId, hubContract: hubContract, active: true });
 
         spokeChainList.push(chainId);
 
@@ -432,10 +385,7 @@ contract Hub is Ownable, ReentrancyGuard {
      * @param chainId Spoke chain's blockchain ID
      * @param active Active status
      */
-    function setSpokeChainActive(
-        bytes32 chainId,
-        bool active
-    ) external onlyOwner {
+    function setSpokeChainActive(bytes32 chainId, bool active) external onlyOwner {
         spokeChains[chainId].active = active;
         emit SpokeChainUpdated(chainId, active);
     }
@@ -455,10 +405,7 @@ contract Hub is Ownable, ReentrancyGuard {
      * @param marketId Market ID
      * @param newStatus New status
      */
-    function setMarketStatus(
-        bytes32 marketId,
-        MarketStatus newStatus
-    ) external onlyOwner {
+    function setMarketStatus(bytes32 marketId, MarketStatus newStatus) external onlyOwner {
         Market storage market = markets[marketId];
         if (market.status == MarketStatus.Unknown) revert MarketNotFound();
 

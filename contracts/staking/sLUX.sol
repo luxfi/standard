@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title sLUX - Staked LUX
@@ -106,7 +106,7 @@ contract sLUX is ERC20, ReentrancyGuard, Ownable {
     /// @return sLuxMinted Amount of sLUX minted
     function stake(uint256 luxAmount) external nonReentrant returns (uint256 sLuxMinted) {
         require(luxAmount >= MIN_STAKE, "sLUX: below minimum stake");
-        
+
         // Accrue rewards first
         _accrueRewards();
 
@@ -195,10 +195,7 @@ contract sLUX is ERC20, ReentrancyGuard, Ownable {
     /// @param amount Amount of LUX to add as rewards
     function addRewards(uint256 amount) external {
         // Allow protocolVault or owner (for testing/bootstrapping)
-        require(
-            msg.sender == protocolVault || msg.sender == owner(),
-            "sLUX: not authorized"
-        );
+        require(msg.sender == protocolVault || msg.sender == owner(), "sLUX: not authorized");
         lux.safeTransferFrom(msg.sender, address(this), amount);
         totalStaked += amount;
         emit RewardsDistributed(amount);
@@ -249,10 +246,7 @@ contract sLUX is ERC20, ReentrancyGuard, Ownable {
     /// @notice Queue rewards for drip distribution (called by Protocol Vault)
     /// @param amount Amount of LUX to queue for next accrual
     function queueRewards(uint256 amount) external {
-        require(
-            msg.sender == protocolVault || msg.sender == owner(),
-            "sLUX: not authorized"
-        );
+        require(msg.sender == protocolVault || msg.sender == owner(), "sLUX: not authorized");
         lux.safeTransferFrom(msg.sender, address(this), amount);
         pendingRewards += amount;
     }
@@ -261,13 +255,13 @@ contract sLUX is ERC20, ReentrancyGuard, Ownable {
     /// @dev For testnet/development only - simulates Protocol Vault distributions
     function simulateYield() external onlyOwner {
         if (totalStaked == 0) return;
-        
+
         uint256 timeElapsed = block.timestamp - lastRewardTime;
         if (timeElapsed == 0) return;
 
         // Calculate simulated rewards based on target APY
         uint256 rewards = (totalStaked * apy * timeElapsed) / (365 days * 10000);
-        
+
         if (rewards > 0) {
             totalStaked += rewards;
             lastRewardTime = block.timestamp;

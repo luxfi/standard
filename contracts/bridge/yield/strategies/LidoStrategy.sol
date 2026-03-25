@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.24;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title Lido stETH Yield Strategies
 /// @notice Yield strategies for Lido liquid staking and Curve LP staking
@@ -63,15 +63,28 @@ interface ILidoWithdrawalQueue {
         bool isFinalized;
         bool isClaimed;
     }
-    function requestWithdrawals(uint256[] calldata _amounts, address _owner) external returns (uint256[] memory requestIds);
-    function requestWithdrawalsWstETH(uint256[] calldata _amounts, address _owner) external returns (uint256[] memory requestIds);
+    function requestWithdrawals(uint256[] calldata _amounts, address _owner)
+        external
+        returns (uint256[] memory requestIds);
+    function requestWithdrawalsWstETH(uint256[] calldata _amounts, address _owner)
+        external
+        returns (uint256[] memory requestIds);
     function claimWithdrawals(uint256[] calldata _requestIds, uint256[] calldata _hints) external;
     function claimWithdrawal(uint256 _requestId) external;
-    function getWithdrawalStatus(uint256[] calldata _requestIds) external view returns (WithdrawalRequestStatus[] memory statuses);
+    function getWithdrawalStatus(uint256[] calldata _requestIds)
+        external
+        view
+        returns (WithdrawalRequestStatus[] memory statuses);
     function getLastFinalizedRequestId() external view returns (uint256);
     function getLastRequestId() external view returns (uint256);
-    function findCheckpointHints(uint256[] calldata _requestIds, uint256 _firstIndex, uint256 _lastIndex) external view returns (uint256[] memory hintIds);
-    function getClaimableEther(uint256[] calldata _requestIds, uint256[] calldata _hints) external view returns (uint256[] memory claimableEth);
+    function findCheckpointHints(uint256[] calldata _requestIds, uint256 _firstIndex, uint256 _lastIndex)
+        external
+        view
+        returns (uint256[] memory hintIds);
+    function getClaimableEther(uint256[] calldata _requestIds, uint256[] calldata _hints)
+        external
+        view
+        returns (uint256[] memory claimableEth);
     function MIN_STETH_WITHDRAWAL_AMOUNT() external view returns (uint256);
     function MAX_STETH_WITHDRAWAL_AMOUNT() external view returns (uint256);
 }
@@ -251,7 +264,16 @@ contract StETHStrategy is Ownable, ReentrancyGuard {
     // =========================================================================
 
     /// @notice
-    function deposit(uint256 amount, bytes calldata /* data */) external onlyVault whenActive nonReentrant returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        whenActive
+        nonReentrant
+        returns (uint256 shares)
+    {
         if (amount == 0) revert ZeroAmount();
 
         ILido steth = ILido(STETH);
@@ -266,7 +288,7 @@ contract StETHStrategy is Ownable, ReentrancyGuard {
         uint256 sharesBefore = steth.sharesOf(address(this));
 
         // Submit ETH to Lido
-        uint256 stethReceived = steth.submit{value: amount}(referral);
+        uint256 stethReceived = steth.submit{ value: amount }(referral);
 
         // Calculate actual shares received
         uint256 sharesAfter = steth.sharesOf(address(this));
@@ -278,15 +300,24 @@ contract StETHStrategy is Ownable, ReentrancyGuard {
     }
 
     /// @notice
-    function withdraw(uint256 amount, address recipient, bytes calldata /* data */) external onlyVault nonReentrant returns (uint256 assets) {
+    function withdraw(
+        uint256 amount,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        nonReentrant
+        returns (uint256 assets)
+    {
         if (amount == 0) revert ZeroAmount();
-        
+
         ILido steth = ILido(STETH);
-        
+
         // Convert amount to shares if needed
         uint256 sharesToWithdraw = steth.getSharesByPooledEth(amount);
         if (sharesToWithdraw > stethShares) sharesToWithdraw = stethShares;
-        
+
         assets = steth.getPooledEthByShares(sharesToWithdraw);
 
         ILidoWithdrawalQueue queue = ILidoWithdrawalQueue(WITHDRAWAL_QUEUE);
@@ -380,7 +411,11 @@ contract StETHStrategy is Ownable, ReentrancyGuard {
 
     /// @notice Get pending withdrawal status
     /// @return statuses Array of withdrawal statuses
-    function getPendingWithdrawals() external view returns (ILidoWithdrawalQueue.WithdrawalRequestStatus[] memory statuses) {
+    function getPendingWithdrawals()
+        external
+        view
+        returns (ILidoWithdrawalQueue.WithdrawalRequestStatus[] memory statuses)
+    {
         if (pendingWithdrawals.length == 0) {
             return new ILidoWithdrawalQueue.WithdrawalRequestStatus[](0);
         }
@@ -435,11 +470,11 @@ contract StETHStrategy is Ownable, ReentrancyGuard {
     // =========================================================================
 
     /// @notice Split amount into valid withdrawal chunks
-    function _splitWithdrawalAmounts(
-        uint256 amount,
-        uint256 minAmount,
-        uint256 maxAmount
-    ) internal pure returns (uint256[] memory amounts) {
+    function _splitWithdrawalAmounts(uint256 amount, uint256 minAmount, uint256 maxAmount)
+        internal
+        pure
+        returns (uint256[] memory amounts)
+    {
         if (amount < minAmount) {
             amounts = new uint256[](1);
             amounts[0] = minAmount;
@@ -461,8 +496,7 @@ contract StETHStrategy is Ownable, ReentrancyGuard {
         if (pendingWithdrawals.length == 0) return 0;
 
         ILidoWithdrawalQueue queue = ILidoWithdrawalQueue(WITHDRAWAL_QUEUE);
-        ILidoWithdrawalQueue.WithdrawalRequestStatus[] memory statuses = 
-            queue.getWithdrawalStatus(pendingWithdrawals);
+        ILidoWithdrawalQueue.WithdrawalRequestStatus[] memory statuses = queue.getWithdrawalStatus(pendingWithdrawals);
 
         uint256 balanceBefore = address(this).balance;
 
@@ -487,7 +521,7 @@ contract StETHStrategy is Ownable, ReentrancyGuard {
 
         // Forward claimed ETH to vault
         if (claimed > 0 && vault != address(0)) {
-            (bool success, ) = vault.call{value: claimed}("");
+            (bool success,) = vault.call{ value: claimed }("");
             require(success, "ETH transfer failed");
         }
     }
@@ -516,7 +550,7 @@ contract StETHStrategy is Ownable, ReentrancyGuard {
     }
 
     /// @notice Receive ETH from withdrawal claims
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // =============================================================================
@@ -653,7 +687,16 @@ contract WstETHStrategy is Ownable, ReentrancyGuard {
     // =========================================================================
 
     /// @notice
-    function deposit(uint256 amount, bytes calldata /* data */) external onlyVault whenActive nonReentrant returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        whenActive
+        nonReentrant
+        returns (uint256 shares)
+    {
         if (amount == 0) revert ZeroAmount();
 
         ILido steth = ILido(STETH);
@@ -662,7 +705,7 @@ contract WstETHStrategy is Ownable, ReentrancyGuard {
         if (steth.isStakingPaused()) revert StakingPaused();
 
         // Submit ETH to Lido
-        uint256 stethReceived = steth.submit{value: amount}(referral);
+        uint256 stethReceived = steth.submit{ value: amount }(referral);
         emit Staked(msg.sender, amount, stethReceived);
 
         // Approve and wrap to wstETH
@@ -675,11 +718,20 @@ contract WstETHStrategy is Ownable, ReentrancyGuard {
     }
 
     /// @notice
-    function withdraw(uint256 amount, address recipient, bytes calldata /* data */) external onlyVault nonReentrant returns (uint256 assets) {
+    function withdraw(
+        uint256 amount,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        nonReentrant
+        returns (uint256 assets)
+    {
         if (amount == 0) revert ZeroAmount();
 
         IWstETH wsteth = IWstETH(WSTETH);
-        
+
         // Convert ETH amount to wstETH shares
         uint256 wstethAmount = wsteth.getWstETHByStETH(amount);
         if (wstethAmount > wstethBalance) revert InsufficientBalance(wstethAmount, wstethBalance);
@@ -810,8 +862,7 @@ contract WstETHStrategy is Ownable, ReentrancyGuard {
         if (pendingWithdrawals.length == 0) return 0;
 
         ILidoWithdrawalQueue queue = ILidoWithdrawalQueue(WITHDRAWAL_QUEUE);
-        ILidoWithdrawalQueue.WithdrawalRequestStatus[] memory statuses = 
-            queue.getWithdrawalStatus(pendingWithdrawals);
+        ILidoWithdrawalQueue.WithdrawalRequestStatus[] memory statuses = queue.getWithdrawalStatus(pendingWithdrawals);
 
         uint256 balanceBefore = address(this).balance;
 
@@ -832,13 +883,13 @@ contract WstETHStrategy is Ownable, ReentrancyGuard {
         claimed = address(this).balance - balanceBefore;
 
         if (claimed > 0 && vault != address(0)) {
-            (bool success, ) = vault.call{value: claimed}("");
+            (bool success,) = vault.call{ value: claimed }("");
             require(success, "ETH transfer failed");
         }
     }
 
     /// @notice Receive ETH from withdrawal claims
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // =============================================================================
@@ -992,13 +1043,9 @@ contract LidoCurveStrategy is Ownable, ReentrancyGuard {
     /// @param _vault Initial vault address
     /// @param _referral Lido referral address
     /// @param _slippageTolerance Initial slippage tolerance in BPS (e.g., 50 = 0.5%)
-    constructor(
-        address _vault, 
-        address _referral,
-        uint256 _slippageTolerance
-    ) Ownable(msg.sender) {
+    constructor(address _vault, address _referral, uint256 _slippageTolerance) Ownable(msg.sender) {
         if (_slippageTolerance > 500) revert InvalidSlippageTolerance(_slippageTolerance);
-        
+
         vault = _vault;
         referral = _referral;
         rewardRecipient = _vault;
@@ -1025,7 +1072,7 @@ contract LidoCurveStrategy is Ownable, ReentrancyGuard {
         uint256 ethForSteth = amount - ethForLP;
 
         // Submit half to Lido
-        uint256 stethReceived = steth.submit{value: ethForSteth}(referral);
+        uint256 stethReceived = steth.submit{ value: ethForSteth }(referral);
 
         // Approve stETH for Curve pool
         steth.approve(CURVE_POOL, stethReceived);
@@ -1036,7 +1083,7 @@ contract LidoCurveStrategy is Ownable, ReentrancyGuard {
         uint256 minLP = (expectedLP * (BPS - slippageTolerance)) / BPS;
 
         // Add liquidity to Curve
-        uint256 lpReceived = pool.add_liquidity{value: ethForLP}(amounts, minLP);
+        uint256 lpReceived = pool.add_liquidity{ value: ethForLP }(amounts, minLP);
         emit LiquidityAdded(ethForLP, stethReceived, lpReceived);
 
         // Approve and stake in gauge
@@ -1050,7 +1097,16 @@ contract LidoCurveStrategy is Ownable, ReentrancyGuard {
     }
 
     /// @notice
-    function withdraw(uint256 amount, address recipient, bytes calldata /* data */) external onlyVault nonReentrant returns (uint256 assets) {
+    function withdraw(
+        uint256 amount,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        onlyVault
+        nonReentrant
+        returns (uint256 assets)
+    {
         if (amount == 0) revert ZeroAmount();
 
         ICurveStETHPool pool = ICurveStETHPool(CURVE_POOL);
@@ -1059,7 +1115,7 @@ contract LidoCurveStrategy is Ownable, ReentrancyGuard {
         // Calculate LP tokens to withdraw for the requested ETH amount
         uint256 vPrice = pool.get_virtual_price();
         uint256 lpToWithdraw = (amount * 1e18) / vPrice;
-        
+
         if (lpToWithdraw > stakedLP) revert InsufficientLPBalance(lpToWithdraw, stakedLP);
 
         // Unstake from gauge
@@ -1076,7 +1132,7 @@ contract LidoCurveStrategy is Ownable, ReentrancyGuard {
 
         // Forward ETH to recipient
         if (assets > 0 && recipient != address(0)) {
-            (bool success, ) = recipient.call{value: assets}("");
+            (bool success,) = recipient.call{ value: assets }("");
             require(success, "ETH transfer failed");
         }
 
@@ -1238,7 +1294,7 @@ contract LidoCurveStrategy is Ownable, ReentrancyGuard {
         // Transfer any ETH
         uint256 ethBalance = address(this).balance;
         if (ethBalance > 0) {
-            (bool success, ) = recipient.call{value: ethBalance}("");
+            (bool success,) = recipient.call{ value: ethBalance }("");
             require(success, "ETH transfer failed");
         }
 
@@ -1284,7 +1340,7 @@ contract LidoCurveStrategy is Ownable, ReentrancyGuard {
     }
 
     /// @notice Receive ETH
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // =============================================================================
@@ -1294,18 +1350,13 @@ contract LidoCurveStrategy is Ownable, ReentrancyGuard {
 /// @title Lido Strategy Factory
 /// @notice Factory for deploying Lido yield strategies
 contract LidoStrategyFactory {
-
     /// @notice Strategy type identifiers
     bytes32 public constant STETH = keccak256("LIDO_STETH");
     bytes32 public constant WSTETH = keccak256("LIDO_WSTETH");
     bytes32 public constant CURVE = keccak256("LIDO_CURVE");
 
     /// @notice Emitted when a strategy is deployed
-    event StrategyDeployed(
-        bytes32 indexed strategyType,
-        address indexed strategy,
-        address indexed vault
-    );
+    event StrategyDeployed(bytes32 indexed strategyType, address indexed strategy, address indexed vault);
 
     /// @notice Deploy a new Lido strategy
     /// @param strategyType Type of strategy (STETH, WSTETH, CURVE)
@@ -1313,12 +1364,10 @@ contract LidoStrategyFactory {
     /// @param referral Lido referral address
     /// @param slippageTolerance Slippage tolerance for Curve strategy (ignored for others)
     /// @return strategy Address of deployed strategy
-    function deploy(
-        bytes32 strategyType,
-        address vault,
-        address referral,
-        uint256 slippageTolerance
-    ) external returns (address strategy) {
+    function deploy(bytes32 strategyType, address vault, address referral, uint256 slippageTolerance)
+        external
+        returns (address strategy)
+    {
         if (strategyType == STETH) {
             strategy = address(new StETHStrategy(vault, referral));
         } else if (strategyType == WSTETH) {

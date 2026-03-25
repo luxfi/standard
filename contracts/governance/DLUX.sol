@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title DLUX - DAO LUX Rebasing Governance Token
@@ -81,27 +81,34 @@ contract DLUX is ERC20, ReentrancyGuard, AccessControl {
     uint256 public constant LOCK_QUANTUM = 365 days;
 
     /// @notice Tier boosts in basis points (10000 = 1.0x)
-    uint256 public constant BOOST_BRONZE = 10000;   // 1.0x
-    uint256 public constant BOOST_SILVER = 11000;   // 1.1x
-    uint256 public constant BOOST_GOLD = 12500;     // 1.25x
-    uint256 public constant BOOST_DIAMOND = 15000;  // 1.5x
-    uint256 public constant BOOST_QUANTUM = 20000;  // 2.0x
+    uint256 public constant BOOST_BRONZE = 10000; // 1.0x
+    uint256 public constant BOOST_SILVER = 11000; // 1.1x
+    uint256 public constant BOOST_GOLD = 12500; // 1.25x
+    uint256 public constant BOOST_DIAMOND = 15000; // 1.5x
+    uint256 public constant BOOST_QUANTUM = 20000; // 2.0x
 
     // ============ Types ============
 
-    enum Tier { None, Bronze, Silver, Gold, Diamond, Quantum }
+    enum Tier {
+        None,
+        Bronze,
+        Silver,
+        Gold,
+        Diamond,
+        Quantum
+    }
 
     struct StakeInfo {
-        uint256 amount;         // Amount staked
-        uint256 lockEnd;        // Lock end timestamp
-        uint256 lastRebase;     // Last rebase claim timestamp
-        uint256 pendingRebase;  // Accumulated unclaimed rebases
-        Tier tier;              // Current tier
+        uint256 amount; // Amount staked
+        uint256 lockEnd; // Lock end timestamp
+        uint256 lastRebase; // Last rebase claim timestamp
+        uint256 pendingRebase; // Accumulated unclaimed rebases
+        Tier tier; // Current tier
     }
 
     struct DemurrageInfo {
-        uint256 balance;        // Balance subject to demurrage
-        uint256 lastUpdate;     // Last demurrage calculation timestamp
+        uint256 balance; // Balance subject to demurrage
+        uint256 lastUpdate; // Last demurrage calculation timestamp
     }
 
     // ============ State ============
@@ -160,11 +167,7 @@ contract DLUX is ERC20, ReentrancyGuard, AccessControl {
 
     // ============ Constructor ============
 
-    constructor(
-        address _lux,
-        address _treasury,
-        address admin
-    ) ERC20("DAO LUX", "DLUX") {
+    constructor(address _lux, address _treasury, address admin) ERC20("DAO LUX", "DLUX") {
         if (_lux == address(0) || _treasury == address(0) || admin == address(0)) {
             revert ZeroAddress();
         }
@@ -355,12 +358,11 @@ contract DLUX is ERC20, ReentrancyGuard, AccessControl {
 
     /// @notice Get stake details for account
     /// @param account Address to query
-    function getStake(address account) external view returns (
-        uint256 amount,
-        uint256 lockEnd,
-        Tier tier,
-        uint256 boost
-    ) {
+    function getStake(address account)
+        external
+        view
+        returns (uint256 amount, uint256 lockEnd, Tier tier, uint256 boost)
+    {
         StakeInfo memory info = stakes[account];
         return (info.amount, info.lockEnd, info.tier, _getTierBoost(info.tier));
     }
@@ -444,11 +446,10 @@ contract DLUX is ERC20, ReentrancyGuard, AccessControl {
     /// @param recipients Array of recipient addresses
     /// @param amounts Array of amounts to mint
     /// @param reason Shared reason for batch
-    function batchMint(
-        address[] calldata recipients,
-        uint256[] calldata amounts,
-        bytes32 reason
-    ) external onlyRole(MINTER_ROLE) {
+    function batchMint(address[] calldata recipients, uint256[] calldata amounts, bytes32 reason)
+        external
+        onlyRole(MINTER_ROLE)
+    {
         require(recipients.length == amounts.length, "Length mismatch");
 
         for (uint256 i = 0; i < recipients.length; i++) {

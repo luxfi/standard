@@ -56,10 +56,7 @@ interface IWarp {
      * @return message The verified warp message structure
      * @return valid True if the message is valid and verified
      */
-    function getVerifiedWarpMessage(uint32 index)
-        external
-        view
-        returns (WarpMessage memory message, bool valid);
+    function getVerifiedWarpMessage(uint32 index) external view returns (WarpMessage memory message, bool valid);
 
     /**
      * @notice Send a warp message to other chains
@@ -102,11 +99,7 @@ library WarpLib {
     /**
      * @notice Get a verified warp message and revert if invalid
      */
-    function getVerifiedMessageOrRevert(uint32 index)
-        internal
-        view
-        returns (IWarp.WarpMessage memory message)
-    {
+    function getVerifiedMessageOrRevert(uint32 index) internal view returns (IWarp.WarpMessage memory message) {
         bool valid;
         (message, valid) = IWarp(PRECOMPILE_ADDRESS).getVerifiedWarpMessage(index);
         if (!valid) revert WarpMessageNotVerified();
@@ -114,4 +107,4 @@ library WarpLib {
 }
 
 // Legacy alias for backwards compatibility
-interface IWarpMessenger is IWarp {}
+interface IWarpMessenger is IWarp { }

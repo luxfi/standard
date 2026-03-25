@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.31;
 
-import {IVotingWeight} from "../interfaces/IVotingWeight.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
-import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
-import {Checkpoints} from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
+import { IVotingWeight } from "../interfaces/IVotingWeight.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
+import { Checkpoints } from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
 
 /**
  * @title VotingWeightLRC20
@@ -67,10 +67,7 @@ contract VotingWeightLRC20 is IVotingWeight, ERC165, Initializable {
      * @param token_ The IVotes token address
      * @param weightPerToken_ Multiplier for weight calculation (1e18 = 1x)
      */
-    function initialize(
-        address token_,
-        uint256 weightPerToken_
-    ) public virtual initializer {
+    function initialize(address token_, uint256 weightPerToken_) public virtual initializer {
         VotingWeightStorage storage $ = _getStorage();
         $.token = IVotes(token_);
         $.weightPerToken = weightPerToken_;
@@ -101,11 +98,13 @@ contract VotingWeightLRC20 is IVotingWeight, ERC165, Initializable {
      * @return weight The voting weight
      * @return processedData Empty bytes (no processing needed)
      */
-    function calculateWeight(
-        address voter,
-        uint256 timestamp,
-        bytes calldata voteData
-    ) external view virtual override returns (uint256 weight, bytes memory processedData) {
+    function calculateWeight(address voter, uint256 timestamp, bytes calldata voteData)
+        external
+        view
+        virtual
+        override
+        returns (uint256 weight, bytes memory processedData)
+    {
         VotingWeightStorage storage $ = _getStorage();
 
         weight = $.token.getPastVotes(voter, timestamp) * $.weightPerToken;
@@ -121,11 +120,13 @@ contract VotingWeightLRC20 is IVotingWeight, ERC165, Initializable {
      * @param voteData Ignored for LRC20
      * @return weight The voting weight
      */
-    function getVotingWeightForPaymaster(
-        address voter,
-        uint256 timestamp,
-        bytes calldata voteData
-    ) external view virtual override returns (uint256 weight) {
+    function getVotingWeightForPaymaster(address voter, uint256 timestamp, bytes calldata voteData)
+        external
+        view
+        virtual
+        override
+        returns (uint256 weight)
+    {
         VotingWeightStorage storage $ = _getStorage();
 
         // Cast to ERC20Votes to access checkpoints
@@ -146,7 +147,9 @@ contract VotingWeightLRC20 is IVotingWeight, ERC165, Initializable {
                 break;
             }
 
-            unchecked { --i; }
+            unchecked {
+                --i;
+            }
         }
 
         return votingBalance * $.weightPerToken;
@@ -157,8 +160,6 @@ contract VotingWeightLRC20 is IVotingWeight, ERC165, Initializable {
     // ======================================================================
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return
-            interfaceId == type(IVotingWeight).interfaceId ||
-            super.supportsInterface(interfaceId);
+        return interfaceId == type(IVotingWeight).interfaceId || super.supportsInterface(interfaceId);
     }
 }

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {LSSVMPair} from "./LSSVMPair.sol";
-import {ICurve} from "./ICurve.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { LSSVMPair } from "./LSSVMPair.sol";
+import { ICurve } from "./ICurve.sol";
 
 /// @title LSSVMPairFactory - NFT AMM Factory
 /// @notice Creates and manages LSSVM pairs for NFT trading
@@ -96,18 +96,9 @@ contract LSSVMPairFactory is Ownable {
 
         // Create pair via CREATE2 with deterministic salt (nonce prevents collision)
         bytes32 salt = keccak256(abi.encodePacked(_nft, _bondingCurve, _token, _poolType, allPairs.length));
-        pair = address(new LSSVMPair{salt: salt}());
-        LSSVMPair(payable(pair)).initialize(
-            msg.sender,
-            _nft,
-            _bondingCurve,
-            _token,
-            _poolType,
-            _spotPrice,
-            _delta,
-            _fee,
-            _assetRecipient
-        );
+        pair = address(new LSSVMPair{ salt: salt }());
+        LSSVMPair(payable(pair))
+            .initialize(msg.sender, _nft, _bondingCurve, _token, _poolType, _spotPrice, _delta, _fee, _assetRecipient);
 
         // Track pair
         allPairs.push(pair);
@@ -122,7 +113,7 @@ contract LSSVMPairFactory is Ownable {
 
         // Deposit initial tokens (for ETH pools)
         if (msg.value > 0 && _token == address(0)) {
-            (bool success,) = pair.call{value: msg.value}("");
+            (bool success,) = pair.call{ value: msg.value }("");
             require(success, "LSSVMPairFactory: ETH_TRANSFER_FAILED");
         }
 
@@ -140,15 +131,7 @@ contract LSSVMPairFactory is Ownable {
     ) external payable returns (address) {
         uint256[] memory empty = new uint256[](0);
         return this.createPair(
-            _nft,
-            _bondingCurve,
-            _token,
-            LSSVMPair.PoolType.TOKEN,
-            _spotPrice,
-            _delta,
-            _fee,
-            address(0),
-            empty
+            _nft, _bondingCurve, _token, LSSVMPair.PoolType.TOKEN, _spotPrice, _delta, _fee, address(0), empty
         );
     }
 
@@ -252,12 +235,8 @@ contract LSSVMPairFactory is Ownable {
         uint256 _nonce
     ) external view returns (address) {
         bytes32 salt = keccak256(abi.encodePacked(_nft, _bondingCurve, _token, _poolType, _nonce));
-        bytes32 hash = keccak256(abi.encodePacked(
-            bytes1(0xff),
-            address(this),
-            salt,
-            keccak256(type(LSSVMPair).creationCode)
-        ));
+        bytes32 hash =
+            keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(type(LSSVMPair).creationCode)));
         return address(uint160(uint256(hash)));
     }
 }

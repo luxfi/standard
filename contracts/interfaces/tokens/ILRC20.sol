@@ -2,7 +2,7 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title ILRC20
@@ -26,4 +26,5 @@ interface ILRC20 is IERC20 {
     // - allowance(address owner, address spender) external view returns (uint256)
     // - approve(address spender, uint256 value) external returns (bool)
     // - transferFrom(address from, address to, uint256 value) external returns (bool)
-}
+
+    }

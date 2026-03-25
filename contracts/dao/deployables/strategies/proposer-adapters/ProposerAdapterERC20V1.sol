@@ -1,22 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IProposerAdapterERC20V1
-} from "../../../interfaces/deployables/IProposerAdapterERC20V1.sol";
-import {
-    IProposerAdapterBaseV1
-} from "../../../interfaces/deployables/IProposerAdapterBaseV1.sol";
-import {IVersion} from "../../../interfaces/deployables/IVersion.sol";
-import {
-    IDeploymentBlock
-} from "../../../interfaces/IDeploymentBlock.sol";
-import {
-    DeploymentBlockInitializable
-} from "../../../DeploymentBlockInitializable.sol";
-import {InitializerEventEmitter} from "../../../InitializerEventEmitter.sol";
-import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { IProposerAdapterERC20V1 } from "../../../interfaces/deployables/IProposerAdapterERC20V1.sol";
+import { IProposerAdapterBaseV1 } from "../../../interfaces/deployables/IProposerAdapterBaseV1.sol";
+import { IVersion } from "../../../interfaces/deployables/IVersion.sol";
+import { IDeploymentBlock } from "../../../interfaces/IDeploymentBlock.sol";
+import { DeploymentBlockInitializable } from "../../../DeploymentBlockInitializable.sol";
+import { InitializerEventEmitter } from "../../../InitializerEventEmitter.sol";
+import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
  * @title ProposerAdapterERC20V1
@@ -53,9 +45,13 @@ contract ProposerAdapterERC20V1 is
      * @custom:storage-location erc7201:DAO.ProposerAdapterERC20.main
      */
     struct ProposerAdapterERC20Storage {
-        /** @notice The IVotes token used for voting power checks */
+        /**
+         * @notice The IVotes token used for voting power checks
+         */
         IVotes token;
-        /** @notice Minimum voting power required to create proposals */
+        /**
+         * @notice Minimum voting power required to create proposals
+         */
         uint256 proposerThreshold;
     }
 
@@ -71,11 +67,7 @@ contract ProposerAdapterERC20V1 is
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      * @return $ The storage struct for ProposerAdapterERC20V1
      */
-    function _getProposerAdapterERC20Storage()
-        internal
-        pure
-        returns (ProposerAdapterERC20Storage storage $)
-    {
+    function _getProposerAdapterERC20Storage() internal pure returns (ProposerAdapterERC20Storage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := PROPOSER_ADAPTER_ERC20_STORAGE_LOCATION
@@ -95,15 +87,11 @@ contract ProposerAdapterERC20V1 is
      * @dev The token must implement IVotes interface for voting power queries.
      * A threshold of 0 allows anyone to propose.
      */
-    function initialize(
-        address token_,
-        uint256 proposerThreshold_
-    ) public virtual override initializer {
+    function initialize(address token_, uint256 proposerThreshold_) public virtual override initializer {
         __InitializerEventEmitter_init(abi.encode(token_, proposerThreshold_));
         __DeploymentBlockInitializable_init();
 
-        ProposerAdapterERC20Storage
-            storage $ = _getProposerAdapterERC20Storage();
+        ProposerAdapterERC20Storage storage $ = _getProposerAdapterERC20Storage();
         $.token = IVotes(token_);
         $.proposerThreshold = proposerThreshold_;
     }
@@ -118,23 +106,15 @@ contract ProposerAdapterERC20V1 is
      * @inheritdoc IProposerAdapterERC20V1
      */
     function token() public view virtual override returns (address) {
-        ProposerAdapterERC20Storage
-            storage $ = _getProposerAdapterERC20Storage();
+        ProposerAdapterERC20Storage storage $ = _getProposerAdapterERC20Storage();
         return address($.token);
     }
 
     /**
      * @inheritdoc IProposerAdapterERC20V1
      */
-    function proposerThreshold()
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
-        ProposerAdapterERC20Storage
-            storage $ = _getProposerAdapterERC20Storage();
+    function proposerThreshold() public view virtual override returns (uint256) {
+        ProposerAdapterERC20Storage storage $ = _getProposerAdapterERC20Storage();
         return $.proposerThreshold;
     }
 
@@ -151,12 +131,8 @@ contract ProposerAdapterERC20V1 is
      * themselves or have others delegate to them to gain voting power.
      * The data parameter is ignored for ERC20 adapters.
      */
-    function isProposer(
-        address proposer_,
-        bytes calldata
-    ) public view virtual override returns (bool) {
-        ProposerAdapterERC20Storage
-            storage $ = _getProposerAdapterERC20Storage();
+    function isProposer(address proposer_, bytes calldata) public view virtual override returns (bool) {
+        ProposerAdapterERC20Storage storage $ = _getProposerAdapterERC20Storage();
         return $.token.getVotes(proposer_) >= $.proposerThreshold;
     }
 
@@ -183,14 +159,9 @@ contract ProposerAdapterERC20V1 is
      * @inheritdoc ERC165
      * @dev Supports IProposerAdapterERC20V1, IProposerAdapterBaseV1, IVersion, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(IProposerAdapterERC20V1).interfaceId ||
-            interfaceId_ == type(IProposerAdapterBaseV1).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(IProposerAdapterERC20V1).interfaceId
+            || interfaceId_ == type(IProposerAdapterBaseV1).interfaceId || interfaceId_ == type(IVersion).interfaceId
+            || interfaceId_ == type(IDeploymentBlock).interfaceId || super.supportsInterface(interfaceId_);
     }
 }

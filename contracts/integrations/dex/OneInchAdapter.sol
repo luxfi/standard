@@ -2,9 +2,9 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ILiquidityEngine} from "@luxfi/contracts/interfaces/liquidity/ILiquidityEngine.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ILiquidityEngine } from "@luxfi/contracts/interfaces/liquidity/ILiquidityEngine.sol";
 
 /// @title 1inch Aggregation Router V5 Interface
 interface IAggregationRouterV5 {
@@ -18,25 +18,20 @@ interface IAggregationRouterV5 {
         uint256 flags;
     }
 
-    function swap(
-        address executor,
-        SwapDescription calldata desc,
-        bytes calldata permit,
-        bytes calldata data
-    ) external payable returns (uint256 returnAmount, uint256 spentAmount);
+    function swap(address executor, SwapDescription calldata desc, bytes calldata permit, bytes calldata data)
+        external
+        payable
+        returns (uint256 returnAmount, uint256 spentAmount);
 
-    function unoswap(
-        address srcToken,
-        uint256 amount,
-        uint256 minReturn,
-        uint256[] calldata pools
-    ) external payable returns (uint256 returnAmount);
+    function unoswap(address srcToken, uint256 amount, uint256 minReturn, uint256[] calldata pools)
+        external
+        payable
+        returns (uint256 returnAmount);
 
-    function uniswapV3Swap(
-        uint256 amount,
-        uint256 minReturn,
-        uint256[] calldata pools
-    ) external payable returns (uint256 returnAmount);
+    function uniswapV3Swap(uint256 amount, uint256 minReturn, uint256[] calldata pools)
+        external
+        payable
+        returns (uint256 returnAmount);
 }
 
 /// @title OneInchAdapter
@@ -49,8 +44,7 @@ contract OneInchAdapter is ILiquidityEngine {
     //////////////////////////////////////////////////////////////*/
 
     // 1inch Router V5 (same address on all EVM chains)
-    IAggregationRouterV5 public constant ROUTER =
-        IAggregationRouterV5(0x1111111254EEB25477B68fb85Ed929f73A960582);
+    IAggregationRouterV5 public constant ROUTER = IAggregationRouterV5(0x1111111254EEB25477B68fb85Ed929f73A960582);
 
     Chain public immutable CHAIN;
 
@@ -68,9 +62,7 @@ contract OneInchAdapter is ILiquidityEngine {
 
     /// @notice Get quote from 1inch API (must be called off-chain)
     /// @dev On-chain quote not available, use 1inch API
-    function getSwapQuote(address, address, uint256)
-        external override returns (SwapQuote memory)
-    {
+    function getSwapQuote(address, address, uint256) external override returns (SwapQuote memory) {
         // 1inch requires off-chain API call for quotes
         // Return empty quote - use 1inch API directly
         revert("Use 1inch API for quotes");
@@ -105,7 +97,7 @@ contract OneInchAdapter is ILiquidityEngine {
             flags: 0
         });
 
-        (amountOut,) = ROUTER.swap{value: msg.value}(
+        (amountOut,) = ROUTER.swap{ value: msg.value }(
             address(0), // executor (use default)
             desc,
             "", // permit
@@ -127,12 +119,8 @@ contract OneInchAdapter is ILiquidityEngine {
         require(block.timestamp <= deadline, "Deadline expired");
 
         // Decode route from 1inch API
-        (
-            address executor,
-            IAggregationRouterV5.SwapDescription memory desc,
-            bytes memory permit,
-            bytes memory data
-        ) = abi.decode(route, (address, IAggregationRouterV5.SwapDescription, bytes, bytes));
+        (address executor, IAggregationRouterV5.SwapDescription memory desc, bytes memory permit, bytes memory data) =
+            abi.decode(route, (address, IAggregationRouterV5.SwapDescription, bytes, bytes));
 
         // Override recipient and minReturn
         desc.dstReceiver = payable(recipient);
@@ -143,12 +131,7 @@ contract OneInchAdapter is ILiquidityEngine {
             IERC20(desc.srcToken).forceApprove(address(ROUTER), amountIn);
         }
 
-        (amountOut,) = ROUTER.swap{value: msg.value}(
-            executor,
-            desc,
-            permit,
-            data
-        );
+        (amountOut,) = ROUTER.swap{ value: msg.value }(executor, desc, permit, data);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -156,13 +139,19 @@ contract OneInchAdapter is ILiquidityEngine {
     //////////////////////////////////////////////////////////////*/
 
     function addLiquidity(address, uint256, uint256, uint256, uint256, address, uint256)
-        external pure override returns (uint256)
+        external
+        pure
+        override
+        returns (uint256)
     {
         revert("Aggregator only");
     }
 
     function removeLiquidity(address, uint256, uint256, uint256, address, uint256)
-        external pure override returns (uint256, uint256)
+        external
+        pure
+        override
+        returns (uint256, uint256)
     {
         revert("Aggregator only");
     }
@@ -171,9 +160,7 @@ contract OneInchAdapter is ILiquidityEngine {
         revert("Aggregator only");
     }
 
-    function getLendingQuote(address, uint256, bool)
-        external pure override returns (LendingQuote memory)
-    {
+    function getLendingQuote(address, uint256, bool) external pure override returns (LendingQuote memory) {
         revert("Not a lending protocol");
     }
 
@@ -213,5 +200,5 @@ contract OneInchAdapter is ILiquidityEngine {
         return true;
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

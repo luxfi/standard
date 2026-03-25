@@ -3,7 +3,7 @@ pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
 import "./TestHelpers.sol";
-import {FHE_PRECOMPILE} from "../../contracts/fhe/FHETypes.sol";
+import { FHE_PRECOMPILE } from "../../contracts/fhe/FHETypes.sol";
 
 /**
  * @title FHETest

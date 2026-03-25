@@ -12,23 +12,23 @@ interface ISoulID {
 
     /// @notice On-chain reputation fields
     struct ReputationFields {
-        uint256 karma;                    // Karma balance snapshot
-        uint256 humanityScore;            // 0-100: Proof of humanity
-        uint256 governanceParticipation;  // 0-100: Governance activity
-        uint256 communityContribution;    // 0-100: Community contributions
-        uint256 protocolUsage;            // 0-100: Protocol interaction
-        uint256 trustLevel;               // 0-100: Composite trust rating
-        uint256 lastUpdated;              // Last update timestamp
+        uint256 karma; // Karma balance snapshot
+        uint256 humanityScore; // 0-100: Proof of humanity
+        uint256 governanceParticipation; // 0-100: Governance activity
+        uint256 communityContribution; // 0-100: Community contributions
+        uint256 protocolUsage; // 0-100: Protocol interaction
+        uint256 trustLevel; // 0-100: Composite trust rating
+        uint256 lastUpdated; // Last update timestamp
     }
 
     /// @notice Badge/attestation structure
     struct Badge {
-        bytes32 badgeType;        // Type identifier
-        address issuer;           // Who issued the badge
-        uint256 issuedAt;         // Issue timestamp
-        uint256 expiresAt;        // Expiration (0 = never)
-        bytes32 metadata;         // Additional metadata hash
-        bool revoked;             // Whether badge is revoked
+        bytes32 badgeType; // Type identifier
+        address issuer; // Who issued the badge
+        uint256 issuedAt; // Issue timestamp
+        uint256 expiresAt; // Expiration (0 = never)
+        bytes32 metadata; // Additional metadata hash
+        bool revoked; // Whether badge is revoked
     }
 
     // ============ Events ============
@@ -88,15 +88,18 @@ interface ISoulID {
      * @return trustLevel Composite trust rating
      * @return lastUpdated Last update timestamp
      */
-    function reputation(uint256 tokenId) external view returns (
-        uint256 karma,
-        uint256 humanityScore,
-        uint256 governanceParticipation,
-        uint256 communityContribution,
-        uint256 protocolUsage,
-        uint256 trustLevel,
-        uint256 lastUpdated
-    );
+    function reputation(uint256 tokenId)
+        external
+        view
+        returns (
+            uint256 karma,
+            uint256 humanityScore,
+            uint256 governanceParticipation,
+            uint256 communityContribution,
+            uint256 protocolUsage,
+            uint256 trustLevel,
+            uint256 lastUpdated
+        );
 
     /**
      * @notice Get reputation for an address
@@ -166,12 +169,9 @@ interface ISoulID {
      * @param metadata Additional metadata hash
      * @return badgeIndex Index of the issued badge
      */
-    function issueBadge(
-        uint256 tokenId,
-        bytes32 badgeType,
-        uint256 expiresAt,
-        bytes32 metadata
-    ) external returns (uint256 badgeIndex);
+    function issueBadge(uint256 tokenId, bytes32 badgeType, uint256 expiresAt, bytes32 metadata)
+        external
+        returns (uint256 badgeIndex);
 
     /**
      * @notice Revoke a badge

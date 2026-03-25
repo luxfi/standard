@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IVotingTypes} from "./IVotingTypes.sol";
+import { IVotingTypes } from "./IVotingTypes.sol";
 
 /**
  * @title IFreezeVotingGovernorV1
@@ -30,7 +30,9 @@ import {IVotingTypes} from "./IVotingTypes.sol";
 interface IFreezeVotingGovernorV1 {
     // --- Errors ---
 
-    /** @notice Thrown when attempting to use a voting config not configured in the parent's strategy */
+    /**
+     * @notice Thrown when attempting to use a voting config not configured in the parent's strategy
+     */
     error InvalidVotingConfig(uint256 configIndex);
 
     /**
@@ -47,10 +49,7 @@ interface IFreezeVotingGovernorV1 {
      * @param proposer The address that triggered the proposal creation (first voter)
      * @param strategy The parent DAO's strategy contract used for this freeze proposal
      */
-    event FreezeProposalCreated(
-        address indexed proposer,
-        address indexed strategy
-    );
+    event FreezeProposalCreated(address indexed proposer, address indexed strategy);
 
     /**
      * @notice Emitted when a freeze vote is recorded for a specific voting config
@@ -59,12 +58,7 @@ interface IFreezeVotingGovernorV1 {
      * @param weight The voting weight applied from this config
      * @param voteData The processed vote data for this config
      */
-    event FreezeVoteRecorded(
-        address indexed voter,
-        uint256 freezeProposalId,
-        uint256 weight,
-        bytes voteData
-    );
+    event FreezeVoteRecorded(address indexed voter, uint256 freezeProposalId, uint256 weight, bytes voteData);
 
     // --- Initializer Functions ---
 
@@ -98,10 +92,7 @@ interface IFreezeVotingGovernorV1 {
      * @dev Captured from parent Governor when the freeze proposal is created
      * @return freezeProposalStrategy The strategy address for the active freeze proposal
      */
-    function freezeProposalStrategy()
-        external
-        view
-        returns (address freezeProposalStrategy);
+    function freezeProposalStrategy() external view returns (address freezeProposalStrategy);
 
     // --- State-Changing Functions ---
 

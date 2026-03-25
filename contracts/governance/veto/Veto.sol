@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.31;
 
-import {IVeto} from "../interfaces/IVeto.sol";
-import {ILRC20} from "../../tokens/interfaces/ILRC20.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { IVeto } from "../interfaces/IVeto.sol";
+import { ILRC20 } from "../../tokens/interfaces/ILRC20.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @title Veto
@@ -173,8 +173,8 @@ contract Veto is IVeto, ERC165, Initializable {
         VetoStorage storage $ = _getStorage();
 
         // Check if current proposal has expired
-        bool proposalExpired = $.vetoProposalCreated == 0 ||
-            block.timestamp > $.vetoProposalCreated + $.vetoProposalPeriod;
+        bool proposalExpired =
+            $.vetoProposalCreated == 0 || block.timestamp > $.vetoProposalCreated + $.vetoProposalPeriod;
 
         // Start new proposal if needed
         if (proposalExpired) {
@@ -246,9 +246,8 @@ contract Veto is IVeto, ERC165, Initializable {
      */
     function _getVotingWeight(address voter, uint48 timestamp) internal view virtual returns (uint256) {
         // Try ERC5805 getPastVotes first
-        (bool success, bytes memory data) = _getStorage().votingToken.staticcall(
-            abi.encodeWithSignature("getPastVotes(address,uint256)", voter, timestamp)
-        );
+        (bool success, bytes memory data) = _getStorage().votingToken
+            .staticcall(abi.encodeWithSignature("getPastVotes(address,uint256)", voter, timestamp));
 
         if (success && data.length == 32) {
             return abi.decode(data, (uint256));
@@ -263,8 +262,6 @@ contract Veto is IVeto, ERC165, Initializable {
     // ======================================================================
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return
-            interfaceId == type(IVeto).interfaceId ||
-            super.supportsInterface(interfaceId);
+        return interfaceId == type(IVeto).interfaceId || super.supportsInterface(interfaceId);
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Currency, PoolKey, BalanceDelta, SwapParams, ModifyLiquidityParams} from "./Types.sol";
+import { Currency, PoolKey, BalanceDelta, SwapParams, ModifyLiquidityParams } from "./Types.sol";
 
 /// @title IPoolManager
 /// @notice Interface for the Lux DEX singleton pool manager with flash accounting
@@ -28,20 +28,10 @@ interface IPoolManager {
     // Events
     // =========================================================================
 
-    event PoolInitialized(
-        bytes32 indexed poolId,
-        PoolKey key,
-        uint160 sqrtPriceX96,
-        int24 tick
-    );
+    event PoolInitialized(bytes32 indexed poolId, PoolKey key, uint160 sqrtPriceX96, int24 tick);
 
     event Swap(
-        bytes32 indexed poolId,
-        address indexed sender,
-        int256 amount0,
-        int256 amount1,
-        uint160 sqrtPriceX96,
-        int24 tick
+        bytes32 indexed poolId, address indexed sender, int256 amount0, int256 amount1, uint160 sqrtPriceX96, int24 tick
     );
 
     event ModifyLiquidity(
@@ -54,12 +44,7 @@ interface IPoolManager {
         int256 amount1
     );
 
-    event Donate(
-        bytes32 indexed poolId,
-        address indexed sender,
-        uint256 amount0,
-        uint256 amount1
-    );
+    event Donate(bytes32 indexed poolId, address indexed sender, uint256 amount0, uint256 amount1);
 
     // =========================================================================
     // Pool Management
@@ -70,20 +55,16 @@ interface IPoolManager {
     /// @param sqrtPriceX96 The initial sqrt price (as a Q64.96 value)
     /// @param hookData Additional data passed to hooks
     /// @return tick The initial tick corresponding to the sqrt price
-    function initialize(
-        PoolKey calldata key,
-        uint160 sqrtPriceX96,
-        bytes calldata hookData
-    ) external returns (int24 tick);
+    function initialize(PoolKey calldata key, uint160 sqrtPriceX96, bytes calldata hookData)
+        external
+        returns (int24 tick);
 
     /// @notice Get the pool state for a given key
     /// @param key The pool key
     /// @return sqrtPriceX96 Current sqrt price
     /// @return tick Current tick
     /// @return liquidity Current liquidity
-    function getPool(
-        PoolKey calldata key
-    ) external view returns (uint160 sqrtPriceX96, int24 tick, uint128 liquidity);
+    function getPool(PoolKey calldata key) external view returns (uint160 sqrtPriceX96, int24 tick, uint128 liquidity);
 
     // =========================================================================
     // Flash Accounting - Lock/Unlock Pattern
@@ -120,11 +101,9 @@ interface IPoolManager {
     /// @param params The swap parameters
     /// @param hookData Additional data passed to hooks
     /// @return delta The balance delta (positive = user owes pool, negative = pool owes user)
-    function swap(
-        PoolKey calldata key,
-        SwapParams calldata params,
-        bytes calldata hookData
-    ) external returns (BalanceDelta delta);
+    function swap(PoolKey calldata key, SwapParams calldata params, bytes calldata hookData)
+        external
+        returns (BalanceDelta delta);
 
     /// @notice Add or remove liquidity from a pool
     /// @param key The pool key
@@ -132,23 +111,16 @@ interface IPoolManager {
     /// @param hookData Additional data passed to hooks
     /// @return delta0 The balance delta for currency0
     /// @return delta1 The balance delta for currency1
-    function modifyLiquidity(
-        PoolKey calldata key,
-        ModifyLiquidityParams calldata params,
-        bytes calldata hookData
-    ) external returns (BalanceDelta delta0, BalanceDelta delta1);
+    function modifyLiquidity(PoolKey calldata key, ModifyLiquidityParams calldata params, bytes calldata hookData)
+        external
+        returns (BalanceDelta delta0, BalanceDelta delta1);
 
     /// @notice Donate tokens to the pool (for protocol revenue)
     /// @param key The pool key
     /// @param amount0 The amount of currency0 to donate
     /// @param amount1 The amount of currency1 to donate
     /// @param hookData Additional data passed to hooks
-    function donate(
-        PoolKey calldata key,
-        uint256 amount0,
-        uint256 amount1,
-        bytes calldata hookData
-    ) external;
+    function donate(PoolKey calldata key, uint256 amount0, uint256 amount1, bytes calldata hookData) external;
 
     // =========================================================================
     // Flash Loans
@@ -159,12 +131,7 @@ interface IPoolManager {
     /// @param currency The currency to borrow
     /// @param amount The amount to borrow
     /// @param data Additional data passed to the callback
-    function flash(
-        address borrower,
-        Currency currency,
-        uint256 amount,
-        bytes calldata data
-    ) external;
+    function flash(address borrower, Currency currency, uint256 amount, bytes calldata data) external;
 
     // =========================================================================
     // Protocol Fees
@@ -180,10 +147,9 @@ interface IPoolManager {
     /// @param recipient The address to receive the fees
     /// @return amount0 The amount of currency0 collected
     /// @return amount1 The amount of currency1 collected
-    function collectProtocol(
-        PoolKey calldata key,
-        address recipient
-    ) external returns (uint256 amount0, uint256 amount1);
+    function collectProtocol(PoolKey calldata key, address recipient)
+        external
+        returns (uint256 amount0, uint256 amount1);
 }
 
 /// @notice Callback interface for lock holders
@@ -201,10 +167,5 @@ interface IFlashCallback {
     /// @param amount The borrowed amount
     /// @param fee The flash loan fee
     /// @param data The data passed to flash()
-    function flashCallback(
-        Currency currency,
-        uint256 amount,
-        uint256 fee,
-        bytes calldata data
-    ) external;
+    function flashCallback(Currency currency, uint256 amount, uint256 fee, bytes calldata data) external;
 }

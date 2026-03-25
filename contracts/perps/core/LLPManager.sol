@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: MIT
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import {IVault} from "./interfaces/IVault.sol";
-import {ILLPManager} from "./interfaces/ILLPManager.sol";
-import {IShortsTracker} from "./interfaces/IShortsTracker.sol";
-import {ILPUSD} from "../tokens/interfaces/ILPUSD.sol";
-import {IMintable} from "../tokens/interfaces/IMintable.sol";
-import {Governable} from "../access/Governable.sol";
+import { IVault } from "./interfaces/IVault.sol";
+import { ILLPManager } from "./interfaces/ILLPManager.sol";
+import { IShortsTracker } from "./interfaces/IShortsTracker.sol";
+import { ILPUSD } from "../tokens/interfaces/ILPUSD.sol";
+import { IMintable } from "../tokens/interfaces/IMintable.sol";
+import { Governable } from "../access/Governable.sol";
 
 pragma solidity ^0.8.31;
 
 contract LLPManager is ReentrancyGuard, Governable, ILLPManager {
-    
     using SafeERC20 for IERC20;
 
     uint256 public constant PRICE_PRECISION = 10 ** 30;
@@ -29,14 +28,14 @@ contract LLPManager is ReentrancyGuard, Governable, ILLPManager {
     address public override llp;
 
     uint256 public override cooldownDuration;
-    mapping (address => uint256) public override lastAddedAt;
+    mapping(address => uint256) public override lastAddedAt;
 
     uint256 public aumAddition;
     uint256 public aumDeduction;
 
     bool public inPrivateMode;
     uint256 public shortsTrackerAveragePriceWeight;
-    mapping (address => bool) public isHandler;
+    mapping(address => bool) public isHandler;
 
     event AddLiquidity(
         address account,
@@ -58,7 +57,9 @@ contract LLPManager is ReentrancyGuard, Governable, ILLPManager {
         uint256 amountOut
     );
 
-    constructor(address _vault, address _lpusd, address _llp, address _shortsTracker, uint256 _cooldownDuration) public {
+    constructor(address _vault, address _lpusd, address _llp, address _shortsTracker, uint256 _cooldownDuration)
+        public
+    {
         gov = msg.sender;
         vault = IVault(_vault);
         lpusd = _lpusd;
@@ -94,22 +95,45 @@ contract LLPManager is ReentrancyGuard, Governable, ILLPManager {
         aumDeduction = _aumDeduction;
     }
 
-    function addLiquidity(address _token, uint256 _amount, uint256 _minLpusd, uint256 _minLlp) external override nonReentrant returns (uint256) {
-        if (inPrivateMode) { revert("LlpManager: action not enabled"); }
+    function addLiquidity(address _token, uint256 _amount, uint256 _minLpusd, uint256 _minLlp)
+        external
+        override
+        nonReentrant
+        returns (uint256)
+    {
+        if (inPrivateMode) revert("LlpManager: action not enabled");
         return _addLiquidity(msg.sender, msg.sender, _token, _amount, _minLpusd, _minLlp);
     }
 
-    function addLiquidityForAccount(address _fundingAccount, address _account, address _token, uint256 _amount, uint256 _minLpusd, uint256 _minLlp) external override nonReentrant returns (uint256) {
+    function addLiquidityForAccount(
+        address _fundingAccount,
+        address _account,
+        address _token,
+        uint256 _amount,
+        uint256 _minLpusd,
+        uint256 _minLlp
+    ) external override nonReentrant returns (uint256) {
         _validateHandler();
         return _addLiquidity(_fundingAccount, _account, _token, _amount, _minLpusd, _minLlp);
     }
 
-    function removeLiquidity(address _tokenOut, uint256 _llpAmount, uint256 _minOut, address _receiver) external override nonReentrant returns (uint256) {
-        if (inPrivateMode) { revert("LlpManager: action not enabled"); }
+    function removeLiquidity(address _tokenOut, uint256 _llpAmount, uint256 _minOut, address _receiver)
+        external
+        override
+        nonReentrant
+        returns (uint256)
+    {
+        if (inPrivateMode) revert("LlpManager: action not enabled");
         return _removeLiquidity(msg.sender, _tokenOut, _llpAmount, _minOut, _receiver);
     }
 
-    function removeLiquidityForAccount(address _account, address _tokenOut, uint256 _llpAmount, uint256 _minOut, address _receiver) external override nonReentrant returns (uint256) {
+    function removeLiquidityForAccount(
+        address _account,
+        address _tokenOut,
+        uint256 _llpAmount,
+        uint256 _minOut,
+        address _receiver
+    ) external override nonReentrant returns (uint256) {
         _validateHandler();
         return _removeLiquidity(_account, _tokenOut, _llpAmount, _minOut, _receiver);
     }
@@ -127,7 +151,7 @@ contract LLPManager is ReentrancyGuard, Governable, ILLPManager {
         return amounts;
     }
 
-    function getAumInLpusd(bool maximise) public override view returns (uint256) {
+    function getAumInLpusd(bool maximise) public view override returns (uint256) {
         uint256 aum = getAum(maximise);
         return aum * 10 ** LPUSD_DECIMALS / PRICE_PRECISION;
     }
@@ -200,12 +224,20 @@ contract LLPManager is ReentrancyGuard, Governable, ILLPManager {
         uint256 vaultAveragePrice = vault.globalShortAveragePrices(_token);
         uint256 shortsTrackerAveragePrice = _shortsTracker.globalShortAveragePrices(_token);
 
-        return (vaultAveragePrice * (BASIS_POINTS_DIVISOR - _shortsTrackerAveragePriceWeight)
-            + shortsTrackerAveragePrice * _shortsTrackerAveragePriceWeight)
-             / BASIS_POINTS_DIVISOR;
+        return (vaultAveragePrice
+                * (BASIS_POINTS_DIVISOR - _shortsTrackerAveragePriceWeight)
+                + shortsTrackerAveragePrice
+                * _shortsTrackerAveragePriceWeight) / BASIS_POINTS_DIVISOR;
     }
 
-    function _addLiquidity(address _fundingAccount, address _account, address _token, uint256 _amount, uint256 _minLpusd, uint256 _minLlp) private returns (uint256) {
+    function _addLiquidity(
+        address _fundingAccount,
+        address _account,
+        address _token,
+        uint256 _amount,
+        uint256 _minLpusd,
+        uint256 _minLlp
+    ) private returns (uint256) {
         require(_amount > 0, "LlpManager: invalid _amount");
 
         // calculate aum before buyLPUSD
@@ -228,9 +260,17 @@ contract LLPManager is ReentrancyGuard, Governable, ILLPManager {
         return mintAmount;
     }
 
-    function _removeLiquidity(address _account, address _tokenOut, uint256 _llpAmount, uint256 _minOut, address _receiver) private returns (uint256) {
+    function _removeLiquidity(
+        address _account,
+        address _tokenOut,
+        uint256 _llpAmount,
+        uint256 _minOut,
+        address _receiver
+    ) private returns (uint256) {
         require(_llpAmount > 0, "LlpManager: invalid _llpAmount");
-        require(lastAddedAt[_account] + cooldownDuration <= block.timestamp, "LlpManager: cooldown duration not yet passed");
+        require(
+            lastAddedAt[_account] + cooldownDuration <= block.timestamp, "LlpManager: cooldown duration not yet passed"
+        );
 
         // calculate aum before sellLPUSD
         uint256 aumInLpusd = getAumInLpusd(false);

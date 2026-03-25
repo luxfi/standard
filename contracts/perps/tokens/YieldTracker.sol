@@ -2,17 +2,16 @@
 
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import {IDistributor} from "./interfaces/IDistributor.sol";
-import {IYieldTracker} from "./interfaces/IYieldTracker.sol";
-import {IYieldToken} from "./interfaces/IYieldToken.sol";
+import { IDistributor } from "./interfaces/IDistributor.sol";
+import { IYieldTracker } from "./interfaces/IYieldTracker.sol";
+import { IYieldToken } from "./interfaces/IYieldToken.sol";
 
 // code adapated from https://github.com/trusttoken/smart-contracts/blob/master/contracts/truefi/TrueFarm.sol
 contract YieldTracker is IYieldTracker, ReentrancyGuard {
-    
     using SafeERC20 for IERC20;
 
     uint256 public constant PRECISION = 1e30;
@@ -22,8 +21,8 @@ contract YieldTracker is IYieldTracker, ReentrancyGuard {
     address public distributor;
 
     uint256 public cumulativeRewardPerToken;
-    mapping (address => uint256) public claimableReward;
-    mapping (address => uint256) public previousCumulatedRewardPerToken;
+    mapping(address => uint256) public claimableReward;
+    mapping(address => uint256) public previousCumulatedRewardPerToken;
 
     event Claim(address receiver, uint256 amount);
 
@@ -64,11 +63,11 @@ contract YieldTracker is IYieldTracker, ReentrancyGuard {
         return tokenAmount;
     }
 
-    function getTokensPerInterval() external override view returns (uint256) {
+    function getTokensPerInterval() external view override returns (uint256) {
         return IDistributor(distributor).tokensPerInterval(address(this));
     }
 
-    function claimable(address _account) external override view returns (uint256) {
+    function claimable(address _account) external view override returns (uint256) {
         uint256 stakedBalance = IYieldToken(yieldToken).stakedBalance(_account);
         if (stakedBalance == 0) {
             return claimableReward[_account];
@@ -76,8 +75,8 @@ contract YieldTracker is IYieldTracker, ReentrancyGuard {
         uint256 pendingRewards = IDistributor(distributor).getDistributionAmount(address(this)) * PRECISION;
         uint256 totalStaked = IYieldToken(yieldToken).totalStaked();
         uint256 nextCumulativeRewardPerToken = cumulativeRewardPerToken + pendingRewards / totalStaked;
-        return claimableReward[_account] +
-            (stakedBalance * nextCumulativeRewardPerToken - previousCumulatedRewardPerToken[_account]) / PRECISION;
+        return claimableReward[_account]
+            + (stakedBalance * nextCumulativeRewardPerToken - previousCumulatedRewardPerToken[_account]) / PRECISION;
     }
 
     function updateRewards(address _account) public override nonReentrant {
@@ -105,8 +104,8 @@ contract YieldTracker is IYieldTracker, ReentrancyGuard {
         if (_account != address(0)) {
             uint256 stakedBalance = IYieldToken(yieldToken).stakedBalance(_account);
             uint256 _previousCumulatedReward = previousCumulatedRewardPerToken[_account];
-            uint256 _claimableReward = claimableReward[_account] +
-                (stakedBalance * _cumulativeRewardPerToken - _previousCumulatedReward) / PRECISION;
+            uint256 _claimableReward = claimableReward[_account]
+                + (stakedBalance * _cumulativeRewardPerToken - _previousCumulatedReward) / PRECISION;
 
             claimableReward[_account] = _claimableReward;
             previousCumulatedRewardPerToken[_account] = _cumulativeRewardPerToken;

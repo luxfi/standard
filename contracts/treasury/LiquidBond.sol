@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20, SafeERC20} from "@luxfi/standard/tokens/ERC20.sol";
-import {Ownable} from "@luxfi/standard/access/Access.sol";
-import {ReentrancyGuard} from "@luxfi/standard/utils/Utils.sol";
+import { IERC20, SafeERC20 } from "@luxfi/standard/tokens/ERC20.sol";
+import { Ownable } from "@luxfi/standard/access/Access.sol";
+import { ReentrancyGuard } from "@luxfi/standard/utils/Utils.sol";
 
 /**
  * @title LiquidBond
@@ -44,7 +44,12 @@ import {ReentrancyGuard} from "@luxfi/standard/utils/Utils.sol";
  */
 
 interface ICollateralRegistry {
-    enum RiskTier { TIER_1, TIER_2, TIER_3, TIER_4 }
+    enum RiskTier {
+        TIER_1,
+        TIER_2,
+        TIER_3,
+        TIER_4
+    }
 
     struct CollateralConfig {
         bool whitelisted;
@@ -68,13 +73,10 @@ interface ICollateralRegistry {
 }
 
 interface IPriceFeed {
-    function latestRoundData() external view returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    );
+    function latestRoundData()
+        external
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
     function decimals() external view returns (uint8);
 }
 
@@ -159,7 +161,7 @@ contract LiquidBond is Ownable, ReentrancyGuard {
         uint256 ashaClaimed;
         uint256 vestingStart;
         uint256 vestingEnd;
-        uint256 priceInSats;  // Price at time of purchase
+        uint256 priceInSats; // Price at time of purchase
     }
 
     /// @notice User purchases
@@ -241,11 +243,11 @@ contract LiquidBond is Ownable, ReentrancyGuard {
      * @param minAshaOut Minimum ASHA to receive (slippage protection)
      * @return ashaAmount Amount of ASHA to receive (vested)
      */
-    function bond(
-        address collateral,
-        uint256 amount,
-        uint256 minAshaOut
-    ) external nonReentrant returns (uint256 ashaAmount) {
+    function bond(address collateral, uint256 amount, uint256 minAshaOut)
+        external
+        nonReentrant
+        returns (uint256 ashaAmount)
+    {
         _advanceEpochIfNeeded();
 
         // Verify collateral is whitelisted
@@ -254,19 +256,14 @@ contract LiquidBond is Ownable, ReentrancyGuard {
         }
 
         // Get collateral config
-        ICollateralRegistry.CollateralConfig memory config =
-            collateralRegistry.getCollateral(collateral);
+        ICollateralRegistry.CollateralConfig memory config = collateralRegistry.getCollateral(collateral);
 
         // Handle swap if required
         address finalCollateral = collateral;
         uint256 finalAmount = amount;
 
         if (config.requiresSwap) {
-            (finalCollateral, finalAmount) = _swapCollateral(
-                collateral,
-                amount,
-                config.swapTarget
-            );
+            (finalCollateral, finalAmount) = _swapCollateral(collateral, amount, config.swapTarget);
         }
 
         // Calculate collateral value in sats
@@ -299,26 +296,21 @@ contract LiquidBond is Ownable, ReentrancyGuard {
         collateralRegistry.recordBond(finalCollateral, finalAmount);
 
         // Create purchase record
-        userPurchases[msg.sender].push(Purchase({
-            collateral: finalCollateral,
-            collateralAmount: finalAmount,
-            ashaOwed: ashaAmount,
-            ashaClaimed: 0,
-            vestingStart: block.timestamp,
-            vestingEnd: block.timestamp + vestingPeriod,
-            priceInSats: ashaPriceInSats
-        }));
+        userPurchases[msg.sender].push(
+            Purchase({
+                collateral: finalCollateral,
+                collateralAmount: finalAmount,
+                ashaOwed: ashaAmount,
+                ashaClaimed: 0,
+                vestingStart: block.timestamp,
+                vestingEnd: block.timestamp + vestingPeriod,
+                priceInSats: ashaPriceInSats
+            })
+        );
 
         totalAshaOwed += ashaAmount;
 
-        emit Bonded(
-            msg.sender,
-            collateral,
-            amount,
-            collateralValueSats,
-            ashaAmount,
-            discount
-        );
+        emit Bonded(msg.sender, collateral, amount, collateralValueSats, ashaAmount, discount);
     }
 
     /**
@@ -403,8 +395,7 @@ contract LiquidBond is Ownable, ReentrancyGuard {
      * @return Value in sats
      */
     function _getValueInSats(address token, uint256 amount) internal view returns (uint256) {
-        ICollateralRegistry.CollateralConfig memory config =
-            collateralRegistry.getCollateral(token);
+        ICollateralRegistry.CollateralConfig memory config = collateralRegistry.getCollateral(token);
 
         if (config.priceFeed == address(0)) {
             // No price feed - assume 1:1 with BTC for L* tokens
@@ -413,13 +404,8 @@ contract LiquidBond is Ownable, ReentrancyGuard {
         }
 
         // Get token price in USD from Chainlink with full validation
-        (
-            uint80 tokenRoundId,
-            int256 tokenPrice,
-            ,
-            uint256 tokenUpdatedAt,
-            uint80 tokenAnsweredInRound
-        ) = IPriceFeed(config.priceFeed).latestRoundData();
+        (uint80 tokenRoundId, int256 tokenPrice,, uint256 tokenUpdatedAt, uint80 tokenAnsweredInRound) =
+            IPriceFeed(config.priceFeed).latestRoundData();
         uint8 tokenDecimals = IPriceFeed(config.priceFeed).decimals();
 
         // Validate token price feed
@@ -429,13 +415,8 @@ contract LiquidBond is Ownable, ReentrancyGuard {
         if (tokenAnsweredInRound < tokenRoundId) revert StaleRound();
 
         // Get BTC price in USD with full validation
-        (
-            uint80 btcRoundId,
-            int256 btcPrice,
-            ,
-            uint256 btcUpdatedAt,
-            uint80 btcAnsweredInRound
-        ) = IPriceFeed(btcPriceFeed).latestRoundData();
+        (uint80 btcRoundId, int256 btcPrice,, uint256 btcUpdatedAt, uint80 btcAnsweredInRound) =
+            IPriceFeed(btcPriceFeed).latestRoundData();
         uint8 btcDecimals = IPriceFeed(btcPriceFeed).decimals();
 
         // Validate BTC price feed
@@ -459,11 +440,7 @@ contract LiquidBond is Ownable, ReentrancyGuard {
      * @dev H-02 fix: Uses forceApprove to handle tokens like USDT that require
      *      approval to be set to 0 before changing
      */
-    function _swapCollateral(
-        address tokenIn,
-        uint256 amountIn,
-        address tokenOut
-    ) internal returns (address, uint256) {
+    function _swapCollateral(address tokenIn, uint256 amountIn, address tokenOut) internal returns (address, uint256) {
         address router = collateralRegistry.swapRouter();
         if (router == address(0)) revert SwapFailed();
 
@@ -476,13 +453,14 @@ contract LiquidBond is Ownable, ReentrancyGuard {
         path[0] = tokenIn;
         path[1] = tokenOut;
 
-        uint256[] memory amounts = ISwapRouter(router).swapExactTokensForTokens(
-            amountIn,
-            0, // Accept any amount (user protects via minAshaOut)
-            path,
-            address(this),
-            block.timestamp
-        );
+        uint256[] memory amounts = ISwapRouter(router)
+            .swapExactTokensForTokens(
+                amountIn,
+                0, // Accept any amount (user protects via minAshaOut)
+                path,
+                address(this),
+                block.timestamp
+            );
 
         // H-02 fix: Clear approval after swap
         IERC20(tokenIn).forceApprove(router, 0);
@@ -575,10 +553,11 @@ contract LiquidBond is Ownable, ReentrancyGuard {
      * @return discount Applied discount
      * @return valueSats Collateral value in sats
      */
-    function getBondQuote(
-        address collateral,
-        uint256 amount
-    ) external view returns (uint256 ashaOut, uint256 discount, uint256 valueSats) {
+    function getBondQuote(address collateral, uint256 amount)
+        external
+        view
+        returns (uint256 ashaOut, uint256 discount, uint256 valueSats)
+    {
         if (!collateralRegistry.isWhitelisted(collateral)) {
             return (0, 0, 0);
         }

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {IMarkets, MarketParams, Id, Market} from "./interfaces/IMarkets.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {MarketParamsLib} from "./libraries/MarketParamsLib.sol";
+import { IMarkets, MarketParams, Id, Market } from "./interfaces/IMarkets.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC4626 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { MarketParamsLib } from "./libraries/MarketParamsLib.sol";
 
 /// @title Allocator
 /// @notice ERC4626 allocator that distributes deposits across multiple Markets
@@ -22,8 +22,8 @@ contract Allocator is ERC4626, ReentrancyGuard {
 
     /// @notice Market allocation configuration
     struct MarketConfig {
-        uint184 cap;        // Maximum assets to supply to this market
-        bool enabled;       // Whether market is enabled for supply
+        uint184 cap; // Maximum assets to supply to this market
+        bool enabled; // Whether market is enabled for supply
         uint64 removableAt; // Timestamp when market can be removed (0 if not pending removal)
     }
 
@@ -104,16 +104,13 @@ contract Allocator is ERC4626, ReentrancyGuard {
 
     /* CONSTRUCTOR */
 
-    constructor(
-        address _markets,
-        address _asset,
-        string memory _name,
-        string memory _symbol,
-        address _curator
-    ) ERC4626(IERC20(_asset)) ERC20(_name, _symbol) {
+    constructor(address _markets, address _asset, string memory _name, string memory _symbol, address _curator)
+        ERC4626(IERC20(_asset))
+        ERC20(_name, _symbol)
+    {
         markets = IMarkets(_markets);
         curator = _curator;
-        
+
         // Approve markets to spend allocator's assets
         IERC20(_asset).approve(_markets, type(uint256).max);
     }
@@ -146,7 +143,7 @@ contract Allocator is ERC4626, ReentrancyGuard {
     /// @notice Enable a new market for this vault
     function enableMarket(MarketParams calldata marketParams, uint256 cap) external onlyCurator {
         require(marketParams.loanToken == asset(), "Wrong asset");
-        
+
         Id id = marketParams.id();
         config[id] = MarketConfig({
             // forge-lint: disable-next-line(unsafe-typecast)
@@ -176,7 +173,7 @@ contract Allocator is ERC4626, ReentrancyGuard {
     function setMarketCap(MarketParams calldata marketParams, uint256 newCap) external onlyCurator {
         Id id = marketParams.id();
         if (!config[id].enabled) revert MarketNotEnabled();
-        
+
         // forge-lint: disable-next-line(unsafe-typecast)
         config[id].cap = uint184(newCap);
         emit SetMarketCap(id, newCap);
@@ -208,11 +205,11 @@ contract Allocator is ERC4626, ReentrancyGuard {
     /* ALLOCATION */
 
     /// @notice Reallocate assets between markets
-    function reallocate(
-        MarketParams calldata fromMarket,
-        MarketParams calldata toMarket,
-        uint256 assets
-    ) external onlyCurator nonReentrant {
+    function reallocate(MarketParams calldata fromMarket, MarketParams calldata toMarket, uint256 assets)
+        external
+        onlyCurator
+        nonReentrant
+    {
         Id fromId = fromMarket.id();
         Id toId = toMarket.id();
 
@@ -255,7 +252,7 @@ contract Allocator is ERC4626, ReentrancyGuard {
         for (uint256 i = 0; i < supplyQueue.length && remaining > 0; i++) {
             Id id = supplyQueue[i];
             MarketConfig memory cfg = config[id];
-            
+
             if (!cfg.enabled) continue;
 
             uint256 currentSupply = _getCurrentSupply(id);
@@ -273,13 +270,11 @@ contract Allocator is ERC4626, ReentrancyGuard {
         lastTotalAssets = totalAssets();
     }
 
-    function _withdraw(
-        address caller,
-        address receiver,
-        address owner,
-        uint256 assets,
-        uint256 shares
-    ) internal override nonReentrant {
+    function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)
+        internal
+        override
+        nonReentrant
+    {
         // First try idle assets
         uint256 idle = IERC20(asset()).balanceOf(address(this));
         uint256 remaining = assets > idle ? assets - idle : 0;

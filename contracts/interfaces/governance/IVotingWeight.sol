@@ -23,11 +23,10 @@ interface IVotingWeight {
      * @return weight The calculated voting weight
      * @return processedData Implementation-specific data for vote tracking
      */
-    function calculateWeight(
-        address voter_,
-        uint256 timestamp_,
-        bytes calldata voteData_
-    ) external view returns (uint256 weight, bytes memory processedData);
+    function calculateWeight(address voter_, uint256 timestamp_, bytes calldata voteData_)
+        external
+        view
+        returns (uint256 weight, bytes memory processedData);
 
     /**
      * @notice Calculates voting weight for paymaster validation (ERC-4337 gasless voting)
@@ -37,9 +36,8 @@ interface IVotingWeight {
      * @param voteData_ Implementation-specific data
      * @return weight The calculated voting weight (0 if not eligible)
      */
-    function getVotingWeightForPaymaster(
-        address voter_,
-        uint256 timestamp_,
-        bytes calldata voteData_
-    ) external view returns (uint256 weight);
+    function getVotingWeightForPaymaster(address voter_, uint256 timestamp_, bytes calldata voteData_)
+        external
+        view
+        returns (uint256 weight);
 }

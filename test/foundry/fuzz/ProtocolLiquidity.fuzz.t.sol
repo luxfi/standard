@@ -2,8 +2,8 @@
 pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
-import {ProtocolLiquidity} from "../../../contracts/treasury/ProtocolLiquidity.sol";
-import {MockERC20} from "../TestMocks.sol";
+import { ProtocolLiquidity } from "../../../contracts/treasury/ProtocolLiquidity.sol";
+import { MockERC20 } from "../TestMocks.sol";
 
 /// @title MockLiquidityPool
 /// @notice Mock Uniswap-style LP token for ProtocolLiquidity testing
@@ -13,10 +13,7 @@ contract MockLiquidityPool is MockERC20 {
     uint112 public reserve0;
     uint112 public reserve1;
 
-    constructor(
-        address _token0,
-        address _token1
-    ) MockERC20("LP Token", "LP", 18) {
+    constructor(address _token0, address _token1) MockERC20("LP Token", "LP", 18) {
         token0 = _token0;
         token1 = _token1;
         reserve0 = 1_000_000e18;
@@ -50,7 +47,7 @@ contract MockPriceOracle {
 /// @title MockMintableProtocolToken
 /// @notice Protocol token with mint capability
 contract MockMintableProtocolToken is MockERC20 {
-    constructor() MockERC20("ASHA", "ASHA", 18) {}
+    constructor() MockERC20("ASHA", "ASHA", 18) { }
 }
 
 /// @title ProtocolLiquidityFuzzTest
@@ -85,17 +82,12 @@ contract ProtocolLiquidityFuzzTest is Test {
 
         // Deploy oracle
         oracle = new MockPriceOracle();
-        oracle.setPrice(address(token0), 1e18);      // $1
-        oracle.setPrice(address(token1), 1e18);      // $1
+        oracle.setPrice(address(token0), 1e18); // $1
+        oracle.setPrice(address(token1), 1e18); // $1
         oracle.setPrice(address(protocolToken), 1e18); // $1
 
         // Deploy ProtocolLiquidity
-        pol = new ProtocolLiquidity(
-            address(protocolToken),
-            treasury,
-            address(oracle),
-            owner
-        );
+        pol = new ProtocolLiquidity(address(protocolToken), treasury, address(oracle), owner);
 
         // Mint LP tokens to mock pool total supply
         lpToken.mint(address(lpToken), 1_000_000e18);
@@ -105,34 +97,17 @@ contract ProtocolLiquidityFuzzTest is Test {
     // HELPER FUNCTIONS
     // =========================================================================
 
-    function _addPool(
-        uint256 discount,
-        uint256 vestingPeriod,
-        uint256 maxCapacity
-    ) internal returns (uint256 poolId) {
+    function _addPool(uint256 discount, uint256 vestingPeriod, uint256 maxCapacity) internal returns (uint256 poolId) {
         vm.prank(owner);
-        poolId = pol.addPool(
-            address(lpToken),
-            discount,
-            vestingPeriod,
-            maxCapacity
-        );
+        poolId = pol.addPool(address(lpToken), discount, vestingPeriod, maxCapacity);
     }
 
-    function _addSingleSided(
-        address token,
-        uint256 discount,
-        uint256 vestingPeriod,
-        uint256 maxCapacity
-    ) internal returns (uint256 configId) {
+    function _addSingleSided(address token, uint256 discount, uint256 vestingPeriod, uint256 maxCapacity)
+        internal
+        returns (uint256 configId)
+    {
         vm.prank(owner);
-        configId = pol.addSingleSided(
-            token,
-            discount,
-            vestingPeriod,
-            maxCapacity,
-            address(lpToken)
-        );
+        configId = pol.addSingleSided(token, discount, vestingPeriod, maxCapacity, address(lpToken));
     }
 
     // =========================================================================
@@ -141,7 +116,7 @@ contract ProtocolLiquidityFuzzTest is Test {
 
     /// @notice Fuzz test LP bonding with various amounts
     function testFuzz_BondLP_ValidAmounts(uint256 lpAmount, uint256 discount) public {
-        lpAmount = bound(lpAmount, 1e15, 100_000e18);  // 0.001 to 100k LP
+        lpAmount = bound(lpAmount, 1e15, 100_000e18); // 0.001 to 100k LP
         discount = bound(discount, 0, MAX_DISCOUNT);
 
         uint256 poolId = _addPool(discount, 30 days, type(uint256).max);
@@ -155,12 +130,8 @@ contract ProtocolLiquidityFuzzTest is Test {
         uint256 positionId = pol.bondLP(poolId, lpAmount);
 
         // Verify position created
-        (
-            uint256 totalOwed,
-            uint256 claimed,
-            uint256 vestingStart,
-            uint256 vestingEnd
-        ) = pol.positions(alice, positionId);
+        (uint256 totalOwed, uint256 claimed, uint256 vestingStart, uint256 vestingEnd) =
+            pol.positions(alice, positionId);
 
         assertGt(totalOwed, 0);
         assertEq(claimed, 0);
@@ -185,14 +156,14 @@ contract ProtocolLiquidityFuzzTest is Test {
         vm.prank(alice);
         pol.bondLP(poolId, lpAmount);
 
-        (uint256 totalOwed, , , ) = pol.positions(alice, 0);
+        (uint256 totalOwed,,,) = pol.positions(alice, 0);
 
         // LP value = (reserve0 + reserve1) * lpAmount / totalSupply
         // With equal reserves of 1M each and 1M totalSupply:
         // lpValue = 2M * lpAmount / 1M = 2 * lpAmount (in sats)
         // ashaOwed = lpValue * (BPS + discount) / ashaPrice
-        uint256 lpValue = 2 * lpAmount;  // simplified for equal reserves
-        uint256 expected = (lpValue * (BPS + discount)) / 1e18;  // ashaPrice = 1e18
+        uint256 lpValue = 2 * lpAmount; // simplified for equal reserves
+        uint256 expected = (lpValue * (BPS + discount)) / 1e18; // ashaPrice = 1e18
 
         // Allow 1% tolerance due to rounding
         assertApproxEqRel(totalOwed, expected, 0.01e18);
@@ -243,12 +214,7 @@ contract ProtocolLiquidityFuzzTest is Test {
         amount = bound(amount, 1e15, 100_000e18);
         discount = bound(discount, 0, MAX_DISCOUNT);
 
-        uint256 configId = _addSingleSided(
-            address(token0),
-            discount,
-            30 days,
-            type(uint256).max
-        );
+        uint256 configId = _addSingleSided(address(token0), discount, 30 days, type(uint256).max);
 
         token0.mint(alice, amount);
         vm.prank(alice);
@@ -258,7 +224,7 @@ contract ProtocolLiquidityFuzzTest is Test {
         uint256 positionId = pol.depositSingleSided(configId, amount);
 
         // Verify position created
-        (uint256 totalOwed, , , ) = pol.positions(alice, positionId);
+        (uint256 totalOwed,,,) = pol.positions(alice, positionId);
         assertGt(totalOwed, 0);
 
         // Verify token transferred to treasury
@@ -271,12 +237,7 @@ contract ProtocolLiquidityFuzzTest is Test {
         amount = bound(amount, 1e18, 10_000e18);
         discount = bound(discount, 0, MAX_DISCOUNT);
 
-        uint256 configId = _addSingleSided(
-            address(token0),
-            discount,
-            30 days,
-            type(uint256).max
-        );
+        uint256 configId = _addSingleSided(address(token0), discount, 30 days, type(uint256).max);
 
         token0.mint(alice, amount);
         vm.prank(alice);
@@ -285,7 +246,7 @@ contract ProtocolLiquidityFuzzTest is Test {
         vm.prank(alice);
         pol.depositSingleSided(configId, amount);
 
-        (uint256 totalOwed, , , ) = pol.positions(alice, 0);
+        (uint256 totalOwed,,,) = pol.positions(alice, 0);
 
         // Contract calculation:
         // value = (amount * tokenPrice) / 1e18 = (amount * 1e18) / 1e18 = amount
@@ -331,7 +292,7 @@ contract ProtocolLiquidityFuzzTest is Test {
         vm.prank(alice);
         uint256 positionId = pol.bondLP(poolId, lpAmount);
 
-        (uint256 totalOwed, , , ) = pol.positions(alice, positionId);
+        (uint256 totalOwed,,,) = pol.positions(alice, positionId);
 
         // Fast forward
         skip(timeElapsed);
@@ -362,7 +323,7 @@ contract ProtocolLiquidityFuzzTest is Test {
         vm.prank(alice);
         uint256 positionId = pol.bondLP(poolId, lpAmount);
 
-        (uint256 totalOwed, , , ) = pol.positions(alice, positionId);
+        (uint256 totalOwed,,,) = pol.positions(alice, positionId);
 
         // At 0% - nothing to claim
         assertEq(pol.claimable(alice, positionId), 0);
@@ -371,7 +332,7 @@ contract ProtocolLiquidityFuzzTest is Test {
         skip(vestingPeriod / 2);
         uint256 expected50 = totalOwed / 2;
         uint256 actual50 = pol.claimable(alice, positionId);
-        assertApproxEqAbs(actual50, expected50, 1);  // allow 1 wei rounding
+        assertApproxEqAbs(actual50, expected50, 1); // allow 1 wei rounding
 
         // At 100%
         skip(vestingPeriod / 2);
@@ -501,16 +462,14 @@ contract ProtocolLiquidityFuzzTest is Test {
         uint256 ashaAfter = pol.totalASHABonded();
         assertGt(ashaAfter, ashaBefore);
 
-        (uint256 totalOwed, , , ) = pol.positions(alice, 0);
+        (uint256 totalOwed,,,) = pol.positions(alice, 0);
         assertEq(ashaAfter, totalOwed);
     }
 
     /// @notice Invariant: pool total deposited never exceeds capacity
-    function testFuzz_Invariant_PoolDepositedNeverExceedsCapacity(
-        uint256 capacity,
-        uint256 amount1,
-        uint256 amount2
-    ) public {
+    function testFuzz_Invariant_PoolDepositedNeverExceedsCapacity(uint256 capacity, uint256 amount1, uint256 amount2)
+        public
+    {
         capacity = bound(capacity, 1_000e18, 100_000e18);
         amount1 = bound(amount1, 1e18, capacity);
         amount2 = bound(amount2, 1e18, capacity);
@@ -557,8 +516,8 @@ contract ProtocolLiquidityFuzzTest is Test {
         vm.prank(alice);
         pol.bondLP(poolId, lpAmount);
 
-        (uint256 totalOwed, , , ) = pol.positions(alice, 0);
-        assertGt(totalOwed, 0);  // Should still get tokens, just at market rate
+        (uint256 totalOwed,,,) = pol.positions(alice, 0);
+        assertGt(totalOwed, 0); // Should still get tokens, just at market rate
     }
 
     /// @notice Test with maximum allowed discount
@@ -574,7 +533,7 @@ contract ProtocolLiquidityFuzzTest is Test {
         vm.prank(alice);
         pol.bondLP(poolId, lpAmount);
 
-        (uint256 totalOwed, , , ) = pol.positions(alice, 0);
+        (uint256 totalOwed,,,) = pol.positions(alice, 0);
 
         // With 30% discount, should get 130% of base
         // Verify it's more than with zero discount
@@ -585,7 +544,7 @@ contract ProtocolLiquidityFuzzTest is Test {
         vm.prank(bob);
         pol.bondLP(poolId2, lpAmount);
 
-        (uint256 bobOwed, , , ) = pol.positions(bob, 0);
+        (uint256 bobOwed,,,) = pol.positions(bob, 0);
 
         assertGt(totalOwed, bobOwed);
     }
@@ -594,7 +553,7 @@ contract ProtocolLiquidityFuzzTest is Test {
     function testFuzz_BondLP_ShortVesting(uint256 lpAmount) public {
         lpAmount = bound(lpAmount, 1e18, 10_000e18);
 
-        uint256 poolId = _addPool(1000, 1, type(uint256).max);  // 1 second vesting
+        uint256 poolId = _addPool(1000, 1, type(uint256).max); // 1 second vesting
 
         lpToken.mint(alice, lpAmount);
         vm.prank(alice);
@@ -606,7 +565,7 @@ contract ProtocolLiquidityFuzzTest is Test {
         // Skip 1 second
         skip(1);
 
-        (uint256 totalOwed, , , ) = pol.positions(alice, 0);
+        (uint256 totalOwed,,,) = pol.positions(alice, 0);
         assertEq(pol.claimable(alice, 0), totalOwed);
     }
 
@@ -627,9 +586,9 @@ contract ProtocolLiquidityFuzzTest is Test {
         // After half the vesting period
         skip(longVesting / 2);
 
-        (uint256 totalOwed, , , ) = pol.positions(alice, 0);
+        (uint256 totalOwed,,,) = pol.positions(alice, 0);
         uint256 claimable = pol.claimable(alice, 0);
 
-        assertApproxEqRel(claimable, totalOwed / 2, 0.001e18);  // within 0.1%
+        assertApproxEqRel(claimable, totalOwed / 2, 0.001e18); // within 0.1%
     }
 }

@@ -29,11 +29,10 @@ interface IStore {
      * @return regularFee amount owed for the duration from start to end time for the given pfc (raw value, 18 decimals).
      * @return latePenalty penalty for paying the fee after the deadline (raw value, 18 decimals).
      */
-    function computeRegularFee(
-        uint256 startTime,
-        uint256 endTime,
-        uint256 pfc
-    ) external view returns (uint256 regularFee, uint256 latePenalty);
+    function computeRegularFee(uint256 startTime, uint256 endTime, uint256 pfc)
+        external
+        view
+        returns (uint256 regularFee, uint256 latePenalty);
 
     /**
      * @notice Computes the final oracle fees that a contract should pay at settlement.

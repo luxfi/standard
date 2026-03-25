@@ -5,7 +5,7 @@ pragma solidity ^0.8.31;
  * @title YieldBridgeConfig
  * @notice Configuration contract for yield-bearing bridge tokens
  * @dev Allows governance to configure strategies for each bridged asset
- * 
+ *
  * Users can select their preferred yield strategy when bridging:
  * - Lido (stETH) - ~4.5% APY, most liquid
  * - Rocket Pool (rETH) - ~4.5% APY, more decentralized
@@ -14,45 +14,44 @@ pragma solidity ^0.8.31;
  * - Custom strategies via governance
  */
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract YieldBridgeConfig is Ownable {
-
     // ═══════════════════════════════════════════════════════════════════════
     // TYPES
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice Strategy types
     enum StrategyType {
-        NONE,       // No yield (just hold)
-        LIDO,       // Lido stETH
-        ROCKET,     // Rocket Pool rETH
-        AAVE,       // Aave lending
-        COMPOUND,   // Compound lending
-        CURVE,      // Curve LP
-        YEARN,      // Yearn vaults
-        CUSTOM      // Custom strategy
+        NONE, // No yield (just hold)
+        LIDO, // Lido stETH
+        ROCKET, // Rocket Pool rETH
+        AAVE, // Aave lending
+        COMPOUND, // Compound lending
+        CURVE, // Curve LP
+        YEARN, // Yearn vaults
+        CUSTOM // Custom strategy
     }
 
     /// @notice Strategy configuration
     struct StrategyConfig {
         StrategyType strategyType;
-        address strategyAddress;    // Strategy contract on source chain
-        uint256 allocation;         // Allocation in basis points (10000 = 100%)
-        uint256 minDeposit;         // Minimum deposit amount
-        uint256 maxDeposit;         // Maximum deposit (0 = unlimited)
-        bool isActive;              // Whether strategy accepts deposits
-        string name;                // Human-readable name
-        string description;         // Strategy description
+        address strategyAddress; // Strategy contract on source chain
+        uint256 allocation; // Allocation in basis points (10000 = 100%)
+        uint256 minDeposit; // Minimum deposit amount
+        uint256 maxDeposit; // Maximum deposit (0 = unlimited)
+        bool isActive; // Whether strategy accepts deposits
+        string name; // Human-readable name
+        string description; // Strategy description
     }
 
     /// @notice Asset configuration
     struct AssetConfig {
-        address yieldToken;         // Yield-bearing token on Lux (yLETH, etc.)
-        address bridgeToken;        // Regular bridge token (LETH, etc.)
-        uint32 sourceChainId;       // Source chain ID
-        address sourceVault;        // Vault on source chain
-        bool isConfigured;          // Whether asset is configured
+        address yieldToken; // Yield-bearing token on Lux (yLETH, etc.)
+        address bridgeToken; // Regular bridge token (LETH, etc.)
+        uint32 sourceChainId; // Source chain ID
+        address sourceVault; // Vault on source chain
+        bool isConfigured; // Whether asset is configured
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -117,7 +116,7 @@ contract YieldBridgeConfig is Ownable {
         address sourceVault
     ) external onlyOwner {
         bytes32 symbolHash = keccak256(abi.encodePacked(assetSymbol));
-        
+
         require(!assetConfigs[symbolHash].isConfigured, "YieldBridgeConfig: already configured");
 
         assetConfigs[symbolHash] = AssetConfig({
@@ -173,10 +172,7 @@ contract YieldBridgeConfig is Ownable {
      * @param assetSymbol Asset symbol
      * @param strategyType Default strategy type
      */
-    function setDefaultStrategy(
-        string calldata assetSymbol,
-        StrategyType strategyType
-    ) external onlyOwner {
+    function setDefaultStrategy(string calldata assetSymbol, StrategyType strategyType) external onlyOwner {
         bytes32 symbolHash = keccak256(abi.encodePacked(assetSymbol));
         require(assetConfigs[symbolHash].isConfigured, "YieldBridgeConfig: asset not configured");
         require(strategies[symbolHash][strategyType].isActive, "YieldBridgeConfig: strategy not active");
@@ -205,10 +201,11 @@ contract YieldBridgeConfig is Ownable {
      * @param strategyType Strategy type
      * @return config Strategy configuration
      */
-    function getStrategyConfig(
-        string calldata assetSymbol,
-        StrategyType strategyType
-    ) external view returns (StrategyConfig memory) {
+    function getStrategyConfig(string calldata assetSymbol, StrategyType strategyType)
+        external
+        view
+        returns (StrategyConfig memory)
+    {
         return strategies[keccak256(abi.encodePacked(assetSymbol))][strategyType];
     }
 
@@ -226,10 +223,7 @@ contract YieldBridgeConfig is Ownable {
      * @param strategyType Strategy type
      * @return True if strategy is active for asset
      */
-    function supportsStrategy(
-        string calldata assetSymbol,
-        StrategyType strategyType
-    ) external view returns (bool) {
+    function supportsStrategy(string calldata assetSymbol, StrategyType strategyType) external view returns (bool) {
         return strategies[keccak256(abi.encodePacked(assetSymbol))][strategyType].isActive;
     }
 
@@ -247,19 +241,15 @@ contract YieldBridgeConfig is Ownable {
         feeReceiver = _feeReceiver;
     }
 
-    function setStrategyActive(
-        string calldata assetSymbol,
-        StrategyType strategyType,
-        bool isActive
-    ) external onlyOwner {
+    function setStrategyActive(string calldata assetSymbol, StrategyType strategyType, bool isActive)
+        external
+        onlyOwner
+    {
         bytes32 symbolHash = keccak256(abi.encodePacked(assetSymbol));
         strategies[symbolHash][strategyType].isActive = isActive;
     }
 
-    function updateSourceVault(
-        string calldata assetSymbol,
-        address sourceVault
-    ) external onlyOwner {
+    function updateSourceVault(string calldata assetSymbol, address sourceVault) external onlyOwner {
         bytes32 symbolHash = keccak256(abi.encodePacked(assetSymbol));
         require(assetConfigs[symbolHash].isConfigured, "YieldBridgeConfig: asset not configured");
         assetConfigs[symbolHash].sourceVault = sourceVault;

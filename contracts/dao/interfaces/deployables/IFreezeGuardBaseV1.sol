@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IGuard} from "../IGuard.sol";
+import { IGuard } from "../IGuard.sol";
 
 /**
  * @title IFreezeGuardBaseV1
@@ -24,7 +24,9 @@ import {IGuard} from "../IGuard.sol";
 interface IFreezeGuardBaseV1 is IGuard {
     // --- Errors ---
 
-    /** @notice Thrown when attempting to execute a transaction while the DAO is frozen */
+    /**
+     * @notice Thrown when attempting to execute a transaction while the DAO is frozen
+     */
     error DAOFrozen();
 
     // --- View Functions ---

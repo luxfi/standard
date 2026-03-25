@@ -2,7 +2,7 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {LRC20} from "../tokens/LRC20.sol";
+import { LRC20 } from "../tokens/LRC20.sol";
 
 /**
  * @title Mock Tokens for Testing
@@ -13,7 +13,7 @@ import {LRC20} from "../tokens/LRC20.sol";
 
 /// @notice Mock Lux Dollar for testing
 contract MockLUSD is LRC20 {
-    constructor() LRC20("Mock Lux Dollar", "LUSD") {}
+    constructor() LRC20("Mock Lux Dollar", "LUSD") { }
 
     function mint(address to, uint256 amount) external {
         _mint(to, amount);
@@ -26,7 +26,7 @@ contract MockLUSD is LRC20 {
 
 /// @notice Mock Bridged ETH for testing
 contract MockLETH is LRC20 {
-    constructor() LRC20("Mock Lux ETH", "LETH") {}
+    constructor() LRC20("Mock Lux ETH", "LETH") { }
 
     function mint(address to, uint256 amount) external {
         _mint(to, amount);
@@ -41,7 +41,7 @@ contract MockLETH is LRC20 {
 contract MockLBTC is LRC20 {
     uint8 private constant _decimals = 8;
 
-    constructor() LRC20("Mock Lux BTC", "LBTC") {}
+    constructor() LRC20("Mock Lux BTC", "LBTC") { }
 
     function decimals() public pure override returns (uint8) {
         return _decimals;
@@ -58,7 +58,7 @@ contract MockLBTC is LRC20 {
 
 /// @notice Mock Wrapped LUX for testing
 contract MockWLUX is LRC20 {
-    constructor() LRC20("Mock Wrapped LUX", "WLUX") {}
+    constructor() LRC20("Mock Wrapped LUX", "WLUX") { }
 
     function mint(address to, uint256 amount) external {
         _mint(to, amount);
@@ -88,7 +88,7 @@ contract MockWLUX is LRC20 {
 contract MockLSOL is LRC20 {
     uint8 private constant _decimals = 9;
 
-    constructor() LRC20("Mock Lux SOL", "LSOL") {}
+    constructor() LRC20("Mock Lux SOL", "LSOL") { }
 
     function decimals() public pure override returns (uint8) {
         return _decimals;
@@ -105,7 +105,7 @@ contract MockLSOL is LRC20 {
 
 /// @notice Mock AI Token for testing
 contract MockAI is LRC20 {
-    constructor() LRC20("Mock AI Token", "AI") {}
+    constructor() LRC20("Mock AI Token", "AI") { }
 
     function mint(address to, uint256 amount) external {
         _mint(to, amount);
@@ -118,7 +118,7 @@ contract MockAI is LRC20 {
 
 /// @notice Mock ZOO Token for testing
 contract MockZOO is LRC20 {
-    constructor() LRC20("Mock Zoo Token", "ZOO") {}
+    constructor() LRC20("Mock Zoo Token", "ZOO") { }
 
     function mint(address to, uint256 amount) external {
         _mint(to, amount);

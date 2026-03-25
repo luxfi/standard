@@ -2,9 +2,9 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ILiquidityEngine} from "@luxfi/contracts/interfaces/liquidity/ILiquidityEngine.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ILiquidityEngine } from "@luxfi/contracts/interfaces/liquidity/ILiquidityEngine.sol";
 
 /// @title Uniswap V4 Pool Manager Interface
 /// @notice Singleton contract that holds all V4 pools
@@ -30,15 +30,14 @@ interface IPoolManager {
 
     /// @notice Swap tokens in a pool
     function swap(PoolKey memory key, SwapParams memory params, bytes calldata hookData)
-        external returns (int128 delta0, int128 delta1);
+        external
+        returns (int128 delta0, int128 delta1);
 
     /// @notice Get pool slot0 (price, tick, etc)
-    function getSlot0(bytes32 poolId) external view returns (
-        uint160 sqrtPriceX96,
-        int24 tick,
-        uint24 protocolFee,
-        uint24 lpFee
-    );
+    function getSlot0(bytes32 poolId)
+        external
+        view
+        returns (uint160 sqrtPriceX96, int24 tick, uint24 protocolFee, uint24 lpFee);
 }
 
 /// @title Uniswap V4 Universal Router Interface
@@ -89,15 +88,14 @@ contract UniswapV4Adapter is ILiquidityEngine {
 
     /// @notice Get swap quote for V4 pool
     /// @dev V4 uses on-chain state for quotes
-    function getSwapQuote(
-        address tokenIn,
-        address tokenOut,
-        uint256 amountIn
-    ) external view override returns (SwapQuote memory quote) {
+    function getSwapQuote(address tokenIn, address tokenOut, uint256 amountIn)
+        external
+        view
+        override
+        returns (SwapQuote memory quote)
+    {
         // Sort tokens for pool lookup
-        (address currency0, address currency1) = tokenIn < tokenOut
-            ? (tokenIn, tokenOut)
-            : (tokenOut, tokenIn);
+        (address currency0, address currency1) = tokenIn < tokenOut ? (tokenIn, tokenOut) : (tokenOut, tokenIn);
 
         // Create pool key with default parameters
         IPoolManager.PoolKey memory key = IPoolManager.PoolKey({
@@ -153,16 +151,10 @@ contract UniswapV4Adapter is ILiquidityEngine {
         bytes[] memory inputs = new bytes[](1);
 
         // Sort tokens
-        (address currency0, address currency1) = tokenIn < tokenOut
-            ? (tokenIn, tokenOut)
-            : (tokenOut, tokenIn);
+        (address currency0, address currency1) = tokenIn < tokenOut ? (tokenIn, tokenOut) : (tokenOut, tokenIn);
 
         IPoolManager.PoolKey memory key = IPoolManager.PoolKey({
-            currency0: currency0,
-            currency1: currency1,
-            fee: 3000,
-            tickSpacing: DEFAULT_TICK_SPACING,
-            hooks: address(0)
+            currency0: currency0, currency1: currency1, fee: 3000, tickSpacing: DEFAULT_TICK_SPACING, hooks: address(0)
         });
 
         bool zeroForOne = tokenIn == currency0;
@@ -176,19 +168,11 @@ contract UniswapV4Adapter is ILiquidityEngine {
         inputs[0] = abi.encode(key, params, recipient, minAmountOut);
 
         // Execute swap
-        uint256 balanceBefore = tokenOut == address(0)
-            ? recipient.balance
-            : IERC20(tokenOut).balanceOf(recipient);
+        uint256 balanceBefore = tokenOut == address(0) ? recipient.balance : IERC20(tokenOut).balanceOf(recipient);
 
-        ROUTER.execute{value: tokenIn == address(0) ? amountIn : 0}(
-            commands,
-            inputs,
-            deadline
-        );
+        ROUTER.execute{ value: tokenIn == address(0) ? amountIn : 0 }(commands, inputs, deadline);
 
-        uint256 balanceAfter = tokenOut == address(0)
-            ? recipient.balance
-            : IERC20(tokenOut).balanceOf(recipient);
+        uint256 balanceAfter = tokenOut == address(0) ? recipient.balance : IERC20(tokenOut).balanceOf(recipient);
 
         amountOut = balanceAfter - balanceBefore;
         require(amountOut >= minAmountOut, "Insufficient output");
@@ -208,7 +192,7 @@ contract UniswapV4Adapter is ILiquidityEngine {
         (bytes memory commands, bytes[] memory inputs) = abi.decode(route, (bytes, bytes[]));
 
         // Execute via Universal Router
-        ROUTER.execute{value: msg.value}(commands, inputs, deadline);
+        ROUTER.execute{ value: msg.value }(commands, inputs, deadline);
 
         // Get output from recipient balance
         // (In production, track deltas properly)
@@ -254,21 +238,15 @@ contract UniswapV4Adapter is ILiquidityEngine {
                           LENDING FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function getLendingQuote(address, uint256, bool)
-        external pure override returns (LendingQuote memory)
-    {
+    function getLendingQuote(address, uint256, bool) external pure override returns (LendingQuote memory) {
         revert("Uniswap V4 does not support lending");
     }
 
-    function supply(address, uint256, address)
-        external pure override returns (uint256)
-    {
+    function supply(address, uint256, address) external pure override returns (uint256) {
         revert("Uniswap V4 does not support lending");
     }
 
-    function withdraw(address, uint256, address)
-        external pure override returns (uint256)
-    {
+    function withdraw(address, uint256, address) external pure override returns (uint256) {
         revert("Uniswap V4 does not support lending");
     }
 
@@ -276,9 +254,7 @@ contract UniswapV4Adapter is ILiquidityEngine {
         revert("Uniswap V4 does not support lending");
     }
 
-    function repay(address, uint256, uint256, address)
-        external pure override returns (uint256)
-    {
+    function repay(address, uint256, uint256, address) external pure override returns (uint256) {
         revert("Uniswap V4 does not support lending");
     }
 
@@ -312,11 +288,7 @@ contract UniswapV4Adapter is ILiquidityEngine {
     }
 
     /// @notice Estimate swap output (simplified)
-    function _estimateOutput(
-        uint256 amountIn,
-        uint160 sqrtPriceX96,
-        bool zeroForOne
-    ) internal pure returns (uint256) {
+    function _estimateOutput(uint256 amountIn, uint160 sqrtPriceX96, bool zeroForOne) internal pure returns (uint256) {
         // Simplified price calculation
         // Real implementation would use V4's tick math
         uint256 price = uint256(sqrtPriceX96) * uint256(sqrtPriceX96) / (1 << 192);

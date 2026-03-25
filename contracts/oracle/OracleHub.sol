@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IOracle} from "./IOracle.sol";
-import {IOracleWriter} from "./interfaces/IOracleWriter.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { IOracle } from "./IOracle.sol";
+import { IOracleWriter } from "./interfaces/IOracleWriter.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /// @title OracleHub
 /// @notice On-chain price hub that receives prices from DEX infrastructure
@@ -167,7 +167,9 @@ contract OracleHub is IOracle, IOracleWriter, AccessControl {
 
     /// @notice Batch price query for gas efficiency
     function getPrices(address[] calldata assets)
-        external view returns (uint256[] memory priceList, uint256[] memory timestamps)
+        external
+        view
+        returns (uint256[] memory priceList, uint256[] memory timestamps)
     {
         priceList = new uint256[](assets.length);
         timestamps = new uint256[](assets.length);
@@ -184,23 +186,15 @@ contract OracleHub is IOracle, IOracleWriter, AccessControl {
     // =========================================================================
 
     /// @inheritdoc IOracleWriter
-    function writePrice(address asset, uint256 price, uint256 timestamp)
-        external override onlyRole(WRITER_ROLE)
-    {
+    function writePrice(address asset, uint256 price, uint256 timestamp) external override onlyRole(WRITER_ROLE) {
         _writePrice(asset, price, timestamp, 10000, keccak256("dex-gateway"));
     }
 
     /// @inheritdoc IOracleWriter
-    function writePrices(PriceUpdate[] calldata updates)
-        external override onlyRole(WRITER_ROLE)
-    {
+    function writePrices(PriceUpdate[] calldata updates) external override onlyRole(WRITER_ROLE) {
         for (uint256 i = 0; i < updates.length; i++) {
             _writePrice(
-                updates[i].asset,
-                updates[i].price,
-                updates[i].timestamp,
-                updates[i].confidence,
-                updates[i].source
+                updates[i].asset, updates[i].price, updates[i].timestamp, updates[i].confidence, updates[i].source
             );
         }
     }
@@ -211,28 +205,20 @@ contract OracleHub is IOracle, IOracleWriter, AccessControl {
         if (!hasRole(VALIDATOR_ROLE, update.validator)) revert InvalidSignature();
 
         // Verify signature
-        bytes32 hash = keccak256(abi.encode(
-            update.update.asset,
-            update.update.price,
-            update.update.timestamp
-        ));
+        bytes32 hash = keccak256(abi.encode(update.update.asset, update.update.price, update.update.timestamp));
         bytes32 ethHash = hash.toEthSignedMessageHash();
         address signer = ethHash.recover(update.signature);
         if (signer != update.validator) revert InvalidSignature();
 
         // Store validator price
-        validatorPrices[update.update.asset][update.validator] = ValidatorPrice({
-            price: update.update.price,
-            timestamp: update.update.timestamp
-        });
+        validatorPrices[update.update.asset][update.validator] =
+            ValidatorPrice({ price: update.update.price, timestamp: update.update.timestamp });
 
         emit ValidatorPriceWritten(update.update.asset, update.update.price, update.validator);
     }
 
     /// @inheritdoc IOracleWriter
-    function writeQuorumPrice(SignedPriceUpdate[] calldata updates, uint256 minQuorum)
-        external override
-    {
+    function writeQuorumPrice(SignedPriceUpdate[] calldata updates, uint256 minQuorum) external override {
         if (updates.length < minQuorum) revert InsufficientQuorum(updates.length, minQuorum);
 
         address asset = updates[0].update.asset;
@@ -247,11 +233,8 @@ contract OracleHub is IOracle, IOracleWriter, AccessControl {
             if (updates[i].update.asset != asset) continue;
             if (!hasRole(VALIDATOR_ROLE, updates[i].validator)) continue;
 
-            bytes32 hash = keccak256(abi.encode(
-                updates[i].update.asset,
-                updates[i].update.price,
-                updates[i].update.timestamp
-            ));
+            bytes32 hash =
+                keccak256(abi.encode(updates[i].update.asset, updates[i].update.price, updates[i].update.timestamp));
             bytes32 ethHash = hash.toEthSignedMessageHash();
             address signer = ethHash.recover(updates[i].signature);
 
@@ -344,13 +327,9 @@ contract OracleHub is IOracle, IOracleWriter, AccessControl {
     // Internal Functions
     // =========================================================================
 
-    function _writePrice(
-        address asset,
-        uint256 price,
-        uint256 timestamp,
-        uint256 confidence,
-        bytes32 sourceId
-    ) internal {
+    function _writePrice(address asset, uint256 price, uint256 timestamp, uint256 confidence, bytes32 sourceId)
+        internal
+    {
         if (paused[asset]) revert AssetPaused(asset);
 
         // Check price change circuit breaker
@@ -363,11 +342,7 @@ contract OracleHub is IOracle, IOracleWriter, AccessControl {
         }
 
         prices[asset] = PriceData({
-            price: price,
-            timestamp: timestamp,
-            confidence: confidence,
-            source: sourceId,
-            validatorCount: 0
+            price: price, timestamp: timestamp, confidence: confidence, source: sourceId, validatorCount: 0
         });
 
         emit PriceWritten(asset, price, timestamp, sourceId);

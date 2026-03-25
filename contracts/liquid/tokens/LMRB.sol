@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {LRC20B} from "../../bridge/LRC20B.sol";
+import { LRC20B } from "../../bridge/LRC20B.sol";
 
 contract LuxMRB is LRC20B {
-    constructor() LRC20B("Liquid MoonRabbits", "LMRB") {}
+    constructor() LRC20B("Liquid MoonRabbits", "LMRB") { }
 
     function mint(address account, uint256 amount) public onlyAdmin {
         _mint(account, amount);

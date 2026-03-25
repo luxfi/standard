@@ -13,73 +13,59 @@ interface IOracle {
 
     /// @notice Price feed sources supported
     enum PriceSource {
-        NATIVE,         // Lux native HFT DEX TWAP
-        CHAINLINK,      // Chainlink aggregator
-        PYTH,           // Pyth Network
-        BINANCE,        // Binance oracle
-        KRAKEN,         // Kraken oracle
-        UNISWAP_V3,     // Uniswap V3 TWAP
-        AGGREGATE       // Multi-source aggregated
+        NATIVE, // Lux native HFT DEX TWAP
+        CHAINLINK, // Chainlink aggregator
+        PYTH, // Pyth Network
+        BINANCE, // Binance oracle
+        KRAKEN, // Kraken oracle
+        UNISWAP_V3, // Uniswap V3 TWAP
+        AGGREGATE // Multi-source aggregated
     }
 
     /// @notice Price data struct
     struct Price {
-        uint256 price;          // 1e18 precision
-        uint256 confidence;     // Confidence interval (1e18 = 100%)
-        uint256 timestamp;      // Last update time
-        PriceSource source;     // Price source
-        bool isValid;           // Whether price is valid
+        uint256 price; // 1e18 precision
+        uint256 confidence; // Confidence interval (1e18 = 100%)
+        uint256 timestamp; // Last update time
+        PriceSource source; // Price source
+        bool isValid; // Whether price is valid
     }
 
     /// @notice Aggregated price with multiple sources
     struct AggregatedPrice {
-        uint256 price;          // Weighted average (1e18 precision)
-        uint256 minPrice;       // Minimum across sources
-        uint256 maxPrice;       // Maximum across sources
-        uint256 deviation;      // Standard deviation (basis points)
-        uint256 confidence;     // Aggregate confidence
-        uint256 timestamp;      // Latest update
-        uint8 sourceCount;      // Number of sources used
-        bool isValid;           // All sources agree within threshold
+        uint256 price; // Weighted average (1e18 precision)
+        uint256 minPrice; // Minimum across sources
+        uint256 maxPrice; // Maximum across sources
+        uint256 deviation; // Standard deviation (basis points)
+        uint256 confidence; // Aggregate confidence
+        uint256 timestamp; // Latest update
+        uint8 sourceCount; // Number of sources used
+        bool isValid; // All sources agree within threshold
     }
 
     /// @notice TWAP configuration
     struct TWAPConfig {
-        uint32 window;          // TWAP window in seconds
-        uint32 granularity;     // Number of observations
-        bool useGeometric;      // Geometric vs arithmetic mean
+        uint32 window; // TWAP window in seconds
+        uint32 granularity; // Number of observations
+        bool useGeometric; // Geometric vs arithmetic mean
     }
 
     /// @notice Historical price point
     struct PricePoint {
         uint256 price;
         uint256 timestamp;
-        uint256 volume;         // Trading volume in period
+        uint256 volume; // Trading volume in period
     }
 
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
 
-    event PriceUpdated(
-        bytes32 indexed pairId,
-        uint256 price,
-        uint256 timestamp,
-        PriceSource source
-    );
+    event PriceUpdated(bytes32 indexed pairId, uint256 price, uint256 timestamp, PriceSource source);
 
-    event OracleRegistered(
-        bytes32 indexed pairId,
-        address indexed oracle,
-        PriceSource source
-    );
+    event OracleRegistered(bytes32 indexed pairId, address indexed oracle, PriceSource source);
 
-    event PriceDeviation(
-        bytes32 indexed pairId,
-        uint256 primaryPrice,
-        uint256 secondaryPrice,
-        uint256 deviationBps
-    );
+    event PriceDeviation(bytes32 indexed pairId, uint256 primaryPrice, uint256 secondaryPrice, uint256 deviationBps);
 
     /*//////////////////////////////////////////////////////////////
                           PRICE FUNCTIONS
@@ -89,41 +75,30 @@ interface IOracle {
     /// @param base Base token address (e.g., ETH)
     /// @param quote Quote token address (e.g., USD)
     /// @return price Price data
-    function getPrice(
-        address base,
-        address quote
-    ) external view returns (Price memory price);
+    function getPrice(address base, address quote) external view returns (Price memory price);
 
     /// @notice Get price from specific source
     /// @param base Base token address
     /// @param quote Quote token address
     /// @param source Preferred price source
     /// @return price Price from specified source
-    function getPriceFromSource(
-        address base,
-        address quote,
-        PriceSource source
-    ) external view returns (Price memory price);
+    function getPriceFromSource(address base, address quote, PriceSource source)
+        external
+        view
+        returns (Price memory price);
 
     /// @notice Get aggregated price from multiple sources
     /// @param base Base token address
     /// @param quote Quote token address
     /// @return agg Aggregated price with metadata
-    function getAggregatedPrice(
-        address base,
-        address quote
-    ) external view returns (AggregatedPrice memory agg);
+    function getAggregatedPrice(address base, address quote) external view returns (AggregatedPrice memory agg);
 
     /// @notice Get TWAP price
     /// @param base Base token address
     /// @param quote Quote token address
     /// @param config TWAP configuration
     /// @return twap Time-weighted average price
-    function getTWAP(
-        address base,
-        address quote,
-        TWAPConfig calldata config
-    ) external view returns (uint256 twap);
+    function getTWAP(address base, address quote, TWAPConfig calldata config) external view returns (uint256 twap);
 
     /// @notice Get historical prices
     /// @param base Base token address
@@ -132,22 +107,19 @@ interface IOracle {
     /// @param endTime End timestamp
     /// @param interval Interval in seconds
     /// @return prices Array of historical price points
-    function getHistoricalPrices(
-        address base,
-        address quote,
-        uint256 startTime,
-        uint256 endTime,
-        uint256 interval
-    ) external view returns (PricePoint[] memory prices);
+    function getHistoricalPrices(address base, address quote, uint256 startTime, uint256 endTime, uint256 interval)
+        external
+        view
+        returns (PricePoint[] memory prices);
 
     /// @notice Get prices for multiple pairs in one call
     /// @param bases Array of base token addresses
     /// @param quotes Array of quote token addresses
     /// @return prices Array of prices
-    function getBatchPrices(
-        address[] calldata bases,
-        address[] calldata quotes
-    ) external view returns (Price[] memory prices);
+    function getBatchPrices(address[] calldata bases, address[] calldata quotes)
+        external
+        view
+        returns (Price[] memory prices);
 
     /*//////////////////////////////////////////////////////////////
                         VOLATILITY FUNCTIONS
@@ -158,20 +130,13 @@ interface IOracle {
     /// @param quote Quote token address
     /// @param period Period in seconds
     /// @return volatility Annualized volatility (1e18 = 100%)
-    function getVolatility(
-        address base,
-        address quote,
-        uint256 period
-    ) external view returns (uint256 volatility);
+    function getVolatility(address base, address quote, uint256 period) external view returns (uint256 volatility);
 
     /// @notice Get implied volatility (from options markets)
     /// @param base Base token address
     /// @param quote Quote token address
     /// @return iv Implied volatility (1e18 = 100%)
-    function getImpliedVolatility(
-        address base,
-        address quote
-    ) external view returns (uint256 iv);
+    function getImpliedVolatility(address base, address quote) external view returns (uint256 iv);
 
     /*//////////////////////////////////////////////////////////////
                           ORACLE MANAGEMENT
@@ -181,39 +146,26 @@ interface IOracle {
     /// @param base Base token address
     /// @param quote Quote token address
     /// @return exists True if feed exists
-    function feedExists(
-        address base,
-        address quote
-    ) external view returns (bool exists);
+    function feedExists(address base, address quote) external view returns (bool exists);
 
     /// @notice Get supported sources for a pair
     /// @param base Base token address
     /// @param quote Quote token address
     /// @return sources Array of available price sources
-    function getSupportedSources(
-        address base,
-        address quote
-    ) external view returns (PriceSource[] memory sources);
+    function getSupportedSources(address base, address quote) external view returns (PriceSource[] memory sources);
 
     /// @notice Get oracle address for a source
     /// @param base Base token address
     /// @param quote Quote token address
     /// @param source Price source
     /// @return oracle Oracle contract address
-    function getOracleAddress(
-        address base,
-        address quote,
-        PriceSource source
-    ) external view returns (address oracle);
+    function getOracleAddress(address base, address quote, PriceSource source) external view returns (address oracle);
 
     /// @notice Get pair ID for tokens
     /// @param base Base token address
     /// @param quote Quote token address
     /// @return pairId Unique pair identifier
-    function getPairId(
-        address base,
-        address quote
-    ) external pure returns (bytes32 pairId);
+    function getPairId(address base, address quote) external pure returns (bytes32 pairId);
 
     /*//////////////////////////////////////////////////////////////
                          CHAINLINK SPECIFIC
@@ -227,16 +179,10 @@ interface IOracle {
     /// @return startedAt Round start timestamp
     /// @return updatedAt Round update timestamp
     /// @return answeredInRound Round in which answer was computed
-    function getChainlinkRoundData(
-        address base,
-        address quote
-    ) external view returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    );
+    function getChainlinkRoundData(address base, address quote)
+        external
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
 
     /*//////////////////////////////////////////////////////////////
                            PYTH SPECIFIC
@@ -248,21 +194,15 @@ interface IOracle {
     /// @return conf Confidence interval
     /// @return expo Exponent
     /// @return publishTime Publish timestamp
-    function getPythPrice(
-        bytes32 priceId
-    ) external view returns (
-        int64 price,
-        uint64 conf,
-        int32 expo,
-        uint256 publishTime
-    );
+    function getPythPrice(bytes32 priceId)
+        external
+        view
+        returns (int64 price, uint64 conf, int32 expo, uint256 publishTime);
 
     /// @notice Update Pyth prices (requires fee)
     /// @param updateData Pyth price update data
     /// @return fee Fee paid
-    function updatePythPrices(
-        bytes[] calldata updateData
-    ) external payable returns (uint256 fee);
+    function updatePythPrices(bytes[] calldata updateData) external payable returns (uint256 fee);
 }
 
 /// @title OracleLib
@@ -289,11 +229,11 @@ library OracleLib {
     }
 
     /// @notice Get price with staleness check
-    function getPriceWithStalenessCheck(
-        address base,
-        address quote,
-        uint256 maxAge
-    ) internal view returns (uint256 price) {
+    function getPriceWithStalenessCheck(address base, address quote, uint256 maxAge)
+        internal
+        view
+        returns (uint256 price)
+    {
         IOracle.Price memory p = ORACLE.getPrice(base, quote);
         require(p.isValid, "Oracle: invalid price");
         require(block.timestamp - p.timestamp <= maxAge, "Oracle: stale price");
@@ -301,17 +241,14 @@ library OracleLib {
     }
 
     /// @notice Get TWAP with default config (30 min window)
-    function getTWAP30Min(
-        address base,
-        address quote
-    ) internal view returns (uint256 twap) {
+    function getTWAP30Min(address base, address quote) internal view returns (uint256 twap) {
         return ORACLE.getTWAP(
             base,
             quote,
             IOracle.TWAPConfig({
-                window: 1800,       // 30 minutes
-                granularity: 30,    // 30 observations
-                useGeometric: true  // Geometric mean
+                window: 1800, // 30 minutes
+                granularity: 30, // 30 observations
+                useGeometric: true // Geometric mean
             })
         );
     }
@@ -356,13 +293,11 @@ abstract contract ChainlinkCompatible {
         decimals = _decimals;
     }
 
-    function latestRoundData() external view returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    ) {
+    function latestRoundData()
+        external
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+    {
         return ORACLE.getChainlinkRoundData(base, quote);
     }
 
@@ -383,17 +318,16 @@ abstract contract ChainlinkCompatible {
 abstract contract PythCompatible {
     IOracle internal constant ORACLE = IOracle(0x0200000000000000000000000000000000000011);
 
-    function getPrice(bytes32 priceId) external view returns (
-        int64 price,
-        uint64 conf,
-        int32 expo,
-        uint256 publishTime
-    ) {
+    function getPrice(bytes32 priceId)
+        external
+        view
+        returns (int64 price, uint64 conf, int32 expo, uint256 publishTime)
+    {
         return ORACLE.getPythPrice(priceId);
     }
 
     function updatePriceFeeds(bytes[] calldata updateData) external payable {
-        ORACLE.updatePythPrices{value: msg.value}(updateData);
+        ORACLE.updatePythPrices{ value: msg.value }(updateData);
     }
 
     function getUpdateFee(bytes[] calldata updateData) external pure returns (uint256) {

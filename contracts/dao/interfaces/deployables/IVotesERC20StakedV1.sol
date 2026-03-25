@@ -32,28 +32,44 @@ pragma solidity ^0.8.30;
 interface IVotesERC20StakedV1 {
     // --- Errors ---
 
-    /** @notice Thrown when attempting to transfer staking tokens (they are non-transferable) */
+    /**
+     * @notice Thrown when attempting to transfer staking tokens (they are non-transferable)
+     */
     error NonTransferable();
 
-    /** @notice Thrown when attempting to stake zero tokens */
+    /**
+     * @notice Thrown when attempting to stake zero tokens
+     */
     error ZeroStake();
 
-    /** @notice Thrown when attempting to unstake zero tokens */
+    /**
+     * @notice Thrown when attempting to unstake zero tokens
+     */
     error ZeroUnstake();
 
-    /** @notice Thrown when user has no staked tokens */
+    /**
+     * @notice Thrown when user has no staked tokens
+     */
     error ZeroStaked();
 
-    /** @notice Thrown when adding an invalid reward token (e.g., staking token itself) */
+    /**
+     * @notice Thrown when adding an invalid reward token (e.g., staking token itself)
+     */
     error InvalidRewardsToken(address token);
 
-    /** @notice Thrown when adding a reward token that's already registered */
+    /**
+     * @notice Thrown when adding a reward token that's already registered
+     */
     error DuplicateRewardsToken();
 
-    /** @notice Thrown when unstaking before minimum staking period */
+    /**
+     * @notice Thrown when unstaking before minimum staking period
+     */
     error MinimumStakingPeriod();
 
-    /** @notice Thrown when reward token transfer fails */
+    /**
+     * @notice Thrown when reward token transfer fails
+     */
     error TransferFailed();
 
     // --- Structs ---
@@ -130,11 +146,7 @@ interface IVotesERC20StakedV1 {
      * @param amount The amount distributed
      * @param newRate The new reward rate per staked token
      */
-    event RewardsDistributed(
-        address indexed token,
-        uint256 amount,
-        uint256 newRate
-    );
+    event RewardsDistributed(address indexed token, uint256 amount, uint256 newRate);
 
     /**
      * @notice Emitted when a staker claims rewards
@@ -143,12 +155,7 @@ interface IVotesERC20StakedV1 {
      * @param recipient The address receiving the rewards
      * @param amount The amount of rewards claimed
      */
-    event RewardsClaimed(
-        address indexed staker,
-        address indexed token,
-        address indexed recipient,
-        uint256 amount
-    );
+    event RewardsClaimed(address indexed staker, address indexed token, address indexed recipient, uint256 amount);
 
     // --- Initializer Functions ---
 
@@ -168,10 +175,7 @@ interface IVotesERC20StakedV1 {
      * @param minimumStakingPeriod_ Minimum seconds before unstaking allowed
      * @param rewardsTokens_ Initial array of reward token addresses
      */
-    function initialize2(
-        uint256 minimumStakingPeriod_,
-        address[] calldata rewardsTokens_
-    ) external;
+    function initialize2(uint256 minimumStakingPeriod_, address[] calldata rewardsTokens_) external;
 
     // --- Pure Functions ---
 
@@ -202,10 +206,7 @@ interface IVotesERC20StakedV1 {
      * @notice Returns the minimum staking period
      * @return minimumStakingPeriod Seconds that must pass before unstaking
      */
-    function minimumStakingPeriod()
-        external
-        view
-        returns (uint256 minimumStakingPeriod);
+    function minimumStakingPeriod() external view returns (uint256 minimumStakingPeriod);
 
     /**
      * @notice Returns the total amount of tokens staked
@@ -217,10 +218,7 @@ interface IVotesERC20StakedV1 {
      * @notice Returns all registered reward token addresses
      * @return rewardsTokens Array of reward token addresses
      */
-    function rewardsTokens()
-        external
-        view
-        returns (address[] memory rewardsTokens);
+    function rewardsTokens() external view returns (address[] memory rewardsTokens);
 
     /**
      * @notice Returns reward token statistics
@@ -229,35 +227,27 @@ interface IVotesERC20StakedV1 {
      * @return rewardsDistributed Total distributed for this token
      * @return rewardsClaimed Total claimed by all stakers
      */
-    function rewardsTokenData(
-        address token_
-    )
+    function rewardsTokenData(address token_)
         external
         view
-        returns (
-            uint256 rewardsRate,
-            uint256 rewardsDistributed,
-            uint256 rewardsClaimed
-        );
+        returns (uint256 rewardsRate, uint256 rewardsDistributed, uint256 rewardsClaimed);
 
     /**
      * @notice Returns available rewards to distribute for all tokens
      * @dev Calculates contract balance minus already distributed amounts
      * @return distributableRewards Array of amounts per reward token
      */
-    function distributableRewards()
-        external
-        view
-        returns (uint256[] memory distributableRewards);
+    function distributableRewards() external view returns (uint256[] memory distributableRewards);
 
     /**
      * @notice Returns available rewards to distribute for specific tokens
      * @param rewardsTokens_ Array of reward tokens to check
      * @return distributableRewards Array of amounts per token
      */
-    function distributableRewards(
-        address[] calldata rewardsTokens_
-    ) external view returns (uint256[] memory distributableRewards);
+    function distributableRewards(address[] calldata rewardsTokens_)
+        external
+        view
+        returns (uint256[] memory distributableRewards);
 
     /**
      * @notice Returns staking data for an address
@@ -265,9 +255,7 @@ interface IVotesERC20StakedV1 {
      * @return stakedAmount Tokens currently staked
      * @return lastStakeTimestamp When last stake occurred
      */
-    function stakerData(
-        address staker_
-    ) external view returns (uint256 stakedAmount, uint256 lastStakeTimestamp);
+    function stakerData(address staker_) external view returns (uint256 stakedAmount, uint256 lastStakeTimestamp);
 
     /**
      * @notice Returns reward data for a staker and token
@@ -276,19 +264,17 @@ interface IVotesERC20StakedV1 {
      * @return rewardRate Staker's last checkpoint rate
      * @return accumulatedRewards Unclaimed rewards for this token
      */
-    function stakerRewardsData(
-        address token_,
-        address staker_
-    ) external view returns (uint256 rewardRate, uint256 accumulatedRewards);
+    function stakerRewardsData(address token_, address staker_)
+        external
+        view
+        returns (uint256 rewardRate, uint256 accumulatedRewards);
 
     /**
      * @notice Returns claimable rewards for all tokens
      * @param staker_ The staker to check
      * @return claimableRewards Array of claimable amounts per reward token
      */
-    function claimableRewards(
-        address staker_
-    ) external view returns (uint256[] memory claimableRewards);
+    function claimableRewards(address staker_) external view returns (uint256[] memory claimableRewards);
 
     /**
      * @notice Returns claimable rewards for specific tokens
@@ -296,10 +282,10 @@ interface IVotesERC20StakedV1 {
      * @param tokens_ Array of reward tokens to check
      * @return claimableRewards Array of claimable amounts per token
      */
-    function claimableRewards(
-        address staker_,
-        address[] calldata tokens_
-    ) external view returns (uint256[] memory claimableRewards);
+    function claimableRewards(address staker_, address[] calldata tokens_)
+        external
+        view
+        returns (uint256[] memory claimableRewards);
 
     // --- State-Changing Functions ---
 
@@ -322,9 +308,7 @@ interface IVotesERC20StakedV1 {
      * @custom:access Restricted to owner
      * @custom:emits MinimumStakingPeriodUpdated
      */
-    function updateMinimumStakingPeriod(
-        uint256 newMinimumStakingPeriod_
-    ) external;
+    function updateMinimumStakingPeriod(uint256 newMinimumStakingPeriod_) external;
 
     /**
      * @notice Stakes tokens to receive voting power and rewards
@@ -380,8 +364,5 @@ interface IVotesERC20StakedV1 {
      * @param tokens_ Array of reward tokens to claim
      * @custom:emits RewardsClaimed for each claimed token
      */
-    function claimRewards(
-        address recipient_,
-        address[] calldata tokens_
-    ) external;
+    function claimRewards(address recipient_, address[] calldata tokens_) external;
 }

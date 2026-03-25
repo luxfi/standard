@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {FHE, ebool, euint64, euint8} from "../../../FHE.sol";
+import { FHE, ebool, euint64, euint8 } from "../../../FHE.sol";
 import { ConfidentialLRC20 } from "../ConfidentialLRC20.sol";
 import { EncryptedErrors } from "../../../utils/EncryptedErrors.sol";
 
@@ -33,10 +33,10 @@ abstract contract ConfidentialLRC20WithErrors is ConfidentialLRC20, EncryptedErr
      * @param name_     Name of the token.
      * @param symbol_   Symbol.
      */
-    constructor(
-        string memory name_,
-        string memory symbol_
-    ) ConfidentialLRC20(name_, symbol_) EncryptedErrors(uint8(type(ErrorCodes).max)) {}
+    constructor(string memory name_, string memory symbol_)
+        ConfidentialLRC20(name_, symbol_)
+        EncryptedErrors(uint8(type(ErrorCodes).max))
+    { }
 
     /**
      * @notice See {IConfidentialLRC20-transfer}.
@@ -79,11 +79,12 @@ abstract contract ConfidentialLRC20WithErrors is ConfidentialLRC20, EncryptedErr
         emit Transfer(from, to, _errorGetCounter() - 1);
     }
 
-    function _updateAllowance(
-        address owner,
-        address spender,
-        euint64 amount
-    ) internal virtual override returns (ebool isTransferable) {
+    function _updateAllowance(address owner, address spender, euint64 amount)
+        internal
+        virtual
+        override
+        returns (ebool isTransferable)
+    {
         euint64 currentAllowance = _allowance(owner, spender);
         /// @dev It checks whether the allowance suffices.
         ebool allowedTransfer = FHE.le(amount, currentAllowance);

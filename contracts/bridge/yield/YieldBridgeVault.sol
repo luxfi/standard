@@ -2,33 +2,33 @@
 pragma solidity ^0.8.31;
 
 /**
-    ██╗   ██╗██╗███████╗██╗     ██████╗     ██████╗ ██████╗ ██╗██████╗  ██████╗ ███████╗
-    ╚██╗ ██╔╝██║██╔════╝██║     ██╔══██╗    ██╔══██╗██╔══██╗██║██╔══██╗██╔════╝ ██╔════╝
-     ╚████╔╝ ██║█████╗  ██║     ██║  ██║    ██████╔╝██████╔╝██║██║  ██║██║  ███╗█████╗  
-      ╚██╔╝  ██║██╔══╝  ██║     ██║  ██║    ██╔══██╗██╔══██╗██║██║  ██║██║   ██║██╔══╝  
-       ██║   ██║███████╗███████╗██████╔╝    ██████╔╝██║  ██║██║██████╔╝╚██████╔╝███████╗
-       ╚═╝   ╚═╝╚══════╝╚══════╝╚═════╝     ╚═════╝ ╚═╝  ╚═╝╚═╝╚═════╝  ╚═════╝ ╚══════╝
-
-    Yield-Bearing Bridge Vault - Deploys bridged assets to yield strategies
-    
-    Architecture:
-    - Deployed on SOURCE chains (Ethereum, Solana, etc.)
-    - Receives bridged assets and deploys to yield strategies
-    - Reports yield back to Lux via Warp messaging
-    - Supports multiple strategies per asset for diversification
+ *     ██╗   ██╗██╗███████╗██╗     ██████╗     ██████╗ ██████╗ ██╗██████╗  ██████╗ ███████╗
+ *     ╚██╗ ██╔╝██║██╔════╝██║     ██╔══██╗    ██╔══██╗██╔══██╗██║██╔══██╗██╔════╝ ██╔════╝
+ *      ╚████╔╝ ██║█████╗  ██║     ██║  ██║    ██████╔╝██████╔╝██║██║  ██║██║  ███╗█████╗
+ *       ╚██╔╝  ██║██╔══╝  ██║     ██║  ██║    ██╔══██╗██╔══██╗██║██║  ██║██║   ██║██╔══╝
+ *        ██║   ██║███████╗███████╗██████╔╝    ██████╔╝██║  ██║██║██████╔╝╚██████╔╝███████╗
+ *        ╚═╝   ╚═╝╚══════╝╚══════╝╚═════╝     ╚═════╝ ╚═╝  ╚═╝╚═╝╚═════╝  ╚═════╝ ╚══════╝
+ *
+ *     Yield-Bearing Bridge Vault - Deploys bridged assets to yield strategies
+ *
+ *     Architecture:
+ *     - Deployed on SOURCE chains (Ethereum, Solana, etc.)
+ *     - Receives bridged assets and deploys to yield strategies
+ *     - Reports yield back to Lux via Warp messaging
+ *     - Supports multiple strategies per asset for diversification
  */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IYieldStrategy} from "./IYieldStrategy.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IYieldStrategy } from "./IYieldStrategy.sol";
 
 /**
  * @title YieldBridgeVault
  * @notice Manages bridged assets with automatic yield deployment
  * @dev Deployed on source chains (Ethereum, etc.) to earn yield on locked assets
- * 
+ *
  * When users bridge ETH to Lux:
  * 1. ETH deposited to this vault on Ethereum
  * 2. Vault deploys ETH to yield strategies (Lido, Rocket Pool, etc.)
@@ -44,20 +44,20 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     struct StrategyAllocation {
-        address strategy;       // Strategy contract address
-        uint256 targetWeight;   // Target allocation in basis points (10000 = 100%)
+        address strategy; // Strategy contract address
+        uint256 targetWeight; // Target allocation in basis points (10000 = 100%)
         uint256 depositedAmount; // Amount deposited to this strategy
-        bool isActive;          // Whether strategy is accepting deposits
+        bool isActive; // Whether strategy is accepting deposits
     }
 
     struct AssetConfig {
-        address asset;              // Asset address (address(0) for native ETH)
-        uint256 totalDeposited;     // Total amount deposited by bridge users
-        uint256 totalInStrategies;  // Total amount deployed to strategies
-        uint256 lastHarvestTime;    // Last yield harvest timestamp
-        uint256 accumulatedYield;   // Yield accumulated since last distribution
-        uint256 reserveRatio;       // % kept liquid for withdrawals (basis points)
-        bool isSupported;           // Whether asset is supported
+        address asset; // Asset address (address(0) for native ETH)
+        uint256 totalDeposited; // Total amount deposited by bridge users
+        uint256 totalInStrategies; // Total amount deployed to strategies
+        uint256 lastHarvestTime; // Last yield harvest timestamp
+        uint256 accumulatedYield; // Yield accumulated since last distribution
+        uint256 reserveRatio; // % kept liquid for withdrawals (basis points)
+        bool isSupported; // Whether asset is supported
     }
 
     struct YieldReport {
@@ -129,11 +129,7 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(
-        uint32 _luxChainId,
-        address _bridge,
-        address _yieldReceiver
-    ) Ownable(msg.sender) {
+    constructor(uint32 _luxChainId, address _bridge, address _yieldReceiver) Ownable(msg.sender) {
         luxChainId = _luxChainId;
         bridge = _bridge;
         yieldReceiver = _yieldReceiver;
@@ -149,10 +145,13 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
      * @param asset Asset address (address(0) for native ETH)
      * @param amount Amount being bridged
      */
-    function depositFromBridge(
-        address asset,
-        uint256 amount
-    ) external payable onlyBridge assetSupported(asset) nonReentrant {
+    function depositFromBridge(address asset, uint256 amount)
+        external
+        payable
+        onlyBridge
+        assetSupported(asset)
+        nonReentrant
+    {
         if (asset == address(0)) {
             require(msg.value == amount, "YieldBridgeVault: ETH amount mismatch");
         } else {
@@ -175,17 +174,18 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
      * @param recipient Recipient address
      * @param amount Amount to withdraw
      */
-    function withdrawToBridge(
-        address asset,
-        address recipient,
-        uint256 amount
-    ) external onlyBridge assetSupported(asset) nonReentrant {
+    function withdrawToBridge(address asset, address recipient, uint256 amount)
+        external
+        onlyBridge
+        assetSupported(asset)
+        nonReentrant
+    {
         AssetConfig storage config = assetConfigs[asset];
         require(config.totalDeposited >= amount, "YieldBridgeVault: insufficient balance");
 
         // First try liquid balance
         uint256 liquidBalance = _getLiquidBalance(asset);
-        
+
         if (liquidBalance < amount) {
             // Need to withdraw from strategies
             uint256 needed = amount - liquidBalance;
@@ -195,7 +195,7 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
         config.totalDeposited -= amount;
 
         if (asset == address(0)) {
-            (bool success, ) = recipient.call{value: amount}("");
+            (bool success,) = recipient.call{ value: amount }("");
             require(success, "YieldBridgeVault: ETH transfer failed");
         } else {
             IERC20(asset).safeTransfer(recipient, amount);
@@ -215,13 +215,10 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
      */
     function harvestYield(address asset) external assetSupported(asset) returns (uint256 totalYield) {
         AssetConfig storage config = assetConfigs[asset];
-        require(
-            block.timestamp >= config.lastHarvestTime + harvestInterval,
-            "YieldBridgeVault: harvest too soon"
-        );
+        require(block.timestamp >= config.lastHarvestTime + harvestInterval, "YieldBridgeVault: harvest too soon");
 
         StrategyAllocation[] storage assetStrategies = strategies[asset];
-        
+
         for (uint256 i = 0; i < assetStrategies.length; i++) {
             if (assetStrategies[i].isActive) {
                 uint256 harvested = IYieldStrategy(assetStrategies[i].strategy).harvest();
@@ -247,12 +244,7 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
         require(yieldAmount > 0, "YieldBridgeVault: no yield to distribute");
 
         // Generate report ID
-        reportId = keccak256(abi.encodePacked(
-            asset,
-            yieldAmount,
-            block.timestamp,
-            block.number
-        ));
+        reportId = keccak256(abi.encodePacked(asset, yieldAmount, block.timestamp, block.number));
 
         // Create yield report
         YieldReport memory report = YieldReport({
@@ -324,20 +316,17 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
      * @param strategy Strategy contract address
      * @param targetWeight Target allocation weight (basis points)
      */
-    function addStrategy(
-        address asset,
-        address strategy,
-        uint256 targetWeight
-    ) external onlyOwner assetSupported(asset) {
+    function addStrategy(address asset, address strategy, uint256 targetWeight)
+        external
+        onlyOwner
+        assetSupported(asset)
+    {
         require(targetWeight <= BASIS_POINTS, "YieldBridgeVault: invalid weight");
         require(IYieldStrategy(strategy).asset() == asset, "YieldBridgeVault: asset mismatch");
 
-        strategies[asset].push(StrategyAllocation({
-            strategy: strategy,
-            targetWeight: targetWeight,
-            depositedAmount: 0,
-            isActive: true
-        }));
+        strategies[asset].push(
+            StrategyAllocation({ strategy: strategy, targetWeight: targetWeight, depositedAmount: 0, isActive: true })
+        );
 
         // Approve strategy to spend asset
         if (asset != address(0)) {
@@ -352,15 +341,12 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
      * @param asset Asset address
      * @param strategyIndex Index of strategy to remove
      */
-    function removeStrategy(
-        address asset,
-        uint256 strategyIndex
-    ) external onlyOwner {
+    function removeStrategy(address asset, uint256 strategyIndex) external onlyOwner {
         StrategyAllocation[] storage assetStrategies = strategies[asset];
         require(strategyIndex < assetStrategies.length, "YieldBridgeVault: invalid index");
 
         StrategyAllocation storage allocation = assetStrategies[strategyIndex];
-        
+
         // Withdraw all funds from strategy
         if (allocation.depositedAmount > 0) {
             IYieldStrategy(allocation.strategy).withdraw(allocation.depositedAmount);
@@ -417,10 +403,7 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
      * @param asset Asset address (address(0) for native ETH)
      * @param reserveRatio Reserve ratio in basis points
      */
-    function addSupportedAsset(
-        address asset,
-        uint256 reserveRatio
-    ) external onlyOwner {
+    function addSupportedAsset(address asset, uint256 reserveRatio) external onlyOwner {
         require(!assetConfigs[asset].isSupported, "YieldBridgeVault: already supported");
         require(reserveRatio <= BASIS_POINTS, "YieldBridgeVault: invalid reserve ratio");
 
@@ -443,7 +426,7 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
 
     function _deployToStrategies(address asset, uint256 amount) internal {
         AssetConfig storage config = assetConfigs[asset];
-        
+
         // Keep reserve liquid
         uint256 reserveAmount = (amount * config.reserveRatio) / BASIS_POINTS;
         uint256 toDeployAmount = amount - reserveAmount;
@@ -451,7 +434,7 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
         if (toDeployAmount == 0) return;
 
         StrategyAllocation[] storage assetStrategies = strategies[asset];
-        
+
         for (uint256 i = 0; i < assetStrategies.length; i++) {
             if (!assetStrategies[i].isActive) continue;
 
@@ -552,5 +535,5 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
         return supportedAssets;
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

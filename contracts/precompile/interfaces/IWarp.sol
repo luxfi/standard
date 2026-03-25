@@ -43,10 +43,7 @@ interface IWarp {
         view
         returns (WarpBlockHash memory warpBlockHash, bool valid);
 
-    function getVerifiedWarpMessage(uint32 index)
-        external
-        view
-        returns (WarpMessage memory message, bool valid);
+    function getVerifiedWarpMessage(uint32 index) external view returns (WarpMessage memory message, bool valid);
 
     function sendWarpMessage(bytes calldata payload) external returns (bytes32 messageID);
 }
@@ -74,21 +71,13 @@ library WarpLib {
         return IWarp(PRECOMPILE_ADDRESS).sendWarpMessage(payload);
     }
 
-    function getVerifiedMessageOrRevert(uint32 index)
-        internal
-        view
-        returns (IWarp.WarpMessage memory message)
-    {
+    function getVerifiedMessageOrRevert(uint32 index) internal view returns (IWarp.WarpMessage memory message) {
         bool valid;
         (message, valid) = IWarp(PRECOMPILE_ADDRESS).getVerifiedWarpMessage(index);
         if (!valid) revert WarpMessageNotVerified();
     }
 
-    function getVerifiedBlockHashOrRevert(uint32 index)
-        internal
-        view
-        returns (IWarp.WarpBlockHash memory blockHash)
-    {
+    function getVerifiedBlockHashOrRevert(uint32 index) internal view returns (IWarp.WarpBlockHash memory blockHash) {
         bool valid;
         (blockHash, valid) = IWarp(PRECOMPILE_ADDRESS).getVerifiedWarpBlockHash(index);
         if (!valid) revert WarpBlockHashNotVerified();
@@ -98,19 +87,11 @@ library WarpLib {
         return SEND_WARP_MESSAGE_BASE_GAS + (payloadLength * SEND_WARP_MESSAGE_PER_BYTE_GAS);
     }
 
-    function isFromChain(IWarp.WarpMessage memory message, bytes32 expectedChainID)
-        internal
-        pure
-        returns (bool)
-    {
+    function isFromChain(IWarp.WarpMessage memory message, bytes32 expectedChainID) internal pure returns (bool) {
         return message.sourceChainID == expectedChainID;
     }
 
-    function isFromSender(IWarp.WarpMessage memory message, address expectedSender)
-        internal
-        pure
-        returns (bool)
-    {
+    function isFromSender(IWarp.WarpMessage memory message, address expectedSender) internal pure returns (bool) {
         return message.originSenderAddress == expectedSender;
     }
 }
@@ -120,21 +101,13 @@ library WarpLib {
  * @dev Abstract contract for cross-chain messaging using Warp
  */
 abstract contract WarpMessenger {
-    event WarpMessageReceived(
-        bytes32 indexed sourceChainID,
-        address indexed originSender,
-        bytes payload
-    );
+    event WarpMessageReceived(bytes32 indexed sourceChainID, address indexed originSender, bytes payload);
 
     function _sendWarpMessage(bytes memory payload) internal returns (bytes32 messageID) {
         return WarpLib.sendMessage(payload);
     }
 
-    function _receiveWarpMessage(uint32 index)
-        internal
-        view
-        returns (IWarp.WarpMessage memory message)
-    {
+    function _receiveWarpMessage(uint32 index) internal view returns (IWarp.WarpMessage memory message) {
         return WarpLib.getVerifiedMessageOrRevert(index);
     }
 
@@ -154,11 +127,7 @@ abstract contract TrustedSourceWarpReceiver is WarpMessenger {
     error UntrustedChain(bytes32 chainID);
     error UntrustedSender(bytes32 chainID, address sender);
 
-    function _receiveTrustedMessage(uint32 index)
-        internal
-        view
-        returns (IWarp.WarpMessage memory message)
-    {
+    function _receiveTrustedMessage(uint32 index) internal view returns (IWarp.WarpMessage memory message) {
         message = _receiveWarpMessage(index);
 
         if (!trustedChains[message.sourceChainID]) {

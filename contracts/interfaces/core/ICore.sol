@@ -51,9 +51,9 @@ pragma solidity ^0.8.31;
  */
 
 // Core Primitive Interfaces
-import {ICapital, RiskTier, CapitalState} from "./ICapital.sol";
-import {IYield, YieldType, AccrualPattern} from "./IYield.sol";
-import {IObligation, Monotonicity, ObligationState, ObligationLib} from "./IObligation.sol";
-import {ISettlement, SettlementType, SettlementState, SettlementLib} from "./ISettlement.sol";
-import {IRisk, InterventionType, HealthStatus, RiskLib} from "./IRisk.sol";
-import {IDistribution, DistributionType, RecipientClass, DistributionLib} from "./IDistribution.sol";
+import { ICapital, RiskTier, CapitalState } from "./ICapital.sol";
+import { IYield, YieldType, AccrualPattern } from "./IYield.sol";
+import { IObligation, Monotonicity, ObligationState, ObligationLib } from "./IObligation.sol";
+import { ISettlement, SettlementType, SettlementState, SettlementLib } from "./ISettlement.sol";
+import { IRisk, InterventionType, HealthStatus, RiskLib } from "./IRisk.sol";
+import { IDistribution, DistributionType, RecipientClass, DistributionLib } from "./IDistribution.sol";

@@ -75,13 +75,7 @@ library FROSTLib {
             revert InvalidSignature();
         }
 
-        bytes memory input = abi.encodePacked(
-            threshold,
-            totalSigners,
-            publicKey,
-            messageHash,
-            signature
-        );
+        bytes memory input = abi.encodePacked(threshold, totalSigners, publicKey, messageHash, signature);
 
         (bool success, bytes memory result) = FROST_PRECOMPILE.staticcall(input);
         require(success, "FROST precompile call failed");
@@ -120,10 +114,7 @@ abstract contract FROSTVerifier {
     using FROSTLib for *;
 
     event FROSTSignatureVerified(
-        uint32 threshold,
-        uint32 totalSigners,
-        bytes32 indexed publicKey,
-        bytes32 indexed messageHash
+        uint32 threshold, uint32 totalSigners, bytes32 indexed publicKey, bytes32 indexed messageHash
     );
 
     /**
@@ -141,13 +132,7 @@ abstract contract FROSTVerifier {
         bytes32 messageHash,
         bytes calldata signature
     ) internal view {
-        FROSTLib.verifyOrRevert(
-            threshold,
-            totalSigners,
-            publicKey,
-            messageHash,
-            signature
-        );
+        FROSTLib.verifyOrRevert(threshold, totalSigners, publicKey, messageHash, signature);
     }
 
     /**
@@ -193,19 +178,10 @@ contract ExampleFROSTContract is FROSTVerifier {
      * @param totalSigners Total number of parties
      * @param publicKey Aggregated public key
      */
-    function registerConfig(
-        bytes32 configId,
-        uint32 threshold,
-        uint32 totalSigners,
-        bytes32 publicKey
-    ) external {
+    function registerConfig(bytes32 configId, uint32 threshold, uint32 totalSigners, bytes32 publicKey) external {
         require(FROSTLib.isValidThreshold(threshold, totalSigners), "Invalid threshold");
 
-        configs[configId] = ThresholdConfig({
-            threshold: threshold,
-            totalSigners: totalSigners,
-            publicKey: publicKey
-        });
+        configs[configId] = ThresholdConfig({ threshold: threshold, totalSigners: totalSigners, publicKey: publicKey });
 
         emit ConfigRegistered(configId, threshold, totalSigners);
     }
@@ -216,21 +192,11 @@ contract ExampleFROSTContract is FROSTVerifier {
      * @param messageHash Message hash
      * @param signature FROST threshold signature
      */
-    function processSignedMessage(
-        bytes32 configId,
-        bytes32 messageHash,
-        bytes calldata signature
-    ) external {
+    function processSignedMessage(bytes32 configId, bytes32 messageHash, bytes calldata signature) external {
         ThresholdConfig memory config = configs[configId];
         require(config.threshold > 0, "Config not found");
 
-        verifyFROSTSignatureWithEvent(
-            config.threshold,
-            config.totalSigners,
-            config.publicKey,
-            messageHash,
-            signature
-        );
+        verifyFROSTSignatureWithEvent(config.threshold, config.totalSigners, config.publicKey, messageHash, signature);
 
         emit MessageProcessed(configId, messageHash);
     }

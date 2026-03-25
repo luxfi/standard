@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {FHE, ebool, euint64, eaddress} from "../../FHE.sol";
-import {IConfidentialLRC721} from "./IConfidentialLRC721.sol";
-import {TFHEErrors} from "../../utils/TFHEErrors.sol";
+import { FHE, ebool, euint64, eaddress } from "../../FHE.sol";
+import { IConfidentialLRC721 } from "./IConfidentialLRC721.sol";
+import { TFHEErrors } from "../../utils/TFHEErrors.sol";
 
 /**
  * @title ConfidentialLRC721
@@ -310,12 +310,7 @@ abstract contract ConfidentialLRC721 is IConfidentialLRC721, TFHEErrors {
      * @param tokenId Token ID
      * @param data Additional data
      */
-    function _checkOnERC721Received(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes memory data
-    ) internal virtual {
+    function _checkOnERC721Received(address from, address to, uint256 tokenId, bytes memory data) internal virtual {
         if (to.code.length > 0) {
             try IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, data) returns (bytes4 retval) {
                 if (retval != IERC721Receiver.onERC721Received.selector) {
@@ -333,10 +328,7 @@ abstract contract ConfidentialLRC721 is IConfidentialLRC721, TFHEErrors {
  * @dev Interface for contracts that want to receive ERC721 tokens
  */
 interface IERC721Receiver {
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) external returns (bytes4);
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
+        external
+        returns (bytes4);
 }

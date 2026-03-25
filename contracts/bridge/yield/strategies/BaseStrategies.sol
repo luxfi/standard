@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.24;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title Base Chain DeFi Yield Strategies
 /// @notice Yield strategies for Base chain DeFi protocols
@@ -74,12 +74,10 @@ interface IAerodromeRouter {
     ) external returns (uint256[] memory amounts);
 
     /// @notice Get pair address for tokens
-    function pairFor(address tokenA, address tokenB, bool stable, address factory)
-        external view returns (address pair);
+    function pairFor(address tokenA, address tokenB, bool stable, address factory) external view returns (address pair);
 
     /// @notice Get amounts out for swap
-    function getAmountsOut(uint256 amountIn, Route[] calldata routes)
-        external view returns (uint256[] memory amounts);
+    function getAmountsOut(uint256 amountIn, Route[] calldata routes) external view returns (uint256[] memory amounts);
 
     /// @notice Default factory
     function defaultFactory() external view returns (address);
@@ -159,7 +157,9 @@ interface IMoonwellComptroller {
 
     /// @notice Get account liquidity
     function getAccountLiquidity(address account)
-        external view returns (uint256 error, uint256 liquidity, uint256 shortfall);
+        external
+        view
+        returns (uint256 error, uint256 liquidity, uint256 shortfall);
 
     /// @notice Claim WELL rewards (all markets)
     function claimReward() external;
@@ -241,46 +241,32 @@ interface IMToken {
 /// @notice Seamless Pool interface (Aave V3 style)
 interface ISeamlessPool {
     /// @notice Supply assets to the pool
-    function supply(
-        address asset,
-        uint256 amount,
-        address onBehalfOf,
-        uint16 referralCode
-    ) external;
+    function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
 
     /// @notice Withdraw assets from the pool
-    function withdraw(
-        address asset,
-        uint256 amount,
-        address to
-    ) external returns (uint256);
+    function withdraw(address asset, uint256 amount, address to) external returns (uint256);
 
     /// @notice Borrow assets from the pool
-    function borrow(
-        address asset,
-        uint256 amount,
-        uint256 interestRateMode,
-        uint16 referralCode,
-        address onBehalfOf
-    ) external;
+    function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf)
+        external;
 
     /// @notice Repay borrowed assets
-    function repay(
-        address asset,
-        uint256 amount,
-        uint256 interestRateMode,
-        address onBehalfOf
-    ) external returns (uint256);
+    function repay(address asset, uint256 amount, uint256 interestRateMode, address onBehalfOf)
+        external
+        returns (uint256);
 
     /// @notice Get user account data
-    function getUserAccountData(address user) external view returns (
-        uint256 totalCollateralBase,
-        uint256 totalDebtBase,
-        uint256 availableBorrowsBase,
-        uint256 currentLiquidationThreshold,
-        uint256 ltv,
-        uint256 healthFactor
-    );
+    function getUserAccountData(address user)
+        external
+        view
+        returns (
+            uint256 totalCollateralBase,
+            uint256 totalDebtBase,
+            uint256 availableBorrowsBase,
+            uint256 currentLiquidationThreshold,
+            uint256 ltv,
+            uint256 healthFactor
+        );
 
     /// @notice Get reserve data
     function getReserveData(address asset) external view returns (ReserveData memory);
@@ -311,15 +297,17 @@ interface ISeamlessPool {
 interface ISeamlessRewards {
     /// @notice Claim all rewards for assets
     function claimAllRewards(address[] calldata assets, address to)
-        external returns (address[] memory rewardsList, uint256[] memory claimedAmounts);
+        external
+        returns (address[] memory rewardsList, uint256[] memory claimedAmounts);
 
     /// @notice Get user rewards
-    function getUserRewards(address[] calldata assets, address user, address reward)
-        external view returns (uint256);
+    function getUserRewards(address[] calldata assets, address user, address reward) external view returns (uint256);
 
     /// @notice Get all user rewards
     function getAllUserRewards(address[] calldata assets, address user)
-        external view returns (address[] memory rewardsList, uint256[] memory unclaimedAmounts);
+        external
+        view
+        returns (address[] memory rewardsList, uint256[] memory unclaimedAmounts);
 }
 
 /// @notice Seamless aToken interface
@@ -337,7 +325,7 @@ interface ISeamlessAToken {
 /// @title Aerodrome LP Strategy
 /// @notice Provides liquidity to Aerodrome pools and stakes in gauges for AERO rewards
 /// @dev Implements ve(3,3) LP staking with auto-compounding of rewards
-contract AerodromeStrategy is Ownable, ReentrancyGuard{
+contract AerodromeStrategy is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // =========================================================================
@@ -438,12 +426,7 @@ contract AerodromeStrategy is Ownable, ReentrancyGuard{
     /// @param _gauge Gauge address for staking
     /// @param _controller Controller that can deposit/withdraw
     /// @param _owner Owner address
-    constructor(
-        address _pair,
-        address _gauge,
-        address _controller,
-        address _owner
-    ) Ownable(_owner) {
+    constructor(address _pair, address _gauge, address _controller, address _owner) Ownable(_owner) {
         if (_pair == address(0)) revert InvalidPair();
         if (_gauge == address(0)) revert InvalidGauge();
 
@@ -483,17 +466,18 @@ contract AerodromeStrategy is Ownable, ReentrancyGuard{
         tokenB.safeTransferFrom(msg.sender, address(this), amountB);
 
         // Add liquidity
-        (uint256 usedA, uint256 usedB, uint256 lpReceived) = IAerodromeRouter(ROUTER).addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            isStable,
-            amount,
-            amountB,
-            (amount * 99) / 100, // 1% slippage
-            (amountB * 99) / 100,
-            address(this),
-            block.timestamp + 300
-        );
+        (uint256 usedA, uint256 usedB, uint256 lpReceived) = IAerodromeRouter(ROUTER)
+            .addLiquidity(
+                address(tokenA),
+                address(tokenB),
+                isStable,
+                amount,
+                amountB,
+                (amount * 99) / 100, // 1% slippage
+                (amountB * 99) / 100,
+                address(this),
+                block.timestamp + 300
+            );
 
         // Refund unused tokens
         if (amount > usedA) {
@@ -522,16 +506,17 @@ contract AerodromeStrategy is Ownable, ReentrancyGuard{
         gauge.withdraw(shares);
 
         // Remove liquidity
-        (uint256 amountA, uint256 amountB) = IAerodromeRouter(ROUTER).removeLiquidity(
-            address(tokenA),
-            address(tokenB),
-            isStable,
-            shares,
-            0, // Accept any amount (controller handles slippage)
-            0,
-            msg.sender,
-            block.timestamp + 300
-        );
+        (uint256 amountA, uint256 amountB) = IAerodromeRouter(ROUTER)
+            .removeLiquidity(
+                address(tokenA),
+                address(tokenB),
+                isStable,
+                shares,
+                0, // Accept any amount (controller handles slippage)
+                0,
+                msg.sender,
+                block.timestamp + 300
+            );
 
         stakedLP -= shares;
         amount = amountA + amountB;
@@ -559,53 +544,38 @@ contract AerodromeStrategy is Ownable, ReentrancyGuard{
         // Build routes for swaps
         IAerodromeRouter.Route[] memory routeA = new IAerodromeRouter.Route[](1);
         routeA[0] = IAerodromeRouter.Route({
-            from: AERO,
-            to: address(tokenA),
-            stable: false,
-            factory: IAerodromeRouter(ROUTER).defaultFactory()
+            from: AERO, to: address(tokenA), stable: false, factory: IAerodromeRouter(ROUTER).defaultFactory()
         });
 
         IAerodromeRouter.Route[] memory routeB = new IAerodromeRouter.Route[](1);
         routeB[0] = IAerodromeRouter.Route({
-            from: AERO,
-            to: address(tokenB),
-            stable: false,
-            factory: IAerodromeRouter(ROUTER).defaultFactory()
+            from: AERO, to: address(tokenB), stable: false, factory: IAerodromeRouter(ROUTER).defaultFactory()
         });
 
         // Execute swaps
-        uint256[] memory amountsA = IAerodromeRouter(ROUTER).swapExactTokensForTokens(
-            halfAero,
-            0,
-            routeA,
-            address(this),
-            block.timestamp + 300
-        );
+        uint256[] memory amountsA = IAerodromeRouter(ROUTER)
+            .swapExactTokensForTokens(halfAero, 0, routeA, address(this), block.timestamp + 300);
 
-        uint256[] memory amountsB = IAerodromeRouter(ROUTER).swapExactTokensForTokens(
-            aeroBalance - halfAero,
-            0,
-            routeB,
-            address(this),
-            block.timestamp + 300
-        );
+        uint256[] memory amountsB = IAerodromeRouter(ROUTER)
+            .swapExactTokensForTokens(aeroBalance - halfAero, 0, routeB, address(this), block.timestamp + 300);
 
         // Add liquidity with swapped tokens
         uint256 tokenABalance = IERC20(tokenA).balanceOf(address(this));
         uint256 tokenBBalance = IERC20(tokenB).balanceOf(address(this));
 
         if (tokenABalance > 0 && tokenBBalance > 0) {
-            (,, uint256 lpMinted) = IAerodromeRouter(ROUTER).addLiquidity(
-                address(tokenA),
-                address(tokenB),
-                isStable,
-                tokenABalance,
-                tokenBBalance,
-                0,
-                0,
-                address(this),
-                block.timestamp + 300
-            );
+            (,, uint256 lpMinted) = IAerodromeRouter(ROUTER)
+                .addLiquidity(
+                    address(tokenA),
+                    address(tokenB),
+                    isStable,
+                    tokenABalance,
+                    tokenBBalance,
+                    0,
+                    0,
+                    address(this),
+                    block.timestamp + 300
+                );
 
             // Stake new LP
             if (lpMinted > 0) {
@@ -736,7 +706,7 @@ contract AerodromeStrategy is Ownable, ReentrancyGuard{
 /// @title Moonwell Lending Strategy
 /// @notice Supplies assets to Moonwell on Base for yield
 /// @dev Compound-fork with WELL token rewards
-contract MoonwellStrategy is Ownable, ReentrancyGuard{
+contract MoonwellStrategy is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // =========================================================================
@@ -820,11 +790,7 @@ contract MoonwellStrategy is Ownable, ReentrancyGuard{
     /// @param _mToken mToken address (e.g., mUSDC)
     /// @param _controller Controller that can deposit/withdraw
     /// @param _owner Owner address
-    constructor(
-        address _mToken,
-        address _controller,
-        address _owner
-    ) Ownable(_owner) {
+    constructor(address _mToken, address _controller, address _owner) Ownable(_owner) {
         if (_mToken == address(0)) revert InvalidMToken();
 
         mToken = IMToken(_mToken);
@@ -1016,7 +982,7 @@ contract MoonwellStrategy is Ownable, ReentrancyGuard{
 /// @title Seamless Protocol Lending Strategy
 /// @notice Supplies assets to Seamless Protocol on Base for yield
 /// @dev Aave V3 fork with native Base integrations
-contract SeamlessStrategy is Ownable, ReentrancyGuard{
+contract SeamlessStrategy is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // =========================================================================
@@ -1101,11 +1067,7 @@ contract SeamlessStrategy is Ownable, ReentrancyGuard{
     /// @param _underlying Underlying asset address
     /// @param _controller Controller that can deposit/withdraw
     /// @param _owner Owner address
-    constructor(
-        address _underlying,
-        address _controller,
-        address _owner
-    ) Ownable(_owner) {
+    constructor(address _underlying, address _controller, address _owner) Ownable(_owner) {
         if (_underlying == address(0)) revert InvalidAsset();
 
         underlyingAsset = IERC20(_underlying);
@@ -1131,12 +1093,7 @@ contract SeamlessStrategy is Ownable, ReentrancyGuard{
         underlyingAsset.safeTransferFrom(msg.sender, address(this), amount);
 
         // Supply to Seamless
-        ISeamlessPool(POOL).supply(
-            address(underlyingAsset),
-            amount,
-            address(this),
-            REFERRAL_CODE
-        );
+        ISeamlessPool(POOL).supply(address(underlyingAsset), amount, address(this), REFERRAL_CODE);
 
         totalDeposited += amount;
         shares = amount; // 1:1 for aTokens
@@ -1152,11 +1109,7 @@ contract SeamlessStrategy is Ownable, ReentrancyGuard{
         if (shares > balance) revert InsufficientBalance();
 
         // Withdraw from Seamless
-        amount = ISeamlessPool(POOL).withdraw(
-            address(underlyingAsset),
-            shares,
-            msg.sender
-        );
+        amount = ISeamlessPool(POOL).withdraw(address(underlyingAsset), shares, msg.sender);
 
         if (amount <= totalDeposited) {
             totalDeposited -= amount;
@@ -1239,14 +1192,18 @@ contract SeamlessStrategy is Ownable, ReentrancyGuard{
     }
 
     /// @notice Get user account data
-    function getAccountData() external view returns (
-        uint256 totalCollateral,
-        uint256 totalDebt,
-        uint256 availableBorrows,
-        uint256 liquidationThreshold,
-        uint256 ltv,
-        uint256 healthFactor
-    ) {
+    function getAccountData()
+        external
+        view
+        returns (
+            uint256 totalCollateral,
+            uint256 totalDebt,
+            uint256 availableBorrows,
+            uint256 liquidationThreshold,
+            uint256 ltv,
+            uint256 healthFactor
+        )
+    {
         return ISeamlessPool(POOL).getUserAccountData(address(this));
     }
 
@@ -1259,11 +1216,11 @@ contract SeamlessStrategy is Ownable, ReentrancyGuard{
     }
 
     /// @notice Get reserve data
-    function getReserveData() external view returns (
-        uint256 liquidityRate,
-        uint256 variableBorrowRate,
-        uint256 stableBorrowRate
-    ) {
+    function getReserveData()
+        external
+        view
+        returns (uint256 liquidityRate, uint256 variableBorrowRate, uint256 stableBorrowRate)
+    {
         ISeamlessPool.ReserveData memory data = ISeamlessPool(POOL).getReserveData(address(underlyingAsset));
         liquidityRate = uint256(data.currentLiquidityRate);
         variableBorrowRate = uint256(data.currentVariableBorrowRate);
@@ -1289,11 +1246,12 @@ contract SeamlessStrategy is Ownable, ReentrancyGuard{
     function emergencyWithdraw() external onlyOwner {
         uint256 balance = aToken.balanceOf(address(this));
         if (balance > 0) {
-            ISeamlessPool(POOL).withdraw(
-                address(underlyingAsset),
-                type(uint256).max, // Max withdrawal
-                owner()
-            );
+            ISeamlessPool(POOL)
+                .withdraw(
+                    address(underlyingAsset),
+                    type(uint256).max, // Max withdrawal
+                    owner()
+                );
             totalDeposited = 0;
         }
     }
@@ -1313,33 +1271,21 @@ contract SeamlessStrategy is Ownable, ReentrancyGuard{
 /// @title Base Strategies Factory
 /// @notice Factory for deploying Base chain yield strategies
 contract BaseStrategiesFactory is Ownable {
-
     // =========================================================================
     // EVENTS
     // =========================================================================
 
-    event AerodromeStrategyDeployed(
-        address indexed strategy,
-        address indexed pair,
-        address indexed gauge
-    );
+    event AerodromeStrategyDeployed(address indexed strategy, address indexed pair, address indexed gauge);
 
-    event MoonwellStrategyDeployed(
-        address indexed strategy,
-        address indexed mToken,
-        address indexed underlying
-    );
+    event MoonwellStrategyDeployed(address indexed strategy, address indexed mToken, address indexed underlying);
 
-    event SeamlessStrategyDeployed(
-        address indexed strategy,
-        address indexed underlying
-    );
+    event SeamlessStrategyDeployed(address indexed strategy, address indexed underlying);
 
     // =========================================================================
     // CONSTRUCTOR
     // =========================================================================
 
-    constructor() Ownable(msg.sender) {}
+    constructor() Ownable(msg.sender) { }
 
     // =========================================================================
     // DEPLOYMENT FUNCTIONS
@@ -1349,17 +1295,12 @@ contract BaseStrategiesFactory is Ownable {
     /// @param pair LP pair address
     /// @param gauge Gauge address
     /// @param controller Controller address
-    function deployAerodromeStrategy(
-        address pair,
-        address gauge,
-        address controller
-    ) external onlyOwner returns (address) {
-        AerodromeStrategy strategy = new AerodromeStrategy(
-            pair,
-            gauge,
-            controller,
-            msg.sender
-        );
+    function deployAerodromeStrategy(address pair, address gauge, address controller)
+        external
+        onlyOwner
+        returns (address)
+    {
+        AerodromeStrategy strategy = new AerodromeStrategy(pair, gauge, controller, msg.sender);
 
         emit AerodromeStrategyDeployed(address(strategy), pair, gauge);
         return address(strategy);
@@ -1368,15 +1309,8 @@ contract BaseStrategiesFactory is Ownable {
     /// @notice Deploy Moonwell lending strategy
     /// @param mToken mToken address
     /// @param controller Controller address
-    function deployMoonwellStrategy(
-        address mToken,
-        address controller
-    ) external onlyOwner returns (address) {
-        MoonwellStrategy strategy = new MoonwellStrategy(
-            mToken,
-            controller,
-            msg.sender
-        );
+    function deployMoonwellStrategy(address mToken, address controller) external onlyOwner returns (address) {
+        MoonwellStrategy strategy = new MoonwellStrategy(mToken, controller, msg.sender);
 
         emit MoonwellStrategyDeployed(address(strategy), mToken, IMToken(mToken).underlying());
         return address(strategy);
@@ -1385,15 +1319,8 @@ contract BaseStrategiesFactory is Ownable {
     /// @notice Deploy Seamless lending strategy
     /// @param underlying Underlying asset address
     /// @param controller Controller address
-    function deploySeamlessStrategy(
-        address underlying,
-        address controller
-    ) external onlyOwner returns (address) {
-        SeamlessStrategy strategy = new SeamlessStrategy(
-            underlying,
-            controller,
-            msg.sender
-        );
+    function deploySeamlessStrategy(address underlying, address controller) external onlyOwner returns (address) {
+        SeamlessStrategy strategy = new SeamlessStrategy(underlying, controller, msg.sender);
 
         emit SeamlessStrategyDeployed(address(strategy), underlying);
         return address(strategy);

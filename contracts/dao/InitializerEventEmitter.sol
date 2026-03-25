@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    Initializable
-} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @title InitializerEventEmitter
@@ -69,7 +67,9 @@ abstract contract InitializerEventEmitter is Initializable {
      * @custom:storage-location erc7201:DAO.InitializerEventEmitter.main
      */
     struct InitializerEventEmitterStorage {
-        /** @notice Whether the initialization data has been emitted */
+        /**
+         * @notice Whether the initialization data has been emitted
+         */
         bool initialized;
     }
 
@@ -85,11 +85,7 @@ abstract contract InitializerEventEmitter is Initializable {
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      * @return $ The storage struct for InitializerEventEmitter
      */
-    function _getInitializerEventEmitterStorage()
-        internal
-        pure
-        returns (InitializerEventEmitterStorage storage $)
-    {
+    function _getInitializerEventEmitterStorage() internal pure returns (InitializerEventEmitterStorage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := INITIALIZER_EVENT_EMITTER_STORAGE_LOCATION
@@ -110,9 +106,11 @@ abstract contract InitializerEventEmitter is Initializable {
     function __InitializerEventEmitter_init(
         // solhint-disable-previous-line func-name-mixedcase
         bytes memory initData
-    ) internal onlyInitializing {
-        InitializerEventEmitterStorage
-            storage $ = _getInitializerEventEmitterStorage();
+    )
+        internal
+        onlyInitializing
+    {
+        InitializerEventEmitterStorage storage $ = _getInitializerEventEmitterStorage();
 
         if ($.initialized) {
             revert InitializeDataAlreadyEmitted();

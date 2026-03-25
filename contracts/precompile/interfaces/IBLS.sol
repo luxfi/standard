@@ -34,11 +34,10 @@ interface IBLS {
      * @param signature The 96-byte BLS signature
      * @return valid True if signature is valid
      */
-    function verify(
-        bytes calldata publicKey,
-        bytes32 messageHash,
-        bytes calldata signature
-    ) external view returns (bool valid);
+    function verify(bytes calldata publicKey, bytes32 messageHash, bytes calldata signature)
+        external
+        view
+        returns (bool valid);
 }
 
 /**
@@ -54,10 +53,7 @@ interface IBLSAggregate {
      * @param signatures Array of 96-byte BLS signatures
      * @return aggregatedSignature Single 96-byte aggregated signature
      */
-    function aggregate(bytes[] calldata signatures)
-        external
-        view
-        returns (bytes memory aggregatedSignature);
+    function aggregate(bytes[] calldata signatures) external view returns (bytes memory aggregatedSignature);
 }
 
 /**
@@ -80,11 +76,11 @@ library BLSLib {
     /**
      * @dev Verify BLS signature
      */
-    function verify(
-        bytes memory publicKey,
-        bytes32 messageHash,
-        bytes memory signature
-    ) internal view returns (bool valid) {
+    function verify(bytes memory publicKey, bytes32 messageHash, bytes memory signature)
+        internal
+        view
+        returns (bool valid)
+    {
         if (publicKey.length != PUBLIC_KEY_SIZE) revert InvalidBLSPublicKey();
         if (signature.length != SIGNATURE_SIZE) revert InvalidBLSSignature();
         return IBLS(BLS_VERIFY).verify(publicKey, messageHash, signature);
@@ -93,11 +89,7 @@ library BLSLib {
     /**
      * @dev Verify BLS signature or revert
      */
-    function verifyOrRevert(
-        bytes memory publicKey,
-        bytes32 messageHash,
-        bytes memory signature
-    ) internal view {
+    function verifyOrRevert(bytes memory publicKey, bytes32 messageHash, bytes memory signature) internal view {
         if (!verify(publicKey, messageHash, signature)) {
             revert BLSVerificationFailed();
         }
@@ -106,11 +98,7 @@ library BLSLib {
     /**
      * @dev Aggregate multiple BLS signatures
      */
-    function aggregate(bytes[] memory signatures)
-        internal
-        view
-        returns (bytes memory aggregated)
-    {
+    function aggregate(bytes[] memory signatures) internal view returns (bytes memory aggregated) {
         return IBLSAggregate(BLS_AGGREGATE).aggregate(signatures);
     }
 
@@ -153,22 +141,14 @@ abstract contract BLSVerifier {
     /**
      * @dev Verify BLS signature
      */
-    function _verifyBLS(
-        bytes memory publicKey,
-        bytes32 messageHash,
-        bytes memory signature
-    ) internal view {
+    function _verifyBLS(bytes memory publicKey, bytes32 messageHash, bytes memory signature) internal view {
         BLSLib.verifyOrRevert(publicKey, messageHash, signature);
     }
 
     /**
      * @dev Verify BLS signature with event
      */
-    function _verifyBLSWithEvent(
-        bytes memory publicKey,
-        bytes32 messageHash,
-        bytes memory signature
-    ) internal {
+    function _verifyBLSWithEvent(bytes memory publicKey, bytes32 messageHash, bytes memory signature) internal {
         _verifyBLS(publicKey, messageHash, signature);
         emit BLSSignatureVerified(messageHash, publicKey);
     }
@@ -176,11 +156,7 @@ abstract contract BLSVerifier {
     /**
      * @dev Aggregate BLS signatures
      */
-    function _aggregateBLS(bytes[] memory signatures)
-        internal
-        view
-        returns (bytes memory)
-    {
+    function _aggregateBLS(bytes[] memory signatures) internal view returns (bytes memory) {
         return BLSLib.aggregate(signatures);
     }
 }

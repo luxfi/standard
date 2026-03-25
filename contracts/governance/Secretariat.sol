@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.31;
 
-import {Enum} from "./base/Enum.sol";
-import {IVault} from "./interfaces/IVault.sol";
-import {IGuard} from "./interfaces/IGuard.sol";
+import { Enum } from "./base/Enum.sol";
+import { IVault } from "./interfaces/IVault.sol";
+import { IGuard } from "./interfaces/IGuard.sol";
 
 /**
  * @title Secretariat
@@ -160,36 +160,31 @@ abstract contract Secretariat {
      * @return success True if succeeded
      * @dev Handles guard checks and transaction execution
      */
-    function exec(
-        address to,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation
-    ) internal virtual returns (bool success) {
+    function exec(address to, uint256 value, bytes memory data, Enum.Operation operation)
+        internal
+        virtual
+        returns (bool success)
+    {
         // Pre-transaction guard check
         if (guard != address(0)) {
-            IGuard(guard).checkTransaction(
-                to,
-                value,
-                data,
-                operation,
-                0, // safeTxGas
-                0, // baseGas
-                0, // gasPrice
-                address(0), // gasToken
-                payable(address(0)), // refundReceiver
-                "", // signatures
-                msg.sender
-            );
+            IGuard(guard)
+                .checkTransaction(
+                    to,
+                    value,
+                    data,
+                    operation,
+                    0, // safeTxGas
+                    0, // baseGas
+                    0, // gasPrice
+                    address(0), // gasToken
+                    payable(address(0)), // refundReceiver
+                    "", // signatures
+                    msg.sender
+                );
         }
 
         // Execute transaction through vault
-        success = IVault(target).execTransactionFromModule(
-            to,
-            value,
-            data,
-            operation
-        );
+        success = IVault(target).execTransactionFromModule(to, value, data, operation);
 
         // Post-transaction guard check
         if (guard != address(0)) {

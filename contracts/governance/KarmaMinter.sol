@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 interface IKarma {
     function mint(address to, uint256 amount, bytes32 reason) external;
@@ -77,14 +77,14 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
 
     /// @notice Configuration for each event type
     struct MintConfig {
-        uint256 baseAmount;      // Base K amount to mint
-        uint256 maxAmount;       // Max K per event (for variable rewards)
-        uint256 cooldown;        // Cooldown between rewards for same user
-        uint256 dailyLimit;      // Max K per day for this event type
-        uint256 dailyMinted;     // K minted today for this event
-        uint256 lastResetDay;    // Last day dailyMinted was reset
-        bool enabled;            // Whether this event type is active
-        bool requiresVerified;   // Whether user must be verified
+        uint256 baseAmount; // Base K amount to mint
+        uint256 maxAmount; // Max K per event (for variable rewards)
+        uint256 cooldown; // Cooldown between rewards for same user
+        uint256 dailyLimit; // Max K per day for this event type
+        uint256 dailyMinted; // K minted today for this event
+        uint256 lastResetDay; // Last day dailyMinted was reset
+        bool enabled; // Whether this event type is active
+        bool requiresVerified; // Whether user must be verified
     }
 
     // ============ State ============
@@ -112,18 +112,9 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
 
     // ============ Events ============
 
-    event KarmaRewarded(
-        address indexed recipient,
-        bytes32 indexed eventType,
-        uint256 amount,
-        bytes32 reason
-    );
+    event KarmaRewarded(address indexed recipient, bytes32 indexed eventType, uint256 amount, bytes32 reason);
     event KarmaStruck(
-        address indexed striker,
-        address indexed target,
-        uint256 strikerBurned,
-        uint256 targetBurned,
-        bytes32 reason
+        address indexed striker, address indexed target, uint256 strikerBurned, uint256 targetBurned, bytes32 reason
     );
     event MintConfigUpdated(bytes32 indexed eventType, MintConfig config);
     event HookAdded(address indexed hook, string description);
@@ -178,12 +169,11 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
     /// @param eventType Type of event
     /// @param amount Amount of K to mint (must be <= config.maxAmount)
     /// @param reason Additional context (proposal ID, contribution hash, etc.)
-    function rewardKarma(
-        address recipient,
-        bytes32 eventType,
-        uint256 amount,
-        bytes32 reason
-    ) external onlyRole(HOOK_ROLE) whenNotPaused {
+    function rewardKarma(address recipient, bytes32 eventType, uint256 amount, bytes32 reason)
+        external
+        onlyRole(HOOK_ROLE)
+        whenNotPaused
+    {
         // Cannot mint karma for yourself
         if (recipient == msg.sender) revert CannotMintForSelf();
 
@@ -290,11 +280,7 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
     /// @param target Address to strike
     /// @param amount Amount of target's K to strike (will burn 2x from striker)
     /// @param reason Reason for striking (hash of evidence)
-    function strikeKarma(
-        address target,
-        uint256 amount,
-        bytes32 reason
-    ) external nonReentrant whenNotPaused {
+    function strikeKarma(address target, uint256 amount, bytes32 reason) external nonReentrant whenNotPaused {
         if (target == address(0)) revert ZeroAddress();
         if (target == msg.sender) revert CannotMintForSelf(); // Can't strike yourself
         if (amount == 0) revert AmountExceedsMax();
@@ -340,10 +326,7 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
     /// @notice Update mint config for an event type
     /// @param eventType Event type to configure
     /// @param config New configuration
-    function setMintConfig(
-        bytes32 eventType,
-        MintConfig calldata config
-    ) external onlyRole(GOVERNOR_ROLE) {
+    function setMintConfig(bytes32 eventType, MintConfig calldata config) external onlyRole(GOVERNOR_ROLE) {
         mintConfigs[eventType] = config;
         emit MintConfigUpdated(eventType, config);
     }
@@ -351,10 +334,7 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
     /// @notice Enable/disable an event type
     /// @param eventType Event type to toggle
     /// @param enabled Whether to enable
-    function setEventEnabled(
-        bytes32 eventType,
-        bool enabled
-    ) external onlyRole(GOVERNOR_ROLE) {
+    function setEventEnabled(bytes32 eventType, bool enabled) external onlyRole(GOVERNOR_ROLE) {
         mintConfigs[eventType].enabled = enabled;
         emit MintConfigUpdated(eventType, mintConfigs[eventType]);
     }
@@ -362,10 +342,7 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
     /// @notice Update base amount for an event type
     /// @param eventType Event type to update
     /// @param baseAmount New base amount
-    function setBaseAmount(
-        bytes32 eventType,
-        uint256 baseAmount
-    ) external onlyRole(GOVERNOR_ROLE) {
+    function setBaseAmount(bytes32 eventType, uint256 baseAmount) external onlyRole(GOVERNOR_ROLE) {
         mintConfigs[eventType].baseAmount = baseAmount;
         emit MintConfigUpdated(eventType, mintConfigs[eventType]);
     }
@@ -373,10 +350,7 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
     /// @notice Update cooldown for an event type
     /// @param eventType Event type to update
     /// @param cooldown New cooldown in seconds
-    function setCooldown(
-        bytes32 eventType,
-        uint256 cooldown
-    ) external onlyRole(GOVERNOR_ROLE) {
+    function setCooldown(bytes32 eventType, uint256 cooldown) external onlyRole(GOVERNOR_ROLE) {
         mintConfigs[eventType].cooldown = cooldown;
         emit MintConfigUpdated(eventType, mintConfigs[eventType]);
     }
@@ -421,10 +395,11 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
     }
 
     /// @notice Check if user can receive reward
-    function canReceiveReward(
-        address recipient,
-        bytes32 eventType
-    ) external view returns (bool canReceive, string memory reason) {
+    function canReceiveReward(address recipient, bytes32 eventType)
+        external
+        view
+        returns (bool canReceive, string memory reason)
+    {
         MintConfig memory config = mintConfigs[eventType];
 
         if (!config.enabled) {
@@ -480,10 +455,10 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
     function _initializeDefaultConfigs() internal {
         // Identity Events (one-time, higher rewards)
         mintConfigs[EVENT_DID_VERIFICATION] = MintConfig({
-            baseAmount: 100e18,      // 100 K
+            baseAmount: 100e18, // 100 K
             maxAmount: 100e18,
-            cooldown: 365 days,      // Once per year
-            dailyLimit: 10_000e18,   // 10K K per day
+            cooldown: 365 days, // Once per year
+            dailyLimit: 10_000e18, // 10K K per day
             dailyMinted: 0,
             lastResetDay: 0,
             enabled: true,
@@ -491,7 +466,7 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
         });
 
         mintConfigs[EVENT_HUMANITY_PROOF] = MintConfig({
-            baseAmount: 200e18,      // 200 K
+            baseAmount: 200e18, // 200 K
             maxAmount: 200e18,
             cooldown: 365 days,
             dailyLimit: 20_000e18,
@@ -503,9 +478,9 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
 
         // Governance Events (frequent, smaller rewards)
         mintConfigs[EVENT_PROPOSAL_CREATED] = MintConfig({
-            baseAmount: 25e18,       // 25 K
+            baseAmount: 25e18, // 25 K
             maxAmount: 50e18,
-            cooldown: 7 days,        // Once per week
+            cooldown: 7 days, // Once per week
             dailyLimit: 500e18,
             dailyMinted: 0,
             lastResetDay: 0,
@@ -514,9 +489,9 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
         });
 
         mintConfigs[EVENT_PROPOSAL_PASSED] = MintConfig({
-            baseAmount: 50e18,       // 50 K
+            baseAmount: 50e18, // 50 K
             maxAmount: 100e18,
-            cooldown: 0,             // Per proposal
+            cooldown: 0, // Per proposal
             dailyLimit: 1_000e18,
             dailyMinted: 0,
             lastResetDay: 0,
@@ -525,9 +500,9 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
         });
 
         mintConfigs[EVENT_VOTE_CAST] = MintConfig({
-            baseAmount: 1e18,        // 1 K per vote
+            baseAmount: 1e18, // 1 K per vote
             maxAmount: 5e18,
-            cooldown: 0,             // Per proposal
+            cooldown: 0, // Per proposal
             dailyLimit: 10_000e18,
             dailyMinted: 0,
             lastResetDay: 0,
@@ -537,7 +512,7 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
 
         // Protocol Events
         mintConfigs[EVENT_LIQUIDITY_PROVIDED] = MintConfig({
-            baseAmount: 10e18,       // 10 K
+            baseAmount: 10e18, // 10 K
             maxAmount: 50e18,
             cooldown: 1 days,
             dailyLimit: 50_000e18,
@@ -548,7 +523,7 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
         });
 
         mintConfigs[EVENT_STAKE_LONG_TERM] = MintConfig({
-            baseAmount: 5e18,        // 5 K per month staked
+            baseAmount: 5e18, // 5 K per month staked
             maxAmount: 100e18,
             cooldown: 30 days,
             dailyLimit: 100_000e18,
@@ -560,8 +535,8 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
 
         // Community Events
         mintConfigs[EVENT_BUG_BOUNTY] = MintConfig({
-            baseAmount: 100e18,      // 100 K base
-            maxAmount: 500e18,       // Up to 500 K for critical
+            baseAmount: 100e18, // 100 K base
+            maxAmount: 500e18, // Up to 500 K for critical
             cooldown: 0,
             dailyLimit: 5_000e18,
             dailyMinted: 0,
@@ -571,7 +546,7 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
         });
 
         mintConfigs[EVENT_CONTRIBUTION] = MintConfig({
-            baseAmount: 25e18,       // 25 K
+            baseAmount: 25e18, // 25 K
             maxAmount: 100e18,
             cooldown: 7 days,
             dailyLimit: 10_000e18,
@@ -582,7 +557,7 @@ contract KarmaMinter is AccessControl, Pausable, ReentrancyGuard {
         });
 
         mintConfigs[EVENT_REFERRAL] = MintConfig({
-            baseAmount: 10e18,       // 10 K per referral
+            baseAmount: 10e18, // 10 K per referral
             maxAmount: 10e18,
             cooldown: 0,
             dailyLimit: 50_000e18,

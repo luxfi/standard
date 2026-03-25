@@ -2,35 +2,35 @@
 pragma solidity ^0.8.31;
 
 /**
-    ██╗   ██╗██╗███████╗██╗     ██████╗     ██████╗ ██████╗ ██╗██████╗  ██████╗ ███████╗
-    ╚██╗ ██╔╝██║██╔════╝██║     ██╔══██╗    ██╔══██╗██╔══██╗██║██╔══██╗██╔════╝ ██╔════╝
-     ╚████╔╝ ██║█████╗  ██║     ██║  ██║    ██████╔╝██████╔╝██║██║  ██║██║  ███╗█████╗  
-      ╚██╔╝  ██║██╔══╝  ██║     ██║  ██║    ██╔══██╗██╔══██╗██║██║  ██║██║   ██║██╔══╝  
-       ██║   ██║███████╗███████╗██████╔╝    ██████╔╝██║  ██║██║██████╔╝╚██████╔╝███████╗
-       ╚═╝   ╚═╝╚══════╝╚══════╝╚═════╝     ╚═════╝ ╚═╝  ╚═╝╚═╝╚═════╝  ╚═════╝ ╚══════╝
-
-    Yield-Bearing Bridge Token (yLETH, yLBTC, yLUSD, etc.)
-    
-    Features:
-    - Share-based accounting (like ERC4626)
-    - Receives yield reports from source chain via Warp
-    - Integrates with Alchemix as collateral (auto-repaying loans)
-    - Integrates with LPX Perps as collateral
-    - Configurable yield strategies per source chain
-    - Claims yield proportionally to all holders
+ *     ██╗   ██╗██╗███████╗██╗     ██████╗     ██████╗ ██████╗ ██╗██████╗  ██████╗ ███████╗
+ *     ╚██╗ ██╔╝██║██╔════╝██║     ██╔══██╗    ██╔══██╗██╔══██╗██║██╔══██╗██╔════╝ ██╔════╝
+ *      ╚████╔╝ ██║█████╗  ██║     ██║  ██║    ██████╔╝██████╔╝██║██║  ██║██║  ███╗█████╗
+ *       ╚██╔╝  ██║██╔══╝  ██║     ██║  ██║    ██╔══██╗██╔══██╗██║██║  ██║██║   ██║██╔══╝
+ *        ██║   ██║███████╗███████╗██████╔╝    ██████╔╝██║  ██║██║██████╔╝╚██████╔╝███████╗
+ *        ╚═╝   ╚═╝╚══════╝╚══════╝╚═════╝     ╚═════╝ ╚═╝  ╚═╝╚═╝╚═════╝  ╚═════╝ ╚══════╝
+ *
+ *     Yield-Bearing Bridge Token (yLETH, yLBTC, yLUSD, etc.)
+ *
+ *     Features:
+ *     - Share-based accounting (like ERC4626)
+ *     - Receives yield reports from source chain via Warp
+ *     - Integrates with Alchemix as collateral (auto-repaying loans)
+ *     - Integrates with LPX Perps as collateral
+ *     - Configurable yield strategies per source chain
+ *     - Claims yield proportionally to all holders
  */
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title YieldBearingBridgeToken
  * @notice Bridge token that earns yield from source chain strategies
  * @dev Deployed on Lux network, receives yield reports via Warp
- * 
+ *
  * Example: yLETH
  * - User bridges ETH from Ethereum to Lux
  * - ETH deployed to Lido/Rocket Pool on Ethereum
@@ -46,19 +46,19 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     struct YieldReport {
-        uint256 totalAssets;      // Total assets on source chain
-        uint256 yieldAmount;       // Yield since last report
-        uint256 timestamp;         // Report timestamp
-        bytes32 reportId;          // Unique report ID
-        bool processed;            // Whether report has been processed
+        uint256 totalAssets; // Total assets on source chain
+        uint256 yieldAmount; // Yield since last report
+        uint256 timestamp; // Report timestamp
+        bytes32 reportId; // Unique report ID
+        bool processed; // Whether report has been processed
     }
 
     struct StrategyInfo {
-        bytes32 strategyId;        // Strategy identifier
-        string name;               // Human-readable name (e.g., "Lido stETH")
-        uint256 allocation;        // Allocation percentage (basis points)
-        uint256 currentAPY;        // Current APY in basis points
-        bool isActive;             // Whether strategy is active
+        bytes32 strategyId; // Strategy identifier
+        string name; // Human-readable name (e.g., "Lido stETH")
+        uint256 allocation; // Allocation percentage (basis points)
+        uint256 currentAPY; // Current APY in basis points
+        bool isActive; // Whether strategy is active
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -254,12 +254,10 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
      * @param timestamp Report timestamp
      * @param reportId Unique report ID
      */
-    function processYieldReport(
-        uint256 totalAssetsOnSource,
-        uint256 yieldAmount,
-        uint256 timestamp,
-        bytes32 reportId
-    ) external onlyBridge {
+    function processYieldReport(uint256 totalAssetsOnSource, uint256 yieldAmount, uint256 timestamp, bytes32 reportId)
+        external
+        onlyBridge
+    {
         require(!yieldReports[reportId].processed, "YieldBearingBridgeToken: already processed");
         require(timestamp > yieldReports[latestReportId].timestamp, "YieldBearingBridgeToken: stale report");
 
@@ -298,7 +296,7 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
 
         // Protocol fee
         uint256 feeAmount = (yieldAmount * protocolFee) / BASIS_POINTS;
-        
+
         // Fee is minted as shares to fee receiver
         if (feeAmount > 0 && feeReceiver != address(0)) {
             uint256 feeShares = convertToShares(feeAmount);
@@ -321,12 +319,10 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
      * @param allocation Allocation in basis points
      * @param apy Current APY
      */
-    function updateStrategy(
-        bytes32 strategyId,
-        string calldata _name,
-        uint256 allocation,
-        uint256 apy
-    ) external onlyOwner {
+    function updateStrategy(bytes32 strategyId, string calldata _name, uint256 allocation, uint256 apy)
+        external
+        onlyOwner
+    {
         // Find existing strategy or add new one
         bool found = false;
         for (uint256 i = 0; i < strategies.length; i++) {
@@ -341,13 +337,15 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
         }
 
         if (!found) {
-            strategies.push(StrategyInfo({
-                strategyId: strategyId,
-                name: _name,
-                allocation: allocation,
-                currentAPY: apy,
-                isActive: allocation > 0
-            }));
+            strategies.push(
+                StrategyInfo({
+                    strategyId: strategyId,
+                    name: _name,
+                    allocation: allocation,
+                    currentAPY: apy,
+                    isActive: allocation > 0
+                })
+            );
         }
 
         emit StrategyUpdated(strategyId, _name, allocation);
@@ -449,17 +447,16 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
  * @notice ETH bridged from Ethereum, earning staking yield (Lido, Rocket Pool, Aave)
  */
 contract yLETH is YieldBearingBridgeToken {
-    constructor(
-        address _bridge,
-        address _feeReceiver
-    ) YieldBearingBridgeToken(
-        "Yield-Bearing Lux ETH",
-        "yLETH",
-        "ETH",
-        1, // Ethereum mainnet
-        _bridge,
-        _feeReceiver
-    ) {}
+    constructor(address _bridge, address _feeReceiver)
+        YieldBearingBridgeToken(
+            "Yield-Bearing Lux ETH",
+            "yLETH",
+            "ETH",
+            1, // Ethereum mainnet
+            _bridge,
+            _feeReceiver
+        )
+    { }
 }
 
 /**
@@ -467,17 +464,16 @@ contract yLETH is YieldBearingBridgeToken {
  * @notice BTC bridged, earning yield (eventually Babylon staking, or lending)
  */
 contract yLBTC is YieldBearingBridgeToken {
-    constructor(
-        address _bridge,
-        address _feeReceiver
-    ) YieldBearingBridgeToken(
-        "Yield-Bearing Lux BTC",
-        "yLBTC",
-        "BTC",
-        1, // Source chain (could be Bitcoin via bridge)
-        _bridge,
-        _feeReceiver
-    ) {}
+    constructor(address _bridge, address _feeReceiver)
+        YieldBearingBridgeToken(
+            "Yield-Bearing Lux BTC",
+            "yLBTC",
+            "BTC",
+            1, // Source chain (could be Bitcoin via bridge)
+            _bridge,
+            _feeReceiver
+        )
+    { }
 }
 
 /**
@@ -485,17 +481,16 @@ contract yLBTC is YieldBearingBridgeToken {
  * @notice USD stablecoins bridged, earning yield (Curve, Aave, Compound)
  */
 contract yLUSD is YieldBearingBridgeToken {
-    constructor(
-        address _bridge,
-        address _feeReceiver
-    ) YieldBearingBridgeToken(
-        "Yield-Bearing Lux USD",
-        "yLUSD",
-        "USD",
-        1, // Ethereum mainnet
-        _bridge,
-        _feeReceiver
-    ) {}
+    constructor(address _bridge, address _feeReceiver)
+        YieldBearingBridgeToken(
+            "Yield-Bearing Lux USD",
+            "yLUSD",
+            "USD",
+            1, // Ethereum mainnet
+            _bridge,
+            _feeReceiver
+        )
+    { }
 }
 
 /**
@@ -503,15 +498,14 @@ contract yLUSD is YieldBearingBridgeToken {
  * @notice SOL bridged from Solana, earning staking yield (Marinade, Jito)
  */
 contract yLSOL is YieldBearingBridgeToken {
-    constructor(
-        address _bridge,
-        address _feeReceiver
-    ) YieldBearingBridgeToken(
-        "Yield-Bearing Lux SOL",
-        "yLSOL",
-        "SOL",
-        101, // Solana (example chain ID)
-        _bridge,
-        _feeReceiver
-    ) {}
+    constructor(address _bridge, address _feeReceiver)
+        YieldBearingBridgeToken(
+            "Yield-Bearing Lux SOL",
+            "yLSOL",
+            "SOL",
+            101, // Solana (example chain ID)
+            _bridge,
+            _feeReceiver
+        )
+    { }
 }

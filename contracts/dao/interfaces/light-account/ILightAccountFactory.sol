@@ -6,8 +6,5 @@ interface ILightAccountFactory {
     /// @param owner The owner of the account to be created.
     /// @param salt A salt, which can be changed to create multiple accounts with the same owner.
     /// @return account The address of the account that would be created with `createAccount`.
-    function getAddress(
-        address owner,
-        uint256 salt
-    ) external view returns (address account);
+    function getAddress(address owner, uint256 salt) external view returns (address account);
 }

@@ -2,9 +2,9 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 interface IKarma {
     function mint(address to, uint256 amount, bytes32 reason) external;
@@ -22,16 +22,21 @@ interface ISoulID {
     function mintSoul(address to) external returns (uint256);
     function updateKarma(uint256 tokenId, uint256 karma) external;
     function updateTrustLevel(uint256 tokenId, uint256 level) external;
-    function issueBadge(uint256 tokenId, bytes32 badgeType, uint256 expiresAt, bytes32 metadata) external returns (uint256);
-    function reputationOf(address account) external view returns (
-        uint256 karma,
-        uint256 humanityScore,
-        uint256 governanceParticipation,
-        uint256 communityContribution,
-        uint256 protocolUsage,
-        uint256 trustLevel,
-        uint256 lastUpdated
-    );
+    function issueBadge(uint256 tokenId, bytes32 badgeType, uint256 expiresAt, bytes32 metadata)
+        external
+        returns (uint256);
+    function reputationOf(address account)
+        external
+        view
+        returns (
+            uint256 karma,
+            uint256 humanityScore,
+            uint256 governanceParticipation,
+            uint256 communityContribution,
+            uint256 protocolUsage,
+            uint256 trustLevel,
+            uint256 lastUpdated
+        );
 }
 
 /**
@@ -135,26 +140,11 @@ contract KarmaController is AccessControl, ReentrancyGuard, Pausable {
 
     // ============ Events ============
 
-    event KarmaEarned(
-        address indexed account,
-        uint256 amount,
-        bytes32 indexed reason,
-        address indexed source
-    );
+    event KarmaEarned(address indexed account, uint256 amount, bytes32 indexed reason, address indexed source);
 
-    event KarmaGiven(
-        address indexed from,
-        address indexed to,
-        uint256 amount,
-        bytes32 indexed reason
-    );
+    event KarmaGiven(address indexed from, address indexed to, uint256 amount, bytes32 indexed reason);
 
-    event KarmaPurged(
-        address indexed account,
-        uint256 amount,
-        bytes32 indexed reason,
-        address indexed authority
-    );
+    event KarmaPurged(address indexed account, uint256 amount, bytes32 indexed reason, address indexed authority);
 
     event SoulIDSynced(address indexed account, uint256 tokenId, uint256 karmaBalance);
 
@@ -197,11 +187,12 @@ contract KarmaController is AccessControl, ReentrancyGuard, Pausable {
      * @param amount Amount of karma to mint
      * @param reason Reason code for earning
      */
-    function earnKarma(
-        address account,
-        uint256 amount,
-        bytes32 reason
-    ) external onlyRole(KARMA_SOURCE_ROLE) whenNotPaused nonReentrant {
+    function earnKarma(address account, uint256 amount, bytes32 reason)
+        external
+        onlyRole(KARMA_SOURCE_ROLE)
+        whenNotPaused
+        nonReentrant
+    {
         if (account == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAmount();
 
@@ -230,11 +221,7 @@ contract KarmaController is AccessControl, ReentrancyGuard, Pausable {
      * @param amount Amount to give (max 100 K)
      * @param reason Reason code for giving
      */
-    function giveKarma(
-        address to,
-        uint256 amount,
-        bytes32 reason
-    ) external whenNotPaused nonReentrant {
+    function giveKarma(address to, uint256 amount, bytes32 reason) external whenNotPaused nonReentrant {
         if (to == address(0)) revert ZeroAddress();
         if (to == msg.sender) revert CannotGiveToSelf();
         if (amount == 0) revert ZeroAmount();
@@ -281,11 +268,12 @@ contract KarmaController is AccessControl, ReentrancyGuard, Pausable {
      * @param amount Amount to burn
      * @param reason Reason code for purging
      */
-    function purgeKarma(
-        address account,
-        uint256 amount,
-        bytes32 reason
-    ) external onlyRole(SLASHER_ROLE) whenNotPaused nonReentrant {
+    function purgeKarma(address account, uint256 amount, bytes32 reason)
+        external
+        onlyRole(SLASHER_ROLE)
+        whenNotPaused
+        nonReentrant
+    {
         if (account == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAmount();
 
@@ -328,11 +316,11 @@ contract KarmaController is AccessControl, ReentrancyGuard, Pausable {
      * @param amounts Amounts per account
      * @param reason Shared reason code
      */
-    function batchEarnKarma(
-        address[] calldata accounts,
-        uint256[] calldata amounts,
-        bytes32 reason
-    ) external onlyRole(KARMA_SOURCE_ROLE) whenNotPaused {
+    function batchEarnKarma(address[] calldata accounts, uint256[] calldata amounts, bytes32 reason)
+        external
+        onlyRole(KARMA_SOURCE_ROLE)
+        whenNotPaused
+    {
         require(accounts.length == amounts.length, "Length mismatch");
 
         for (uint256 i = 0; i < accounts.length; i++) {
@@ -388,13 +376,11 @@ contract KarmaController is AccessControl, ReentrancyGuard, Pausable {
      * @return purged Total purged
      * @return balance Current balance
      */
-    function getAccountStats(address account) external view returns (
-        uint256 earned,
-        uint256 given,
-        uint256 received,
-        uint256 purged,
-        uint256 balance
-    ) {
+    function getAccountStats(address account)
+        external
+        view
+        returns (uint256 earned, uint256 given, uint256 received, uint256 purged, uint256 balance)
+    {
         earned = totalEarned[account];
         given = totalGiven[account];
         received = totalReceived[account];
@@ -410,11 +396,11 @@ contract KarmaController is AccessControl, ReentrancyGuard, Pausable {
      * @return canGive Whether giving is allowed
      * @return reason Reason if not allowed
      */
-    function canGiveKarma(
-        address from,
-        address to,
-        uint256 amount
-    ) external view returns (bool canGive, string memory reason) {
+    function canGiveKarma(address from, address to, uint256 amount)
+        external
+        view
+        returns (bool canGive, string memory reason)
+    {
         if (to == address(0)) return (false, "Zero address");
         if (to == from) return (false, "Cannot give to self");
         if (amount == 0) return (false, "Zero amount");

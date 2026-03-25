@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title IdentityNFT
@@ -27,11 +27,7 @@ contract IdentityNFT is ERC721, Ownable {
     error OnlyRegistry();
     error ZeroAddress();
 
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        address owner_
-    ) ERC721(name_, symbol_) Ownable(owner_) {
+    constructor(string memory name_, string memory symbol_, address owner_) ERC721(name_, symbol_) Ownable(owner_) {
         _tokenIdCounter = 1; // Start from 1
     }
 

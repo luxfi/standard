@@ -2,8 +2,8 @@
 pragma solidity ^0.8.31;
 
 import "forge-std/Test.sol";
-import {OracleHub} from "../../contracts/oracle/OracleHub.sol";
-import {IOracleWriter} from "../../contracts/oracle/interfaces/IOracleWriter.sol";
+import { OracleHub } from "../../contracts/oracle/OracleHub.sol";
+import { IOracleWriter } from "../../contracts/oracle/interfaces/IOracleWriter.sol";
 
 /**
  * @title OracleHub Test Suite
@@ -90,11 +90,7 @@ contract OracleHubTest is Test {
         });
 
         updates[2] = IOracleWriter.PriceUpdate({
-            asset: lusd,
-            price: 1e18,
-            timestamp: block.timestamp,
-            confidence: 10000,
-            source: keccak256("dex-aggregator")
+            asset: lusd, price: 1e18, timestamp: block.timestamp, confidence: 10000, source: keccak256("dex-aggregator")
         });
 
         vm.prank(keeper);
@@ -133,11 +129,13 @@ contract OracleHubTest is Test {
 
         // Try to write price with >10% change (default maxChangeBps)
         vm.prank(keeper);
-        vm.expectRevert(abi.encodeWithSelector(
-            OracleHub.PriceChangeExceeded.selector,
-            weth,
-            2000 // 20% change in bps
-        ));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                OracleHub.PriceChangeExceeded.selector,
+                weth,
+                2000 // 20% change in bps
+            )
+        );
         hub.writePrice(weth, 3000e18, block.timestamp);
     }
 
@@ -214,8 +212,8 @@ contract OracleHubTest is Test {
         // Simulate exact calldata from Go writer
         bytes memory calldata_ = abi.encodeWithSelector(
             IOracleWriter.writePrice.selector,
-            weth,           // asset
-            2500e18,        // price
+            weth, // asset
+            2500e18, // price
             block.timestamp // timestamp
         );
 
@@ -235,10 +233,7 @@ contract OracleHubTest is Test {
             source: keccak256("dex-aggregator")
         });
 
-        bytes memory calldata_ = abi.encodeWithSelector(
-            IOracleWriter.writePrices.selector,
-            updates
-        );
+        bytes memory calldata_ = abi.encodeWithSelector(IOracleWriter.writePrices.selector, updates);
 
         vm.prank(keeper);
         (bool success,) = address(hub).call(calldata_);

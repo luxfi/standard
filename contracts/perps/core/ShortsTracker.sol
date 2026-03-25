@@ -2,25 +2,22 @@
 
 pragma solidity ^0.8.31;
 
-
-import {Governable} from "../access/Governable.sol";
-import {IShortsTracker} from "./interfaces/IShortsTracker.sol";
-import {IVault} from "./interfaces/IVault.sol";
+import { Governable } from "../access/Governable.sol";
+import { IShortsTracker } from "./interfaces/IShortsTracker.sol";
+import { IVault } from "./interfaces/IVault.sol";
 
 contract ShortsTracker is Governable, IShortsTracker {
-    
-
     event GlobalShortDataUpdated(address indexed token, uint256 globalShortSize, uint256 globalShortAveragePrice);
 
     uint256 public constant MAX_INT256 = uint256(type(int256).max);
 
     IVault public vault;
 
-    mapping (address => bool) public isHandler;
-    mapping (bytes32 => bytes32) public data;
+    mapping(address => bool) public isHandler;
+    mapping(bytes32 => bytes32) public data;
 
-    mapping (address => uint256) override public globalShortAveragePrices;
-    bool override public isGlobalShortDataReady;
+    mapping(address => uint256) public override globalShortAveragePrices;
+    bool public override isGlobalShortDataReady;
 
     modifier onlyHandler() {
         require(isHandler[msg.sender], "ShortsTracker: forbidden");
@@ -40,7 +37,7 @@ contract ShortsTracker is Governable, IShortsTracker {
         globalShortAveragePrices[_token] = _averagePrice;
     }
 
-    function setIsGlobalShortDataReady(bool value) override external onlyGov {
+    function setIsGlobalShortDataReady(bool value) external override onlyGov {
         isGlobalShortDataReady = value;
     }
 
@@ -52,7 +49,7 @@ contract ShortsTracker is Governable, IShortsTracker {
         uint256 _sizeDelta,
         uint256 _markPrice,
         bool _isIncrease
-    ) override external onlyHandler {
+    ) external override onlyHandler {
         if (_isLong || _sizeDelta == 0) {
             return;
         }
@@ -61,14 +58,8 @@ contract ShortsTracker is Governable, IShortsTracker {
             return;
         }
 
-        (uint256 globalShortSize, uint256 globalShortAveragePrice) = getNextGlobalShortData(
-            _account,
-            _collateralToken,
-            _indexToken,
-            _markPrice,
-            _sizeDelta,
-            _isIncrease
-        );
+        (uint256 globalShortSize, uint256 globalShortAveragePrice) =
+            getNextGlobalShortData(_account, _collateralToken, _indexToken, _markPrice, _sizeDelta, _isIncrease);
         _setGlobalShortAveragePrice(_indexToken, globalShortAveragePrice);
 
         emit GlobalShortDataUpdated(_indexToken, globalShortSize, globalShortAveragePrice);
@@ -77,7 +68,7 @@ contract ShortsTracker is Governable, IShortsTracker {
     function getGlobalShortDelta(address _token) public view returns (bool, uint256) {
         uint256 size = vault.globalShortSizes(_token);
         uint256 averagePrice = globalShortAveragePrices[_token];
-        if (size == 0) { return (false, 0); }
+        if (size == 0) return (false, 0);
 
         uint256 nextPrice = IVault(vault).getMaxPrice(_token);
         uint256 priceDelta = averagePrice > nextPrice ? averagePrice - nextPrice : nextPrice - averagePrice;
@@ -87,8 +78,7 @@ contract ShortsTracker is Governable, IShortsTracker {
         return (hasProfit, delta);
     }
 
-
-    function setInitData(address[] calldata _tokens, uint256[] calldata _averagePrices) override external onlyGov {
+    function setInitData(address[] calldata _tokens, uint256[] calldata _averagePrices) external override onlyGov {
         require(!isGlobalShortDataReady, "ShortsTracker: already migrated");
 
         for (uint256 i = 0; i < _tokens.length; i++) {
@@ -104,8 +94,8 @@ contract ShortsTracker is Governable, IShortsTracker {
         uint256 _nextPrice,
         uint256 _sizeDelta,
         bool _isIncrease
-    ) override public view returns (uint256, uint256) {
-        int256 realisedPnl = getRealisedPnl(_account,_collateralToken, _indexToken, _sizeDelta, _isIncrease);
+    ) public view override returns (uint256, uint256) {
+        int256 realisedPnl = getRealisedPnl(_account, _collateralToken, _indexToken, _sizeDelta, _isIncrease);
         uint256 averagePrice = globalShortAveragePrices[_indexToken];
         uint256 priceDelta = averagePrice > _nextPrice ? averagePrice - _nextPrice : _nextPrice - averagePrice;
 
@@ -127,13 +117,7 @@ contract ShortsTracker is Governable, IShortsTracker {
             delta = size * priceDelta / averagePrice;
         }
 
-        uint256 nextAveragePrice = _getNextGlobalAveragePrice(
-            averagePrice,
-            _nextPrice,
-            nextSize,
-            delta,
-            realisedPnl
-        );
+        uint256 nextAveragePrice = _getNextGlobalAveragePrice(averagePrice, _nextPrice, nextSize, delta, realisedPnl);
 
         return (nextSize, nextAveragePrice);
     }
@@ -150,7 +134,8 @@ contract ShortsTracker is Governable, IShortsTracker {
         }
 
         IVault _vault = vault;
-        (uint256 size, /*uint256 collateral*/, uint256 averagePrice, , , , , uint256 lastIncreasedTime) = _vault.getPosition(_account, _collateralToken, _indexToken, false);
+        (uint256 size,/*uint256 collateral*/, uint256 averagePrice,,,,, uint256 lastIncreasedTime) =
+            _vault.getPosition(_account, _collateralToken, _indexToken, false);
 
         (bool hasProfit, uint256 delta) = _vault.getDelta(_indexToken, size, averagePrice, false, lastIncreasedTime);
         // get the proportional change in pnl
@@ -174,12 +159,11 @@ contract ShortsTracker is Governable, IShortsTracker {
         return nextAveragePrice;
     }
 
-    function _getNextDelta(
-        uint256 _delta,
-        uint256 _averagePrice,
-        uint256 _nextPrice,
-        int256 _realisedPnl
-    ) internal pure returns (bool, uint256) {
+    function _getNextDelta(uint256 _delta, uint256 _averagePrice, uint256 _nextPrice, int256 _realisedPnl)
+        internal
+        pure
+        returns (bool, uint256)
+    {
         // global delta 10000, realised pnl 1000 => new pnl 9000
         // global delta 10000, realised pnl -1000 => new pnl 11000
         // global delta -10000, realised pnl 1000 => new pnl -11000

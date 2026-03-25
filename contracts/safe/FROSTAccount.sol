@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {FROST} from "./FROST.sol";
-import {IERC4337, PackedUserOperation} from "./interfaces/IERC4337.sol";
+import { FROST } from "./FROST.sol";
+import { IERC4337, PackedUserOperation } from "./interfaces/IERC4337.sol";
 
 /// @title FROST Account
 /// @notice An ERC-4337 and ERC-7702 coompatible account.
@@ -18,7 +18,7 @@ contract FROSTAccount is IERC4337 {
         _ENTRY_POINT = entryPoint;
     }
 
-    receive() external payable {}
+    receive() external payable { }
 
     /// @notice Function must be called by the entry point.
     modifier onlyEntryPoint() {

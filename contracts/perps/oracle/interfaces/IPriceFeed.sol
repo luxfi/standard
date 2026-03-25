@@ -14,5 +14,8 @@ interface IPriceFeed {
     /// @return startedAt When the round started
     /// @return updatedAt When the round was last updated
     /// @return answeredInRound The round in which the answer was computed
-    function latestRoundData() external view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
+    function latestRoundData()
+        external
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
 }

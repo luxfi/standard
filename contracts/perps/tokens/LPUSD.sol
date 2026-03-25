@@ -2,12 +2,11 @@
 
 pragma solidity ^0.8.31;
 
-import {ILPUSD} from "./interfaces/ILPUSD.sol";
-import {YieldToken} from "./YieldToken.sol";
+import { ILPUSD } from "./interfaces/ILPUSD.sol";
+import { YieldToken } from "./YieldToken.sol";
 
 contract LPUSD is YieldToken, ILPUSD {
-
-    mapping (address => bool) public vaults;
+    mapping(address => bool) public vaults;
 
     modifier onlyVault() {
         require(vaults[msg.sender], "LPUSD: forbidden");

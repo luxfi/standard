@@ -6,4 +6,5 @@ pragma solidity ^0.8.31;
 /// @dev TODO: Implement AutomationCompatible interface
 abstract contract KeeperRegistryAdapter {
     // Chainlink Keepers-specific implementation pending
-}
+
+    }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {ICurve} from "./ICurve.sol";
+import { ICurve } from "./ICurve.sol";
 
 /// @title LinearCurve - Linear Bonding Curve
 /// @notice Implements linear price changes for NFT AMM
@@ -34,13 +34,7 @@ contract LinearCurve is ICurve {
         external
         pure
         override
-        returns (
-            uint128 newSpotPrice,
-            uint128 newDelta,
-            uint256 inputValue,
-            uint256 tradeFee,
-            uint256 protocolFee
-        )
+        returns (uint128 newSpotPrice, uint128 newDelta, uint256 inputValue, uint256 tradeFee, uint256 protocolFee)
     {
         if (numItems == 0) revert InvalidNumItems();
 
@@ -83,13 +77,7 @@ contract LinearCurve is ICurve {
         external
         pure
         override
-        returns (
-            uint128 newSpotPrice,
-            uint128 newDelta,
-            uint256 outputValue,
-            uint256 tradeFee,
-            uint256 protocolFee
-        )
+        returns (uint128 newSpotPrice, uint128 newDelta, uint256 outputValue, uint256 tradeFee, uint256 protocolFee)
     {
         if (numItems == 0) revert InvalidNumItems();
 

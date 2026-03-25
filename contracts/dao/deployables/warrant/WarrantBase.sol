@@ -1,20 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IWarrantBase
-} from "../../interfaces/deployables/IWarrantBase.sol";
-import {
-    IVotesERC20V1
-} from "../../interfaces/deployables/IVotesERC20V1.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {
-    SafeERC20
-} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {
-    Ownable2StepUpgradeable
-} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import { IWarrantBase } from "../../interfaces/deployables/IWarrantBase.sol";
+import { IVotesERC20V1 } from "../../interfaces/deployables/IVotesERC20V1.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 /**
  * @title WarrantBase
@@ -50,23 +42,41 @@ abstract contract WarrantBase is IWarrantBase, Ownable2StepUpgradeable {
      * @custom:storage-location erc7201:DAO.WarrantBase.main
      */
     struct WarrantBaseStorage {
-        /** @notice Whether warrant uses relative time based on token unlock */
+        /**
+         * @notice Whether warrant uses relative time based on token unlock
+         */
         bool relativeTime;
-        /** @notice Whether the warrant has been executed */
+        /**
+         * @notice Whether the warrant has been executed
+         */
         bool executed;
-        /** @notice Address authorized to execute this warrant */
+        /**
+         * @notice Address authorized to execute this warrant
+         */
         address warrantHolder;
-        /** @notice Token to be vested upon execution */
+        /**
+         * @notice Token to be vested upon execution
+         */
         address warrantToken;
-        /** @notice Token used for payment */
+        /**
+         * @notice Token used for payment
+         */
         address paymentToken;
-        /** @notice Amount of warrant tokens to be vested */
+        /**
+         * @notice Amount of warrant tokens to be vested
+         */
         uint256 warrantTokenAmount;
-        /** @notice Price per warrant token in payment token units (18 decimal precision) */
+        /**
+         * @notice Price per warrant token in payment token units (18 decimal precision)
+         */
         uint256 warrantTokenPrice;
-        /** @notice Address that receives payment */
+        /**
+         * @notice Address that receives payment
+         */
         address paymentReceiver;
-        /** @notice Expiration timestamp or duration based on time mode */
+        /**
+         * @notice Expiration timestamp or duration based on time mode
+         */
         uint256 expiration;
     }
 
@@ -81,18 +91,16 @@ abstract contract WarrantBase is IWarrantBase, Ownable2StepUpgradeable {
      * @dev Returns the storage struct for WarrantBase
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      */
-    function _getWarrantBaseStorage()
-        internal
-        pure
-        returns (WarrantBaseStorage storage $)
-    {
+    function _getWarrantBaseStorage() internal pure returns (WarrantBaseStorage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := WARRANT_BASE_STORAGE_LOCATION
         }
     }
 
-    /** @notice Precision for token price calculations (18 decimals) */
+    /**
+     * @notice Precision for token price calculations (18 decimals)
+     */
     uint256 internal constant PRECISION = 10 ** 18;
 
     // ======================================================================
@@ -132,11 +140,7 @@ abstract contract WarrantBase is IWarrantBase, Ownable2StepUpgradeable {
         // If relative time mode, verify token supports IVotesERC20V1
         if (relativeTime_) {
             bool supported;
-            try
-                ERC165(warrantToken_).supportsInterface(
-                    type(IVotesERC20V1).interfaceId
-                )
-            returns (bool result) {
+            try ERC165(warrantToken_).supportsInterface(type(IVotesERC20V1).interfaceId) returns (bool result) {
                 supported = result;
             } catch {
                 // solhint-disable-previous-line no-empty-blocks
@@ -197,13 +201,7 @@ abstract contract WarrantBase is IWarrantBase, Ownable2StepUpgradeable {
     /**
      * @inheritdoc IWarrantBase
      */
-    function warrantTokenAmount()
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function warrantTokenAmount() public view virtual override returns (uint256) {
         WarrantBaseStorage storage $ = _getWarrantBaseStorage();
         return $.warrantTokenAmount;
     }
@@ -211,13 +209,7 @@ abstract contract WarrantBase is IWarrantBase, Ownable2StepUpgradeable {
     /**
      * @inheritdoc IWarrantBase
      */
-    function warrantTokenPrice()
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function warrantTokenPrice() public view virtual override returns (uint256) {
         WarrantBaseStorage storage $ = _getWarrantBaseStorage();
         return $.warrantTokenPrice;
     }
@@ -262,22 +254,14 @@ abstract contract WarrantBase is IWarrantBase, Ownable2StepUpgradeable {
         // Check expiration based on time mode and token lock if relative time
         if ($.relativeTime) {
             if (IVotesERC20V1($.warrantToken).locked()) revert TokenLocked();
-            if (
-                block.timestamp >
-                IVotesERC20V1($.warrantToken).getUnlockTime() + $.expiration
-            ) revert WarrantExpired();
+            if (block.timestamp > IVotesERC20V1($.warrantToken).getUnlockTime() + $.expiration) revert WarrantExpired();
         } else {
             if (block.timestamp > $.expiration) revert WarrantExpired();
         }
 
         // Calculate and collect payment
-        uint256 paymentAmount = ($.warrantTokenAmount * $.warrantTokenPrice) /
-            PRECISION;
-        IERC20($.paymentToken).safeTransferFrom(
-            msg.sender,
-            $.paymentReceiver,
-            paymentAmount
-        );
+        uint256 paymentAmount = ($.warrantTokenAmount * $.warrantTokenPrice) / PRECISION;
+        IERC20($.paymentToken).safeTransferFrom(msg.sender, $.paymentReceiver, paymentAmount);
 
         // Mark as executed
         $.executed = true;
@@ -299,10 +283,7 @@ abstract contract WarrantBase is IWarrantBase, Ownable2StepUpgradeable {
         // Check expiration based on time mode
         if ($.relativeTime) {
             if (IVotesERC20V1($.warrantToken).locked()) revert TokenLocked();
-            if (
-                block.timestamp <
-                IVotesERC20V1($.warrantToken).getUnlockTime() + $.expiration
-            ) {
+            if (block.timestamp < IVotesERC20V1($.warrantToken).getUnlockTime() + $.expiration) {
                 revert WarrantNotExpired();
             }
         } else {

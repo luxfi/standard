@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {IOracle} from "../interfaces/IOracle.sol";
+import { IOracle } from "../interfaces/IOracle.sol";
 
 /// @notice Pyth price feed interface
 interface IPyth {
@@ -11,7 +11,7 @@ interface IPyth {
         int32 expo;
         uint256 publishTime;
     }
-    
+
     function getPriceNoOlderThan(bytes32 id, uint256 age) external view returns (Price memory);
     function getPrice(bytes32 id) external view returns (Price memory);
 }
@@ -22,16 +22,16 @@ interface IPyth {
 contract PythOracle is IOracle {
     /// @notice Pyth oracle contract
     IPyth public immutable pyth;
-    
+
     /// @notice Price feed ID for base token
     bytes32 public immutable baseFeedId;
-    
+
     /// @notice Price feed ID for quote token
     bytes32 public immutable quoteFeedId;
-    
+
     /// @notice Base token decimals
     uint8 public immutable baseTokenDecimals;
-    
+
     /// @notice Quote token decimals
     uint8 public immutable quoteTokenDecimals;
 
@@ -69,7 +69,7 @@ contract PythOracle is IOracle {
     /// @inheritdoc IOracle
     function price() external view override returns (uint256) {
         uint256 basePrice = _getPrice(baseFeedId);
-        
+
         uint256 quotePrice;
         if (quoteFeedId != bytes32(0)) {
             quotePrice = _getPrice(quoteFeedId);
@@ -78,19 +78,18 @@ contract PythOracle is IOracle {
         }
 
         // price = (basePrice / quotePrice) * 10^36 * 10^quoteDecimals / 10^baseDecimals
-        return (basePrice * ORACLE_PRICE_SCALE * (10 ** quoteTokenDecimals)) / 
-               (quotePrice * (10 ** baseTokenDecimals));
+        return (basePrice * ORACLE_PRICE_SCALE * (10 ** quoteTokenDecimals)) / (quotePrice * (10 ** baseTokenDecimals));
     }
 
     function _getPrice(bytes32 feedId) internal view returns (uint256) {
         IPyth.Price memory priceData = pyth.getPriceNoOlderThan(feedId, maxStaleness);
-        
+
         if (priceData.price <= 0) revert InvalidPrice();
 
         // Convert Pyth price (with variable exponent) to 8 decimals
         int32 targetExpo = -8;
         int256 scaledPrice;
-        
+
         if (priceData.expo > targetExpo) {
             // Need to divide
             // forge-lint: disable-next-line(unsafe-typecast)

@@ -1,28 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IFreezeVotingBase
-} from "../../interfaces/deployables/IFreezeVotingBase.sol";
-import {
-    IFreezeVotingMultisigV1
-} from "../../interfaces/deployables/IFreezeVotingMultisigV1.sol";
-import {IFreezable} from "../../interfaces/deployables/IFreezable.sol";
-import {
-    ILightAccountValidator
-} from "../../interfaces/deployables/ILightAccountValidator.sol";
-import {IVersion} from "../../interfaces/deployables/IVersion.sol";
-import {IDeploymentBlock} from "../../interfaces/IDeploymentBlock.sol";
-import {ISafe} from "../../interfaces/safe/ISafe.sol";
-import {FreezeVotingBase} from "./FreezeVotingBase.sol";
-import {
-    DeploymentBlockInitializable
-} from "../../DeploymentBlockInitializable.sol";
-import {InitializerEventEmitter} from "../../InitializerEventEmitter.sol";
-import {
-    Ownable2StepUpgradeable
-} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { IFreezeVotingBase } from "../../interfaces/deployables/IFreezeVotingBase.sol";
+import { IFreezeVotingMultisigV1 } from "../../interfaces/deployables/IFreezeVotingMultisigV1.sol";
+import { IFreezable } from "../../interfaces/deployables/IFreezable.sol";
+import { ILightAccountValidator } from "../../interfaces/deployables/ILightAccountValidator.sol";
+import { IVersion } from "../../interfaces/deployables/IVersion.sol";
+import { IDeploymentBlock } from "../../interfaces/IDeploymentBlock.sol";
+import { ISafe } from "../../interfaces/safe/ISafe.sol";
+import { FreezeVotingBase } from "./FreezeVotingBase.sol";
+import { DeploymentBlockInitializable } from "../../DeploymentBlockInitializable.sol";
+import { InitializerEventEmitter } from "../../InitializerEventEmitter.sol";
+import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
  * @title FreezeVotingMultisigV1
@@ -72,9 +62,13 @@ contract FreezeVotingMultisigV1 is
      * @custom:storage-location erc7201:DAO.FreezeVotingMultisig.main
      */
     struct FreezeVotingMultisigStorage {
-        /** @notice The parent multisig Safe for signer verification */
+        /**
+         * @notice The parent multisig Safe for signer verification
+         */
         ISafe parentSafe;
-        /** @notice Tracks which accounts have voted on each proposal to prevent double voting */
+        /**
+         * @notice Tracks which accounts have voted on each proposal to prevent double voting
+         */
         mapping(uint48 freezeProposalCreated => mapping(address voter => bool hasFreezeVoted)) accountHasFreezeVoted;
     }
 
@@ -90,11 +84,7 @@ contract FreezeVotingMultisigV1 is
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      * @return $ The storage struct for FreezeVotingMultisigV1
      */
-    function _getFreezeVotingMultisigStorage()
-        internal
-        pure
-        returns (FreezeVotingMultisigStorage storage $)
-    {
+    function _getFreezeVotingMultisigStorage() internal pure returns (FreezeVotingMultisigStorage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := FREEZE_VOTING_MULTISIG_STORAGE_LOCATION
@@ -122,24 +112,13 @@ contract FreezeVotingMultisigV1 is
         address lightAccountFactory_
     ) public virtual override initializer {
         __InitializerEventEmitter_init(
-            abi.encode(
-                owner_,
-                freezeVotesThreshold_,
-                freezeProposalPeriod_,
-                parentSafe_,
-                lightAccountFactory_
-            )
+            abi.encode(owner_, freezeVotesThreshold_, freezeProposalPeriod_, parentSafe_, lightAccountFactory_)
         );
-        __FreezeVotingBase_init(
-            freezeProposalPeriod_,
-            freezeVotesThreshold_,
-            lightAccountFactory_
-        );
+        __FreezeVotingBase_init(freezeProposalPeriod_, freezeVotesThreshold_, lightAccountFactory_);
         __Ownable_init(owner_);
         __DeploymentBlockInitializable_init();
 
-        FreezeVotingMultisigStorage
-            storage $ = _getFreezeVotingMultisigStorage();
+        FreezeVotingMultisigStorage storage $ = _getFreezeVotingMultisigStorage();
         $.parentSafe = ISafe(parentSafe_);
     }
 
@@ -153,20 +132,21 @@ contract FreezeVotingMultisigV1 is
      * @inheritdoc IFreezeVotingMultisigV1
      */
     function parentSafe() public view virtual override returns (address) {
-        FreezeVotingMultisigStorage
-            storage $ = _getFreezeVotingMultisigStorage();
+        FreezeVotingMultisigStorage storage $ = _getFreezeVotingMultisigStorage();
         return address($.parentSafe);
     }
 
     /**
      * @inheritdoc IFreezeVotingMultisigV1
      */
-    function accountHasFreezeVoted(
-        uint48 freezeProposalCreated_,
-        address account_
-    ) public view virtual override returns (bool) {
-        FreezeVotingMultisigStorage
-            storage $ = _getFreezeVotingMultisigStorage();
+    function accountHasFreezeVoted(uint48 freezeProposalCreated_, address account_)
+        public
+        view
+        virtual
+        override
+        returns (bool)
+    {
+        FreezeVotingMultisigStorage storage $ = _getFreezeVotingMultisigStorage();
         return $.accountHasFreezeVoted[freezeProposalCreated_][account_];
     }
 
@@ -181,23 +161,15 @@ contract FreezeVotingMultisigV1 is
      * 4. Records vote with weight of 1 if eligible
      * 5. Potentially triggers freeze if threshold reached
      */
-    function castFreezeVote(
-        uint256 lightAccountIndex_
-    ) public virtual override {
+    function castFreezeVote(uint256 lightAccountIndex_) public virtual override {
         // Step 1: Resolve the actual voter (handles Light Account case)
-        address resolvedVoter = potentialLightAccountResolvedOwner(
-            msg.sender,
-            lightAccountIndex_
-        );
+        address resolvedVoter = potentialLightAccountResolvedOwner(msg.sender, lightAccountIndex_);
 
         FreezeVotingBaseStorage storage $base = _getFreezeVotingBaseStorage();
 
         // Step 2: Check if we need to create a new freeze proposal
         // This happens when no proposal exists or current one expired
-        if (
-            block.timestamp >
-            $base.freezeProposalCreated + $base.freezeProposalPeriod
-        ) {
+        if (block.timestamp > $base.freezeProposalCreated + $base.freezeProposalPeriod) {
             // Initialize new freeze proposal state
             _initializeFreezeVote();
 
@@ -207,10 +179,7 @@ contract FreezeVotingMultisigV1 is
 
         // Step 3: Verify signer status and record vote
         // Vote weight is always 1 for multisig signers
-        _recordFreezeVote(
-            resolvedVoter,
-            _getVotesAndUpdateHasVoted(resolvedVoter)
-        );
+        _recordFreezeVote(resolvedVoter, _getVotesAndUpdateHasVoted(resolvedVoter));
     }
 
     /**
@@ -246,17 +215,11 @@ contract FreezeVotingMultisigV1 is
      * @inheritdoc ERC165
      * @dev Supports IFreezeVotingMultisigV1, IFreezeVotingBase, IFreezable, ILightAccountValidator, IVersion, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(IFreezeVotingMultisigV1).interfaceId ||
-            interfaceId_ == type(IFreezeVotingBase).interfaceId ||
-            interfaceId_ == type(IFreezable).interfaceId ||
-            interfaceId_ == type(ILightAccountValidator).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(IFreezeVotingMultisigV1).interfaceId
+            || interfaceId_ == type(IFreezeVotingBase).interfaceId || interfaceId_ == type(IFreezable).interfaceId
+            || interfaceId_ == type(ILightAccountValidator).interfaceId || interfaceId_ == type(IVersion).interfaceId
+            || interfaceId_ == type(IDeploymentBlock).interfaceId || super.supportsInterface(interfaceId_);
     }
 
     // ======================================================================
@@ -274,11 +237,8 @@ contract FreezeVotingMultisigV1 is
      * @custom:throws NoVotingWeight if voter is not a current signer
      * @custom:throws AlreadyVoted if voter has already voted on this proposal
      */
-    function _getVotesAndUpdateHasVoted(
-        address voter_
-    ) internal virtual returns (uint256) {
-        FreezeVotingMultisigStorage
-            storage $ = _getFreezeVotingMultisigStorage();
+    function _getVotesAndUpdateHasVoted(address voter_) internal virtual returns (uint256) {
+        FreezeVotingMultisigStorage storage $ = _getFreezeVotingMultisigStorage();
 
         // Check 1: Verify voter is a current signer of the parent Safe
         // This ensures removed signers cannot vote

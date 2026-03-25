@@ -25,19 +25,29 @@ pragma solidity ^0.8.30;
 interface IVotesERC20V1 {
     // --- Errors ---
 
-    /** @notice Thrown when attempting transfers on a locked (non-transferable) token */
+    /**
+     * @notice Thrown when attempting transfers on a locked (non-transferable) token
+     */
     error IsLocked();
 
-    /** @notice Thrown when locking token from unlocked state */
+    /**
+     * @notice Thrown when locking token from unlocked state
+     */
     error LockFromUnlockedState();
 
-    /** @notice Thrown when minting is disabled */
+    /**
+     * @notice Thrown when minting is disabled
+     */
     error MintingDisabled();
 
-    /** @notice Thrown when minting would exceed the maximum total supply */
+    /**
+     * @notice Thrown when minting would exceed the maximum total supply
+     */
     error ExceedMaxTotalSupply();
 
-    /** @notice Thrown when setting max supply below current total supply */
+    /**
+     * @notice Thrown when setting max supply below current total supply
+     */
     error InvalidMaxTotalSupply();
 
     // --- Events ---

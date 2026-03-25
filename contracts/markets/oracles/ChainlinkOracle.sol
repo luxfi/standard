@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {IOracle} from "../interfaces/IOracle.sol";
+import { IOracle } from "../interfaces/IOracle.sol";
 
 /// @notice Chainlink price feed interface
 interface AggregatorV3Interface {
-    function latestRoundData() external view returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    );
+    function latestRoundData()
+        external
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
     function decimals() external view returns (uint8);
 }
 
@@ -21,19 +18,19 @@ interface AggregatorV3Interface {
 contract ChainlinkOracle is IOracle {
     /// @notice Base token price feed (e.g., ETH/USD)
     AggregatorV3Interface public immutable baseFeed;
-    
+
     /// @notice Quote token price feed (e.g., USDC/USD) - optional
     AggregatorV3Interface public immutable quoteFeed;
-    
+
     /// @notice Base feed decimals
     uint8 public immutable baseFeedDecimals;
-    
+
     /// @notice Quote feed decimals
     uint8 public immutable quoteFeedDecimals;
-    
+
     /// @notice Base token decimals
     uint8 public immutable baseTokenDecimals;
-    
+
     /// @notice Quote token decimals
     uint8 public immutable quoteTokenDecimals;
 
@@ -61,10 +58,10 @@ contract ChainlinkOracle is IOracle {
     ) {
         baseFeed = AggregatorV3Interface(_baseFeed);
         quoteFeed = _quoteFeed != address(0) ? AggregatorV3Interface(_quoteFeed) : AggregatorV3Interface(address(0));
-        
+
         baseFeedDecimals = AggregatorV3Interface(_baseFeed).decimals();
         quoteFeedDecimals = _quoteFeed != address(0) ? AggregatorV3Interface(_quoteFeed).decimals() : 8;
-        
+
         baseTokenDecimals = _baseTokenDecimals;
         quoteTokenDecimals = _quoteTokenDecimals;
         maxStaleness = _maxStaleness;
@@ -74,7 +71,7 @@ contract ChainlinkOracle is IOracle {
     /// @dev Returns collateral price in terms of loan asset, scaled by 1e36
     function price() external view override returns (uint256) {
         uint256 basePrice = _getPrice(baseFeed, baseFeedDecimals);
-        
+
         uint256 quotePrice;
         if (address(quoteFeed) != address(0)) {
             quotePrice = _getPrice(quoteFeed, quoteFeedDecimals);
@@ -85,18 +82,11 @@ contract ChainlinkOracle is IOracle {
 
         // price = (basePrice / quotePrice) * 10^36 * 10^quoteDecimals / 10^baseDecimals
         // This gives: how many quote tokens per base token, scaled by 1e36
-        return (basePrice * ORACLE_PRICE_SCALE * (10 ** quoteTokenDecimals)) / 
-               (quotePrice * (10 ** baseTokenDecimals));
+        return (basePrice * ORACLE_PRICE_SCALE * (10 ** quoteTokenDecimals)) / (quotePrice * (10 ** baseTokenDecimals));
     }
 
     function _getPrice(AggregatorV3Interface feed, uint8 feedDecimals) internal view returns (uint256) {
-        (
-            uint80 roundId,
-            int256 answer,
-            ,
-            uint256 updatedAt,
-            uint80 answeredInRound
-        ) = feed.latestRoundData();
+        (uint80 roundId, int256 answer,, uint256 updatedAt, uint80 answeredInRound) = feed.latestRoundData();
 
         if (answer <= 0) revert InvalidPrice();
         if (updatedAt == 0) revert StalePrice();

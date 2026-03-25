@@ -6,4 +6,5 @@ pragma solidity ^0.8.31;
 /// @dev TODO: Implement Comet supply/borrow interactions
 abstract contract CompoundV3Adapter {
     // CompoundV3-specific implementation pending
-}
+
+    }

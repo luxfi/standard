@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {Transaction} from "../Module.sol";
+import { Transaction } from "../Module.sol";
 
 /**
  * @title IModuleGovernorV1
@@ -28,25 +28,39 @@ import {Transaction} from "../Module.sol";
 interface IModuleGovernorV1 {
     // --- Errors ---
 
-    /** @notice Thrown when attempting to set a zero address as the strategy */
+    /**
+     * @notice Thrown when attempting to set a zero address as the strategy
+     */
     error InvalidStrategy();
 
-    /** @notice Thrown when attempting to access a proposal that doesn't exist (ID >= totalProposalCount) */
+    /**
+     * @notice Thrown when attempting to access a proposal that doesn't exist (ID >= totalProposalCount)
+     */
     error InvalidProposal();
 
-    /** @notice Thrown when the proposer adapter rejects the proposal submission */
+    /**
+     * @notice Thrown when the proposer adapter rejects the proposal submission
+     */
     error InvalidProposer();
 
-    /** @notice Thrown when attempting to execute a proposal that is not in the EXECUTABLE state */
+    /**
+     * @notice Thrown when attempting to execute a proposal that is not in the EXECUTABLE state
+     */
     error ProposalNotExecutable();
 
-    /** @notice Thrown when the provided transaction details don't match the stored transaction hash */
+    /**
+     * @notice Thrown when the provided transaction details don't match the stored transaction hash
+     */
     error InvalidTxHash();
 
-    /** @notice Thrown when a transaction execution fails during proposal execution */
+    /**
+     * @notice Thrown when a transaction execution fails during proposal execution
+     */
     error TxFailed();
 
-    /** @notice Thrown when attempting to execute a proposal with an empty transactions array */
+    /**
+     * @notice Thrown when attempting to execute a proposal with an empty transactions array
+     */
     error InvalidTxs();
 
     // --- Structs ---
@@ -115,11 +129,7 @@ interface IModuleGovernorV1 {
      * @param metadata IPFS hash or other metadata describing the proposal
      */
     event ProposalCreated(
-        address strategy,
-        uint32 proposalId,
-        address proposer,
-        Transaction[] transactions,
-        string metadata
+        address strategy, uint32 proposalId, address proposer, Transaction[] transactions, string metadata
     );
 
     /**
@@ -177,10 +187,7 @@ interface IModuleGovernorV1 {
      * @dev Proposal IDs are 0-indexed, so valid IDs range from 0 to totalProposalCount-1
      * @return totalProposalCount The total number of proposals created
      */
-    function totalProposalCount()
-        external
-        view
-        returns (uint32 totalProposalCount);
+    function totalProposalCount() external view returns (uint32 totalProposalCount);
 
     /**
      * @notice Returns the current default timelock period for new proposals
@@ -202,9 +209,7 @@ interface IModuleGovernorV1 {
      * @param proposalId_ The ID of the proposal to retrieve
      * @return proposal The complete proposal data
      */
-    function proposals(
-        uint32 proposalId_
-    ) external view returns (Proposal memory proposal);
+    function proposals(uint32 proposalId_) external view returns (Proposal memory proposal);
 
     /**
      * @notice Returns the current default strategy address for new proposals
@@ -221,9 +226,7 @@ interface IModuleGovernorV1 {
      * @return proposalState The current state of the proposal
      * @custom:throws InvalidProposal if proposalId_ >= totalProposalCount
      */
-    function proposalState(
-        uint32 proposalId_
-    ) external view returns (ProposalState proposalState);
+    function proposalState(uint32 proposalId_) external view returns (ProposalState proposalState);
 
     /**
      * @notice Generates the data that will be hashed to create a transaction hash
@@ -232,10 +235,10 @@ interface IModuleGovernorV1 {
      * @param nonce_ A unique nonce to prevent hash collisions
      * @return txHashData The encoded data ready for hashing
      */
-    function generateTxHashData(
-        Transaction calldata transaction_,
-        uint256 nonce_
-    ) external view returns (bytes memory txHashData);
+    function generateTxHashData(Transaction calldata transaction_, uint256 nonce_)
+        external
+        view
+        returns (bytes memory txHashData);
 
     /**
      * @notice Computes the hash for a transaction
@@ -244,9 +247,7 @@ interface IModuleGovernorV1 {
      * @param transaction_ The transaction to hash
      * @return txHash The computed transaction hash
      */
-    function getTxHash(
-        Transaction calldata transaction_
-    ) external view returns (bytes32 txHash);
+    function getTxHash(Transaction calldata transaction_) external view returns (bytes32 txHash);
 
     /**
      * @notice Returns the transaction hash at a specific index in a proposal
@@ -256,10 +257,7 @@ interface IModuleGovernorV1 {
      * @return txHash The transaction hash at the specified index
      * @custom:throws InvalidTxHash if txIndex_ is out of bounds
      */
-    function getProposalTxHash(
-        uint32 proposalId_,
-        uint32 txIndex_
-    ) external view returns (bytes32 txHash);
+    function getProposalTxHash(uint32 proposalId_, uint32 txIndex_) external view returns (bytes32 txHash);
 
     /**
      * @notice Returns all transaction hashes for a proposal
@@ -267,9 +265,7 @@ interface IModuleGovernorV1 {
      * @param proposalId_ The proposal ID
      * @return txHashes Array of all transaction hashes in the proposal
      */
-    function getProposalTxHashes(
-        uint32 proposalId_
-    ) external view returns (bytes32[] memory txHashes);
+    function getProposalTxHashes(uint32 proposalId_) external view returns (bytes32[] memory txHashes);
 
     /**
      * @notice Returns detailed information about a proposal
@@ -282,9 +278,7 @@ interface IModuleGovernorV1 {
      * @return executionPeriod The execution period for this proposal
      * @return executionCounter Number of transactions already executed
      */
-    function getProposal(
-        uint32 proposalId_
-    )
+    function getProposal(uint32 proposalId_)
         external
         view
         returns (
@@ -355,8 +349,5 @@ interface IModuleGovernorV1 {
      * @custom:throws TxFailed if a transaction execution fails
      * @custom:emits ProposalExecuted when all transactions are successfully executed
      */
-    function executeProposal(
-        uint32 proposalId_,
-        Transaction[] calldata transactions_
-    ) external;
+    function executeProposal(uint32 proposalId_, Transaction[] calldata transactions_) external;
 }

@@ -1,24 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {PayoutHelperLib} from "./libraries/PayoutHelperLib.sol";
-import {AncillaryDataLib} from "./libraries/AncillaryDataLib.sol";
+import { PayoutHelperLib } from "./libraries/PayoutHelperLib.sol";
+import { AncillaryDataLib } from "./libraries/AncillaryDataLib.sol";
 
-import {
-    IOracle,
-    IOracleCallbacks
-} from "./interfaces/IOracle.sol";
+import { IOracle, IOracleCallbacks } from "./interfaces/IOracle.sol";
 
-import {
-    QuestionData,
-    BondConfig,
-    AncillaryDataUpdate,
-    IResolver
-} from "./interfaces/IResolver.sol";
-import {IClaims} from "./claims/interfaces/IClaims.sol";
+import { QuestionData, BondConfig, AncillaryDataUpdate, IResolver } from "./interfaces/IResolver.sol";
+import { IClaims } from "./claims/interfaces/IClaims.sol";
 
 /// @title IAddressWhitelist
 /// @notice Minimal interface for collateral whitelist
@@ -104,13 +96,7 @@ contract Resolver is IResolver, IOracleCallbacks {
     /// @param _oracle The Oracle contract address
     /// @param _defaultMinBond Default minimum bond amount
     /// @param _defaultMaxBond Default maximum bond amount (0 = no maximum)
-    constructor(
-        address _claims,
-        address _finder,
-        address _oracle,
-        uint256 _defaultMinBond,
-        uint256 _defaultMaxBond
-    ) {
+    constructor(address _claims, address _finder, address _oracle, uint256 _defaultMinBond, uint256 _defaultMaxBond) {
         claims = IClaims(_claims);
         IFinder finder = IFinder(_finder);
         oracle = IOracle(_oracle);
@@ -120,11 +106,7 @@ contract Resolver is IResolver, IOracleCallbacks {
 
         // Initialize default bond configuration
         if (_defaultMaxBond != 0 && _defaultMaxBond < _defaultMinBond) revert InvalidBondConfig();
-        defaultBondConfig = BondConfig({
-            minBond: _defaultMinBond,
-            maxBond: _defaultMaxBond,
-            customBondEnabled: false
-        });
+        defaultBondConfig = BondConfig({ minBond: _defaultMinBond, maxBond: _defaultMaxBond, customBondEnabled: false });
     }
 
     // ============ Public Functions ============
@@ -204,10 +186,7 @@ contract Resolver is IResolver, IOracleCallbacks {
 
     /// @inheritdoc IOracleCallbacks
     /// @notice Called when an assertion is resolved (either by expiry or DVM)
-    function assertionResolvedCallback(
-        bytes32 assertionId,
-        bool assertedTruthfully
-    ) external onlyOptimisticOracle {
+    function assertionResolvedCallback(bytes32 assertionId, bool assertedTruthfully) external onlyOptimisticOracle {
         bytes32 questionID = _assertionToQuestion[assertionId];
         if (questionID == bytes32(0)) return;
 
@@ -223,9 +202,7 @@ contract Resolver is IResolver, IOracleCallbacks {
 
     /// @inheritdoc IOracleCallbacks
     /// @notice Called when an assertion is disputed (escalated to DVM)
-    function assertionDisputedCallback(
-        bytes32 assertionId
-    ) external onlyOptimisticOracle {
+    function assertionDisputedCallback(bytes32 assertionId) external onlyOptimisticOracle {
         bytes32 questionID = _assertionToQuestion[assertionId];
         if (questionID == bytes32(0)) return;
 
@@ -355,19 +332,13 @@ contract Resolver is IResolver, IOracleCallbacks {
     }
 
     /// @inheritdoc IResolver
-    function setMarketBondConfig(
-        bytes32 questionID,
-        uint256 minBond,
-        uint256 maxBond,
-        bool enabled
-    ) external onlyAdmin {
+    function setMarketBondConfig(bytes32 questionID, uint256 minBond, uint256 maxBond, bool enabled)
+        external
+        onlyAdmin
+    {
         if (enabled && maxBond != 0 && maxBond < minBond) revert InvalidBondConfig();
 
-        marketBondConfigs[questionID] = BondConfig({
-            minBond: minBond,
-            maxBond: maxBond,
-            customBondEnabled: enabled
-        });
+        marketBondConfigs[questionID] = BondConfig({ minBond: minBond, maxBond: maxBond, customBondEnabled: enabled });
 
         emit MarketBondConfigUpdated(questionID, minBond, maxBond, enabled);
     }
@@ -530,26 +501,23 @@ contract Resolver is IResolver, IOracleCallbacks {
 
         // Assert truth via Optimistic Oracle
         assertionId = oracle.assertTruth(
-            claim,                       // claim (the question/assertion)
-            address(this),               // asserter
-            address(this),               // callbackRecipient
-            address(0),                  // escalationManager (use default DVM)
+            claim, // claim (the question/assertion)
+            address(this), // asserter
+            address(this), // callbackRecipient
+            address(0), // escalationManager (use default DVM)
             // forge-lint: disable-next-line(unsafe-typecast)
-            uint64(liveness),            // liveness
-            IERC20(rewardToken),         // currency
-            bond,                        // bond
-            identifier,                  // identifier
-            DOMAIN_ID                    // domainId
+            uint64(liveness), // liveness
+            IERC20(rewardToken), // currency
+            bond, // bond
+            identifier, // identifier
+            DOMAIN_ID // domainId
         );
     }
 
     /// @notice Reset the question by creating a new assertion
-    function _reset(
-        address requestor,
-        bytes32 questionID,
-        bool resetRefund,
-        QuestionData storage questionData
-    ) internal {
+    function _reset(address requestor, bytes32 questionID, bool resetRefund, QuestionData storage questionData)
+        internal
+    {
         uint256 requestTimestamp = block.timestamp;
 
         questionData.requestTimestamp = requestTimestamp;
@@ -585,7 +553,9 @@ contract Resolver is IResolver, IOracleCallbacks {
     }
 
     /// @notice Resolves the CTF market with assertion result
-    function _resolveWithAssertion(bytes32 questionID, QuestionData storage questionData, bool assertedTruthfully) internal {
+    function _resolveWithAssertion(bytes32 questionID, QuestionData storage questionData, bool assertedTruthfully)
+        internal
+    {
         questionData.resolved = true;
 
         if (questionData.refund) _refund(questionData);

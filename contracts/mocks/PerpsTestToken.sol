@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title Token
@@ -10,7 +10,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @dev Used for LP tokens and testing. Extends OZ 5.x ERC20.
  */
 contract Token is ERC20 {
-    constructor() ERC20("Token", "TOKEN") {}
+    constructor() ERC20("Token", "TOKEN") { }
 
     /**
      * @notice Mint tokens to an account (public - for LP/test tokens)

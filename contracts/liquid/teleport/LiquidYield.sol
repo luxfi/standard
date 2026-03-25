@@ -2,11 +2,11 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @title LiquidYield
@@ -81,23 +81,11 @@ contract LiquidYield is Ownable, AccessControl, ReentrancyGuard {
     // EVENTS
     // ═══════════════════════════════════════════════════════════════════════
 
-    event YieldReceived(
-        uint256 indexed eventId,
-        uint256 amount,
-        uint256 srcChainId,
-        uint256 timestamp
-    );
+    event YieldReceived(uint256 indexed eventId, uint256 amount, uint256 srcChainId, uint256 timestamp);
 
-    event YieldProcessed(
-        uint256 indexed eventId,
-        uint256 amountBurned,
-        uint256 timestamp
-    );
+    event YieldProcessed(uint256 indexed eventId, uint256 amountBurned, uint256 timestamp);
 
-    event BatchProcessed(
-        uint256 amountBurned,
-        uint256 eventsProcessed
-    );
+    event BatchProcessed(uint256 amountBurned, uint256 eventsProcessed);
 
     event LiquidETHSet(address indexed liquidETH);
     event DEXRouterSet(address indexed router);
@@ -142,20 +130,14 @@ contract LiquidYield is Ownable, AccessControl, ReentrancyGuard {
      * @param amount Amount of yield LETH received
      * @param srcChainId Source chain ID (e.g., Base = 8453)
      */
-    function onYieldReceived(
-        uint256 amount,
-        uint256 srcChainId
-    ) external onlyRole(TELEPORTER_ROLE) whenNotPaused {
+    function onYieldReceived(uint256 amount, uint256 srcChainId) external onlyRole(TELEPORTER_ROLE) whenNotPaused {
         if (amount == 0) revert ZeroAmount();
 
         uint256 eventId = yieldEvents.length;
-        
-        yieldEvents.push(YieldEvent({
-            amount: amount,
-            srcChainId: srcChainId,
-            timestamp: block.timestamp,
-            processed: false
-        }));
+
+        yieldEvents.push(
+            YieldEvent({ amount: amount, srcChainId: srcChainId, timestamp: block.timestamp, processed: false })
+        );
 
         totalYieldReceived += amount;
         pendingYield += amount;
@@ -239,12 +221,11 @@ contract LiquidYield is Ownable, AccessControl, ReentrancyGuard {
     /**
      * @notice Get yield statistics
      */
-    function getYieldStats() external view returns (
-        uint256 received,
-        uint256 burned,
-        uint256 pending,
-        uint256 eventCount
-    ) {
+    function getYieldStats()
+        external
+        view
+        returns (uint256 received, uint256 burned, uint256 pending, uint256 eventCount)
+    {
         received = totalYieldReceived;
         burned = totalYieldBurned;
         pending = pendingYield;
@@ -315,11 +296,7 @@ contract LiquidYield is Ownable, AccessControl, ReentrancyGuard {
      * @notice Emergency recover tokens sent to this contract
      * @dev Only for tokens other than LETH
      */
-    function emergencyRecover(
-        address token,
-        address recipient,
-        uint256 amount
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function emergencyRecover(address token, address recipient, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(token != address(leth), "LiquidYield: cannot recover LETH");
         IERC20(token).safeTransfer(recipient, amount);
     }

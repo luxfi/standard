@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {ConfidentialLRC721} from "../ConfidentialLRC721.sol";
-import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { ConfidentialLRC721 } from "../ConfidentialLRC721.sol";
+import { Ownable2Step, Ownable } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 /**
  * @title ConfidentialLRC721Mintable
@@ -36,12 +36,10 @@ abstract contract ConfidentialLRC721Mintable is ConfidentialLRC721, Ownable2Step
      * @param owner_ Initial owner
      * @param baseURI_ Base URI for metadata
      */
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        address owner_,
-        string memory baseURI_
-    ) ConfidentialLRC721(name_, symbol_) Ownable(owner_) {
+    constructor(string memory name_, string memory symbol_, address owner_, string memory baseURI_)
+        ConfidentialLRC721(name_, symbol_)
+        Ownable(owner_)
+    {
         _baseTokenURI = baseURI_;
     }
 

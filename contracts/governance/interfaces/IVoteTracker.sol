@@ -35,11 +35,10 @@ interface IVoteTracker {
      * @param voteData_ Token-specific data (e.g., NFT token IDs)
      * @return hasVoted True if vote has been recorded
      */
-    function hasVoted(
-        uint256 contextId_,
-        address voter_,
-        bytes calldata voteData_
-    ) external view returns (bool hasVoted);
+    function hasVoted(uint256 contextId_, address voter_, bytes calldata voteData_)
+        external
+        view
+        returns (bool hasVoted);
 
     // --- State-Changing Functions ---
 
@@ -49,9 +48,5 @@ interface IVoteTracker {
      * @param voter_ The address casting the vote
      * @param voteData_ Processed vote data from weight strategy
      */
-    function recordVote(
-        uint256 contextId_,
-        address voter_,
-        bytes calldata voteData_
-    ) external;
+    function recordVote(uint256 contextId_, address voter_, bytes calldata voteData_) external;
 }

@@ -4,41 +4,41 @@ pragma solidity ^0.8.31;
 import "forge-std/Test.sol";
 
 // Core tokens
-import {WLUX} from "../../contracts/tokens/WLUX.sol";
-import {LuxUSD} from "../../contracts/liquid/tokens/LUSD.sol";
-import {LuxETH} from "../../contracts/liquid/tokens/LETH.sol";
-import {LuxBTC} from "../../contracts/liquid/tokens/LBTC.sol";
+import { WLUX } from "../../contracts/tokens/WLUX.sol";
+import { LuxUSD } from "../../contracts/liquid/tokens/LUSD.sol";
+import { LuxETH } from "../../contracts/liquid/tokens/LETH.sol";
+import { LuxBTC } from "../../contracts/liquid/tokens/LBTC.sol";
 
 // Staking
-import {sLUX as StakedLUX} from "../../contracts/staking/sLUX.sol";
+import { sLUX as StakedLUX } from "../../contracts/staking/sLUX.sol";
 
 // Note: s* synth tokens have been removed - L* tokens (LETH, LUSD) are now the synthetics
 // See LP-3003 for the Liquid Protocol specification
 
 // AMM
-import {AMMV2Factory} from "../../contracts/amm/AMMV2Factory.sol";
-import {AMMV2Router} from "../../contracts/amm/AMMV2Router.sol";
+import { AMMV2Factory } from "../../contracts/amm/AMMV2Factory.sol";
+import { AMMV2Router } from "../../contracts/amm/AMMV2Router.sol";
 
 // Governance (using DAO for simple governance - Governor is Zodiac-style for Safe)
-import {Stake} from "../../contracts/governance/Stake.sol";
-import {Timelock} from "../../contracts/governance/Timelock.sol";
-import {DAO} from "../../contracts/governance/DAO.sol";
-import {vLUX} from "../../contracts/governance/vLUX.sol";
-import {GaugeController} from "../../contracts/governance/GaugeController.sol";
+import { Stake } from "../../contracts/governance/Stake.sol";
+import { Timelock } from "../../contracts/governance/Timelock.sol";
+import { DAO } from "../../contracts/governance/DAO.sol";
+import { vLUX } from "../../contracts/governance/vLUX.sol";
+import { GaugeController } from "../../contracts/governance/GaugeController.sol";
 
 // LSSVM (NFT AMM)
-import {LSSVMPairFactory} from "../../contracts/lssvm/LSSVMPairFactory.sol";
-import {LSSVMPair} from "../../contracts/lssvm/LSSVMPair.sol";
-import {LinearCurve} from "../../contracts/lssvm/LinearCurve.sol";
-import {ExponentialCurve} from "../../contracts/lssvm/ExponentialCurve.sol";
-import {LSSVMRouter} from "../../contracts/lssvm/LSSVMRouter.sol";
+import { LSSVMPairFactory } from "../../contracts/lssvm/LSSVMPairFactory.sol";
+import { LSSVMPair } from "../../contracts/lssvm/LSSVMPair.sol";
+import { LinearCurve } from "../../contracts/lssvm/LinearCurve.sol";
+import { ExponentialCurve } from "../../contracts/lssvm/ExponentialCurve.sol";
+import { LSSVMRouter } from "../../contracts/lssvm/LSSVMRouter.sol";
 
 // Markets (Lending)
-import {Markets} from "../../contracts/markets/Markets.sol";
-import {MarketParams} from "../../contracts/markets/interfaces/IMarkets.sol";
+import { Markets } from "../../contracts/markets/Markets.sol";
+import { MarketParams } from "../../contracts/markets/interfaces/IMarkets.sol";
 
 // Shared mocks
-import {MockNFT, MockOracle, MockRateModel} from "./TestMocks.sol";
+import { MockNFT, MockOracle, MockRateModel } from "./TestMocks.sol";
 
 /**
  * @title LuxE2ETest
@@ -98,7 +98,7 @@ contract LuxE2ETest is Test {
     // Governance
     Stake public govToken;
     Timelock public timelock;
-    DAO public governor;  // Using DAO for simple governance (Governor is Zodiac-style for Safe)
+    DAO public governor; // Using DAO for simple governance (Governor is Zodiac-style for Safe)
     vLUX public voteLux;
     GaugeController public gaugeController;
 
@@ -183,19 +183,9 @@ contract LuxE2ETest is Test {
     function _deployGovernance() internal {
         // Governance token
         Stake.Allocation[] memory allocations = new Stake.Allocation[](1);
-        allocations[0] = Stake.Allocation({
-            recipient: deployer,
-            amount: GOV_TOKEN_SUPPLY
-        });
+        allocations[0] = Stake.Allocation({ recipient: deployer, amount: GOV_TOKEN_SUPPLY });
 
-        govToken = new Stake(
-            "Lux Governance",
-            "gLUX",
-            allocations,
-            deployer,
-            GOV_TOKEN_SUPPLY,
-            false
-        );
+        govToken = new Stake("Lux Governance", "gLUX", allocations, deployer, GOV_TOKEN_SUPPLY, false);
 
         // Timelock
         address[] memory proposers = new address[](1);
@@ -243,7 +233,7 @@ contract LuxE2ETest is Test {
 
     function _setupInitialTokens() internal {
         // Wrap LUX
-        wlux.deposit{value: INITIAL_LUX}();
+        wlux.deposit{ value: INITIAL_LUX }();
 
         // Mint bridge tokens
         lusd.mint(deployer, INITIAL_TOKENS);
@@ -282,7 +272,7 @@ contract LuxE2ETest is Test {
         uint256 wrapAmount = 100 ether;
 
         // Wrap LUX
-        wlux.deposit{value: wrapAmount}();
+        wlux.deposit{ value: wrapAmount }();
         assertEq(wlux.balanceOf(alice), wrapAmount, "Should have WLUX");
         console.log("Wrapped", wrapAmount / 1e18, "LUX -> WLUX");
 
@@ -303,7 +293,7 @@ contract LuxE2ETest is Test {
         uint256 stakeAmount = 1000 ether;
 
         // Wrap LUX first
-        wlux.deposit{value: stakeAmount}();
+        wlux.deposit{ value: stakeAmount }();
 
         // Stake WLUX
         wlux.approve(address(stakedLux), stakeAmount);
@@ -316,7 +306,7 @@ contract LuxE2ETest is Test {
         uint256 sLuxBalance = stakedLux.balanceOf(alice);
         stakedLux.startCooldown(sLuxBalance);
         console.log("Started cooldown for", sLuxBalance / 1e18, "StakedLUX");
-        
+
         // Fast-forward past cooldown and complete unstake
         skip(7 days + 1);
         uint256 wluxBefore = wlux.balanceOf(alice);
@@ -343,14 +333,7 @@ contract LuxE2ETest is Test {
         lusd.approve(address(router), lusdAmount);
 
         router.addLiquidity(
-            address(wlux),
-            address(lusd),
-            wluxAmount,
-            lusdAmount,
-            0,
-            0,
-            deployer,
-            block.timestamp + 1 hours
+            address(wlux), address(lusd), wluxAmount, lusdAmount, 0, 0, deployer, block.timestamp + 1 hours
         );
 
         address pair = factory.getPair(address(wlux), address(lusd));
@@ -368,9 +351,7 @@ contract LuxE2ETest is Test {
         wlux.approve(address(router), 1000 ether);
         lusd.approve(address(router), 1000 ether);
         router.addLiquidity(
-            address(wlux), address(lusd),
-            1000 ether, 1000 ether,
-            0, 0, deployer, block.timestamp + 1 hours
+            address(wlux), address(lusd), 1000 ether, 1000 ether, 0, 0, deployer, block.timestamp + 1 hours
         );
         vm.stopPrank();
 
@@ -378,7 +359,7 @@ contract LuxE2ETest is Test {
         vm.startPrank(alice);
 
         uint256 swapAmount = 100 ether;
-        wlux.deposit{value: swapAmount}();
+        wlux.deposit{ value: swapAmount }();
         wlux.approve(address(router), swapAmount);
 
         uint256 lusdBefore = lusd.balanceOf(alice);
@@ -387,13 +368,7 @@ contract LuxE2ETest is Test {
         path[0] = address(wlux);
         path[1] = address(lusd);
 
-        router.swapExactTokensForTokens(
-            swapAmount,
-            0,
-            path,
-            alice,
-            block.timestamp + 1 hours
-        );
+        router.swapExactTokensForTokens(swapAmount, 0, path, alice, block.timestamp + 1 hours);
 
         uint256 lusdAfter = lusd.balanceOf(alice);
         assertGt(lusdAfter, lusdBefore, "Should have more LUSD");
@@ -416,16 +391,12 @@ contract LuxE2ETest is Test {
 
         // Pool 1: WLUX/LUSD
         router.addLiquidity(
-            address(wlux), address(lusd),
-            1000 ether, 1000 ether,
-            0, 0, deployer, block.timestamp + 1 hours
+            address(wlux), address(lusd), 1000 ether, 1000 ether, 0, 0, deployer, block.timestamp + 1 hours
         );
 
         // Pool 2: LUSD/LETH
         router.addLiquidity(
-            address(lusd), address(leth),
-            1000 ether, 1000 ether,
-            0, 0, deployer, block.timestamp + 1 hours
+            address(lusd), address(leth), 1000 ether, 1000 ether, 0, 0, deployer, block.timestamp + 1 hours
         );
 
         vm.stopPrank();
@@ -434,7 +405,7 @@ contract LuxE2ETest is Test {
         vm.startPrank(alice);
 
         uint256 swapAmount = 50 ether;
-        wlux.deposit{value: swapAmount}();
+        wlux.deposit{ value: swapAmount }();
         wlux.approve(address(router), swapAmount);
 
         uint256 lethBefore = leth.balanceOf(alice);
@@ -444,13 +415,7 @@ contract LuxE2ETest is Test {
         path[1] = address(lusd);
         path[2] = address(leth);
 
-        router.swapExactTokensForTokens(
-            swapAmount,
-            0,
-            path,
-            alice,
-            block.timestamp + 1 hours
-        );
+        router.swapExactTokensForTokens(swapAmount, 0, path, alice, block.timestamp + 1 hours);
 
         uint256 lethAfter = leth.balanceOf(alice);
         assertGt(lethAfter, lethBefore, "Should have more LETH");
@@ -474,7 +439,7 @@ contract LuxE2ETest is Test {
         uint256 lockTime = 365 days; // 1 year lock
 
         // Wrap LUX
-        wlux.deposit{value: lockAmount}();
+        wlux.deposit{ value: lockAmount }();
         wlux.approve(address(voteLux), lockAmount);
 
         // Lock for vLUX
@@ -516,12 +481,7 @@ contract LuxE2ETest is Test {
         bytes[] memory calldatas = new bytes[](1);
         calldatas[0] = "";
 
-        uint256 proposalId = governor.propose(
-            targets,
-            values,
-            calldatas,
-            "Test proposal"
-        );
+        uint256 proposalId = governor.propose(targets, values, calldatas, "Test proposal");
 
         console.log("Created proposal:", proposalId);
         vm.stopPrank();
@@ -563,7 +523,7 @@ contract LuxE2ETest is Test {
         testNft.setApprovalForAll(address(lssvmFactory), true);
 
         // Create TRADE pool (can buy and sell)
-        address pair = lssvmFactory.createPair{value: 10 ether}(
+        address pair = lssvmFactory.createPair{ value: 10 ether }(
             address(testNft),
             address(linearCurve),
             address(0), // Native LUX
@@ -591,7 +551,7 @@ contract LuxE2ETest is Test {
         uint256[] memory nftIds = testNft.mintBatch(deployer, 5);
         testNft.setApprovalForAll(address(lssvmFactory), true);
 
-        address pairAddr = lssvmFactory.createPair{value: 50 ether}(
+        address pairAddr = lssvmFactory.createPair{ value: 50 ether }(
             address(testNft),
             address(linearCurve),
             address(0),
@@ -618,11 +578,7 @@ contract LuxE2ETest is Test {
         uint256[] memory nftsToBuy = new uint256[](1);
         nftsToBuy[0] = nftIds[0];
 
-        pair.swapTokenForNFTs{value: buyPrice}(
-            nftsToBuy,
-            buyPrice,
-            alice
-        );
+        pair.swapTokenForNFTs{ value: buyPrice }(nftsToBuy, buyPrice, alice);
 
         assertEq(testNft.balanceOf(alice), nftsBefore + 1, "Alice should have 1 NFT");
         console.log("Alice bought NFT #", nftIds[0]);
@@ -638,11 +594,7 @@ contract LuxE2ETest is Test {
         uint256[] memory nftsToSell = new uint256[](1);
         nftsToSell[0] = nftIds[0];
 
-        pair.swapNFTsForToken(
-            nftsToSell,
-            sellPrice,
-            alice
-        );
+        pair.swapNFTsForToken(nftsToSell, sellPrice, alice);
 
         assertEq(testNft.balanceOf(alice), nftsBefore, "Alice should have 0 NFTs");
         assertGt(alice.balance, balanceBefore, "Alice should have more LUX");
@@ -702,7 +654,7 @@ contract LuxE2ETest is Test {
 
         // Wrap some LUX for collateral
         uint256 collateralAmount = 1000 ether;
-        wlux.deposit{value: collateralAmount}();
+        wlux.deposit{ value: collateralAmount }();
         wlux.approve(address(markets), collateralAmount);
 
         // Supply collateral
@@ -774,7 +726,7 @@ contract LuxE2ETest is Test {
 
         // Step 1: Wrap LUX
         uint256 wrapAmount = 5000 ether;
-        wlux.deposit{value: wrapAmount}();
+        wlux.deposit{ value: wrapAmount }();
         console.log("1. Wrapped", wrapAmount / 1e18, "LUX");
 
         // Step 2: Stake some
@@ -790,9 +742,7 @@ contract LuxE2ETest is Test {
         wlux.approve(address(router), 2000 ether);
         lusd.approve(address(router), 2000 ether);
         router.addLiquidity(
-            address(wlux), address(lusd),
-            2000 ether, 2000 ether,
-            0, 0, deployer, block.timestamp + 1 hours
+            address(wlux), address(lusd), 2000 ether, 2000 ether, 0, 0, deployer, block.timestamp + 1 hours
         );
         console.log("3. Created WLUX/LUSD LP");
         vm.stopPrank();
@@ -806,9 +756,7 @@ contract LuxE2ETest is Test {
         path[0] = address(wlux);
         path[1] = address(lusd);
 
-        router.swapExactTokensForTokens(
-            swapAmount, 0, path, alice, block.timestamp + 1 hours
-        );
+        router.swapExactTokensForTokens(swapAmount, 0, path, alice, block.timestamp + 1 hours);
         console.log("4. Swapped", swapAmount / 1e18, "WLUX for LUSD");
 
         // Step 5: Lock for governance

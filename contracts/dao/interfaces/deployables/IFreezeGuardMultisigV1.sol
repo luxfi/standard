@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {Enum} from "@gnosis.pm/safe-contracts/interfaces/Enum.sol";
-import {IFreezeGuardBaseV1} from "./IFreezeGuardBaseV1.sol";
+import { Enum } from "@gnosis.pm/safe-contracts/interfaces/Enum.sol";
+import { IFreezeGuardBaseV1 } from "./IFreezeGuardBaseV1.sol";
 
 /**
  * @title IFreezeGuardMultisigV1
@@ -32,19 +32,29 @@ import {IFreezeGuardBaseV1} from "./IFreezeGuardBaseV1.sol";
 interface IFreezeGuardMultisigV1 is IFreezeGuardBaseV1 {
     // --- Errors ---
 
-    /** @notice Thrown when attempting to timelock a transaction that's already timelocked */
+    /**
+     * @notice Thrown when attempting to timelock a transaction that's already timelocked
+     */
     error AlreadyTimelocked();
 
-    /** @notice Thrown when attempting to execute a transaction that hasn't been timelocked */
+    /**
+     * @notice Thrown when attempting to execute a transaction that hasn't been timelocked
+     */
     error NotTimelocked();
 
-    /** @notice Thrown when attempting to execute a transaction still in timelock period */
+    /**
+     * @notice Thrown when attempting to execute a transaction still in timelock period
+     */
     error Timelocked();
 
-    /** @notice Thrown when attempting to execute a transaction after execution period expired */
+    /**
+     * @notice Thrown when attempting to execute a transaction after execution period expired
+     */
     error Expired();
 
-    /** @notice Thrown when attempting to execute a transaction that was timelocked before the most recent freeze */
+    /**
+     * @notice Thrown when attempting to execute a transaction that was timelocked before the most recent freeze
+     */
     error TimelockedBeforeFreeze();
 
     // --- Events ---
@@ -55,11 +65,7 @@ interface IFreezeGuardMultisigV1 is IFreezeGuardBaseV1 {
      * @param transactionHash The hash of the timelocked transaction
      * @param signatures The signatures authorizing the transaction
      */
-    event TransactionTimelocked(
-        address indexed timelocker,
-        bytes32 indexed transactionHash,
-        bytes indexed signatures
-    );
+    event TransactionTimelocked(address indexed timelocker, bytes32 indexed transactionHash, bytes indexed signatures);
 
     /**
      * @notice Emitted when the timelock period is updated
@@ -116,9 +122,7 @@ interface IFreezeGuardMultisigV1 is IFreezeGuardBaseV1 {
      * @param signaturesHash_ The keccak256 hash of the transaction signatures
      * @return timelockedTimestamp The timestamp when the transaction was timelocked (0 if not timelocked)
      */
-    function getTransactionTimelocked(
-        bytes32 signaturesHash_
-    ) external view returns (uint48 timelockedTimestamp);
+    function getTransactionTimelocked(bytes32 signaturesHash_) external view returns (uint48 timelockedTimestamp);
 
     // --- State-Changing Functions ---
 

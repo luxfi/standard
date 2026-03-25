@@ -1,15 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import {
-    IDIDRegistry,
-    DIDDocument,
-    VerificationMethod,
-    Service
-} from "./interfaces/IDID.sol";
+import { IDIDRegistry, DIDDocument, VerificationMethod, Service } from "./interfaces/IDID.sol";
 
 /**
  * @title DIDRegistry - On-Chain W3C DID Registry for Lux Network
@@ -115,11 +110,7 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
      * @param _method DID method this registry handles (e.g., "lux")
      * @param _publicRegistration Whether anyone can register DIDs
      */
-    constructor(
-        address admin,
-        string memory _method,
-        bool _publicRegistration
-    ) {
+    constructor(address admin, string memory _method, bool _publicRegistration) {
         if (admin == address(0)) revert ZeroAddress();
         if (bytes(_method).length == 0) revert EmptyIdentifier();
 
@@ -139,10 +130,12 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
      * @param identifier Method-specific identifier
      * @return did The full DID string
      */
-    function createDID(
-        string calldata _method,
-        string calldata identifier
-    ) external payable nonReentrant returns (string memory did) {
+    function createDID(string calldata _method, string calldata identifier)
+        external
+        payable
+        nonReentrant
+        returns (string memory did)
+    {
         // Validate method matches
         if (keccak256(bytes(_method)) != keccak256(bytes(method))) {
             revert InvalidDID();
@@ -162,10 +155,12 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
      * @param controller Controller address for the DID
      * @return did The full DID string
      */
-    function createDIDFor(
-        string calldata identifier,
-        address controller
-    ) external onlyRole(REGISTRAR_ROLE) nonReentrant returns (string memory did) {
+    function createDIDFor(string calldata identifier, address controller)
+        external
+        onlyRole(REGISTRAR_ROLE)
+        nonReentrant
+        returns (string memory did)
+    {
         return _createDID(identifier, controller);
     }
 
@@ -175,29 +170,27 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
      * @param initialMethod Initial verification method
      * @return did The full DID string
      */
-    function createDIDWithMethod(
-        string calldata identifier,
-        VerificationMethod calldata initialMethod
-    ) external nonReentrant returns (string memory did) {
+    function createDIDWithMethod(string calldata identifier, VerificationMethod calldata initialMethod)
+        external
+        nonReentrant
+        returns (string memory did)
+    {
         if (!publicRegistration && !hasRole(REGISTRAR_ROLE, msg.sender)) {
             revert RegistrationClosed();
         }
 
         did = _createDID(identifier, msg.sender);
         bytes32 didHash = keccak256(bytes(did));
-        
+
         _verificationMethods[didHash].push(initialMethod);
-        
+
         emit VerificationMethodAdded(did, initialMethod.id, initialMethod.methodType);
     }
 
     /**
      * @notice Internal DID creation
      */
-    function _createDID(
-        string calldata identifier,
-        address controller
-    ) internal returns (string memory did) {
+    function _createDID(string calldata identifier, address controller) internal returns (string memory did) {
         if (bytes(identifier).length == 0) revert EmptyIdentifier();
         if (controller == address(0)) revert ZeroAddress();
 
@@ -232,7 +225,7 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
     function resolve(string calldata did) external view returns (DIDDocument memory document) {
         bytes32 didHash = keccak256(bytes(did));
         document = _documents[didHash];
-        
+
         if (document.created == 0) revert DIDNotFound();
         if (!document.active) revert DIDIsDeactivated();
     }
@@ -291,10 +284,7 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
     /**
      * @notice Add a verification method to a DID
      */
-    function addVerificationMethod(
-        string calldata did,
-        VerificationMethod calldata _method
-    ) external nonReentrant {
+    function addVerificationMethod(string calldata did, VerificationMethod calldata _method) external nonReentrant {
         bytes32 didHash = keccak256(bytes(did));
         DIDDocument storage doc = _documents[didHash];
 
@@ -314,10 +304,7 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
     /**
      * @notice Remove a verification method from a DID
      */
-    function removeVerificationMethod(
-        string calldata did,
-        bytes32 methodId
-    ) external nonReentrant {
+    function removeVerificationMethod(string calldata did, bytes32 methodId) external nonReentrant {
         bytes32 didHash = keccak256(bytes(did));
         DIDDocument storage doc = _documents[didHash];
 
@@ -327,7 +314,7 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
 
         VerificationMethod[] storage methods = _verificationMethods[didHash];
         bool found = false;
-        
+
         for (uint256 i = 0; i < methods.length; i++) {
             if (methods[i].id == methodId) {
                 methods[i] = methods[methods.length - 1];
@@ -346,9 +333,7 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
     /**
      * @notice Get all verification methods for a DID
      */
-    function getVerificationMethods(
-        string calldata did
-    ) external view returns (VerificationMethod[] memory) {
+    function getVerificationMethods(string calldata did) external view returns (VerificationMethod[] memory) {
         bytes32 didHash = keccak256(bytes(did));
         if (_documents[didHash].created == 0) revert DIDNotFound();
         return _verificationMethods[didHash];
@@ -359,10 +344,7 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
     /**
      * @notice Add a service endpoint to a DID
      */
-    function addService(
-        string calldata did,
-        Service calldata service
-    ) external nonReentrant {
+    function addService(string calldata did, Service calldata service) external nonReentrant {
         bytes32 didHash = keccak256(bytes(did));
         DIDDocument storage doc = _documents[didHash];
 
@@ -380,10 +362,7 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
     /**
      * @notice Remove a service from a DID
      */
-    function removeService(
-        string calldata did,
-        bytes32 serviceId
-    ) external nonReentrant {
+    function removeService(string calldata did, bytes32 serviceId) external nonReentrant {
         bytes32 didHash = keccak256(bytes(did));
         DIDDocument storage doc = _documents[didHash];
 
@@ -393,7 +372,7 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
 
         Service[] storage services = _services[didHash];
         bool found = false;
-        
+
         for (uint256 i = 0; i < services.length; i++) {
             if (services[i].id == serviceId) {
                 services[i] = services[services.length - 1];
@@ -423,10 +402,7 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
     /**
      * @notice Add an alternative identifier
      */
-    function addAlsoKnownAs(
-        string calldata did,
-        string calldata aliasUri
-    ) external nonReentrant {
+    function addAlsoKnownAs(string calldata did, string calldata aliasUri) external nonReentrant {
         bytes32 didHash = keccak256(bytes(did));
         DIDDocument storage doc = _documents[didHash];
 
@@ -468,30 +444,32 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
     function getDIDsForController(address controller) external view returns (string[] memory) {
         bytes32[] storage didHashes = _controllerDIDs[controller];
         string[] memory dids = new string[](didHashes.length);
-        
+
         for (uint256 i = 0; i < didHashes.length; i++) {
             dids[i] = _didStrings[didHashes[i]];
         }
-        
+
         return dids;
     }
 
     /**
      * @notice Get full DID document with all data
      */
-    function getFullDocument(
-        string calldata did
-    ) external view returns (
-        DIDDocument memory document,
-        VerificationMethod[] memory verificationMethods,
-        Service[] memory services,
-        string[] memory aliases
-    ) {
+    function getFullDocument(string calldata did)
+        external
+        view
+        returns (
+            DIDDocument memory document,
+            VerificationMethod[] memory verificationMethods,
+            Service[] memory services,
+            string[] memory aliases
+        )
+    {
         bytes32 didHash = keccak256(bytes(did));
-        
+
         document = _documents[didHash];
         if (document.created == 0) revert DIDNotFound();
-        
+
         verificationMethods = _verificationMethods[didHash];
         services = _services[didHash];
         aliases = _alsoKnownAs[didHash];
@@ -513,13 +491,13 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
      */
     function _isController(bytes32 didHash, address account) internal view returns (bool) {
         DIDDocument storage doc = _documents[didHash];
-        
+
         if (doc.controller == account) return true;
-        
+
         for (uint256 i = 0; i < doc.additionalControllers.length; i++) {
             if (doc.additionalControllers[i] == account) return true;
         }
-        
+
         return false;
     }
 
@@ -528,7 +506,7 @@ contract DIDRegistry is IDIDRegistry, AccessControl, ReentrancyGuard {
      */
     function _removeControllerDID(address controller, bytes32 didHash) internal {
         bytes32[] storage dids = _controllerDIDs[controller];
-        
+
         for (uint256 i = 0; i < dids.length; i++) {
             if (dids[i] == didHash) {
                 dids[i] = dids[dids.length - 1];

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title IBridge
@@ -63,19 +63,9 @@ interface IBridge {
         uint256[] amounts
     );
 
-    event PositionsUnlocked(
-        bytes32 indexed lockId,
-        address indexed owner,
-        uint256[] positionIds,
-        uint256[] amounts
-    );
+    event PositionsUnlocked(bytes32 indexed lockId, address indexed owner, uint256[] positionIds, uint256[] amounts);
 
-    event WrappedBurned(
-        bytes32 indexed lockId,
-        address indexed owner,
-        uint256[] wrappedIds,
-        uint256[] amounts
-    );
+    event WrappedBurned(bytes32 indexed lockId, address indexed owner, uint256[] wrappedIds, uint256[] amounts);
 
     // ═══════════════════════════════════════════════════════════════════════
     // FUNCTIONS
@@ -100,11 +90,9 @@ interface IBridge {
     /**
      * @notice Burn wrapped positions and request unlock on source chain
      */
-    function burnAndUnlock(
-        bytes32 lockId,
-        uint256[] calldata wrappedIds,
-        uint256[] calldata amounts
-    ) external returns (bytes32 messageId);
+    function burnAndUnlock(bytes32 lockId, uint256[] calldata wrappedIds, uint256[] calldata amounts)
+        external
+        returns (bytes32 messageId);
 
     /**
      * @notice Redeem resolved positions directly on source chain
@@ -139,9 +127,8 @@ interface IBridge {
     /**
      * @notice Calculate wrapped position ID
      */
-    function getWrappedPositionId(
-        bytes32 sourceChainId,
-        address sourceCTF,
-        uint256 sourcePositionId
-    ) external pure returns (uint256);
+    function getWrappedPositionId(bytes32 sourceChainId, address sourceCTF, uint256 sourcePositionId)
+        external
+        pure
+        returns (uint256);
 }

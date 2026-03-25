@@ -12,9 +12,9 @@ pragma solidity ^0.8.24;
  * - Convex boost (if using Convex)
  */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @notice Curve Pool interface
 interface ICurvePool {
@@ -249,15 +249,17 @@ contract CurveStrategy is Ownable {
  * @notice Curve 3pool strategy for USDC
  */
 contract Curve3poolUSDCStrategy is CurveStrategy {
-    constructor(address _vault) CurveStrategy(
-        _vault,
-        0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7, // 3pool
-        0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490, // 3CRV
-        0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A, // gauge
-        0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, // USDC
-        1, // USDC index
-        "Curve 3pool USDC Strategy"
-    ) {}
+    constructor(address _vault)
+        CurveStrategy(
+            _vault,
+            0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7, // 3pool
+            0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490, // 3CRV
+            0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A, // gauge
+            0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, // USDC
+            1, // USDC index
+            "Curve 3pool USDC Strategy"
+        )
+    { }
 }
 
 /**
@@ -265,13 +267,15 @@ contract Curve3poolUSDCStrategy is CurveStrategy {
  * @notice Curve 3pool strategy for DAI
  */
 contract Curve3poolDAIStrategy is CurveStrategy {
-    constructor(address _vault) CurveStrategy(
-        _vault,
-        0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7, // 3pool
-        0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490, // 3CRV
-        0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A, // gauge
-        0x6B175474E89094C44Da98b954EedeAC495271d0F, // DAI
-        0, // DAI index
-        "Curve 3pool DAI Strategy"
-    ) {}
+    constructor(address _vault)
+        CurveStrategy(
+            _vault,
+            0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7, // 3pool
+            0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490, // 3CRV
+            0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A, // gauge
+            0x6B175474E89094C44Da98b954EedeAC495271d0F, // DAI
+            0, // DAI index
+            "Curve 3pool DAI Strategy"
+        )
+    { }
 }

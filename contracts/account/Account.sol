@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 /// @title Account
 /// @notice Lux smart account - ERC-4337 compatible account abstraction
@@ -61,9 +61,8 @@ contract Account is Initializable, UUPSUpgradeable {
     string public constant VERSION = "1.0.0";
 
     /// @notice EIP-712 domain separator
-    bytes32 private constant DOMAIN_TYPEHASH = keccak256(
-        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-    );
+    bytes32 private constant DOMAIN_TYPEHASH =
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
     // ═══════════════════════════════════════════════════════════════════════
     // STATE
@@ -173,11 +172,7 @@ contract Account is Initializable, UUPSUpgradeable {
     /// @param target Target address
     /// @param value ETH value
     /// @param data Call data
-    function execute(
-        address target,
-        uint256 value,
-        bytes calldata data
-    ) external onlyOwner returns (bytes memory) {
+    function execute(address target, uint256 value, bytes calldata data) external onlyOwner returns (bytes memory) {
         return _execute(target, value, data);
     }
 
@@ -196,12 +191,10 @@ contract Account is Initializable, UUPSUpgradeable {
     /// @param value ETH value
     /// @param data Call data
     /// @param signature Session key signature
-    function executeWithSession(
-        address target,
-        uint256 value,
-        bytes calldata data,
-        bytes calldata signature
-    ) external returns (bytes memory) {
+    function executeWithSession(address target, uint256 value, bytes calldata data, bytes calldata signature)
+        external
+        returns (bytes memory)
+    {
         // Recover signer
         bytes32 hash = keccak256(abi.encodePacked(target, value, data, nonce));
         address signer = hash.toEthSignedMessageHash().recover(signature);
@@ -236,11 +229,11 @@ contract Account is Initializable, UUPSUpgradeable {
     }
 
     /// @notice Execute via module
-    function executeFromModule(
-        address target,
-        uint256 value,
-        bytes calldata data
-    ) external onlyModule returns (bytes memory) {
+    function executeFromModule(address target, uint256 value, bytes calldata data)
+        external
+        onlyModule
+        returns (bytes memory)
+    {
         return _execute(target, value, data);
     }
 
@@ -249,11 +242,11 @@ contract Account is Initializable, UUPSUpgradeable {
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice Validate user operation
-    function validateUserOp(
-        UserOperation calldata userOp,
-        bytes32 userOpHash,
-        uint256 missingAccountFunds
-    ) external onlyEntryPoint returns (uint256 validationData) {
+    function validateUserOp(UserOperation calldata userOp, bytes32 userOpHash, uint256 missingAccountFunds)
+        external
+        onlyEntryPoint
+        returns (uint256 validationData)
+    {
         // Verify signature
         bytes32 hash = userOpHash.toEthSignedMessageHash();
         address signer = hash.recover(userOp.signature);
@@ -277,7 +270,7 @@ contract Account is Initializable, UUPSUpgradeable {
 
         // Pay prefund
         if (missingAccountFunds > 0) {
-            (bool success,) = payable(msg.sender).call{value: missingAccountFunds}("");
+            (bool success,) = payable(msg.sender).call{ value: missingAccountFunds }("");
             require(success, "Prefund failed");
         }
     }
@@ -411,10 +404,7 @@ contract Account is Initializable, UUPSUpgradeable {
     }
 
     /// @notice EIP-1271 signature validation
-    function isValidSignature(
-        bytes32 hash,
-        bytes calldata signature
-    ) external view returns (bytes4) {
+    function isValidSignature(bytes32 hash, bytes calldata signature) external view returns (bytes4) {
         address signer = hash.toEthSignedMessageHash().recover(signature);
         if (signer == owner || sessionKeys[signer].active) {
             return 0x1626ba7e; // EIP-1271 magic value
@@ -426,13 +416,9 @@ contract Account is Initializable, UUPSUpgradeable {
     // INTERNAL FUNCTIONS
     // ═══════════════════════════════════════════════════════════════════════
 
-    function _execute(
-        address target,
-        uint256 value,
-        bytes memory data
-    ) internal returns (bytes memory result) {
+    function _execute(address target, uint256 value, bytes memory data) internal returns (bytes memory result) {
         bool success;
-        (success, result) = target.call{value: value}(data);
+        (success, result) = target.call{ value: value }(data);
         if (!success) {
             // Bubble up revert reason
             assembly {
@@ -442,15 +428,11 @@ contract Account is Initializable, UUPSUpgradeable {
         emit Executed(target, value, data);
     }
 
-    function _packValidationData(
-        bool sigValid,
-        uint48 validUntil,
-        uint48 validAfter
-    ) internal pure returns (uint256) {
+    function _packValidationData(bool sigValid, uint48 validUntil, uint48 validAfter) internal pure returns (uint256) {
         return (sigValid ? 0 : 1) | (uint256(validUntil) << 160) | (uint256(validAfter) << 208);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner { }
 }
 
 /// @title AccountFactory
@@ -477,14 +459,7 @@ contract AccountFactory {
 
     /// @notice Get deterministic account address
     function getAddress(address owner, bytes32 salt) external view returns (address) {
-        bytes32 hash = keccak256(
-            abi.encodePacked(
-                bytes1(0xff),
-                address(this),
-                salt,
-                keccak256(_getInitCode(owner))
-            )
-        );
+        bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(_getInitCode(owner))));
         return address(uint160(uint256(hash)));
     }
 
@@ -499,10 +474,7 @@ contract AccountFactory {
     function _getInitCode(address owner) internal view returns (bytes memory) {
         return abi.encodePacked(
             type(ERC1967Proxy).creationCode,
-            abi.encode(
-                implementation,
-                abi.encodeCall(Account.initialize, (owner, defaultGuardian))
-            )
+            abi.encode(implementation, abi.encodeCall(Account.initialize, (owner, defaultGuardian)))
         );
     }
 }
@@ -531,5 +503,5 @@ contract ERC1967Proxy {
         }
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

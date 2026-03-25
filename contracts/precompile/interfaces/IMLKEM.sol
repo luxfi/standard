@@ -22,7 +22,6 @@ uint8 constant MODE_MLKEM_1024 = 0x02;
  * See LP-4318 for full specification.
  */
 interface IMLKEM {
-
     /**
      * @dev Encapsulates a shared secret using recipient's public key
      * @param mode Security level (0=512, 1=768, 2=1024)
@@ -42,11 +41,10 @@ interface IMLKEM {
      * @param ciphertext The received ciphertext
      * @return sharedSecret The 32-byte shared secret
      */
-    function decapsulate(
-        uint8 mode,
-        bytes calldata privateKey,
-        bytes calldata ciphertext
-    ) external view returns (bytes32 sharedSecret);
+    function decapsulate(uint8 mode, bytes calldata privateKey, bytes calldata ciphertext)
+        external
+        view
+        returns (bytes32 sharedSecret);
 }
 
 /**
@@ -201,8 +199,8 @@ library MLKEMLib {
      * @dev Get security level from mode
      */
     function getSecurityLevel(uint8 mode) internal pure returns (uint8) {
-        if (mode == MODE_512) return 1;  // NIST Level 1
-        if (mode == MODE_768) return 3;  // NIST Level 3
+        if (mode == MODE_512) return 1; // NIST Level 1
+        if (mode == MODE_768) return 3; // NIST Level 3
         if (mode == MODE_1024) return 5; // NIST Level 5
         return 0;
     }

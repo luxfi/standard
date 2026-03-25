@@ -2,11 +2,11 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {ILiquidityEngine} from "./interfaces/ILiquidityEngine.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ILiquidityEngine } from "./interfaces/ILiquidityEngine.sol";
 
 /// @title UniversalLiquidityRouter
 /// @notice Aggregates liquidity from multiple protocols across chains
@@ -25,7 +25,7 @@ contract UniversalLiquidityRouter is Ownable, ReentrancyGuard {
         ILiquidityEngine.ProtocolType protocolType;
         ILiquidityEngine.Chain chain;
         bool enabled;
-        uint256 priority;  // Lower = higher priority
+        uint256 priority; // Lower = higher priority
     }
 
     /// @notice Multi-hop route step
@@ -123,11 +123,7 @@ contract UniversalLiquidityRouter is Ownable, ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Register a new adapter
-    function registerAdapter(
-        bytes32 protocolId,
-        address adapter,
-        uint256 priority
-    ) external onlyOwner {
+    function registerAdapter(bytes32 protocolId, address adapter, uint256 priority) external onlyOwner {
         if (adapter == address(0)) revert InvalidAdapter();
         if (adapterByProtocol[protocolId] != address(0)) revert AdapterExists();
 
@@ -170,30 +166,28 @@ contract UniversalLiquidityRouter is Ownable, ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Get best quote across all adapters
-    function getBestQuote(
-        address tokenIn,
-        address tokenOut,
-        uint256 amountIn
-    ) external returns (
-        ILiquidityEngine.SwapQuote memory bestQuote,
-        bytes32 bestProtocol
-    ) {
+    function getBestQuote(address tokenIn, address tokenOut, uint256 amountIn)
+        external
+        returns (ILiquidityEngine.SwapQuote memory bestQuote, bytes32 bestProtocol)
+    {
         uint256 bestAmountOut = 0;
 
         for (uint256 i = 0; i < adapters.length; i++) {
             if (!adapters[i].enabled) continue;
-            if (adapters[i].protocolType != ILiquidityEngine.ProtocolType.DEX_AMM &&
-                adapters[i].protocolType != ILiquidityEngine.ProtocolType.DEX_AGGREGATOR) continue;
+            if (
+                adapters[i].protocolType != ILiquidityEngine.ProtocolType.DEX_AMM
+                    && adapters[i].protocolType != ILiquidityEngine.ProtocolType.DEX_AGGREGATOR
+            ) continue;
 
-            try ILiquidityEngine(adapters[i].adapter).getSwapQuote(
-                tokenIn, tokenOut, amountIn
-            ) returns (ILiquidityEngine.SwapQuote memory quote) {
+            try ILiquidityEngine(adapters[i].adapter).getSwapQuote(tokenIn, tokenOut, amountIn) returns (
+                ILiquidityEngine.SwapQuote memory quote
+            ) {
                 if (quote.amountOut > bestAmountOut) {
                     bestAmountOut = quote.amountOut;
                     bestQuote = quote;
                     bestProtocol = adapters[i].protocolId;
                 }
-            } catch {}
+            } catch { }
         }
     }
 
@@ -210,8 +204,7 @@ contract UniversalLiquidityRouter is Ownable, ReentrancyGuard {
         if (block.timestamp > deadline) revert DeadlineExpired();
 
         // Find best adapter
-        (ILiquidityEngine.SwapQuote memory quote, bytes32 protocol) =
-            this.getBestQuote(tokenIn, tokenOut, amountIn);
+        (ILiquidityEngine.SwapQuote memory quote, bytes32 protocol) = this.getBestQuote(tokenIn, tokenOut, amountIn);
 
         if (quote.amountOut < minAmountOut) revert InsufficientOutput();
 
@@ -224,13 +217,8 @@ contract UniversalLiquidityRouter is Ownable, ReentrancyGuard {
         }
 
         // Execute swap
-        amountOut = ILiquidityEngine(adapter).swap{value: msg.value}(
-            tokenIn,
-            tokenOut,
-            amountIn,
-            minAmountOut,
-            address(this),
-            deadline
+        amountOut = ILiquidityEngine(adapter).swap{ value: msg.value }(
+            tokenIn, tokenOut, amountIn, minAmountOut, address(this), deadline
         );
 
         // Collect fee
@@ -255,12 +243,12 @@ contract UniversalLiquidityRouter is Ownable, ReentrancyGuard {
     }
 
     /// @notice Execute multi-step swap route
-    function swapMultiHop(
-        RouteStep[] calldata steps,
-        uint256 minAmountOut,
-        address recipient,
-        uint256 deadline
-    ) external payable nonReentrant returns (uint256 amountOut) {
+    function swapMultiHop(RouteStep[] calldata steps, uint256 minAmountOut, address recipient, uint256 deadline)
+        external
+        payable
+        nonReentrant
+        returns (uint256 amountOut)
+    {
         if (paused) revert Paused();
         if (block.timestamp > deadline) revert DeadlineExpired();
         if (steps.length == 0) revert InvalidRoute();
@@ -281,9 +269,8 @@ contract UniversalLiquidityRouter is Ownable, ReentrancyGuard {
                 IERC20(step.tokenIn).forceApprove(step.adapter, currentAmount);
             }
 
-            currentAmount = ILiquidityEngine(step.adapter).swap{
-                value: step.tokenIn == address(0) ? currentAmount : 0
-            }(
+            currentAmount = ILiquidityEngine(step.adapter)
+            .swap{ value: step.tokenIn == address(0) ? currentAmount : 0 }(
                 step.tokenIn,
                 step.tokenOut,
                 currentAmount,
@@ -316,14 +303,7 @@ contract UniversalLiquidityRouter is Ownable, ReentrancyGuard {
             if (fee > 0) IERC20(tokenOut).safeTransfer(feeRecipient, fee);
         }
 
-        emit RouteExecuted(
-            msg.sender,
-            steps[0].tokenIn,
-            tokenOut,
-            steps[0].amountIn,
-            amountOut,
-            protocols
-        );
+        emit RouteExecuted(msg.sender, steps[0].tokenIn, tokenOut, steps[0].amountIn, amountOut, protocols);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -331,23 +311,20 @@ contract UniversalLiquidityRouter is Ownable, ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Get best lending rate across protocols
-    function getBestLendingRate(
-        address token,
-        uint256 amount,
-        bool isSupply
-    ) external view returns (
-        ILiquidityEngine.LendingQuote memory bestQuote,
-        bytes32 bestProtocol
-    ) {
+    function getBestLendingRate(address token, uint256 amount, bool isSupply)
+        external
+        view
+        returns (ILiquidityEngine.LendingQuote memory bestQuote, bytes32 bestProtocol)
+    {
         uint256 bestApy = isSupply ? 0 : type(uint256).max;
 
         for (uint256 i = 0; i < adapters.length; i++) {
             if (!adapters[i].enabled) continue;
             if (adapters[i].protocolType != ILiquidityEngine.ProtocolType.LENDING) continue;
 
-            try ILiquidityEngine(adapters[i].adapter).getLendingQuote(
-                token, amount, isSupply
-            ) returns (ILiquidityEngine.LendingQuote memory quote) {
+            try ILiquidityEngine(adapters[i].adapter).getLendingQuote(token, amount, isSupply) returns (
+                ILiquidityEngine.LendingQuote memory quote
+            ) {
                 if (isSupply && quote.apy > bestApy) {
                     bestApy = quote.apy;
                     bestQuote = quote;
@@ -357,15 +334,16 @@ contract UniversalLiquidityRouter is Ownable, ReentrancyGuard {
                     bestQuote = quote;
                     bestProtocol = adapters[i].protocolId;
                 }
-            } catch {}
+            } catch { }
         }
     }
 
     /// @notice Supply to best lending protocol
-    function supplyBest(
-        address token,
-        uint256 amount
-    ) external nonReentrant returns (uint256 shares, bytes32 protocol) {
+    function supplyBest(address token, uint256 amount)
+        external
+        nonReentrant
+        returns (uint256 shares, bytes32 protocol)
+    {
         if (paused) revert Paused();
 
         (ILiquidityEngine.LendingQuote memory quote, bytes32 bestProtocol) =
@@ -415,18 +393,14 @@ contract UniversalLiquidityRouter is Ownable, ReentrancyGuard {
     }
 
     /// @notice Get adapters for a specific chain
-    function getAdaptersForChain(ILiquidityEngine.Chain chain)
-        external view returns (address[] memory)
-    {
+    function getAdaptersForChain(ILiquidityEngine.Chain chain) external view returns (address[] memory) {
         return adaptersByChain[chain];
     }
 
     /// @notice Get adapters for a specific type
-    function getAdaptersForType(ILiquidityEngine.ProtocolType protocolType)
-        external view returns (address[] memory)
-    {
+    function getAdaptersForType(ILiquidityEngine.ProtocolType protocolType) external view returns (address[] memory) {
         return adaptersByType[protocolType];
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

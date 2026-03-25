@@ -3,10 +3,7 @@ pragma solidity ^0.8.19;
 
 interface IHatsModuleFactory {
     error HatsModuleFactory_ModuleAlreadyDeployed(
-        address implementation,
-        uint256 hatId,
-        bytes otherImmutableArgs,
-        uint256 saltNonce
+        address implementation, uint256 hatId, bytes otherImmutableArgs, uint256 saltNonce
     );
 
     error BatchArrayLengthMismatch();
@@ -47,10 +44,8 @@ interface IHatsModuleFactory {
         uint256 _saltNonce
     ) external view returns (address);
 
-    function deployed(
-        address _implementation,
-        uint256 _hatId,
-        bytes calldata _otherImmutableArgs,
-        uint256 _saltNonce
-    ) external view returns (bool);
+    function deployed(address _implementation, uint256 _hatId, bytes calldata _otherImmutableArgs, uint256 _saltNonce)
+        external
+        view
+        returns (bool);
 }

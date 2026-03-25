@@ -7,8 +7,8 @@ import {
     ITokenMessenger,
     IMessageTransmitter
 } from "../../contracts/integrations/bridges/CCTPAdapter.sol";
-import {BridgeParams, BridgeRoute, BridgeStatus} from "../../contracts/interfaces/adapters/IBridgeAdapter.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { BridgeParams, BridgeRoute, BridgeStatus } from "../../contracts/interfaces/adapters/IBridgeAdapter.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MOCKS
@@ -18,9 +18,14 @@ contract MockUSDC is ERC20 {
     constructor() ERC20("USD Coin", "USDC") {
         _mint(msg.sender, 1_000_000e6); // USDC has 6 decimals
     }
-    function mint(address to, uint256 amt) external { _mint(to, amt); }
 
-    function decimals() public pure override returns (uint8) { return 6; }
+    function mint(address to, uint256 amt) external {
+        _mint(to, amt);
+    }
+
+    function decimals() public pure override returns (uint8) {
+        return 6;
+    }
 }
 
 contract MockTokenMessenger is ITokenMessenger {
@@ -36,12 +41,11 @@ contract MockTokenMessenger is ITokenMessenger {
         mockTransmitter = _transmitter;
     }
 
-    function depositForBurn(
-        uint256 amount,
-        uint32 destinationDomain,
-        bytes32 mintRecipient,
-        address burnToken
-    ) external override returns (uint64 nonce) {
+    function depositForBurn(uint256 amount, uint32 destinationDomain, bytes32 mintRecipient, address burnToken)
+        external
+        override
+        returns (uint64 nonce)
+    {
         depositCalled = true;
         lastAmount = amount;
         lastDestDomain = destinationDomain;
@@ -79,10 +83,7 @@ contract MockMessageTransmitter is IMessageTransmitter {
         shouldSucceed = _success;
     }
 
-    function receiveMessage(
-        bytes calldata,
-        bytes calldata
-    ) external override returns (bool success) {
+    function receiveMessage(bytes calldata, bytes calldata) external override returns (bool success) {
         receiveCalled = true;
         return shouldSucceed;
     }
@@ -117,12 +118,7 @@ contract CCTPAdapterTest is Test {
         tokenMessenger = new MockTokenMessenger(address(messageTransmitter));
         usdcToken = new MockUSDC();
 
-        adapter = new CCTPAdapter(
-            address(tokenMessenger),
-            address(messageTransmitter),
-            address(usdcToken),
-            admin
-        );
+        adapter = new CCTPAdapter(address(tokenMessenger), address(messageTransmitter), address(usdcToken), admin);
 
         // Configure chains
         adapter.addChain(ARB_CHAIN_ID, ARB_DOMAIN);
@@ -309,12 +305,7 @@ contract CCTPAdapterTest is Test {
         usdcToken.approve(address(adapter), 1000e6);
 
         BridgeParams memory params = BridgeParams({
-            dstChainId: 999,
-            token: address(usdcToken),
-            amount: 1000e6,
-            recipient: alice,
-            minAmountOut: 0,
-            extraData: ""
+            dstChainId: 999, token: address(usdcToken), amount: 1000e6, recipient: alice, minAmountOut: 0, extraData: ""
         });
 
         vm.expectRevert(abi.encodeWithSelector(CCTPAdapter.UnsupportedChain.selector, uint256(999)));
@@ -396,9 +387,9 @@ contract CCTPAdapterTest is Test {
     function test_receiveNative() public {
         vm.deal(alice, 1 ether);
         vm.prank(alice);
-        (bool ok,) = address(adapter).call{value: 0.1 ether}("");
+        (bool ok,) = address(adapter).call{ value: 0.1 ether }("");
         assertTrue(ok);
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {IERC1271, ILegacyERC1271} from "./interfaces/IERC1271.sol";
+import { IERC1271, ILegacyERC1271 } from "./interfaces/IERC1271.sol";
 
 /// @title ICGGMP21
 /// @dev Interface for ECDSA verification (LSS produces standard ECDSA signatures)
@@ -76,12 +76,7 @@ contract SafeLSSSigner is IERC1271, ILegacyERC1271 {
     mapping(uint256 => GenerationInfo) public generations;
 
     /// @notice Emitted when the signing group is reshared
-    event Reshared(
-        uint256 indexed generation,
-        uint32 newThreshold,
-        uint32 newTotalSigners,
-        bytes32 commitment
-    );
+    event Reshared(uint256 indexed generation, uint32 newThreshold, uint32 newTotalSigners, bytes32 commitment);
 
     /// @notice Emitted when a signature is verified
     event SignatureVerified(bytes32 indexed messageHash, uint256 generation);
@@ -102,12 +97,7 @@ contract SafeLSSSigner is IERC1271, ILegacyERC1271 {
     /// @param _threshold Initial signing threshold (t)
     /// @param _totalSigners Initial total signers (n)
     /// @param _publicKey Initial 65-byte uncompressed secp256k1 public key
-    constructor(
-        address _safe,
-        uint32 _threshold,
-        uint32 _totalSigners,
-        bytes memory _publicKey
-    ) {
+    constructor(address _safe, uint32 _threshold, uint32 _totalSigners, bytes memory _publicKey) {
         if (_threshold == 0 || _threshold > _totalSigners) revert InvalidConfig();
         if (_publicKey.length != PUBLIC_KEY_SIZE || _publicKey[0] != 0x04) revert InvalidPublicKey();
 
@@ -145,11 +135,7 @@ contract SafeLSSSigner is IERC1271, ILegacyERC1271 {
     /// @param newTotalSigners New total number of signers
     /// @param commitment Cryptographic commitment from resharing protocol
     /// @custom:security The public key MUST remain unchanged after resharing
-    function reshare(
-        uint32 newThreshold,
-        uint32 newTotalSigners,
-        bytes32 commitment
-    ) external onlySafe {
+    function reshare(uint32 newThreshold, uint32 newTotalSigners, bytes32 commitment) external onlySafe {
         if (newThreshold == 0 || newThreshold > newTotalSigners) revert InvalidConfig();
 
         // Update state
@@ -194,13 +180,7 @@ contract SafeLSSSigner is IERC1271, ILegacyERC1271 {
             return false;
         }
 
-        return ICGGMP21(CGGMP21_PRECOMPILE).verify(
-            threshold,
-            totalSigners,
-            publicKey,
-            messageHash,
-            signature
-        );
+        return ICGGMP21(CGGMP21_PRECOMPILE).verify(threshold, totalSigners, publicKey, messageHash, signature);
     }
 
     /// @inheritdoc IERC1271
@@ -218,13 +198,11 @@ contract SafeLSSSigner is IERC1271, ILegacyERC1271 {
     }
 
     /// @notice Get generation info
-    function getGeneration(uint256 gen) external view returns (
-        uint32 t,
-        uint32 n,
-        bytes memory pk,
-        uint256 ts,
-        bytes32 commitment
-    ) {
+    function getGeneration(uint256 gen)
+        external
+        view
+        returns (uint32 t, uint32 n, bytes memory pk, uint256 ts, bytes32 commitment)
+    {
         GenerationInfo storage info = generations[gen];
         return (info.threshold, info.totalSigners, info.publicKey, info.timestamp, info.commitment);
     }
@@ -237,12 +215,9 @@ interface ILSSCoordinator {
     function requestSign(bytes32 messageHash, address callback) external returns (bytes32 sessionId);
 
     /// @notice Request resharing with new parameters
-    function requestReshare(
-        address signer,
-        uint32 newThreshold,
-        uint32 newTotalSigners,
-        address[] calldata newParties
-    ) external returns (bytes32 sessionId);
+    function requestReshare(address signer, uint32 newThreshold, uint32 newTotalSigners, address[] calldata newParties)
+        external
+        returns (bytes32 sessionId);
 
     /// @notice Get current generation for a signer
     function getGeneration(address signer) external view returns (uint256);
@@ -252,30 +227,18 @@ interface ILSSCoordinator {
 /// @notice Factory for deploying SafeLSSSigner instances
 contract SafeLSSFactory {
     /// @notice Emitted when a new LSS signer is deployed
-    event LSSSignerDeployed(
-        address indexed safe,
-        address indexed signer,
-        uint32 threshold,
-        uint32 totalSigners
-    );
+    event LSSSignerDeployed(address indexed safe, address indexed signer, uint32 threshold, uint32 totalSigners);
 
     /// @notice Deploy a new SafeLSSSigner for a Safe
     /// @param safe The Safe address
     /// @param threshold Initial signing threshold
     /// @param totalSigners Initial total signers
     /// @param publicKey Initial aggregated public key
-    function deploy(
-        address safe,
-        uint32 threshold,
-        uint32 totalSigners,
-        bytes calldata publicKey
-    ) external returns (address) {
-        SafeLSSSigner signer = new SafeLSSSigner(
-            safe,
-            threshold,
-            totalSigners,
-            publicKey
-        );
+    function deploy(address safe, uint32 threshold, uint32 totalSigners, bytes calldata publicKey)
+        external
+        returns (address)
+    {
+        SafeLSSSigner signer = new SafeLSSSigner(safe, threshold, totalSigners, publicKey);
 
         emit LSSSignerDeployed(safe, address(signer), threshold, totalSigners);
 
@@ -283,23 +246,16 @@ contract SafeLSSFactory {
     }
 
     /// @notice Compute deployment address
-    function computeAddress(
-        address safe,
-        uint32 threshold,
-        uint32 totalSigners,
-        bytes calldata publicKey,
-        bytes32 salt
-    ) external view returns (address) {
-        bytes memory bytecode = abi.encodePacked(
-            type(SafeLSSSigner).creationCode,
-            abi.encode(safe, threshold, totalSigners, publicKey)
-        );
+    function computeAddress(address safe, uint32 threshold, uint32 totalSigners, bytes calldata publicKey, bytes32 salt)
+        external
+        view
+        returns (address)
+    {
+        bytes memory bytecode =
+            abi.encodePacked(type(SafeLSSSigner).creationCode, abi.encode(safe, threshold, totalSigners, publicKey));
 
-        return address(uint160(uint256(keccak256(abi.encodePacked(
-            bytes1(0xff),
-            address(this),
-            salt,
-            keccak256(bytecode)
-        )))));
+        return address(
+            uint160(uint256(keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(bytecode)))))
+        );
     }
 }

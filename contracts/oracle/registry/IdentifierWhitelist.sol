@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {IIdentifierWhitelist} from "./interfaces/IIdentifierWhitelist.sol";
+import { Ownable2Step, Ownable } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { IIdentifierWhitelist } from "./interfaces/IIdentifierWhitelist.sol";
 
 /**
  * @title IdentifierWhitelist
@@ -22,7 +22,7 @@ contract IdentifierWhitelist is IIdentifierWhitelist, Ownable2Step {
      * @notice Constructs the IdentifierWhitelist contract.
      * @param initialOwner The initial owner of the contract.
      */
-    constructor(address initialOwner) Ownable(initialOwner) {}
+    constructor(address initialOwner) Ownable(initialOwner) { }
 
     /**
      * @notice Adds the provided identifier as a supported identifier.

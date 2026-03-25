@@ -56,9 +56,5 @@ interface IYieldStrategyFactory {
     /// @param underlying Underlying asset address
     /// @param params Strategy-specific parameters
     /// @return strategy Address of deployed strategy
-    function deploy(
-        bytes32 strategyType,
-        address underlying,
-        bytes calldata params
-    ) external returns (address strategy);
+    function deploy(bytes32 strategyType, address underlying, bytes calldata params) external returns (address strategy);
 }

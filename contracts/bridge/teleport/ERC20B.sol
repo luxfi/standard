@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-import {IBridgeToken} from "./IBridgeToken.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { IBridgeToken } from "./IBridgeToken.sol";
 
 /**
  * @title ERC20B
@@ -26,13 +26,9 @@ contract ERC20B is ERC20, AccessControl, Pausable, IBridgeToken {
     error InsufficientBalance();
 
     // ============ Constructor ============
-    constructor(
-        string memory name,
-        string memory symbol,
-        address admin
-    ) ERC20(name, symbol) {
+    constructor(string memory name, string memory symbol, address admin) ERC20(name, symbol) {
         if (admin == address(0)) revert InvalidAddress();
-        
+
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(PAUSER_ROLE, admin);
     }
@@ -45,10 +41,13 @@ contract ERC20B is ERC20, AccessControl, Pausable, IBridgeToken {
      * @param account Account to mint to
      * @param amount Amount to mint
      */
-    function bridgeMint(
-        address account,
-        uint256 amount
-    ) external override onlyRole(BRIDGE_ROLE) whenNotPaused returns (bool) {
+    function bridgeMint(address account, uint256 amount)
+        external
+        override
+        onlyRole(BRIDGE_ROLE)
+        whenNotPaused
+        returns (bool)
+    {
         if (account == address(0)) revert InvalidAddress();
         _mint(account, amount);
         emit BridgeMint(account, amount);
@@ -61,10 +60,13 @@ contract ERC20B is ERC20, AccessControl, Pausable, IBridgeToken {
      * @param account Account to burn from
      * @param amount Amount to burn
      */
-    function bridgeBurn(
-        address account,
-        uint256 amount
-    ) external override onlyRole(BRIDGE_ROLE) whenNotPaused returns (bool) {
+    function bridgeBurn(address account, uint256 amount)
+        external
+        override
+        onlyRole(BRIDGE_ROLE)
+        whenNotPaused
+        returns (bool)
+    {
         if (account == address(0)) revert InvalidAddress();
         if (balanceOf(account) < amount) revert InsufficientBalance();
         _burn(account, amount);
@@ -110,11 +112,7 @@ contract ERC20B is ERC20, AccessControl, Pausable, IBridgeToken {
     /**
      * @dev Override to add pause check
      */
-    function _update(
-        address from,
-        address to,
-        uint256 value
-    ) internal virtual override whenNotPaused {
+    function _update(address from, address to, uint256 value) internal virtual override whenNotPaused {
         super._update(from, to, value);
     }
 }

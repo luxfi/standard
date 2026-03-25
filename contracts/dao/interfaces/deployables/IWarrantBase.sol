@@ -20,22 +20,34 @@ pragma solidity ^0.8.30;
 interface IWarrantBase {
     // --- Errors ---
 
-    /** @notice Thrown when caller is not the designated warrant holder */
+    /**
+     * @notice Thrown when caller is not the designated warrant holder
+     */
     error OnlyWarrantHolder();
 
-    /** @notice Thrown when warrant has already been executed */
+    /**
+     * @notice Thrown when warrant has already been executed
+     */
     error AlreadyExecuted();
 
-    /** @notice Thrown when warrant has expired and cannot be executed */
+    /**
+     * @notice Thrown when warrant has expired and cannot be executed
+     */
     error WarrantExpired();
 
-    /** @notice Thrown when attempting clawback before warrant expiration */
+    /**
+     * @notice Thrown when attempting clawback before warrant expiration
+     */
     error WarrantNotExpired();
 
-    /** @notice Thrown when token is still locked (relative time mode only) */
+    /**
+     * @notice Thrown when token is still locked (relative time mode only)
+     */
     error TokenLocked();
 
-    /** @notice Thrown when token doesn't support IVotesERC20V1 in relative time mode */
+    /**
+     * @notice Thrown when token doesn't support IVotesERC20V1 in relative time mode
+     */
     error UnsupportedToken();
 
     // --- Events ---

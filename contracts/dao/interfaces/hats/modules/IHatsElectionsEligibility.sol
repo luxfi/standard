@@ -17,17 +17,12 @@ interface IHatsElectionsEligibility {
 
     /// @notice Returns the election status (open or closed) for a given term end.
     /// @param termEnd The term end timestamp to query.
-    function electionStatus(
-        uint128 termEnd
-    ) external view returns (bool isElectionOpen);
+    function electionStatus(uint128 termEnd) external view returns (bool isElectionOpen);
 
     /// @notice Returns whether a candidate was elected in a given term.
     /// @param termEnd The term end timestamp to query.
     /// @param candidate The address of the candidate.
-    function electionResults(
-        uint128 termEnd,
-        address candidate
-    ) external view returns (bool elected);
+    function electionResults(uint128 termEnd, address candidate) external view returns (bool elected);
 
     /// @notice Returns the BALLOT_BOX_HAT constant.
     function BALLOT_BOX_HAT() external pure returns (uint256);
@@ -71,8 +66,5 @@ interface IHatsElectionsEligibility {
      * @return eligible True if the wearer is eligible for the hat.
      * @return standing True if the wearer is in good standing.
      */
-    function getWearerStatus(
-        address _wearer,
-        uint256 _hatId
-    ) external view returns (bool eligible, bool standing);
+    function getWearerStatus(address _wearer, uint256 _hatId) external view returns (bool eligible, bool standing);
 }

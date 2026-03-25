@@ -2,14 +2,13 @@
 
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IGMT} from "./interfaces/IGMT.sol";
-import {ITimelockTarget} from "../peripherals/interfaces/ITimelockTarget.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IGMT } from "./interfaces/IGMT.sol";
+import { ITimelockTarget } from "../peripherals/interfaces/ITimelockTarget.sol";
 
 contract GMT is IERC20, IGMT, ITimelockTarget {
     using SafeERC20 for IERC20;
-
 
     string public constant name = "Gambit";
     string public constant symbol = "GMT";
@@ -21,16 +20,16 @@ contract GMT is IERC20, IGMT, ITimelockTarget {
     bool public hasActiveMigration;
     uint256 public migrationTime;
 
-    mapping (address => uint256) public balances;
-    mapping (address => mapping (address => uint256)) public allowances;
+    mapping(address => uint256) public balances;
+    mapping(address => mapping(address => uint256)) public allowances;
 
-    mapping (address => bool) public admins;
+    mapping(address => bool) public admins;
 
     // only checked when hasActiveMigration is true
     // this can be used to block the AMM pair as a recipient
     // and protect liquidity providers during a migration
     // by disabling the selling of GMT
-    mapping (address => bool) public blockedRecipients;
+    mapping(address => bool) public blockedRecipients;
 
     // only checked when hasActiveMigration is true
     // this can be used for:
@@ -39,7 +38,7 @@ contract GMT is IERC20, IGMT, ITimelockTarget {
     // from adding liquidity before the initial liquidity is seeded
     // - only allowing removal of GMT liquidity and no other actions
     // during the migration phase
-    mapping (address => bool) public allowedMsgSenders;
+    mapping(address => bool) public allowedMsgSenders;
 
     modifier onlyGov() {
         require(msg.sender == gov, "GMT: forbidden");
@@ -141,7 +140,7 @@ contract GMT is IERC20, IGMT, ITimelockTarget {
         balances[_sender] = balances[_sender] - _amount;
         balances[_recipient] = balances[_recipient] + _amount;
 
-        emit Transfer(_sender, _recipient,_amount);
+        emit Transfer(_sender, _recipient, _amount);
     }
 
     function _mint(address _account, uint256 _amount) private {

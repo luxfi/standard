@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IPermissionValidator} from "../access/PermissionedV2.sol";
+import { IPermissionValidator } from "../access/PermissionedV2.sol";
 
 contract PermissionedV2RevokableValidator is IPermissionValidator {
     uint256 public rid = 1;

@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.31;
 
-
-
 abstract contract BasicMulticall {
     function multicall(bytes[] calldata data) external virtual returns (bytes[] memory results) {
         results = new bytes[](data.length);

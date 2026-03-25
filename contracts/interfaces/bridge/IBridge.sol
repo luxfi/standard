@@ -37,12 +37,9 @@ interface IBridge {
      * @param receiver The receiver address on destination chain
      * @return transferId The unique transfer identifier
      */
-    function lock(
-        address token,
-        uint256 amount,
-        uint32 destChainId,
-        address receiver
-    ) external returns (bytes32 transferId);
+    function lock(address token, uint256 amount, uint32 destChainId, address receiver)
+        external
+        returns (bytes32 transferId);
 
     /**
      * @notice Mint bridged tokens (called by relayer)
@@ -51,12 +48,7 @@ interface IBridge {
      * @param receiver The receiver address
      * @param amount The amount to mint
      */
-    function mint(
-        bytes32 transferId,
-        address token,
-        address receiver,
-        uint256 amount
-    ) external;
+    function mint(bytes32 transferId, address token, address receiver, uint256 amount) external;
 
     /**
      * @notice Burn tokens for unlocking on source chain
@@ -66,12 +58,9 @@ interface IBridge {
      * @param receiver The receiver address
      * @return transferId The unique transfer identifier
      */
-    function burn(
-        address token,
-        uint256 amount,
-        uint32 destChainId,
-        address receiver
-    ) external returns (bytes32 transferId);
+    function burn(address token, uint256 amount, uint32 destChainId, address receiver)
+        external
+        returns (bytes32 transferId);
 
     /**
      * @notice Unlock tokens (called by relayer)
@@ -80,12 +69,7 @@ interface IBridge {
      * @param receiver The receiver address
      * @param amount The amount to unlock
      */
-    function unlock(
-        bytes32 transferId,
-        address token,
-        address receiver,
-        uint256 amount
-    ) external;
+    function unlock(bytes32 transferId, address token, address receiver, uint256 amount) external;
 
     /**
      * @notice Get transfer details
@@ -112,12 +96,7 @@ interface IBridge {
     );
 
     /// @notice Emitted when tokens are minted
-    event TokensMinted(
-        bytes32 indexed transferId,
-        address indexed receiver,
-        address indexed token,
-        uint256 amount
-    );
+    event TokensMinted(bytes32 indexed transferId, address indexed receiver, address indexed token, uint256 amount);
 
     /// @notice Emitted when tokens are burned
     event TokensBurned(
@@ -130,10 +109,5 @@ interface IBridge {
     );
 
     /// @notice Emitted when tokens are unlocked
-    event TokensUnlocked(
-        bytes32 indexed transferId,
-        address indexed receiver,
-        address indexed token,
-        uint256 amount
-    );
+    event TokensUnlocked(bytes32 indexed transferId, address indexed receiver, address indexed token, uint256 amount);
 }

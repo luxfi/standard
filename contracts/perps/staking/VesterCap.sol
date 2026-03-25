@@ -2,20 +2,19 @@
 
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import {Governable} from "../access/Governable.sol";
-import {IRewardTracker} from "./interfaces/IRewardTracker.sol";
-import {IVester} from "./interfaces/IVester.sol";
-import {Token} from "../../mocks/PerpsTestToken.sol";
+import { Governable } from "../access/Governable.sol";
+import { IRewardTracker } from "./interfaces/IRewardTracker.sol";
+import { IVester } from "./interfaces/IVester.sol";
+import { Token } from "../../mocks/PerpsTestToken.sol";
 
 /// @title VesterCap
 /// @notice Manages DLUX (governance token) staking caps and conversions
 /// @dev DLUX is the single governance rewards token across the Lux ecosystem
 contract VesterCap is ReentrancyGuard, Governable {
-
     using SafeERC20 for IERC20;
 
     uint256 public constant BASIS_POINTS_DIVISOR = 10000;
@@ -24,15 +23,15 @@ contract VesterCap is ReentrancyGuard, Governable {
     address public immutable stakedLPXTracker;
     address public immutable bonusLPXTracker;
     address public immutable feeLPXTracker;
-    address public immutable dlux;  // DLUX governance token
-    address public immutable xLPX;  // Escrowed LPX
+    address public immutable dlux; // DLUX governance token
+    address public immutable xLPX; // Escrowed LPX
 
     uint256 public immutable maxBoostBasisPoints;
     uint256 public immutable dluxToXLPXConversionDivisor;
 
-    mapping (address => bool) public isUpdateCompleted;
+    mapping(address => bool) public isUpdateCompleted;
 
-    constructor (
+    constructor(
         address _lpxVester,
         address _stakedLPXTracker,
         address _bonusLPXTracker,

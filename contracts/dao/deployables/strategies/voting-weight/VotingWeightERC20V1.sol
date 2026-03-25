@@ -1,28 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IVotingWeightERC20V1
-} from "../../../interfaces/deployables/IVotingWeightERC20V1.sol";
-import {
-    IVotingWeightV1
-} from "../../../interfaces/deployables/IVotingWeightV1.sol";
-import {IVersion} from "../../../interfaces/deployables/IVersion.sol";
-import {
-    IDeploymentBlock
-} from "../../../interfaces/IDeploymentBlock.sol";
-import {
-    DeploymentBlockInitializable
-} from "../../../DeploymentBlockInitializable.sol";
-import {InitializerEventEmitter} from "../../../InitializerEventEmitter.sol";
-import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {
-    Checkpoints
-} from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
-import {
-    ERC20Votes
-} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
+import { IVotingWeightERC20V1 } from "../../../interfaces/deployables/IVotingWeightERC20V1.sol";
+import { IVotingWeightV1 } from "../../../interfaces/deployables/IVotingWeightV1.sol";
+import { IVersion } from "../../../interfaces/deployables/IVersion.sol";
+import { IDeploymentBlock } from "../../../interfaces/IDeploymentBlock.sol";
+import { DeploymentBlockInitializable } from "../../../DeploymentBlockInitializable.sol";
+import { InitializerEventEmitter } from "../../../InitializerEventEmitter.sol";
+import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { Checkpoints } from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
+import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
 /**
  * @title VotingWeightERC20V1
@@ -57,9 +45,13 @@ contract VotingWeightERC20V1 is
      * @custom:storage-location erc7201:DAO.VotingWeightERC20.main
      */
     struct VotingWeightERC20Storage {
-        /** @notice The IVotes token used for voting weight calculation */
+        /**
+         * @notice The IVotes token used for voting weight calculation
+         */
         IVotes token;
-        /** @notice Multiplier applied to token balances for weight calculation */
+        /**
+         * @notice Multiplier applied to token balances for weight calculation
+         */
         uint256 weightPerToken;
     }
 
@@ -75,11 +67,7 @@ contract VotingWeightERC20V1 is
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      * @return $ The storage struct for VotingWeightERC20V1
      */
-    function _getVotingWeightERC20Storage()
-        internal
-        pure
-        returns (VotingWeightERC20Storage storage $)
-    {
+    function _getVotingWeightERC20Storage() internal pure returns (VotingWeightERC20Storage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := VOTING_WEIGHT_ERC20_STORAGE_LOCATION
@@ -97,10 +85,7 @@ contract VotingWeightERC20V1 is
     /**
      * @inheritdoc IVotingWeightERC20V1
      */
-    function initialize(
-        address token_,
-        uint256 weightPerToken_
-    ) public virtual override initializer {
+    function initialize(address token_, uint256 weightPerToken_) public virtual override initializer {
         __InitializerEventEmitter_init(abi.encode(token_, weightPerToken_));
         __DeploymentBlockInitializable_init();
 
@@ -148,17 +133,20 @@ contract VotingWeightERC20V1 is
         address voter_,
         uint256 timestamp_,
         bytes calldata /* voteData_ */
-    ) external view virtual override returns (uint256, bytes memory) {
+    )
+        external
+        view
+        virtual
+        override
+        returns (uint256, bytes memory)
+    {
         VotingWeightERC20Storage storage $ = _getVotingWeightERC20Storage();
 
         // Get historical voting power (delegated balance)
         // Safe to cast timestamp to uint48 as it's within reasonable range
         // Calculate weight with multiplier
         // No processed data needed for ERC20
-        return (
-            $.token.getPastVotes(voter_, timestamp_) * $.weightPerToken,
-            ""
-        );
+        return ($.token.getPastVotes(voter_, timestamp_) * $.weightPerToken, "");
     }
 
     /**
@@ -174,7 +162,13 @@ contract VotingWeightERC20V1 is
         address voter_,
         uint256 timestamp_,
         bytes calldata /* voteData_ */
-    ) external view virtual override returns (uint256) {
+    )
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         VotingWeightERC20Storage storage $ = _getVotingWeightERC20Storage();
 
         // Step 1: Get the token as ERC20Votes to access checkpoints
@@ -196,11 +190,11 @@ contract VotingWeightERC20V1 is
 
         // Iterate backwards through checkpoints (more efficient for recent timestamps)
         // This mimics the logic of getPastVotes() without using block.timestamp
-        for (uint256 i = numCheckpoints; i > 0; ) {
+        for (uint256 i = numCheckpoints; i > 0;) {
             // Get checkpoint (indices are 0-based, loop counter is 1-based)
-            Checkpoints.Checkpoint208 memory checkpoint = governanceToken
+            Checkpoints.Checkpoint208 memory checkpoint = governanceToken.
                 // forge-lint: disable-next-line(unsafe-typecast)
-                .checkpoints(voter_, uint32(i - 1));
+                checkpoints(voter_, uint32(i - 1));
 
             // Check if this checkpoint was created at or before our target timestamp
             // checkpoint._key contains the timestamp when the balance changed
@@ -241,14 +235,9 @@ contract VotingWeightERC20V1 is
      * @inheritdoc ERC165
      * @dev Supports IVotingWeightERC20V1, IVotingWeightV1, IVersion, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(IVotingWeightERC20V1).interfaceId ||
-            interfaceId_ == type(IVotingWeightV1).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(IVotingWeightERC20V1).interfaceId
+            || interfaceId_ == type(IVotingWeightV1).interfaceId || interfaceId_ == type(IVersion).interfaceId
+            || interfaceId_ == type(IDeploymentBlock).interfaceId || super.supportsInterface(interfaceId_);
     }
 }

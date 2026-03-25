@@ -47,32 +47,17 @@ interface ICompoundTimelock {
 
     /// @notice Emitted when the queued transaction is canceled.
     event CancelTransaction(
-        bytes32 indexed txHash,
-        address indexed target,
-        uint256 value,
-        string signature,
-        bytes data,
-        uint256 eta
+        bytes32 indexed txHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta
     );
 
     /// @notice Emitted when the queued transaction is executed.
     event ExecuteTransaction(
-        bytes32 indexed txHash,
-        address indexed target,
-        uint256 value,
-        string signature,
-        bytes data,
-        uint256 eta
+        bytes32 indexed txHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta
     );
 
     /// @notice Emitted when a transaction is queued.
     event QueueTransaction(
-        bytes32 indexed txHash,
-        address indexed target,
-        uint256 value,
-        string signature,
-        bytes data,
-        uint256 eta
+        bytes32 indexed txHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta
     );
 
     /**

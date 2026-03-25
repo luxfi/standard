@@ -2,24 +2,29 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
-import {CCIPAdapter} from "../../contracts/integrations/bridges/CCIPAdapter.sol";
-import {IRouterClient} from "@chainlink/contracts/src/v0.8/ccip/interfaces/IRouterClient.sol";
-import {Client} from "@chainlink/contracts/src/v0.8/ccip/libraries/Client.sol";
-import {BridgeParams, BridgeRoute, BridgeStatus} from "../../contracts/interfaces/adapters/IBridgeAdapter.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { CCIPAdapter } from "../../contracts/integrations/bridges/CCIPAdapter.sol";
+import { IRouterClient } from "@chainlink/contracts/src/v0.8/ccip/interfaces/IRouterClient.sol";
+import { Client } from "@chainlink/contracts/src/v0.8/ccip/libraries/Client.sol";
+import { BridgeParams, BridgeRoute, BridgeStatus } from "../../contracts/interfaces/adapters/IBridgeAdapter.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MockToken is ERC20 {
     constructor() ERC20("Mock", "MCK") {
         _mint(msg.sender, 1_000_000e18);
     }
-    function mint(address to, uint256 amt) external { _mint(to, amt); }
+
+    function mint(address to, uint256 amt) external {
+        _mint(to, amt);
+    }
 }
 
 contract MockCCIPRouter is IRouterClient {
     bytes32 public lastMessageId;
     uint256 private _nonce;
 
-    function isChainSupported(uint64) external pure returns (bool) { return true; }
+    function isChainSupported(uint64) external pure returns (bool) {
+        return true;
+    }
 
     function getFee(uint64, Client.EVM2AnyMessage memory) external pure returns (uint256) {
         return 0.01 ether;
@@ -102,7 +107,7 @@ contract CCIPAdapterTest is Test {
             extraData: abi.encode(alice)
         });
 
-        bytes32 bridgeId = adapter.bridge{value: 0.01 ether}(params);
+        bytes32 bridgeId = adapter.bridge{ value: 0.01 ether }(params);
         vm.stopPrank();
 
         assertTrue(bridgeId != bytes32(0));
@@ -124,7 +129,7 @@ contract CCIPAdapterTest is Test {
         });
 
         vm.expectRevert(abi.encodeWithSelector(CCIPAdapter.UnsupportedChain.selector, uint256(999)));
-        adapter.bridge{value: 0.01 ether}(params);
+        adapter.bridge{ value: 0.01 ether }(params);
         vm.stopPrank();
     }
 
@@ -132,16 +137,11 @@ contract CCIPAdapterTest is Test {
         vm.deal(alice, 1 ether);
         vm.prank(alice);
         BridgeParams memory params = BridgeParams({
-            dstChainId: ETH_CHAIN_ID,
-            token: address(token),
-            amount: 0,
-            recipient: alice,
-            minAmountOut: 0,
-            extraData: ""
+            dstChainId: ETH_CHAIN_ID, token: address(token), amount: 0, recipient: alice, minAmountOut: 0, extraData: ""
         });
 
         vm.expectRevert(CCIPAdapter.ZeroAmount.selector);
-        adapter.bridge{value: 0.01 ether}(params);
+        adapter.bridge{ value: 0.01 ether }(params);
     }
 
     function test_getStatus() public {
@@ -158,7 +158,7 @@ contract CCIPAdapterTest is Test {
             extraData: abi.encode(alice)
         });
 
-        bytes32 bridgeId = adapter.bridge{value: 0.01 ether}(params);
+        bytes32 bridgeId = adapter.bridge{ value: 0.01 ether }(params);
         vm.stopPrank();
 
         BridgeStatus memory status = adapter.getStatus(bridgeId);
@@ -179,7 +179,11 @@ contract CCIPAdapterTest is Test {
 
     function test_supportsInterface() public view {
         // IAny2EVMMessageReceiver
-        assertTrue(adapter.supportsInterface(bytes4(keccak256("ccipReceive((bytes32,uint64,bytes,bytes,(address,uint256)[]))"))));
+        assertTrue(
+            adapter.supportsInterface(
+                bytes4(keccak256("ccipReceive((bytes32,uint64,bytes,bytes,(address,uint256)[]))"))
+            )
+        );
     }
 
     function test_onlyAdminCanConfigure() public {
@@ -188,5 +192,5 @@ contract CCIPAdapterTest is Test {
         adapter.addChain(42, 123);
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

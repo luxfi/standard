@@ -2,14 +2,14 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import {IWarp} from "./interfaces/IWarpMessenger.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { IWarp } from "./interfaces/IWarpMessenger.sol";
 
 /**
  * @title XChainVault
@@ -20,14 +20,14 @@ contract XChainVault is Ownable {
 
     // Warp precompile address (official)
     address constant WARP_PRECOMPILE = 0x0200000000000000000000000000000000000005;
-    
+
     // Token types
     enum TokenType {
         ERC20,
         ERC721,
         ERC1155
     }
-    
+
     // Vault entry structure
     struct VaultEntry {
         address originalToken;
@@ -41,7 +41,7 @@ contract XChainVault is Ownable {
         bool isActive;
         uint256 mintedAmount; // Track minted wrapped tokens
     }
-    
+
     // Events
     event TokenVaulted(
         bytes32 indexed vaultId,
@@ -52,25 +52,15 @@ contract XChainVault is Ownable {
         uint256 amount,
         uint256 tokenId
     );
-    
-    event TokenReleased(
-        bytes32 indexed vaultId,
-        address indexed recipient,
-        uint256 amount,
-        uint256 tokenId
-    );
-    
-    event WrappedTokenMinted(
-        bytes32 indexed vaultId,
-        uint32 destinationChainId,
-        address recipient,
-        uint256 amount
-    );
+
+    event TokenReleased(bytes32 indexed vaultId, address indexed recipient, uint256 amount, uint256 tokenId);
+
+    event WrappedTokenMinted(bytes32 indexed vaultId, uint32 destinationChainId, address recipient, uint256 amount);
 
     event MpcOracleUpdated(address indexed oracle, bool authorized);
     event MpcThresholdUpdated(uint256 newThreshold);
     event BurnProofVerified(bytes32 indexed vaultId, uint256 amount, uint256 burnNonce);
-    
+
     // State variables
     mapping(bytes32 => VaultEntry) public vaults;
     mapping(address => mapping(uint32 => address)) public wrappedTokens; // originalToken => chainId => wrappedToken
@@ -89,41 +79,34 @@ contract XChainVault is Ownable {
 
     uint256 private nonce;
     address public bridge;
-    
+
     modifier onlyBridge() {
         require(msg.sender == bridge, "Only bridge can call");
         _;
     }
-    
+
     constructor(address _bridge) Ownable(msg.sender) {
         bridge = _bridge;
         mpcThreshold = 2; // Default: require at least 2 MPC signatures
     }
-    
+
     /**
      * @dev Vault ERC20 tokens
      */
-    function vaultERC20(
-        address token,
-        uint256 amount,
-        uint32 destinationChainId,
-        address recipient
-    ) external returns (bytes32 vaultId) {
+    function vaultERC20(address token, uint256 amount, uint32 destinationChainId, address recipient)
+        external
+        returns (bytes32 vaultId)
+    {
         require(supportedTokens[token], "Token not supported");
         require(supportedChains[destinationChainId], "Chain not supported");
         require(amount > 0, "Amount must be greater than 0");
-        
+
         // Transfer tokens to vault (SafeERC20 handles non-standard return values)
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        
+
         // Generate vault ID
-        vaultId = keccak256(abi.encodePacked(
-            block.chainid,
-            token,
-            msg.sender,
-            nonce++
-        ));
-        
+        vaultId = keccak256(abi.encodePacked(block.chainid, token, msg.sender, nonce++));
+
         // Create vault entry
         vaults[vaultId] = VaultEntry({
             originalToken: token,
@@ -137,37 +120,29 @@ contract XChainVault is Ownable {
             isActive: true,
             mintedAmount: 0
         });
-        
+
         // Send Warp message to destination chain
         _sendVaultMessage(vaultId, destinationChainId, recipient);
-        
+
         emit TokenVaulted(vaultId, token, uint32(block.chainid), TokenType.ERC20, msg.sender, amount, 0);
     }
-    
+
     /**
      * @dev Vault ERC721 token
      */
-    function vaultERC721(
-        address token,
-        uint256 tokenId,
-        uint32 destinationChainId,
-        address recipient
-    ) external returns (bytes32 vaultId) {
+    function vaultERC721(address token, uint256 tokenId, uint32 destinationChainId, address recipient)
+        external
+        returns (bytes32 vaultId)
+    {
         require(supportedTokens[token], "Token not supported");
         require(supportedChains[destinationChainId], "Chain not supported");
-        
+
         // Transfer NFT to vault
         IERC721(token).transferFrom(msg.sender, address(this), tokenId);
-        
+
         // Generate vault ID
-        vaultId = keccak256(abi.encodePacked(
-            block.chainid,
-            token,
-            tokenId,
-            msg.sender,
-            nonce++
-        ));
-        
+        vaultId = keccak256(abi.encodePacked(block.chainid, token, tokenId, msg.sender, nonce++));
+
         // Create vault entry
         vaults[vaultId] = VaultEntry({
             originalToken: token,
@@ -181,13 +156,13 @@ contract XChainVault is Ownable {
             isActive: true,
             mintedAmount: 0
         });
-        
+
         // Send Warp message to destination chain
         _sendVaultMessage(vaultId, destinationChainId, recipient);
-        
+
         emit TokenVaulted(vaultId, token, uint32(block.chainid), TokenType.ERC721, msg.sender, 0, tokenId);
     }
-    
+
     /**
      * @dev Vault ERC1155 tokens
      */
@@ -202,25 +177,15 @@ contract XChainVault is Ownable {
         require(supportedChains[destinationChainId], "Chain not supported");
         require(tokenIds.length == amounts.length, "Arrays length mismatch");
         require(tokenIds.length > 0, "Empty arrays");
-        
+
         // Transfer tokens to vault
-        IERC1155(token).safeBatchTransferFrom(
-            msg.sender,
-            address(this),
-            tokenIds,
-            amounts,
-            ""
-        );
-        
+        IERC1155(token).safeBatchTransferFrom(msg.sender, address(this), tokenIds, amounts, "");
+
         // Generate vault ID
-        vaultId = keccak256(abi.encodePacked(
-            block.chainid,
-            token,
-            keccak256(abi.encode(tokenIds, amounts)),
-            msg.sender,
-            nonce++
-        ));
-        
+        vaultId = keccak256(
+            abi.encodePacked(block.chainid, token, keccak256(abi.encode(tokenIds, amounts)), msg.sender, nonce++)
+        );
+
         // Create vault entry
         vaults[vaultId] = VaultEntry({
             originalToken: token,
@@ -234,28 +199,26 @@ contract XChainVault is Ownable {
             isActive: true,
             mintedAmount: 0
         });
-        
+
         // Send Warp message to destination chain
         _sendVaultMessage(vaultId, destinationChainId, recipient);
-        
+
         emit TokenVaulted(vaultId, token, uint32(block.chainid), TokenType.ERC1155, msg.sender, 0, 0);
     }
-    
+
     /**
      * @dev Release tokens from vault (called by bridge after wrapped tokens are burned)
      */
-    function releaseFromVault(
-        bytes32 vaultId,
-        address recipient,
-        uint256 amount,
-        bytes calldata warpProof
-    ) external onlyBridge {
+    function releaseFromVault(bytes32 vaultId, address recipient, uint256 amount, bytes calldata warpProof)
+        external
+        onlyBridge
+    {
         VaultEntry storage vault = vaults[vaultId];
         require(vault.isActive, "Vault not active");
-        
+
         // Verify Warp message proving burn on destination chain
         require(_verifyBurnProof(vaultId, amount, warpProof), "Invalid burn proof");
-        
+
         if (vault.tokenType == TokenType.ERC20) {
             require(vault.amount >= amount, "Insufficient vault balance");
             vault.amount -= amount;
@@ -268,32 +231,22 @@ contract XChainVault is Ownable {
             // For ERC1155, amount represents the index in the arrays
             uint256 index = amount;
             require(index < vault.tokenIds.length, "Invalid token index");
-            
+
             uint256[] memory tokenId = new uint256[](1);
             uint256[] memory tokenAmount = new uint256[](1);
             tokenId[0] = vault.tokenIds[index];
             tokenAmount[0] = vault.amounts[index];
-            
-            IERC1155(vault.originalToken).safeBatchTransferFrom(
-                address(this),
-                recipient,
-                tokenId,
-                tokenAmount,
-                ""
-            );
+
+            IERC1155(vault.originalToken).safeBatchTransferFrom(address(this), recipient, tokenId, tokenAmount, "");
         }
-        
+
         emit TokenReleased(vaultId, recipient, amount, vault.tokenId);
     }
-    
+
     /**
      * @dev Send vault message via Warp
      */
-    function _sendVaultMessage(
-        bytes32 vaultId,
-        uint32 destinationChainId,
-        address recipient
-    ) private {
+    function _sendVaultMessage(bytes32 vaultId, uint32 destinationChainId, address recipient) private {
         // Include destination chain in payload (Warp precompile takes only payload)
         bytes memory message = abi.encode(
             uint8(1), // Message type: VAULT_CREATED
@@ -308,12 +261,12 @@ contract XChainVault is Ownable {
             vaults[vaultId].tokenIds,
             vaults[vaultId].amounts
         );
-        
+
         // Destination chain ID is encoded in the payload
         // The Warp precompile takes only the payload bytes
         IWarp(WARP_PRECOMPILE).sendWarpMessage(message);
     }
-    
+
     /**
      * @dev Verify burn proof using MPC threshold signatures
      * @param vaultId The vault identifier
@@ -321,31 +274,27 @@ contract XChainVault is Ownable {
      * @param proof Encoded MPC signatures: (uint256 burnNonce, uint32 sourceChainId, bytes[] signatures)
      * @return True if the proof has sufficient valid MPC signatures
      */
-    function _verifyBurnProof(
-        bytes32 vaultId,
-        uint256 amount,
-        bytes calldata proof
-    ) private returns (bool) {
+    function _verifyBurnProof(bytes32 vaultId, uint256 amount, bytes calldata proof) private returns (bool) {
         if (proof.length == 0) return false;
 
         // Decode MPC proof: nonce, source chain, and array of signatures
-        (uint256 burnNonce, uint32 sourceChainId, bytes[] memory signatures) = abi.decode(
-            proof,
-            (uint256, uint32, bytes[])
-        );
+        (uint256 burnNonce, uint32 sourceChainId, bytes[] memory signatures) =
+            abi.decode(proof, (uint256, uint32, bytes[]));
 
         // Verify minimum threshold of signatures provided
         if (signatures.length < mpcThreshold) return false;
 
         // Create the burn message hash that MPC signers should have signed
         // Message format: BURN | sourceChainId | vaultId | amount | burnNonce
-        bytes32 messageHash = keccak256(abi.encode(
-            bytes4(0x4255524e), // "BURN" magic bytes
-            sourceChainId,
-            vaultId,
-            amount,
-            burnNonce
-        ));
+        bytes32 messageHash = keccak256(
+            abi.encode(
+                bytes4(0x4255524e), // "BURN" magic bytes
+                sourceChainId,
+                vaultId,
+                amount,
+                burnNonce
+            )
+        );
 
         // Convert to Ethereum signed message hash (EIP-191)
         bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
@@ -390,21 +339,21 @@ contract XChainVault is Ownable {
 
         return true;
     }
-    
+
     /**
      * @dev Update supported tokens
      */
     function setSupportedToken(address token, bool supported) external onlyOwner {
         supportedTokens[token] = supported;
     }
-    
+
     /**
      * @dev Update supported chains
      */
     function setSupportedChain(uint32 chainId, bool supported) external onlyOwner {
         supportedChains[chainId] = supported;
     }
-    
+
     /**
      * @dev Update bridge address
      */
@@ -457,23 +406,15 @@ contract XChainVault is Ownable {
     /**
      * @dev ERC1155 receiver
      */
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes calldata
-    ) external pure returns (bytes4) {
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata) external pure returns (bytes4) {
         return this.onERC1155Received.selector;
     }
-    
-    function onERC1155BatchReceived(
-        address,
-        address,
-        uint256[] calldata,
-        uint256[] calldata,
-        bytes calldata
-    ) external pure returns (bytes4) {
+
+    function onERC1155BatchReceived(address, address, uint256[] calldata, uint256[] calldata, bytes calldata)
+        external
+        pure
+        returns (bytes4)
+    {
         return this.onERC1155BatchReceived.selector;
     }
 }

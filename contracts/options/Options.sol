@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ERC1155 } from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title Options
@@ -28,22 +28,28 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
     // TYPES
     // ═══════════════════════════════════════════════════════════════════════
 
-    enum OptionType { CALL, PUT }
-    enum SettlementType { CASH, PHYSICAL }
+    enum OptionType {
+        CALL,
+        PUT
+    }
+    enum SettlementType {
+        CASH,
+        PHYSICAL
+    }
 
     struct OptionSeries {
-        address underlying;        // Underlying asset
-        address quote;             // Quote asset (collateral for puts, payment for calls)
-        uint256 strikePrice;       // Strike price in quote decimals
-        uint256 expiry;            // Expiration timestamp
-        OptionType optionType;     // CALL or PUT
+        address underlying; // Underlying asset
+        address quote; // Quote asset (collateral for puts, payment for calls)
+        uint256 strikePrice; // Strike price in quote decimals
+        uint256 expiry; // Expiration timestamp
+        OptionType optionType; // CALL or PUT
         SettlementType settlement; // CASH or PHYSICAL
         bool exists;
     }
 
     struct Position {
-        uint256 written;           // Options written (short)
-        uint256 collateral;        // Collateral deposited
+        uint256 written; // Options written (short)
+        uint256 collateral; // Collateral deposited
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -112,38 +118,15 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
         SettlementType settlement
     );
 
-    event OptionsWritten(
-        uint256 indexed seriesId,
-        address indexed writer,
-        uint256 amount,
-        uint256 collateral
-    );
+    event OptionsWritten(uint256 indexed seriesId, address indexed writer, uint256 amount, uint256 collateral);
 
-    event OptionsBurned(
-        uint256 indexed seriesId,
-        address indexed writer,
-        uint256 amount,
-        uint256 collateralReturned
-    );
+    event OptionsBurned(uint256 indexed seriesId, address indexed writer, uint256 amount, uint256 collateralReturned);
 
-    event OptionsExercised(
-        uint256 indexed seriesId,
-        address indexed holder,
-        uint256 amount,
-        uint256 payout
-    );
+    event OptionsExercised(uint256 indexed seriesId, address indexed holder, uint256 amount, uint256 payout);
 
-    event SeriesSettled(
-        uint256 indexed seriesId,
-        uint256 settlementPrice,
-        uint256 timestamp
-    );
+    event SeriesSettled(uint256 indexed seriesId, uint256 settlementPrice, uint256 timestamp);
 
-    event CollateralClaimed(
-        uint256 indexed seriesId,
-        address indexed writer,
-        uint256 amount
-    );
+    event CollateralClaimed(uint256 indexed seriesId, address indexed writer, uint256 amount);
 
     // ═══════════════════════════════════════════════════════════════════════
     // ERRORS
@@ -167,11 +150,7 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(
-        address _oracle,
-        address _feeReceiver,
-        address _admin
-    ) ERC1155("") {
+    constructor(address _oracle, address _feeReceiver, address _admin) ERC1155("") {
         if (_oracle == address(0)) revert InvalidOracle();
 
         oracle = _oracle;
@@ -228,15 +207,7 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
             tokenDecimals[quote] = _getDecimals(quote);
         }
 
-        emit SeriesCreated(
-            seriesId,
-            underlying,
-            quote,
-            strikePrice,
-            expiry,
-            optionType,
-            settlement
-        );
+        emit SeriesCreated(seriesId, underlying, quote, strikePrice, expiry, optionType, settlement);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -250,11 +221,12 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
      * @param recipient Recipient of option tokens
      * @return collateralRequired Collateral locked
      */
-    function write(
-        uint256 seriesId,
-        uint256 amount,
-        address recipient
-    ) external nonReentrant whenNotPaused returns (uint256 collateralRequired) {
+    function write(uint256 seriesId, uint256 amount, address recipient)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (uint256 collateralRequired)
+    {
         if (amount == 0) revert ZeroAmount();
 
         OptionSeries storage series = optionSeries[seriesId];
@@ -265,9 +237,7 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
         collateralRequired = _calculateCollateral(seriesId, amount);
 
         // Transfer collateral
-        address collateralToken = series.optionType == OptionType.CALL
-            ? series.underlying
-            : series.quote;
+        address collateralToken = series.optionType == OptionType.CALL ? series.underlying : series.quote;
 
         IERC20(collateralToken).safeTransferFrom(msg.sender, address(this), collateralRequired);
 
@@ -296,10 +266,7 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
      * @param seriesId Option series ID
      * @param amount Number of options to burn
      */
-    function burn(
-        uint256 seriesId,
-        uint256 amount
-    ) external nonReentrant returns (uint256 collateralReturned) {
+    function burn(uint256 seriesId, uint256 amount) external nonReentrant returns (uint256 collateralReturned) {
         if (amount == 0) revert ZeroAmount();
 
         OptionSeries storage series = optionSeries[seriesId];
@@ -319,9 +286,7 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
         openInterest[seriesId] -= amount;
 
         // Return collateral
-        address collateralToken = series.optionType == OptionType.CALL
-            ? series.underlying
-            : series.quote;
+        address collateralToken = series.optionType == OptionType.CALL ? series.underlying : series.quote;
 
         IERC20(collateralToken).safeTransfer(msg.sender, collateralReturned);
 
@@ -355,10 +320,7 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
      * @param seriesId Option series ID
      * @param amount Number of options to exercise
      */
-    function exercise(
-        uint256 seriesId,
-        uint256 amount
-    ) external nonReentrant returns (uint256 payout) {
+    function exercise(uint256 seriesId, uint256 amount) external nonReentrant returns (uint256 payout) {
         if (amount == 0) revert ZeroAmount();
 
         OptionSeries storage series = optionSeries[seriesId];
@@ -418,9 +380,7 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
         pos.written = 0;
 
         if (amount > 0) {
-            address collateralToken = series.optionType == OptionType.CALL
-                ? series.underlying
-                : series.quote;
+            address collateralToken = series.optionType == OptionType.CALL ? series.underlying : series.quote;
             IERC20(collateralToken).safeTransfer(msg.sender, amount);
         }
 
@@ -437,26 +397,17 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
     }
 
     /// @notice Get writer position
-    function getPosition(
-        uint256 seriesId,
-        address writer
-    ) external view returns (Position memory) {
+    function getPosition(uint256 seriesId, address writer) external view returns (Position memory) {
         return positions[seriesId][writer];
     }
 
     /// @notice Calculate collateral required for writing
-    function calculateCollateral(
-        uint256 seriesId,
-        uint256 amount
-    ) external view returns (uint256) {
+    function calculateCollateral(uint256 seriesId, uint256 amount) external view returns (uint256) {
         return _calculateCollateral(seriesId, amount);
     }
 
     /// @notice Calculate exercise payout
-    function calculatePayout(
-        uint256 seriesId,
-        uint256 amount
-    ) external view returns (uint256) {
+    function calculatePayout(uint256 seriesId, uint256 amount) external view returns (uint256) {
         if (!isSettled[seriesId]) return 0;
         return _calculatePayout(seriesId, amount);
     }
@@ -480,10 +431,7 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
         feeReceiver = _feeReceiver;
     }
 
-    function setFees(
-        uint256 _exerciseFeeBps,
-        uint256 _writeFeeBps
-    ) external onlyRole(ADMIN_ROLE) {
+    function setFees(uint256 _exerciseFeeBps, uint256 _writeFeeBps) external onlyRole(ADMIN_ROLE) {
         exerciseFeeBps = _exerciseFeeBps;
         writeFeeBps = _writeFeeBps;
     }
@@ -504,10 +452,7 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
     // INTERNAL FUNCTIONS
     // ═══════════════════════════════════════════════════════════════════════
 
-    function _calculateCollateral(
-        uint256 seriesId,
-        uint256 amount
-    ) internal view returns (uint256) {
+    function _calculateCollateral(uint256 seriesId, uint256 amount) internal view returns (uint256) {
         OptionSeries storage series = optionSeries[seriesId];
 
         if (series.optionType == OptionType.CALL) {
@@ -523,10 +468,7 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
         }
     }
 
-    function _calculatePayout(
-        uint256 seriesId,
-        uint256 amount
-    ) internal view returns (uint256) {
+    function _calculatePayout(uint256 seriesId, uint256 amount) internal view returns (uint256) {
         uint256 payoutPerOption = _calculatePayoutPerOption(seriesId);
         return (payoutPerOption * amount) / PRECISION;
     }
@@ -549,18 +491,14 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
     function _getSettlementPrice(address asset) internal view returns (uint256) {
         // Interface with oracle - simplified for now
         // In production, use IOracle(oracle).getPrice(asset)
-        (bool success, bytes memory data) = oracle.staticcall(
-            abi.encodeWithSignature("getPrice(address)", asset)
-        );
+        (bool success, bytes memory data) = oracle.staticcall(abi.encodeWithSignature("getPrice(address)", asset));
         require(success, "Oracle call failed");
         (uint256 price,) = abi.decode(data, (uint256, uint256));
         return price;
     }
 
     function _getDecimals(address token) internal view returns (uint8) {
-        (bool success, bytes memory data) = token.staticcall(
-            abi.encodeWithSignature("decimals()")
-        );
+        (bool success, bytes memory data) = token.staticcall(abi.encodeWithSignature("decimals()"));
         if (success && data.length >= 32) {
             return uint8(abi.decode(data, (uint256)));
         }
@@ -568,12 +506,7 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
     }
 
     // ERC1155 required overrides
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC1155, AccessControl)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC1155, AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }

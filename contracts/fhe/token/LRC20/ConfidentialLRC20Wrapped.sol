@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {FHE, ebool, euint64} from "../../FHE.sol";
-import {TFHEApp} from "../../threshold/TFHEApp.sol";
-import {TFHE} from "../../threshold/TFHE.sol";
+import { FHE, ebool, euint64 } from "../../FHE.sol";
+import { TFHEApp } from "../../threshold/TFHEApp.sol";
+import { TFHE } from "../../threshold/TFHE.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -16,12 +16,7 @@ import { ConfidentialLRC20 } from "./ConfidentialLRC20.sol";
  * @dev     This implementation does not support tokens with rebase functions or tokens with a fee on transfer.
  *          All LRC20 tokens must have decimals superior or equal to 6 decimals.
  */
-abstract contract ConfidentialLRC20Wrapped is
-    ConfidentialLRC20,
-    IConfidentialLRC20Wrapped,
-    ReentrancyGuard,
-    TFHEApp
-{
+abstract contract ConfidentialLRC20Wrapped is ConfidentialLRC20, IConfidentialLRC20Wrapped, ReentrancyGuard, TFHEApp {
     using SafeERC20 for IERC20Metadata;
 
     /// @notice Returned if the maximum decryption delay is higher than 1 day.
@@ -48,10 +43,7 @@ abstract contract ConfidentialLRC20Wrapped is
      *                                  The current implementation expects the Gateway to always return a decrypted
      *                                  value within the delay specified, as long as it is sufficient enough.
      */
-    constructor(
-        address lrc20_,
-        uint256 maxDecryptionDelay_
-    )
+    constructor(address lrc20_, uint256 maxDecryptionDelay_)
         ConfidentialLRC20(
             string(abi.encodePacked("Confidential ", IERC20Metadata(lrc20_).name())),
             string(abi.encodePacked(IERC20Metadata(lrc20_).symbol(), "c"))
@@ -79,13 +71,7 @@ abstract contract ConfidentialLRC20Wrapped is
         uint256[] memory cts = new uint256[](1);
         cts[0] = TFHE.toUint256(canUnwrap);
 
-        uint256 requestId = TFHE.decrypt(
-            cts,
-            this.callbackUnwrap.selector,
-            0,
-            block.timestamp + 100,
-            false
-        );
+        uint256 requestId = TFHE.decrypt(cts, this.callbackUnwrap.selector, 0, block.timestamp + 100, false);
 
         unwrapRequests[requestId] = UnwrapRequest({ account: msg.sender, amount: amount });
     }
@@ -145,12 +131,11 @@ abstract contract ConfidentialLRC20Wrapped is
         }
     }
 
-    function _transferNoEvent(
-        address from,
-        address to,
-        euint64 amount,
-        ebool isTransferable
-    ) internal virtual override {
+    function _transferNoEvent(address from, address to, euint64 amount, ebool isTransferable)
+        internal
+        virtual
+        override
+    {
         _canTransferOrUnwrap(from);
         super._transferNoEvent(from, to, amount, isTransferable);
     }

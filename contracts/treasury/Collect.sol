@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {IERC20, SafeERC20} from "@luxfi/standard/tokens/ERC20.sol";
-import {Ownable} from "@luxfi/standard/access/Access.sol";
+import { IERC20, SafeERC20 } from "@luxfi/standard/tokens/ERC20.sol";
+import { Ownable } from "@luxfi/standard/access/Access.sol";
 
 /**
  * @title Collect
@@ -39,9 +39,9 @@ contract Collect is Ownable {
     uint32 public version;
 
     /// @notice Accounting
-    uint256 public total;    // All-time collected
-    uint256 public pending;  // Awaiting bridge
-    uint256 public bridged;  // All-time bridged
+    uint256 public total; // All-time collected
+    uint256 public pending; // Awaiting bridge
+    uint256 public bridged; // All-time bridged
 
     // ============ Events ============
 
@@ -148,7 +148,7 @@ contract Collect is Ownable {
      */
     function withdrawETH(address payable to, uint256 amount) external onlyOwner {
         if (to == address(0)) revert ZeroAddress();
-        (bool success,) = to.call{value: amount}("");
+        (bool success,) = to.call{ value: amount }("");
         if (!success) revert ETHTransferFailed();
     }
 

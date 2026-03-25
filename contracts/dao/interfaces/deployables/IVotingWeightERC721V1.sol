@@ -11,13 +11,19 @@ pragma solidity ^0.8.30;
 interface IVotingWeightERC721V1 {
     // --- Errors ---
 
-    /** @notice Thrown when voteData contains no token IDs */
+    /**
+     * @notice Thrown when voteData contains no token IDs
+     */
     error NoTokenIds();
 
-    /** @notice Thrown when voteData contains duplicate token IDs */
+    /**
+     * @notice Thrown when voteData contains duplicate token IDs
+     */
     error DuplicateTokenId(uint256 tokenId);
 
-    /** @notice Thrown when voter doesn't own a token ID */
+    /**
+     * @notice Thrown when voter doesn't own a token ID
+     */
     error NotTokenOwner(uint256 tokenId, address actualOwner);
 
     // --- Initializer Functions ---

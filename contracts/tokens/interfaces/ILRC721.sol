@@ -2,9 +2,9 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
-import {IERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { IERC721Metadata } from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import { IERC721Enumerable } from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 
 /**
  * @title ILRC721
@@ -30,7 +30,8 @@ interface ILRC721 is IERC721 {
     // - setApprovalForAll(address operator, bool approved)
     // - getApproved(uint256 tokenId) external view returns (address)
     // - isApprovedForAll(address owner, address operator) external view returns (bool)
-}
+
+    }
 
 /**
  * @title ILRC721Metadata
@@ -41,7 +42,8 @@ interface ILRC721Metadata is ILRC721, IERC721Metadata {
     // - name() external view returns (string memory)
     // - symbol() external view returns (string memory)
     // - tokenURI(uint256 tokenId) external view returns (string memory)
-}
+
+    }
 
 /**
  * @title ILRC721Enumerable
@@ -52,4 +54,5 @@ interface ILRC721Enumerable is ILRC721, IERC721Enumerable {
     // - totalSupply() external view returns (uint256)
     // - tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256)
     // - tokenByIndex(uint256 index) external view returns (uint256)
-}
+
+    }

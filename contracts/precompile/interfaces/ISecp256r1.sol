@@ -31,13 +31,7 @@ interface ISecp256r1 {
      * @param y The y coordinate of the public key
      * @return valid True if signature is valid, false otherwise
      */
-    function verify(
-        bytes32 hash,
-        bytes32 r,
-        bytes32 s,
-        bytes32 x,
-        bytes32 y
-    ) external view returns (bool valid);
+    function verify(bytes32 hash, bytes32 r, bytes32 s, bytes32 x, bytes32 y) external view returns (bool valid);
 }
 
 /**
@@ -65,13 +59,7 @@ library Secp256r1Lib {
      * @param y Public key y coordinate
      * @return True if valid signature
      */
-    function verify(
-        bytes32 hash,
-        bytes32 r,
-        bytes32 s,
-        bytes32 x,
-        bytes32 y
-    ) internal view returns (bool) {
+    function verify(bytes32 hash, bytes32 r, bytes32 s, bytes32 x, bytes32 y) internal view returns (bool) {
         bytes memory input = abi.encodePacked(hash, r, s, x, y);
 
         (bool success, bytes memory result) = P256_PRECOMPILE.staticcall(input);
@@ -92,12 +80,7 @@ library Secp256r1Lib {
      * @param pubKey Public key as (x, y) tuple
      * @return True if valid signature
      */
-    function verify(
-        bytes32 hash,
-        bytes32 r,
-        bytes32 s,
-        P256PublicKey memory pubKey
-    ) internal view returns (bool) {
+    function verify(bytes32 hash, bytes32 r, bytes32 s, P256PublicKey memory pubKey) internal view returns (bool) {
         return verify(hash, r, s, pubKey.x, pubKey.y);
     }
 }
@@ -154,19 +137,9 @@ abstract contract BiometricWallet {
      * @param r Signature r component
      * @param s Signature s component
      */
-    function executeWithBiometric(
-        address target,
-        bytes calldata data,
-        bytes32 r,
-        bytes32 s
-    ) external {
+    function executeWithBiometric(address target, bytes calldata data, bytes32 r, bytes32 s) external {
         // Build transaction hash
-        bytes32 txHash = keccak256(abi.encodePacked(
-            target,
-            data,
-            block.number,
-            msg.sender
-        ));
+        bytes32 txHash = keccak256(abi.encodePacked(target, data, block.number, msg.sender));
 
         // Get user's device key
         P256PublicKey memory pubKey = deviceKeys[msg.sender];
@@ -203,25 +176,18 @@ library WebAuthnVerifier {
      * @param challenge The expected challenge
      * @return True if assertion is valid
      */
-    function verify(
-        WebAuthnAssertion memory assertion,
-        P256PublicKey memory pubKey,
-        bytes32 challenge
-    ) internal view returns (bool) {
+    function verify(WebAuthnAssertion memory assertion, P256PublicKey memory pubKey, bytes32 challenge)
+        internal
+        view
+        returns (bool)
+    {
         // Compute clientDataJSON hash
         bytes32 clientDataHash = sha256(assertion.clientDataJSON);
 
         // Build signed message: authenticatorData || clientDataHash
-        bytes32 messageHash = sha256(
-            abi.encodePacked(assertion.authenticatorData, clientDataHash)
-        );
+        bytes32 messageHash = sha256(abi.encodePacked(assertion.authenticatorData, clientDataHash));
 
         // Verify signature
-        return Secp256r1Lib.verify(
-            messageHash,
-            assertion.r,
-            assertion.s,
-            pubKey
-        );
+        return Secp256r1Lib.verify(messageHash, assertion.r, assertion.s, pubKey);
     }
 }

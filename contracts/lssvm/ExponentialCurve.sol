@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {ICurve} from "./ICurve.sol";
+import { ICurve } from "./ICurve.sol";
 
 /// @title ExponentialCurve - Exponential Bonding Curve
 /// @notice Implements exponential price changes for NFT AMM
@@ -37,13 +37,7 @@ contract ExponentialCurve is ICurve {
         external
         pure
         override
-        returns (
-            uint128 newSpotPrice,
-            uint128 newDelta,
-            uint256 inputValue,
-            uint256 tradeFee,
-            uint256 protocolFee
-        )
+        returns (uint128 newSpotPrice, uint128 newDelta, uint256 inputValue, uint256 tradeFee, uint256 protocolFee)
     {
         if (numItems == 0) revert InvalidNumItems();
 
@@ -93,13 +87,7 @@ contract ExponentialCurve is ICurve {
         external
         pure
         override
-        returns (
-            uint128 newSpotPrice,
-            uint128 newDelta,
-            uint256 outputValue,
-            uint256 tradeFee,
-            uint256 protocolFee
-        )
+        returns (uint128 newSpotPrice, uint128 newDelta, uint256 outputValue, uint256 tradeFee, uint256 protocolFee)
     {
         if (numItems == 0) revert InvalidNumItems();
 

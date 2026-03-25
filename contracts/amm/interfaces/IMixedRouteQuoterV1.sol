@@ -51,12 +51,7 @@ interface IMixedRouteQuoterV1 {
     /// @return gasEstimate The estimate of the gas that the swap consumes
     function quoteExactInputSingleV3(QuoteExactInputSingleV3Params memory params)
         external
-        returns (
-            uint256 amountOut,
-            uint160 sqrtPriceX96After,
-            uint32 initializedTicksCrossed,
-            uint256 gasEstimate
-        );
+        returns (uint256 amountOut, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed, uint256 gasEstimate);
 
     /// @notice Returns the amount out received for a given exact input but for a swap of a single V2 pool
     /// @param params The params for the quote, encoded as `QuoteExactInputSingleV2Params`

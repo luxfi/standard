@@ -31,7 +31,10 @@ interface IFheOps {
     function sub(uint8 utype, bytes memory lhsHash, bytes memory rhsHash) external pure returns (bytes memory);
     function mul(uint8 utype, bytes memory lhsHash, bytes memory rhsHash) external pure returns (bytes memory);
     function lt(uint8 utype, bytes memory lhsHash, bytes memory rhsHash) external pure returns (bytes memory);
-    function select(uint8 utype, bytes memory controlHash, bytes memory ifTrueHash, bytes memory ifFalseHash) external pure returns (bytes memory);
+    function select(uint8 utype, bytes memory controlHash, bytes memory ifTrueHash, bytes memory ifFalseHash)
+        external
+        pure
+        returns (bytes memory);
     function req(uint8 utype, bytes memory input) external pure returns (bytes memory);
     function cast(uint8 utype, bytes memory input, uint8 toType) external pure returns (bytes memory);
     function trivialEncrypt(bytes memory input, uint8 toType, int32 securityZone) external pure returns (bytes memory);
@@ -138,42 +141,47 @@ struct Eaddress {
 
 // Order is set as in fheos/precompiles/types/types.go
 enum FunctionId {
-    _0,             // 0 - GetNetworkKey
-    _1,             // 1 - Verify
-    cast,           // 2
-    sealoutput,     // 3
-    select,         // 4 - select
-    _5,             // 5 - req
-    decrypt,        // 6
-    sub,            // 7
-    add,            // 8
-    xor,            // 9
-    and,            // 10
-    or,             // 11
-    not,            // 12
-    div,            // 13
-    rem,            // 14
-    mul,            // 15
-    shl,            // 16
-    shr,            // 17
-    gte,            // 18
-    lte,            // 19
-    lt,             // 20
-    gt,             // 21
-    min,            // 22
-    max,            // 23
-    eq,             // 24
-    ne,             // 25
+    _0, // 0 - GetNetworkKey
+    _1, // 1 - Verify
+    cast, // 2
+    sealoutput, // 3
+    select, // 4 - select
+    _5, // 5 - req
+    decrypt, // 6
+    sub, // 7
+    add, // 8
+    xor, // 9
+    and, // 10
+    or, // 11
+    not, // 12
+    div, // 13
+    rem, // 14
+    mul, // 15
+    shl, // 16
+    shr, // 17
+    gte, // 18
+    lte, // 19
+    lt, // 20
+    gt, // 21
+    min, // 22
+    max, // 23
+    eq, // 24
+    ne, // 25
     trivialEncrypt, // 26
-    random,         // 27
-    rol,            // 28
-    ror,            // 29
-    square,         // 30
-    _31             // 31
+    random, // 27
+    rol, // 28
+    ror, // 29
+    square, // 30
+    _31 // 31
 }
 
 interface IFHENetwork {
-    function createTask(uint8 returnType, FunctionId funcId, uint256[] memory encryptedInputs, uint256[] memory extraInputs) external returns (uint256);
+    function createTask(
+        uint8 returnType,
+        FunctionId funcId,
+        uint256[] memory encryptedInputs,
+        uint256[] memory extraInputs
+    ) external returns (uint256);
     function createRandomTask(uint8 returnType, uint256 seed, int32 securityZone) external returns (uint256);
 
     function createDecryptTask(uint256 ctHash, address requestor) external;
@@ -234,73 +242,49 @@ library Utils {
 
     function inputFromEbool(Ebool memory input) internal pure returns (EncryptedInput memory) {
         return EncryptedInput({
-            ctHash: input.ctHash,
-            securityZone: input.securityZone,
-            utype: EBOOL_TFHE,
-            signature: input.signature
+            ctHash: input.ctHash, securityZone: input.securityZone, utype: EBOOL_TFHE, signature: input.signature
         });
     }
 
     function inputFromEuint8(Euint8 memory input) internal pure returns (EncryptedInput memory) {
         return EncryptedInput({
-            ctHash: input.ctHash,
-            securityZone: input.securityZone,
-            utype: EUINT8_TFHE,
-            signature: input.signature
+            ctHash: input.ctHash, securityZone: input.securityZone, utype: EUINT8_TFHE, signature: input.signature
         });
     }
 
     function inputFromEuint16(Euint16 memory input) internal pure returns (EncryptedInput memory) {
         return EncryptedInput({
-            ctHash: input.ctHash,
-            securityZone: input.securityZone,
-            utype: EUINT16_TFHE,
-            signature: input.signature
+            ctHash: input.ctHash, securityZone: input.securityZone, utype: EUINT16_TFHE, signature: input.signature
         });
     }
 
     function inputFromEuint32(Euint32 memory input) internal pure returns (EncryptedInput memory) {
         return EncryptedInput({
-            ctHash: input.ctHash,
-            securityZone: input.securityZone,
-            utype: EUINT32_TFHE,
-            signature: input.signature
+            ctHash: input.ctHash, securityZone: input.securityZone, utype: EUINT32_TFHE, signature: input.signature
         });
     }
 
     function inputFromEuint64(Euint64 memory input) internal pure returns (EncryptedInput memory) {
         return EncryptedInput({
-            ctHash: input.ctHash,
-            securityZone: input.securityZone,
-            utype: EUINT64_TFHE,
-            signature: input.signature
+            ctHash: input.ctHash, securityZone: input.securityZone, utype: EUINT64_TFHE, signature: input.signature
         });
     }
 
     function inputFromEuint128(Euint128 memory input) internal pure returns (EncryptedInput memory) {
         return EncryptedInput({
-            ctHash: input.ctHash,
-            securityZone: input.securityZone,
-            utype: EUINT128_TFHE,
-            signature: input.signature
+            ctHash: input.ctHash, securityZone: input.securityZone, utype: EUINT128_TFHE, signature: input.signature
         });
     }
 
     function inputFromEuint256(Euint256 memory input) internal pure returns (EncryptedInput memory) {
         return EncryptedInput({
-            ctHash: input.ctHash,
-            securityZone: input.securityZone,
-            utype: EUINT256_TFHE,
-            signature: input.signature
+            ctHash: input.ctHash, securityZone: input.securityZone, utype: EUINT256_TFHE, signature: input.signature
         });
     }
 
     function inputFromEaddress(Eaddress memory input) internal pure returns (EncryptedInput memory) {
         return EncryptedInput({
-            ctHash: input.ctHash,
-            securityZone: input.securityZone,
-            utype: EADDRESS_TFHE,
-            signature: input.signature
+            ctHash: input.ctHash, securityZone: input.securityZone, utype: EADDRESS_TFHE, signature: input.signature
         });
     }
 }

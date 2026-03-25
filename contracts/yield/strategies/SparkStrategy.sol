@@ -20,10 +20,10 @@ pragma solidity ^0.8.24;
  * Risk: Low (MakerDAO-operated, audited Aave V3 codebase)
  */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SPARK PROTOCOL INTERFACES
@@ -36,52 +36,49 @@ interface ISparkPool {
     /// @param amount The amount to supply
     /// @param onBehalfOf The address that will receive the spTokens
     /// @param referralCode Referral code (0 if none)
-    function supply(
-        address asset,
-        uint256 amount,
-        address onBehalfOf,
-        uint16 referralCode
-    ) external;
+    function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
 
     /// @notice Withdraw asset from Spark lending pool
     /// @param asset The address of the underlying asset
     /// @param amount The amount to withdraw (type(uint256).max for all)
     /// @param to The address that will receive the underlying asset
     /// @return The final amount withdrawn
-    function withdraw(
-        address asset,
-        uint256 amount,
-        address to
-    ) external returns (uint256);
+    function withdraw(address asset, uint256 amount, address to) external returns (uint256);
 
     /// @notice Get reserve data for an asset
-    function getReserveData(address asset) external view returns (
-        uint256 configuration,
-        uint128 liquidityIndex,
-        uint128 currentLiquidityRate,
-        uint128 variableBorrowIndex,
-        uint128 currentVariableBorrowRate,
-        uint128 currentStableBorrowRate,
-        uint40 lastUpdateTimestamp,
-        uint16 id,
-        address spTokenAddress,
-        address stableDebtTokenAddress,
-        address variableDebtTokenAddress,
-        address interestRateStrategyAddress,
-        uint128 accruedToTreasury,
-        uint128 unbacked,
-        uint128 isolationModeTotalDebt
-    );
+    function getReserveData(address asset)
+        external
+        view
+        returns (
+            uint256 configuration,
+            uint128 liquidityIndex,
+            uint128 currentLiquidityRate,
+            uint128 variableBorrowIndex,
+            uint128 currentVariableBorrowRate,
+            uint128 currentStableBorrowRate,
+            uint40 lastUpdateTimestamp,
+            uint16 id,
+            address spTokenAddress,
+            address stableDebtTokenAddress,
+            address variableDebtTokenAddress,
+            address interestRateStrategyAddress,
+            uint128 accruedToTreasury,
+            uint128 unbacked,
+            uint128 isolationModeTotalDebt
+        );
 
     /// @notice Get user account data
-    function getUserAccountData(address user) external view returns (
-        uint256 totalCollateralBase,
-        uint256 totalDebtBase,
-        uint256 availableBorrowsBase,
-        uint256 currentLiquidationThreshold,
-        uint256 ltv,
-        uint256 healthFactor
-    );
+    function getUserAccountData(address user)
+        external
+        view
+        returns (
+            uint256 totalCollateralBase,
+            uint256 totalDebtBase,
+            uint256 availableBorrowsBase,
+            uint256 currentLiquidationThreshold,
+            uint256 ltv,
+            uint256 healthFactor
+        );
 }
 
 /// @notice Spark spToken interface (rebasing)
@@ -112,33 +109,25 @@ interface IPot {
     function dsr() external view returns (uint256); // DSR rate in ray (1e27)
     function chi() external view returns (uint256); // Accumulated rate
     function rho() external view returns (uint256); // Last drip timestamp
-    function drip() external returns (uint256);     // Update chi
+    function drip() external returns (uint256); // Update chi
 }
 
 /// @notice SPK Rewards Controller (for future SPK token rewards)
 interface ISparkRewardsController {
-    function claimRewards(
-        address[] calldata assets,
-        uint256 amount,
-        address to,
-        address reward
-    ) external returns (uint256);
+    function claimRewards(address[] calldata assets, uint256 amount, address to, address reward)
+        external
+        returns (uint256);
 
-    function claimAllRewards(
-        address[] calldata assets,
-        address to
-    ) external returns (address[] memory, uint256[] memory);
+    function claimAllRewards(address[] calldata assets, address to)
+        external
+        returns (address[] memory, uint256[] memory);
 
-    function getUserRewards(
-        address[] calldata assets,
-        address user,
-        address reward
-    ) external view returns (uint256);
+    function getUserRewards(address[] calldata assets, address user, address reward) external view returns (uint256);
 
-    function getAllUserRewards(
-        address[] calldata assets,
-        address user
-    ) external view returns (address[] memory, uint256[] memory);
+    function getAllUserRewards(address[] calldata assets, address user)
+        external
+        view
+        returns (address[] memory, uint256[] memory);
 }
 
 /// @notice WETH interface
@@ -156,7 +145,7 @@ interface IWETH {
 /// @title SparkLendingStrategy
 /// @notice Supplies assets to Spark Protocol for spToken yield
 /// @dev Works with any Spark-supported asset (WETH, USDC, WBTC, DAI, sDAI, etc.)
-contract SparkLendingStrategy is Ownable, ReentrancyGuard{
+contract SparkLendingStrategy is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -167,7 +156,7 @@ contract SparkLendingStrategy is Ownable, ReentrancyGuard{
     ISparkPool public constant SPARK_POOL = ISparkPool(0xC13e21B648A5Ee794902342038FF3aDAB66BE987);
 
     /// @notice Spark Rewards Controller (for SPK rewards when available)
-    ISparkRewardsController public constant REWARDS_CONTROLLER = 
+    ISparkRewardsController public constant REWARDS_CONTROLLER =
         ISparkRewardsController(0x8164Cc65827dcFe994AB23944CBC90e0aa80bFcb);
 
     /// @notice SPK Token (governance token, rewards planned)
@@ -240,11 +229,7 @@ contract SparkLendingStrategy is Ownable, ReentrancyGuard{
     /// @param _vault Vault address that controls deposits/withdrawals
     /// @param _asset Underlying asset (address(0) or WETH for native ETH)
     /// @param _isNativeETH True if strategy accepts native ETH
-    constructor(
-        address _vault,
-        address _asset,
-        bool _isNativeETH
-    ) Ownable(msg.sender) {
+    constructor(address _vault, address _asset, bool _isNativeETH) Ownable(msg.sender) {
         vault = _vault;
         isNativeETH = _isNativeETH;
 
@@ -252,7 +237,7 @@ contract SparkLendingStrategy is Ownable, ReentrancyGuard{
         asset = _isNativeETH ? WETH : _asset;
 
         // Get spToken address from Spark
-        (,,,,,,,,address _spToken,,,,,,) = SPARK_POOL.getReserveData(asset);
+        (,,,,,,,, address _spToken,,,,,,) = SPARK_POOL.getReserveData(asset);
         if (_spToken == address(0)) revert InvalidAsset();
         spToken = _spToken;
 
@@ -265,7 +250,15 @@ contract SparkLendingStrategy is Ownable, ReentrancyGuard{
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice
-    function deposit(uint256 amount, bytes calldata /* data */) external nonReentrant onlyVault returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        nonReentrant
+        onlyVault
+        returns (uint256 shares)
+    {
         if (!active) revert NotActive();
 
         IERC20(asset).safeTransferFrom(msg.sender, address(this), amount);
@@ -285,7 +278,16 @@ contract SparkLendingStrategy is Ownable, ReentrancyGuard{
     }
 
     /// @notice
-    function withdraw(uint256 shares, address recipient, bytes calldata /* data */) external nonReentrant onlyVault returns (uint256 amount) {
+    function withdraw(
+        uint256 shares,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        nonReentrant
+        onlyVault
+        returns (uint256 amount)
+    {
         // Withdraw from Spark
         amount = SPARK_POOL.withdraw(asset, shares, address(this));
 
@@ -363,7 +365,7 @@ contract SparkLendingStrategy is Ownable, ReentrancyGuard{
     function pendingSPKRewards() external view returns (uint256) {
         address[] memory assets = new address[](1);
         assets[0] = spToken;
-        
+
         try REWARDS_CONTROLLER.getUserRewards(assets, address(this), SPK_TOKEN) returns (uint256 rewards) {
             return rewards;
         } catch {
@@ -376,8 +378,7 @@ contract SparkLendingStrategy is Ownable, ReentrancyGuard{
         assets[0] = spToken;
 
         try REWARDS_CONTROLLER.claimAllRewards(assets, address(this)) returns (
-            address[] memory,
-            uint256[] memory amounts
+            address[] memory, uint256[] memory amounts
         ) {
             if (amounts.length > 0) {
                 claimed = amounts[0];
@@ -428,7 +429,7 @@ contract SparkLendingStrategy is Ownable, ReentrancyGuard{
         }
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -511,7 +512,7 @@ contract SparkSDAIStrategy is Ownable, ReentrancyGuard {
         supplyToSpark = _supplyToSpark;
 
         // Get spSDAI address if supplying to Spark
-        (,,,,,,,,address _spSDAI,,,,,,) = SPARK_POOL.getReserveData(address(SDAI));
+        (,,,,,,,, address _spSDAI,,,,,,) = SPARK_POOL.getReserveData(address(SDAI));
         spSDAI = _spSDAI;
 
         // Approve DAI for sDAI deposit
@@ -528,7 +529,15 @@ contract SparkSDAIStrategy is Ownable, ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice
-    function deposit(uint256 amount, bytes calldata /* data */) external nonReentrant onlyVault returns (uint256 shares) {
+    function deposit(
+        uint256 amount,
+        bytes calldata /* data */
+    )
+        external
+        nonReentrant
+        onlyVault
+        returns (uint256 shares)
+    {
         if (!active) revert NotActive();
 
         // Transfer DAI from vault
@@ -548,7 +557,16 @@ contract SparkSDAIStrategy is Ownable, ReentrancyGuard {
     }
 
     /// @notice
-    function withdraw(uint256 shares, address recipient, bytes calldata /* data */) external nonReentrant onlyVault returns (uint256 amount) {
+    function withdraw(
+        uint256 shares,
+        address recipient,
+        bytes calldata /* data */
+    )
+        external
+        nonReentrant
+        onlyVault
+        returns (uint256 amount)
+    {
         if (shares > totalShares) revert InsufficientShares();
 
         // If supplied to Spark, withdraw first
@@ -734,11 +752,7 @@ contract SparkStrategyFactory {
     /// @param vault Vault address
     /// @param asset Underlying asset (WETH, USDC, WBTC, etc.)
     /// @param isNativeETH Whether strategy accepts native ETH
-    function deployLendingStrategy(
-        address vault,
-        address asset,
-        bool isNativeETH
-    ) external returns (address strategy) {
+    function deployLendingStrategy(address vault, address asset, bool isNativeETH) external returns (address strategy) {
         strategy = address(new SparkLendingStrategy(vault, asset, isNativeETH));
         emit StrategyDeployed(strategy, "SparkLending", asset);
     }
@@ -746,10 +760,7 @@ contract SparkStrategyFactory {
     /// @notice Deploy a SparkSDAIStrategy
     /// @param vault Vault address
     /// @param supplyToSpark Whether to supply sDAI to Spark for extra yield
-    function deploySDAIStrategy(
-        address vault,
-        bool supplyToSpark
-    ) external returns (address strategy) {
+    function deploySDAIStrategy(address vault, bool supplyToSpark) external returns (address strategy) {
         strategy = address(new SparkSDAIStrategy(vault, supplyToSpark));
         emit StrategyDeployed(strategy, "SparkSDAI", 0x6B175474E89094C44Da98b954EedeAC495271d0F);
     }

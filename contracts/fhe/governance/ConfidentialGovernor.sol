@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {FHE, ebool, einput, euint64} from "../FHE.sol";
-import {TFHEApp} from "../threshold/TFHEApp.sol";
-import {TFHE} from "../threshold/TFHE.sol";
+import { FHE, ebool, einput, euint64 } from "../FHE.sol";
+import { TFHEApp } from "../threshold/TFHEApp.sol";
+import { TFHE } from "../threshold/TFHE.sol";
 import { Ownable2Step, Ownable } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IConfidentialLRC20Votes } from "./IConfidentialLRC20Votes.sol";
 import { ICompoundTimelock } from "./ICompoundTimelock.sol";
@@ -276,10 +276,8 @@ abstract contract ConfidentialGovernor is Ownable2Step, TFHEApp {
         Proposal memory proposal = _proposals[proposalId];
 
         if (
-            proposal.state == ProposalState.Rejected ||
-            proposal.state == ProposalState.Canceled ||
-            proposal.state == ProposalState.Defeated ||
-            proposal.state == ProposalState.Executed
+            proposal.state == ProposalState.Rejected || proposal.state == ProposalState.Canceled
+                || proposal.state == ProposalState.Defeated || proposal.state == ProposalState.Executed
         ) {
             revert ProposalStateInvalid();
         }
@@ -293,11 +291,7 @@ abstract contract ConfidentialGovernor is Ownable2Step, TFHEApp {
         if (proposal.state == ProposalState.Queued) {
             for (uint256 i = 0; i < proposal.targets.length; i++) {
                 TIMELOCK.cancelTransaction(
-                    proposal.targets[i],
-                    proposal.values[i],
-                    proposal.signatures[i],
-                    proposal.calldatas[i],
-                    proposal.eta
+                    proposal.targets[i], proposal.values[i], proposal.signatures[i], proposal.calldatas[i], proposal.eta
                 );
             }
         }
@@ -340,11 +334,7 @@ abstract contract ConfidentialGovernor is Ownable2Step, TFHEApp {
 
         for (uint256 i = 0; i < proposal.targets.length; i++) {
             TIMELOCK.executeTransaction{ value: proposal.values[i] }(
-                proposal.targets[i],
-                proposal.values[i],
-                proposal.signatures[i],
-                proposal.calldatas[i],
-                proposal.eta
+                proposal.targets[i], proposal.values[i], proposal.signatures[i], proposal.calldatas[i], proposal.eta
             );
         }
 
@@ -391,10 +381,10 @@ abstract contract ConfidentialGovernor is Ownable2Step, TFHEApp {
             ProposalState proposerLatestProposalState = _proposals[latestProposalId].state;
 
             if (
-                proposerLatestProposalState != ProposalState.Rejected &&
-                proposerLatestProposalState != ProposalState.Defeated &&
-                proposerLatestProposalState != ProposalState.Canceled &&
-                proposerLatestProposalState != ProposalState.Executed
+                proposerLatestProposalState != ProposalState.Rejected
+                    && proposerLatestProposalState != ProposalState.Defeated
+                    && proposerLatestProposalState != ProposalState.Canceled
+                    && proposerLatestProposalState != ProposalState.Executed
             ) {
                 revert ProposerHasAnotherProposal();
             }
@@ -423,15 +413,7 @@ abstract contract ConfidentialGovernor is Ownable2Step, TFHEApp {
         latestProposalIds[msg.sender] = thisProposalId;
 
         emit ProposalCreated(
-            thisProposalId,
-            msg.sender,
-            targets,
-            values,
-            signatures,
-            calldatas,
-            startBlock,
-            endBlock,
-            description
+            thisProposalId, msg.sender, targets, values, signatures, calldatas, startBlock, endBlock, description
         );
 
         euint64 priorVotes = CONFIDENTIAL_LRC20_VOTES.getPriorVotesForGovernor(msg.sender, block.number - 1);
@@ -441,11 +423,7 @@ abstract contract ConfidentialGovernor is Ownable2Step, TFHEApp {
         cts[0] = TFHE.toUint256(canPropose);
 
         uint256 requestId = TFHE.decrypt(
-            cts,
-            this.callbackInitiateProposal.selector,
-            0,
-            block.timestamp + MAX_DECRYPTION_DELAY,
-            false
+            cts, this.callbackInitiateProposal.selector, 0, block.timestamp + MAX_DECRYPTION_DELAY, false
         );
 
         _requestIdToProposalId[requestId] = thisProposalId;
@@ -496,13 +474,8 @@ abstract contract ConfidentialGovernor is Ownable2Step, TFHEApp {
         cts[0] = TFHE.toUint256(_proposals[proposalId].forVotes);
         cts[1] = TFHE.toUint256(_proposals[proposalId].againstVotes);
 
-        uint256 requestId = TFHE.decrypt(
-            cts,
-            this.callbackVoteDecryption.selector,
-            0,
-            block.timestamp + MAX_DECRYPTION_DELAY,
-            false
-        );
+        uint256 requestId =
+            TFHE.decrypt(cts, this.callbackVoteDecryption.selector, 0, block.timestamp + MAX_DECRYPTION_DELAY, false);
 
         _requestIdToProposalId[requestId] = proposalId;
         _proposals[proposalId].state = ProposalState.PendingResults;
@@ -531,11 +504,11 @@ abstract contract ConfidentialGovernor is Ownable2Step, TFHEApp {
      * @param forVotesDecrypted     For votes.
      * @param againstVotesDecrypted Against votes.
      */
-    function callbackVoteDecryption(
-        uint256 requestId,
-        uint256 forVotesDecrypted,
-        uint256 againstVotesDecrypted
-    ) public virtual onlyGateway {
+    function callbackVoteDecryption(uint256 requestId, uint256 forVotesDecrypted, uint256 againstVotesDecrypted)
+        public
+        virtual
+        onlyGateway
+    {
         uint256 proposalId = _requestIdToProposalId[requestId];
 
         /// @dev It is safe to downcast since the original values were euint64.
@@ -644,13 +617,10 @@ abstract contract ConfidentialGovernor is Ownable2Step, TFHEApp {
         emit VoteCast(voter, proposalId);
     }
 
-    function _queueOrRevert(
-        address target,
-        uint256 value,
-        string memory signature,
-        bytes memory data,
-        uint256 eta
-    ) internal virtual {
+    function _queueOrRevert(address target, uint256 value, string memory signature, bytes memory data, uint256 eta)
+        internal
+        virtual
+    {
         if (TIMELOCK.queuedTransactions(keccak256(abi.encode(target, value, signature, data, eta)))) {
             revert ProposalActionsAlreadyQueued();
         }

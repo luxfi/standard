@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IOracleSource} from "@luxfi/contracts/interfaces/oracle/IOracleSource.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IOracleSource } from "@luxfi/contracts/interfaces/oracle/IOracleSource.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /// @notice Chainlink AggregatorV3 interface
 interface AggregatorV3Interface {
-    function latestRoundData() external view returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    );
+    function latestRoundData()
+        external
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
     function decimals() external view returns (uint8);
 }
 
@@ -87,13 +84,8 @@ contract ChainlinkAdapter is IOracleSource, AccessControl {
         address feed = feeds[asset];
         if (feed == address(0)) revert FeedNotConfigured(asset);
 
-        (
-            uint80 roundId,
-            int256 answer,
-            ,
-            uint256 updatedAt,
-            uint80 answeredInRound
-        ) = AggregatorV3Interface(feed).latestRoundData();
+        (uint80 roundId, int256 answer,, uint256 updatedAt, uint80 answeredInRound) =
+            AggregatorV3Interface(feed).latestRoundData();
 
         if (answer <= 0) revert InvalidPrice();
         if (updatedAt == 0) revert StalePrice();
@@ -104,10 +96,10 @@ contract ChainlinkAdapter is IOracleSource, AccessControl {
         uint8 decimals = feedDecimals[asset];
         if (decimals < 18) {
             // forge-lint: disable-next-line(unsafe-typecast)
-            price = uint256(answer) * 10**(18 - decimals);
+            price = uint256(answer) * 10 ** (18 - decimals);
         } else if (decimals > 18) {
             // forge-lint: disable-next-line(unsafe-typecast)
-            price = uint256(answer) / 10**(decimals - 18);
+            price = uint256(answer) / 10 ** (decimals - 18);
         } else {
             // forge-lint: disable-next-line(unsafe-typecast)
             price = uint256(answer);
@@ -143,13 +135,8 @@ contract ChainlinkAdapter is IOracleSource, AccessControl {
         address feed = feeds[asset];
         if (feed == address(0)) revert FeedNotConfigured(asset);
 
-        (
-            uint80 roundId,
-            int256 answer,
-            ,
-            uint256 updatedAt,
-            uint80 answeredInRound
-        ) = AggregatorV3Interface(feed).latestRoundData();
+        (uint80 roundId, int256 answer,, uint256 updatedAt, uint80 answeredInRound) =
+            AggregatorV3Interface(feed).latestRoundData();
 
         if (answer <= 0) revert InvalidPrice();
         if (updatedAt == 0) revert StalePrice();
@@ -159,10 +146,10 @@ contract ChainlinkAdapter is IOracleSource, AccessControl {
         uint8 decimals = feedDecimals[asset];
         if (decimals < 18) {
             // forge-lint: disable-next-line(unsafe-typecast)
-            price = uint256(answer) * 10**(18 - decimals);
+            price = uint256(answer) * 10 ** (18 - decimals);
         } else if (decimals > 18) {
             // forge-lint: disable-next-line(unsafe-typecast)
-            price = uint256(answer) / 10**(decimals - 18);
+            price = uint256(answer) / 10 ** (decimals - 18);
         } else {
             // forge-lint: disable-next-line(unsafe-typecast)
             price = uint256(answer);

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title Helpers - Helper library for Claims contract
 /// @author Gnosis (original), Lux Industries (0.8.31 port)
@@ -31,11 +31,11 @@ library Helpers {
     /// @param questionId An identifier for the question to be answered by the oracle.
     /// @param outcomeSlotCount The number of outcome slots which should be used for this condition.
     /// @return The condition ID as a bytes32 hash.
-    function getConditionId(
-        address oracle,
-        bytes32 questionId,
-        uint256 outcomeSlotCount
-    ) internal pure returns (bytes32) {
+    function getConditionId(address oracle, bytes32 questionId, uint256 outcomeSlotCount)
+        internal
+        pure
+        returns (bytes32)
+    {
         return keccak256(abi.encodePacked(oracle, questionId, outcomeSlotCount));
     }
 
@@ -45,11 +45,11 @@ library Helpers {
     /// @param conditionId Condition ID of the outcome collection to combine with the parent.
     /// @param indexSet Index set of the outcome collection to combine with the parent.
     /// @return The collection ID as a bytes32.
-    function getCollectionId(
-        bytes32 parentCollectionId,
-        bytes32 conditionId,
-        uint256 indexSet
-    ) internal view returns (bytes32) {
+    function getCollectionId(bytes32 parentCollectionId, bytes32 conditionId, uint256 indexSet)
+        internal
+        view
+        returns (bytes32)
+    {
         // Derive initial point from condition and index set
         uint256 x1 = uint256(keccak256(abi.encodePacked(conditionId, indexSet)));
         bool odd = x1 >> 255 != 0;
@@ -107,10 +107,7 @@ library Helpers {
     /// @param collateralToken Collateral token which backs the position.
     /// @param collectionId ID of the outcome collection associated with this position.
     /// @return The position ID as a uint256.
-    function getPositionId(
-        IERC20 collateralToken,
-        bytes32 collectionId
-    ) internal pure returns (uint256) {
+    function getPositionId(IERC20 collateralToken, bytes32 collectionId) internal pure returns (uint256) {
         return uint256(keccak256(abi.encodePacked(collateralToken, collectionId)));
     }
 

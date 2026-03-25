@@ -6,4 +6,5 @@ pragma solidity ^0.8.31;
 /// @dev TODO: Implement Scribe integration
 abstract contract ChronicleAdapter {
     // Chronicle-specific implementation pending
-}
+
+    }

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {YieldType} from "@luxfi/contracts/interfaces/core/IYield.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { YieldType } from "@luxfi/contracts/interfaces/core/IYield.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════╗
@@ -53,46 +53,46 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 
 /// @notice RWA asset category
 enum RWACategory {
-    TREASURY,        // Government bonds (interest-bearing)
-    REAL_ESTATE,     // Rental income properties
-    TRADE_FINANCE,   // Invoice/supply chain finance
-    PRIVATE_CREDIT,  // Corporate loans
-    INFRASTRUCTURE,  // Toll roads, energy
-    COMMODITY,       // Gold, silver, etc.
-    EQUITY           // Tokenized stocks
+    TREASURY, // Government bonds (interest-bearing)
+    REAL_ESTATE, // Rental income properties
+    TRADE_FINANCE, // Invoice/supply chain finance
+    PRIVATE_CREDIT, // Corporate loans
+    INFRASTRUCTURE, // Toll roads, energy
+    COMMODITY, // Gold, silver, etc.
+    EQUITY // Tokenized stocks
 }
 
 /// @notice RWA vault configuration
 struct RWAVault {
-    string name;                    // Vault name
-    string symbol;                  // Vault symbol
-    IERC20 underlyingToken;         // Token representing RWA ownership
-    IERC20 yieldToken;              // Token for yield distribution (USDC, etc.)
-    RWACategory category;           // Asset category
-    address oracle;                 // Yield oracle
-    uint256 totalDeposited;         // Total tokens deposited
-    uint256 totalYieldDistributed;  // Cumulative yield
-    uint256 yieldPerToken;          // Accumulated yield per token (scaled by 1e18)
-    uint256 lastYieldUpdate;        // Last oracle update
-    bool shariahCompliant;          // Pre-computed compliance flag
-    bool active;                    // Vault is active
+    string name; // Vault name
+    string symbol; // Vault symbol
+    IERC20 underlyingToken; // Token representing RWA ownership
+    IERC20 yieldToken; // Token for yield distribution (USDC, etc.)
+    RWACategory category; // Asset category
+    address oracle; // Yield oracle
+    uint256 totalDeposited; // Total tokens deposited
+    uint256 totalYieldDistributed; // Cumulative yield
+    uint256 yieldPerToken; // Accumulated yield per token (scaled by 1e18)
+    uint256 lastYieldUpdate; // Last oracle update
+    bool shariahCompliant; // Pre-computed compliance flag
+    bool active; // Vault is active
 }
 
 /// @notice User position in a vault
 struct RWAPosition {
-    uint256 balance;                // Tokens deposited
-    uint256 yieldDebt;              // Yield already accounted for
-    uint256 claimedYield;           // Total yield claimed
-    uint256 depositTime;            // When deposited
+    uint256 balance; // Tokens deposited
+    uint256 yieldDebt; // Yield already accounted for
+    uint256 claimedYield; // Total yield claimed
+    uint256 depositTime; // When deposited
 }
 
 /// @notice Yield report from oracle
 struct YieldReport {
-    uint256 totalYield;             // Total yield for period
-    uint256 periodStart;            // Period start timestamp
-    uint256 periodEnd;              // Period end timestamp
-    bytes32 reportHash;             // Hash of off-chain report
-    address reporter;               // Who submitted the report
+    uint256 totalYield; // Total yield for period
+    uint256 periodStart; // Period start timestamp
+    uint256 periodEnd; // Period end timestamp
+    bytes32 reportHash; // Hash of off-chain report
+    address reporter; // Who submitted the report
 }
 
 /// @notice Adapter errors
@@ -327,13 +327,15 @@ contract RWAYieldAdapter is ReentrancyGuard {
         vault.lastYieldUpdate = block.timestamp;
 
         // Store report for audit trail
-        yieldReports[vaultId].push(YieldReport({
-            totalYield: yieldAmount,
-            periodStart: periodStart,
-            periodEnd: periodEnd,
-            reportHash: reportHash,
-            reporter: msg.sender
-        }));
+        yieldReports[vaultId].push(
+            YieldReport({
+                totalYield: yieldAmount,
+                periodStart: periodStart,
+                periodEnd: periodEnd,
+                reportHash: reportHash,
+                reporter: msg.sender
+            })
+        );
 
         // Transfer yield tokens to adapter for distribution
         vault.yieldToken.safeTransferFrom(msg.sender, address(this), yieldAmount);
@@ -398,14 +400,18 @@ contract RWAYieldAdapter is ReentrancyGuard {
     /**
      * @notice Get position summary
      */
-    function getPosition(address user, bytes32 vaultId) external view returns (
-        uint256 balance,
-        uint256 pendingYield,
-        uint256 claimedYield,
-        uint256 depositTime,
-        RWACategory category,
-        bool shariahCompliant
-    ) {
+    function getPosition(address user, bytes32 vaultId)
+        external
+        view
+        returns (
+            uint256 balance,
+            uint256 pendingYield,
+            uint256 claimedYield,
+            uint256 depositTime,
+            RWACategory category,
+            bool shariahCompliant
+        )
+    {
         RWAVault storage vault = vaults[vaultId];
         RWAPosition storage pos = positions[user][vaultId];
 
@@ -420,15 +426,19 @@ contract RWAYieldAdapter is ReentrancyGuard {
     /**
      * @notice Get vault info
      */
-    function getVault(bytes32 vaultId) external view returns (
-        string memory name,
-        RWACategory category,
-        uint256 totalDeposited,
-        uint256 totalYieldDistributed,
-        uint256 currentAPY,
-        bool shariahCompliant,
-        bool active
-    ) {
+    function getVault(bytes32 vaultId)
+        external
+        view
+        returns (
+            string memory name,
+            RWACategory category,
+            uint256 totalDeposited,
+            uint256 totalYieldDistributed,
+            uint256 currentAPY,
+            bool shariahCompliant,
+            bool active
+        )
+    {
         RWAVault storage vault = vaults[vaultId];
 
         name = vault.name;
@@ -494,10 +504,11 @@ contract RWAYieldAdapter is ReentrancyGuard {
     /**
      * @notice Explain compliance for each category
      */
-    function getComplianceExplanation(RWACategory category) external pure returns (
-        bool compliant,
-        string memory reason
-    ) {
+    function getComplianceExplanation(RWACategory category)
+        external
+        pure
+        returns (bool compliant, string memory reason)
+    {
         if (category == RWACategory.TREASURY) {
             return (false, "Government bonds pay interest (riba), which is forbidden in Islamic finance");
         }
@@ -533,11 +544,11 @@ contract RWAYieldAdapter is ReentrancyGuard {
      * @param recipient Settlement contract
      * @param maxAmount Maximum to route
      */
-    function routeToSettlement(
-        bytes32 vaultId,
-        address recipient,
-        uint256 maxAmount
-    ) external nonReentrant returns (uint256 routed) {
+    function routeToSettlement(bytes32 vaultId, address recipient, uint256 maxAmount)
+        external
+        nonReentrant
+        returns (uint256 routed)
+    {
         uint256 pending = getPendingYield(msg.sender, vaultId);
         if (pending == 0) return 0;
 

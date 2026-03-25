@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 /// @title IClaims
 /// @author Gnosis (original), Lux Industries (0.8.31 port)
@@ -17,10 +17,7 @@ interface IClaims is IERC1155 {
     /// @param questionId An identifier for the question to be answered by the oracle.
     /// @param outcomeSlotCount The number of outcome slots for this condition. Must not exceed 256.
     event ConditionPreparation(
-        bytes32 indexed conditionId,
-        address indexed oracle,
-        bytes32 indexed questionId,
-        uint256 outcomeSlotCount
+        bytes32 indexed conditionId, address indexed oracle, bytes32 indexed questionId, uint256 outcomeSlotCount
     );
 
     /// @dev Emitted when a condition is resolved by the oracle.
@@ -132,11 +129,7 @@ interface IClaims is IERC1155 {
     /// @param oracle The account assigned to report the result.
     /// @param questionId An identifier for the question.
     /// @param outcomeSlotCount The number of outcome slots (2-256).
-    function prepareCondition(
-        address oracle,
-        bytes32 questionId,
-        uint256 outcomeSlotCount
-    ) external;
+    function prepareCondition(address oracle, bytes32 questionId, uint256 outcomeSlotCount) external;
 
     /// @notice Called by the oracle to report results of conditions.
     /// @param questionId The question ID the oracle is answering.
@@ -208,29 +201,24 @@ interface IClaims is IERC1155 {
     /// @param questionId The question ID.
     /// @param outcomeSlotCount The number of outcome slots.
     /// @return The condition ID.
-    function getConditionId(
-        address oracle,
-        bytes32 questionId,
-        uint256 outcomeSlotCount
-    ) external pure returns (bytes32);
+    function getConditionId(address oracle, bytes32 questionId, uint256 outcomeSlotCount)
+        external
+        pure
+        returns (bytes32);
 
     /// @notice Constructs an outcome collection ID.
     /// @param parentCollectionId The parent collection ID (bytes32(0) for root).
     /// @param conditionId The condition ID.
     /// @param indexSet The index set.
     /// @return The collection ID.
-    function getCollectionId(
-        bytes32 parentCollectionId,
-        bytes32 conditionId,
-        uint256 indexSet
-    ) external view returns (bytes32);
+    function getCollectionId(bytes32 parentCollectionId, bytes32 conditionId, uint256 indexSet)
+        external
+        view
+        returns (bytes32);
 
     /// @notice Constructs a position ID (ERC-1155 token ID).
     /// @param collateralToken The collateral token.
     /// @param collectionId The collection ID.
     /// @return The position ID.
-    function getPositionId(
-        IERC20 collateralToken,
-        bytes32 collectionId
-    ) external pure returns (uint256);
+    function getPositionId(IERC20 collateralToken, bytes32 collectionId) external pure returns (uint256);
 }

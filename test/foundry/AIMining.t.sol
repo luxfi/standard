@@ -52,18 +52,18 @@ contract AIMiningTest is Test {
     // ============ ChainConfig Tests ============
 
     function test_ChainConfig_ValidChainIds() public view {
-        assertTrue(chainConfig.isValidChainId(96369));   // C-Chain
-        assertTrue(chainConfig.isValidChainId(36963));   // AI
-        assertTrue(chainConfig.isValidChainId(200200));  // Zoo
-        assertFalse(chainConfig.isValidChainId(1));      // Ethereum
+        assertTrue(chainConfig.isValidChainId(96369)); // C-Chain
+        assertTrue(chainConfig.isValidChainId(36963)); // AI
+        assertTrue(chainConfig.isValidChainId(200200)); // Zoo
+        assertFalse(chainConfig.isValidChainId(1)); // Ethereum
         assertFalse(chainConfig.isValidChainId(0));
     }
 
     function test_ChainConfig_GPUMultipliers() public view {
-        assertEq(chainConfig.gpuMultipliers(ChainConfig.GPUTier.Consumer), 5000);      // 0.5x
+        assertEq(chainConfig.gpuMultipliers(ChainConfig.GPUTier.Consumer), 5000); // 0.5x
         assertEq(chainConfig.gpuMultipliers(ChainConfig.GPUTier.Professional), 10000); // 1.0x
-        assertEq(chainConfig.gpuMultipliers(ChainConfig.GPUTier.DataCenter), 15000);   // 1.5x
-        assertEq(chainConfig.gpuMultipliers(ChainConfig.GPUTier.Sovereign), 20000);    // 2.0x
+        assertEq(chainConfig.gpuMultipliers(ChainConfig.GPUTier.DataCenter), 15000); // 1.5x
+        assertEq(chainConfig.gpuMultipliers(ChainConfig.GPUTier.Sovereign), 20000); // 2.0x
     }
 
     function test_ChainConfig_SetGPUMultiplier() public {
@@ -116,7 +116,7 @@ contract AIMiningTest is Test {
     function test_AIToken_MintReward() public {
         // Set genesis first
         aiToken.setGenesis();
-        
+
         // Mining contract is authorized
         uint256 amount = 100 ether;
 
@@ -148,7 +148,7 @@ contract AIMiningTest is Test {
 
     function test_AIToken_Stats() public {
         aiToken.setGenesis();
-        
+
         // Mint some tokens
         vm.prank(address(mining));
         aiToken.mintReward(miner1, 100 ether);
@@ -159,8 +159,7 @@ contract AIMiningTest is Test {
             uint256 _lpMinted,
             uint256 _miningMinted,
             uint256 _treasuryMinted,
-            uint256 _epoch,
-            ,  // _reward
+            uint256 _epoch,, // _reward
             uint256 _remainingLP,
             uint256 _remainingMining
         ) = aiToken.getStats();
@@ -206,12 +205,7 @@ contract AIMiningTest is Test {
     }
 
     function test_AIMining_GetMiningStats() public view {
-        (
-            uint256 totalProofs,
-            uint256 totalRewards,
-            uint256 currentReward,
-            uint256 difficulty
-        ) = mining.getMiningStats();
+        (uint256 totalProofs, uint256 totalRewards, uint256 currentReward, uint256 difficulty) = mining.getMiningStats();
 
         assertEq(totalProofs, 0);
         assertEq(totalRewards, 0);
@@ -240,12 +234,7 @@ contract AIMiningTest is Test {
     }
 
     function test_ComputeMarket_GetMarketStats() public view {
-        (
-            uint256 supply,
-            uint256 demand,
-            uint256 price,
-            uint256 utilization
-        ) = market.getMarketStats();
+        (uint256 supply, uint256 demand, uint256 price, uint256 utilization) = market.getMarketStats();
 
         assertEq(supply, 0);
         assertEq(demand, 0);
@@ -281,7 +270,7 @@ contract AIMiningTest is Test {
     function test_Integration_TreasuryAllocation() public {
         // Set genesis first
         aiToken.setGenesis();
-        
+
         // Verify 2% goes to treasury
         uint256 reward = 100 ether;
 

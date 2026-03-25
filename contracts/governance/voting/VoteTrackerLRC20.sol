@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.31;
 
-import {IVoteTracker} from "../interfaces/IVoteTracker.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { IVoteTracker } from "../interfaces/IVoteTracker.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @title VoteTrackerLRC20
@@ -73,14 +73,14 @@ contract VoteTrackerLRC20 is IVoteTracker, ERC165, Initializable {
      * @notice Initialize the vote tracker
      * @param authorizedCallers_ Array of addresses authorized to record votes
      */
-    function initialize(
-        address[] calldata authorizedCallers_
-    ) public virtual initializer {
+    function initialize(address[] calldata authorizedCallers_) public virtual initializer {
         VoteTrackerStorage storage $ = _getStorage();
 
         for (uint256 i = 0; i < authorizedCallers_.length;) {
             $.authorizedCallers[authorizedCallers_[i]] = true;
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -103,11 +103,13 @@ contract VoteTrackerLRC20 is IVoteTracker, ERC165, Initializable {
      * @param voteData Ignored for LRC20
      * @return True if already voted
      */
-    function hasVoted(
-        uint256 proposalId,
-        address voter,
-        bytes calldata voteData
-    ) external view virtual override returns (bool) {
+    function hasVoted(uint256 proposalId, address voter, bytes calldata voteData)
+        external
+        view
+        virtual
+        override
+        returns (bool)
+    {
         return _getStorage().votes[proposalId][voter];
     }
 
@@ -117,11 +119,12 @@ contract VoteTrackerLRC20 is IVoteTracker, ERC165, Initializable {
      * @param voter The voter address
      * @param voteData Ignored for LRC20
      */
-    function recordVote(
-        uint256 proposalId,
-        address voter,
-        bytes calldata voteData
-    ) external virtual override onlyAuthorized {
+    function recordVote(uint256 proposalId, address voter, bytes calldata voteData)
+        external
+        virtual
+        override
+        onlyAuthorized
+    {
         VoteTrackerStorage storage $ = _getStorage();
 
         if ($.votes[proposalId][voter]) {
@@ -136,8 +139,6 @@ contract VoteTrackerLRC20 is IVoteTracker, ERC165, Initializable {
     // ======================================================================
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return
-            interfaceId == type(IVoteTracker).interfaceId ||
-            super.supportsInterface(interfaceId);
+        return interfaceId == type(IVoteTracker).interfaceId || super.supportsInterface(interfaceId);
     }
 }

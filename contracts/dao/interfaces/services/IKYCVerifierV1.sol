@@ -21,10 +21,14 @@ pragma solidity ^0.8.30;
 interface IKYCVerifierV1 {
     // --- Errors ---
 
-    /** @notice Thrown when the signature has expired */
+    /**
+     * @notice Thrown when the signature has expired
+     */
     error SignatureExpired();
 
-    /** @notice Thrown when the signature is invalid */
+    /**
+     * @notice Thrown when the signature is invalid
+     */
     error InvalidSignature();
 
     // --- Events ---
@@ -37,10 +41,7 @@ interface IKYCVerifierV1 {
      * @param nonce The nonce used for the signature
      */
     event SignatureVerified(
-        address indexed operator,
-        address indexed account,
-        uint48 signatureExpiration,
-        uint256 nonce
+        address indexed operator, address indexed account, uint48 signatureExpiration, uint256 nonce
     );
 
     /**
@@ -73,12 +74,10 @@ interface IKYCVerifierV1 {
      * @param signature_ The verifier signature attesting to KYC status
      * @return isValid Whether the signature is valid
      */
-    function checkVerify(
-        address operator_,
-        address account_,
-        uint48 signatureExpiration_,
-        bytes calldata signature_
-    ) external view returns (bool);
+    function checkVerify(address operator_, address account_, uint48 signatureExpiration_, bytes calldata signature_)
+        external
+        view
+        returns (bool);
 
     // --- State-Changing Functions ---
 
@@ -90,11 +89,7 @@ interface IKYCVerifierV1 {
      * @param signatureExpiration_ The expiration timestamp of the signature
      * @param signature_ The verifier signature attesting to KYC status
      */
-    function verify(
-        address account_,
-        uint48 signatureExpiration_,
-        bytes calldata signature_
-    ) external;
+    function verify(address account_, uint48 signatureExpiration_, bytes calldata signature_) external;
 
     /**
      * @notice Updates the verifier address

@@ -178,11 +178,7 @@ interface IPublicSaleV1 {
      * @param recipient Address receiving the sale tokens
      * @param saleTokenAmount Amount of sale tokens received
      */
-    event SuccessfulSaleSettled(
-        address indexed account,
-        address indexed recipient,
-        uint256 saleTokenAmount
-    );
+    event SuccessfulSaleSettled(address indexed account, address indexed recipient, uint256 saleTokenAmount);
 
     /**
      * @notice Emitted when a user settles after failed sale
@@ -190,11 +186,7 @@ interface IPublicSaleV1 {
      * @param recipient Address receiving the refunded commitment
      * @param commitmentTokenAmount Amount of commitment tokens refunded
      */
-    event FailedSaleSettled(
-        address indexed account,
-        address indexed recipient,
-        uint256 commitmentTokenAmount
-    );
+    event FailedSaleSettled(address indexed account, address indexed recipient, uint256 commitmentTokenAmount);
 
     /**
      * @notice Emitted when owner settles after successful sale
@@ -202,11 +194,7 @@ interface IPublicSaleV1 {
      * @param saleProceeds Amount sent to saleProceedsReceiver
      * @param protocolFee Amount sent to protocolFeeReceiver
      */
-    event SuccessfulSaleOwnerSettled(
-        address indexed owner,
-        uint256 saleProceeds,
-        uint256 protocolFee
-    );
+    event SuccessfulSaleOwnerSettled(address indexed owner, uint256 saleProceeds, uint256 protocolFee);
 
     /**
      * @notice Emitted when owner settles after failed sale
@@ -214,11 +202,7 @@ interface IPublicSaleV1 {
      * @param saleTokenAmount Amount of sale tokens returned
      * @param decreaseCommitmentFees Amount of collected fees returned
      */
-    event FailedSaleOwnerSettled(
-        address indexed owner,
-        uint256 saleTokenAmount,
-        uint256 decreaseCommitmentFees
-    );
+    event FailedSaleOwnerSettled(address indexed owner, uint256 saleTokenAmount, uint256 decreaseCommitmentFees);
 
     // --- Initializer Functions ---
 
@@ -336,19 +320,14 @@ interface IPublicSaleV1 {
      * @notice Returns the collected decrease commitment fees
      * @return fees Total fees collected
      */
-    function collectedDecreaseCommitmentFees()
-        external
-        view
-        returns (uint256 fees);
+    function collectedDecreaseCommitmentFees() external view returns (uint256 fees);
 
     /**
      * @notice Returns a user's commitment amount
      * @param account_ Address to query
      * @return amount Commitment amount
      */
-    function commitments(
-        address account_
-    ) external view returns (uint256 amount);
+    function commitments(address account_) external view returns (uint256 amount);
 
     /**
      * @notice Returns whether a user has settled
@@ -365,10 +344,7 @@ interface IPublicSaleV1 {
      * @param signatureExpiration_ The expiration timestamp of the signature
      * @dev Reverts if commitment token is not NATIVE_ASSET
      */
-    function increaseCommitmentNative(
-        bytes calldata verifyingSignature_,
-        uint48 signatureExpiration_
-    ) external payable;
+    function increaseCommitmentNative(bytes calldata verifyingSignature_, uint48 signatureExpiration_) external payable;
 
     /**
      * @notice Increases commitment using ERC20 tokens
@@ -389,10 +365,7 @@ interface IPublicSaleV1 {
      * @param recipient_ Address to receive the commitment tokens
      * @dev Fee is deducted from the decrease amount
      */
-    function decreaseCommitment(
-        uint256 decreaseAmount_,
-        address recipient_
-    ) external;
+    function decreaseCommitment(uint256 decreaseAmount_, address recipient_) external;
 
     /**
      * @notice Settles user's commitment after sale ends

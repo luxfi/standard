@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @title FaucetToken
@@ -23,12 +23,9 @@ contract FaucetToken is ERC20 {
         _;
     }
 
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        uint8 decimals_,
-        uint256 dropletAmount_
-    ) ERC20(name_, symbol_) {
+    constructor(string memory name_, string memory symbol_, uint8 decimals_, uint256 dropletAmount_)
+        ERC20(name_, symbol_)
+    {
         gov = msg.sender;
         dropletAmount = dropletAmount_;
         _tokenDecimals = decimals_;
@@ -75,10 +72,7 @@ contract FaucetToken is ERC20 {
      */
     function claimDroplet() public {
         require(isFaucetEnabled, "FaucetToken: faucet not enabled");
-        require(
-            claimedAt[msg.sender] + DROPLET_INTERVAL <= block.timestamp,
-            "FaucetToken: droplet not available yet"
-        );
+        require(claimedAt[msg.sender] + DROPLET_INTERVAL <= block.timestamp, "FaucetToken: droplet not available yet");
         claimedAt[msg.sender] = block.timestamp;
         _mint(msg.sender, dropletAmount);
     }

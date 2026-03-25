@@ -10,7 +10,8 @@ import "../../contracts/treasury/Collect.sol";
 
 // Mock WLUX for testing
 contract MockWLUX is ERC20 {
-    constructor() ERC20("Wrapped LUX", "WLUX") {}
+    constructor() ERC20("Wrapped LUX", "WLUX") { }
+
     function mint(address to, uint256 amount) external {
         _mint(to, amount);
     }
@@ -43,7 +44,7 @@ contract TreasuryTest is Test {
         wlux = new MockWLUX();
 
         // Deploy C-Chain contracts
-        gov = new FeeGov(30, 10, 500, owner);    // 0.3% rate, 0.1% floor, 5% cap
+        gov = new FeeGov(30, 10, 500, owner); // 0.3% rate, 0.1% floor, 5% cap
         vault = new Vault(address(wlux));
         router = new Router(address(wlux), address(vault), owner);
 
@@ -59,9 +60,9 @@ contract TreasuryTest is Test {
         recipients[0] = stakers;
         recipients[1] = dao;
         recipients[2] = dev;
-        weights[0] = 7000;  // 70%
-        weights[1] = 2000;  // 20%
-        weights[2] = 1000;  // 10%
+        weights[0] = 7000; // 70%
+        weights[1] = 2000; // 20%
+        weights[2] = 1000; // 10%
 
         vm.prank(owner);
         router.setBatch(recipients, weights);
@@ -381,7 +382,7 @@ contract TreasuryTest is Test {
         router.distribute(chains);
 
         assertEq(router.owed(stakers), 210 ether); // 70% of 300
-        assertEq(router.owed(dao), 60 ether);      // 20% of 300
-        assertEq(router.owed(dev), 30 ether);      // 10% of 300
+        assertEq(router.owed(dao), 60 ether); // 20% of 300
+        assertEq(router.owed(dev), 30 ether); // 10% of 300
     }
 }

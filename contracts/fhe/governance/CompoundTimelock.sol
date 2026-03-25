@@ -54,7 +54,7 @@ contract CompoundTimelock is ICompoundTimelock {
         delay = delay_;
     }
 
-    receive() external payable {}
+    receive() external payable { }
 
     /**
      * @notice       Set the delay.
@@ -111,13 +111,10 @@ contract CompoundTimelock is ICompoundTimelock {
     /**
      * @notice See {ICompoundTimelock-queueTransaction}.
      */
-    function queueTransaction(
-        address target,
-        uint256 value,
-        string memory signature,
-        bytes memory data,
-        uint256 eta
-    ) public returns (bytes32) {
+    function queueTransaction(address target, uint256 value, string memory signature, bytes memory data, uint256 eta)
+        public
+        returns (bytes32)
+    {
         if (msg.sender != admin) {
             revert SenderIsNotTimelock();
         }
@@ -136,13 +133,9 @@ contract CompoundTimelock is ICompoundTimelock {
     /**
      * @notice See {ICompoundTimelock-cancelTransaction}.
      */
-    function cancelTransaction(
-        address target,
-        uint256 value,
-        string memory signature,
-        bytes memory data,
-        uint256 eta
-    ) public {
+    function cancelTransaction(address target, uint256 value, string memory signature, bytes memory data, uint256 eta)
+        public
+    {
         if (msg.sender != admin) {
             revert SenderIsNotAdmin();
         }
@@ -156,13 +149,11 @@ contract CompoundTimelock is ICompoundTimelock {
     /**
      * @notice See {ICompoundTimelock-executeTransaction}.
      */
-    function executeTransaction(
-        address target,
-        uint256 value,
-        string memory signature,
-        bytes memory data,
-        uint256 eta
-    ) public payable returns (bytes memory) {
+    function executeTransaction(address target, uint256 value, string memory signature, bytes memory data, uint256 eta)
+        public
+        payable
+        returns (bytes memory)
+    {
         if (msg.sender != admin) {
             revert SenderIsNotAdmin();
         }

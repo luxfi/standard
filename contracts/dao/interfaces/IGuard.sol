@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {Enum} from "@gnosis.pm/safe-contracts/interfaces/Enum.sol";
+import { Enum } from "@gnosis.pm/safe-contracts/interfaces/Enum.sol";
 
 /**
  * @title IGuard

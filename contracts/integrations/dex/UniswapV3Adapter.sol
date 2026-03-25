@@ -2,9 +2,9 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ILiquidityEngine} from "@luxfi/contracts/interfaces/liquidity/ILiquidityEngine.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ILiquidityEngine } from "@luxfi/contracts/interfaces/liquidity/ILiquidityEngine.sol";
 
 /// @title Uniswap V3 Router Interface
 interface ISwapRouter {
@@ -27,11 +27,9 @@ interface ISwapRouter {
         uint256 amountOutMinimum;
     }
 
-    function exactInputSingle(ExactInputSingleParams calldata params)
-        external payable returns (uint256 amountOut);
+    function exactInputSingle(ExactInputSingleParams calldata params) external payable returns (uint256 amountOut);
 
-    function exactInput(ExactInputParams calldata params)
-        external payable returns (uint256 amountOut);
+    function exactInput(ExactInputParams calldata params) external payable returns (uint256 amountOut);
 }
 
 /// @title Uniswap V3 Quoter Interface
@@ -45,12 +43,8 @@ interface IQuoterV2 {
     }
 
     function quoteExactInputSingle(QuoteExactInputSingleParams memory params)
-        external returns (
-            uint256 amountOut,
-            uint160 sqrtPriceX96After,
-            uint32 initializedTicksCrossed,
-            uint256 gasEstimate
-        );
+        external
+        returns (uint256 amountOut, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed, uint256 gasEstimate);
 }
 
 /// @title UniswapV3Adapter
@@ -67,10 +61,10 @@ contract UniswapV3Adapter is ILiquidityEngine {
     IQuoterV2 public constant QUOTER = IQuoterV2(0x61fFE014bA17989E743c5F6cB21bF9697530B21e);
 
     // Fee tiers
-    uint24 public constant FEE_LOWEST = 100;    // 0.01%
-    uint24 public constant FEE_LOW = 500;       // 0.05%
-    uint24 public constant FEE_MEDIUM = 3000;   // 0.30%
-    uint24 public constant FEE_HIGH = 10000;    // 1.00%
+    uint24 public constant FEE_LOWEST = 100; // 0.01%
+    uint24 public constant FEE_LOW = 500; // 0.05%
+    uint24 public constant FEE_MEDIUM = 3000; // 0.30%
+    uint24 public constant FEE_HIGH = 10000; // 1.00%
 
     Chain public immutable CHAIN;
 
@@ -86,11 +80,11 @@ contract UniswapV3Adapter is ILiquidityEngine {
                             SWAP FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function getSwapQuote(
-        address tokenIn,
-        address tokenOut,
-        uint256 amountIn
-    ) external override returns (SwapQuote memory quote) {
+    function getSwapQuote(address tokenIn, address tokenOut, uint256 amountIn)
+        external
+        override
+        returns (SwapQuote memory quote)
+    {
         // Try each fee tier and find best output
         uint24[4] memory fees = [FEE_LOWEST, FEE_LOW, FEE_MEDIUM, FEE_HIGH];
         uint256 bestAmountOut = 0;
@@ -100,19 +94,17 @@ contract UniswapV3Adapter is ILiquidityEngine {
         for (uint256 i = 0; i < fees.length; i++) {
             try QUOTER.quoteExactInputSingle(
                 IQuoterV2.QuoteExactInputSingleParams({
-                    tokenIn: tokenIn,
-                    tokenOut: tokenOut,
-                    amountIn: amountIn,
-                    fee: fees[i],
-                    sqrtPriceLimitX96: 0
+                    tokenIn: tokenIn, tokenOut: tokenOut, amountIn: amountIn, fee: fees[i], sqrtPriceLimitX96: 0
                 })
-            ) returns (uint256 amountOut, uint160, uint32, uint256 gas) {
+            ) returns (
+                uint256 amountOut, uint160, uint32, uint256 gas
+            ) {
                 if (amountOut > bestAmountOut) {
                     bestAmountOut = amountOut;
                     bestFee = fees[i];
                     gasEstimate = gas;
                 }
-            } catch {}
+            } catch { }
         }
 
         quote = SwapQuote({
@@ -142,7 +134,7 @@ contract UniswapV3Adapter is ILiquidityEngine {
         }
 
         // Use medium fee as default (most common)
-        amountOut = ROUTER.exactInputSingle{value: msg.value}(
+        amountOut = ROUTER.exactInputSingle{ value: msg.value }(
             ISwapRouter.ExactInputSingleParams({
                 tokenIn: tokenIn,
                 tokenOut: tokenOut,
@@ -176,7 +168,7 @@ contract UniswapV3Adapter is ILiquidityEngine {
             IERC20(tokenIn).forceApprove(address(ROUTER), amountIn);
         }
 
-        amountOut = ROUTER.exactInputSingle{value: msg.value}(
+        amountOut = ROUTER.exactInputSingle{ value: msg.value }(
             ISwapRouter.ExactInputSingleParams({
                 tokenIn: tokenIn,
                 tokenOut: tokenOut,
@@ -221,14 +213,7 @@ contract UniswapV3Adapter is ILiquidityEngine {
     function getPoolInfo(address pool) external view override returns (PoolInfo memory) {
         // Would query pool contract
         return PoolInfo({
-            pool: pool,
-            token0: address(0),
-            token1: address(0),
-            reserve0: 0,
-            reserve1: 0,
-            fee: 0,
-            tvl: 0,
-            volume24h: 0
+            pool: pool, token0: address(0), token1: address(0), reserve0: 0, reserve1: 0, fee: 0, tvl: 0, volume24h: 0
         });
     }
 
@@ -236,21 +221,15 @@ contract UniswapV3Adapter is ILiquidityEngine {
                           LENDING FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function getLendingQuote(address, uint256, bool)
-        external pure override returns (LendingQuote memory)
-    {
+    function getLendingQuote(address, uint256, bool) external pure override returns (LendingQuote memory) {
         revert("Not a lending protocol");
     }
 
-    function supply(address, uint256, address)
-        external pure override returns (uint256)
-    {
+    function supply(address, uint256, address) external pure override returns (uint256) {
         revert("Not a lending protocol");
     }
 
-    function withdraw(address, uint256, address)
-        external pure override returns (uint256)
-    {
+    function withdraw(address, uint256, address) external pure override returns (uint256) {
         revert("Not a lending protocol");
     }
 
@@ -258,9 +237,7 @@ contract UniswapV3Adapter is ILiquidityEngine {
         revert("Not a lending protocol");
     }
 
-    function repay(address, uint256, uint256, address)
-        external pure override returns (uint256)
-    {
+    function repay(address, uint256, uint256, address) external pure override returns (uint256) {
         revert("Not a lending protocol");
     }
 
@@ -288,23 +265,20 @@ contract UniswapV3Adapter is ILiquidityEngine {
                          INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function _calculatePriceImpact(
-        uint256 amountIn,
-        uint256 amountOut,
-        address tokenIn,
-        address tokenOut
-    ) internal pure returns (uint256) {
+    function _calculatePriceImpact(uint256 amountIn, uint256 amountOut, address tokenIn, address tokenOut)
+        internal
+        pure
+        returns (uint256)
+    {
         // Simplified price impact calculation
         // In production, compare to oracle price
         return 0;
     }
 
-    function _decodeTokensFromRoute(bytes calldata route)
-        internal pure returns (address tokenIn, address tokenOut)
-    {
+    function _decodeTokensFromRoute(bytes calldata route) internal pure returns (address tokenIn, address tokenOut) {
         // Simplified - would decode full path
         return (address(0), address(0));
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

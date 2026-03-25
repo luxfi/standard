@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.19 <0.9.0;
 
-import {ebool, euint8, euint16, euint32, euint64, euint128, euint256, eaddress} from "../FHE.sol";
+import { ebool, euint8, euint16, euint32, euint64, euint128, euint256, eaddress } from "../FHE.sol";
 
 /**
  * @title TFHE
@@ -145,13 +145,10 @@ library TFHE {
      * @notice Decryption is async - your contract must implement a callback function
      *         with the selector provided. T-Chain validators will call it with results.
      */
-    function decrypt(
-        uint256[] memory cts,
-        bytes4 callback,
-        uint256 value,
-        uint256 deadline,
-        bool passSignatures
-    ) internal returns (uint256 requestId) {
+    function decrypt(uint256[] memory cts, bytes4 callback, uint256 value, uint256 deadline, bool passSignatures)
+        internal
+        returns (uint256 requestId)
+    {
         requestId = _generateRequestId();
         emit DecryptionRequested(requestId, cts, callback);
 

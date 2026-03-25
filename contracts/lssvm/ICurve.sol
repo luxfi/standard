@@ -41,13 +41,7 @@ interface ICurve {
     )
         external
         view
-        returns (
-            uint128 newSpotPrice,
-            uint128 newDelta,
-            uint256 inputValue,
-            uint256 tradeFee,
-            uint256 protocolFee
-        );
+        returns (uint128 newSpotPrice, uint128 newDelta, uint256 inputValue, uint256 tradeFee, uint256 protocolFee);
 
     /// @notice Calculates the sell price for a number of NFTs
     /// @param spotPrice Current spot price
@@ -69,11 +63,5 @@ interface ICurve {
     )
         external
         view
-        returns (
-            uint128 newSpotPrice,
-            uint128 newDelta,
-            uint256 outputValue,
-            uint256 tradeFee,
-            uint256 protocolFee
-        );
+        returns (uint128 newSpotPrice, uint128 newDelta, uint256 outputValue, uint256 tradeFee, uint256 protocolFee);
 }

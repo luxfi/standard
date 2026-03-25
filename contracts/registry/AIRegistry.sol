@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 interface AITokenInterface is IERC20 {
     function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
@@ -109,7 +109,14 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     event RecordsUpdate(string indexed identity, string[] keys, string[] values);
     event RecordsRemoval(string indexed identity, string[] keys);
     event StakingRewardsClaim(string indexed identity, uint256 rewards);
-    event PricingUpdate(uint256 price1Char, uint256 price2Char, uint256 price3Char, uint256 price4Char, uint256 price5PlusChar, uint256 referrerDiscountBps);
+    event PricingUpdate(
+        uint256 price1Char,
+        uint256 price2Char,
+        uint256 price3Char,
+        uint256 price4Char,
+        uint256 price5PlusChar,
+        uint256 referrerDiscountBps
+    );
     event DelegationRewardsAccrual(string indexed identity, uint256 rewards);
     event DelegationRewardsClaim(string indexed identity, uint256 rewards);
     event BaseRewardsRateUpdate(uint256 newRate);
@@ -132,11 +139,7 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
         _disableInitializers();
     }
 
-    function initialize(
-        address owner_,
-        address shinToken_,
-        address aiNft_
-    ) public initializer {
+    function initialize(address owner_, address shinToken_, address aiNft_) public initializer {
         __Ownable_init(owner_);
         __Ownable2Step_init();
 
@@ -144,29 +147,29 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
         aiNft = AINftInterface(aiNft_);
 
         // Initialize namespaces for all networks
-        namespaces[36963] = "ai";           // AI mainnet
-        namespaces[1] = "ai";                  // .ai alias for AI mainnet
-        namespaces[36962] = "ai-testnet";   // AI testnet
-        namespaces[96369] = "lux";             // Lux mainnet
-        namespaces[96368] = "lux-testnet";     // Lux testnet
-        namespaces[200200] = "zoo";            // Zoo mainnet
-        namespaces[200201] = "zoo-testnet";    // Zoo testnet
-        namespaces[11155111] = "sepolia";      // Sepolia testnet
+        namespaces[36963] = "ai"; // AI mainnet
+        namespaces[1] = "ai"; // .ai alias for AI mainnet
+        namespaces[36962] = "ai-testnet"; // AI testnet
+        namespaces[96369] = "lux"; // Lux mainnet
+        namespaces[96368] = "lux-testnet"; // Lux testnet
+        namespaces[200200] = "zoo"; // Zoo mainnet
+        namespaces[200201] = "zoo-testnet"; // Zoo testnet
+        namespaces[11155111] = "sepolia"; // Sepolia testnet
         namespaces[421614] = "arbitrum-sepolia"; // Arbitrum Sepolia
 
         baseRewardsRate = 1e16; // 1% base rate
         rewardsState = RewardsState(1e36, uint32(block.number));
 
         // Initialize pricing tiers
-        price1Char = 100000 * 1e18;     // 100,000 AI
-        price2Char = 10000 * 1e18;      // 10,000 AI
-        price3Char = 1000 * 1e18;       // 1,000 AI
-        price4Char = 100 * 1e18;        // 100 AI
-        price5PlusChar = 10 * 1e18;     // 10 AI
-        referrerDiscountBps = 5000;     // 50% discount
+        price1Char = 100000 * 1e18; // 100,000 AI
+        price2Char = 10000 * 1e18; // 10,000 AI
+        price3Char = 1000 * 1e18; // 1,000 AI
+        price4Char = 100 * 1e18; // 100 AI
+        price5PlusChar = 10 * 1e18; // 10 AI
+        referrerDiscountBps = 5000; // 50% discount
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner { }
 
     /**
      * @dev Claim a new identity
@@ -255,11 +258,11 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
      *
      * With valid referrer: discount based on referrerDiscountBps (default: 50%)
      */
-    function identityStakeRequirement(
-        string calldata name,
-        uint256 namespace,
-        bool validReferrer
-    ) public view returns (uint256) {
+    function identityStakeRequirement(string calldata name, uint256 namespace, bool validReferrer)
+        public
+        view
+        returns (uint256)
+    {
         uint256 length = bytes(name).length;
         uint256 baseStake;
 
@@ -302,10 +305,7 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     /**
      * @dev Set multiple identity data in batch
      */
-    function setDataBatched(
-        string[] calldata identities,
-        SetDataParams[] calldata setDataParams
-    ) external {
+    function setDataBatched(string[] calldata identities, SetDataParams[] calldata setDataParams) external {
         if (identities.length != setDataParams.length) revert InputArityMismatch();
 
         for (uint256 i = 0; i < identities.length; i++) {
@@ -317,11 +317,7 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     /**
      * @dev Set encryption and signature keys
      */
-    function setKeys(
-        string calldata identity,
-        string calldata encryptionKey,
-        string calldata signatureKey
-    ) external {
+    function setKeys(string calldata identity, string calldata encryptionKey, string calldata signatureKey) external {
         _requireOwner(identity);
 
         IdentityData storage data = _identityData[identity];
@@ -335,10 +331,7 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     /**
      * @dev Set node address
      */
-    function setNodeAddress(
-        string calldata identity,
-        string calldata nodeAddress
-    ) external {
+    function setNodeAddress(string calldata identity, string calldata nodeAddress) external {
         _requireOwner(identity);
 
         string[] memory nodes = new string[](1);
@@ -355,10 +348,7 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     /**
      * @dev Set proxy nodes
      */
-    function setProxyNodes(
-        string calldata identity,
-        string[] calldata proxyNodes
-    ) external {
+    function setProxyNodes(string calldata identity, string[] calldata proxyNodes) external {
         _requireOwner(identity);
 
         IdentityData storage data = _identityData[identity];
@@ -387,11 +377,7 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     /**
      * @dev Decrease stake for an identity
      */
-    function decreaseStake(
-        string calldata name,
-        uint256 namespace,
-        uint256 amount
-    ) external {
+    function decreaseStake(string calldata name, uint256 namespace, uint256 amount) external {
         string memory identity = getIdentity(name, namespace);
         _requireOwner(identity);
 
@@ -409,10 +395,7 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     /**
      * @dev Set delegations for an identity
      */
-    function setDelegations(
-        string calldata identity,
-        Delegation[] calldata delegations
-    ) external {
+    function setDelegations(string calldata identity, Delegation[] calldata delegations) external {
         _requireOwner(identity);
         _setDelegations(identity, delegations);
     }
@@ -487,11 +470,7 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     /**
      * @dev Update custom records for an identity
      */
-    function updateRecords(
-        string calldata identity,
-        string[] calldata keys,
-        string[] calldata values
-    ) external {
+    function updateRecords(string calldata identity, string[] calldata keys, string[] calldata values) external {
         _requireOwner(identity);
         if (keys.length != values.length) revert InputArityMismatch();
 
@@ -554,7 +533,7 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
         uint256 _referrerDiscountBps
     ) external onlyOwner {
         require(_referrerDiscountBps <= 10000, "Discount cannot exceed 100%");
-        
+
         price1Char = _price1Char;
         price2Char = _price2Char;
         price3Char = _price3Char;
@@ -566,13 +545,31 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     }
 
     // Reward functions (simplified)
-    function accruel(string calldata identity) external {}
-    function claimRewards(string calldata identity) external returns (uint256) { return 0; }
-    function claimRewardsBatched(string[] calldata identities) external returns (uint256) { return 0; }
-    function claimStakingRewards(string calldata identity) external returns (uint256) { return 0; }
-    function claimStakingRewardsBatched(string[] calldata identities) external returns (uint256) { return 0; }
-    function claimDelegationRewards(string calldata identity) external returns (uint256) { return 0; }
-    function claimDelegationRewardsBatched(string[] calldata identities) external returns (uint256) { return 0; }
+    function accruel(string calldata identity) external { }
+
+    function claimRewards(string calldata identity) external returns (uint256) {
+        return 0;
+    }
+
+    function claimRewardsBatched(string[] calldata identities) external returns (uint256) {
+        return 0;
+    }
+
+    function claimStakingRewards(string calldata identity) external returns (uint256) {
+        return 0;
+    }
+
+    function claimStakingRewardsBatched(string[] calldata identities) external returns (uint256) {
+        return 0;
+    }
+
+    function claimDelegationRewards(string calldata identity) external returns (uint256) {
+        return 0;
+    }
+
+    function claimDelegationRewardsBatched(string[] calldata identities) external returns (uint256) {
+        return 0;
+    }
 
     // View functions
     function ownerOf(string calldata identity) external view returns (address) {
@@ -610,12 +607,11 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
 
         for (uint256 i = 0; i < b.length; i++) {
             bytes1 char = b[i];
-            if (!(
-                (char >= 0x30 && char <= 0x39) || // 0-9
-                (char >= 0x41 && char <= 0x5A) || // A-Z
-                (char >= 0x61 && char <= 0x7A) || // a-z
-                (char == 0x5F)                     // _
-            )) {
+            if (!((char >= 0x30 && char <= 0x39) // 0-9
+                        || (char >= 0x41 && char <= 0x5A) // A-Z
+                        || (char >= 0x61 && char <= 0x7A) // a-z
+                        || (char == 0x5F) // _
+                )) {
                 return false;
             }
         }

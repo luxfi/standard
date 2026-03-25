@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.31;
 
-import {MintableBaseToken} from "./MintableBaseToken.sol";
+import { MintableBaseToken } from "./MintableBaseToken.sol";
 
-/// @title xLPX Token  
+/// @title xLPX Token
 /// @notice Escrowed LPX token earned from staking, vests to LPX over time
 contract xLPX is MintableBaseToken {
-    constructor() MintableBaseToken("Escrowed LPX", "xLPX", 0) {}
+    constructor() MintableBaseToken("Escrowed LPX", "xLPX", 0) { }
 }

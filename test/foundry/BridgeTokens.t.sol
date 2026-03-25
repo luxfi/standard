@@ -31,8 +31,8 @@ contract BridgeTokensTest is Test {
     address public attacker;
 
     // Events to test
-    event BridgeMint(address indexed account, uint amount);
-    event BridgeBurn(address indexed account, uint amount);
+    event BridgeMint(address indexed account, uint256 amount);
+    event BridgeBurn(address indexed account, uint256 amount);
     event AdminGranted(address to);
     event AdminRevoked(address to);
     event Transfer(address indexed from, address indexed to, uint256 value);

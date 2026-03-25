@@ -23,10 +23,8 @@ interface IERC6551Executable {
      * @param operation A value indicating the type of operation to perform
      * @return The result of the operation
      */
-    function execute(
-        address to,
-        uint256 value,
-        bytes calldata data,
-        uint8 operation
-    ) external payable returns (bytes memory);
+    function execute(address to, uint256 value, bytes calldata data, uint8 operation)
+        external
+        payable
+        returns (bytes memory);
 }

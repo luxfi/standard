@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {IStore} from "./interfaces/IStore.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
+import { IStore } from "./interfaces/IStore.sol";
 
 /**
  * @title Store
@@ -111,11 +111,7 @@ contract Store is IStore {
      * @param _weeklyDelayFeePerSecondPerPfc Initial weekly delay fee per second (scaled by 1e18).
      * @param _timerAddress Timer contract for testing. Set to 0x0 for production.
      */
-    constructor(
-        uint256 _fixedOracleFeePerSecondPerPfc,
-        uint256 _weeklyDelayFeePerSecondPerPfc,
-        address _timerAddress
-    ) {
+    constructor(uint256 _fixedOracleFeePerSecondPerPfc, uint256 _weeklyDelayFeePerSecondPerPfc, address _timerAddress) {
         timerAddress = _timerAddress;
 
         _createExclusiveRole(uint256(Roles.Owner), uint256(Roles.Owner), msg.sender);
@@ -165,11 +161,12 @@ contract Store is IStore {
      * @return regularFee amount owed for the duration from start to end time for the given pfc (raw value, 18 decimals).
      * @return latePenalty penalty percentage, if any, for paying the fee after the deadline (raw value, 18 decimals).
      */
-    function computeRegularFee(
-        uint256 startTime,
-        uint256 endTime,
-        uint256 pfc
-    ) external view override returns (uint256 regularFee, uint256 latePenalty) {
+    function computeRegularFee(uint256 startTime, uint256 endTime, uint256 pfc)
+        external
+        view
+        override
+        returns (uint256 regularFee, uint256 latePenalty)
+    {
         uint256 timeDiff = endTime - startTime;
 
         // regularFee = pfc * timeDiff * fixedOracleFeePerSecondPerPfc / FP_SCALING_FACTOR
@@ -203,9 +200,10 @@ contract Store is IStore {
      * @notice Sets a new oracle fee per second.
      * @param newFixedOracleFeePerSecondPerPfc new fee per second charged to use the oracle (scaled by 1e18).
      */
-    function setFixedOracleFeePerSecondPerPfc(
-        uint256 newFixedOracleFeePerSecondPerPfc
-    ) public onlyRoleHolder(uint256(Roles.Owner)) {
+    function setFixedOracleFeePerSecondPerPfc(uint256 newFixedOracleFeePerSecondPerPfc)
+        public
+        onlyRoleHolder(uint256(Roles.Owner))
+    {
         // Oracle fees at or over 100% don't make sense
         if (newFixedOracleFeePerSecondPerPfc >= FP_SCALING_FACTOR) revert FeeMustBeLessThan100Percent();
         fixedOracleFeePerSecondPerPfc = newFixedOracleFeePerSecondPerPfc;
@@ -216,9 +214,10 @@ contract Store is IStore {
      * @notice Sets a new weekly delay fee.
      * @param newWeeklyDelayFeePerSecondPerPfc fee escalation per week of late fee payment (scaled by 1e18).
      */
-    function setWeeklyDelayFeePerSecondPerPfc(
-        uint256 newWeeklyDelayFeePerSecondPerPfc
-    ) public onlyRoleHolder(uint256(Roles.Owner)) {
+    function setWeeklyDelayFeePerSecondPerPfc(uint256 newWeeklyDelayFeePerSecondPerPfc)
+        public
+        onlyRoleHolder(uint256(Roles.Owner))
+    {
         if (newWeeklyDelayFeePerSecondPerPfc >= FP_SCALING_FACTOR) revert FeeMustBeLessThan100Percent();
         weeklyDelayFeePerSecondPerPfc = newWeeklyDelayFeePerSecondPerPfc;
         emit NewWeeklyDelayFeePerSecondPerPfc(newWeeklyDelayFeePerSecondPerPfc);
@@ -342,7 +341,7 @@ contract Store is IStore {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Allow receiving ETH
-    receive() external payable {}
+    receive() external payable { }
 }
 
 /**

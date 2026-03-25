@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {Script, console} from "forge-std/Script.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {AMMV3Factory} from "@luxfi/contracts/amm/AMMV3Factory.sol";
-import {AMMV3Pool} from "@luxfi/contracts/amm/AMMV3Pool.sol";
-import {ZooMainnet} from "@luxfi/contracts/deployments/Addresses.sol";
+import { Script, console } from "forge-std/Script.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { AMMV3Factory } from "@luxfi/contracts/amm/AMMV3Factory.sol";
+import { AMMV3Pool } from "@luxfi/contracts/amm/AMMV3Pool.sol";
+import { ZooMainnet } from "@luxfi/contracts/deployments/Addresses.sol";
 
 /**
  * @title CreateZooPools
@@ -56,7 +56,7 @@ contract CreateZooPools is Script {
         if (bal < totalZoo) {
             uint256 needed = totalZoo - bal;
             console.log("Wrapping", needed / 1e18, "ZOO...");
-            (bool ok,) = WZOO.call{value: needed}(abi.encodeWithSignature("deposit()"));
+            (bool ok,) = WZOO.call{ value: needed }(abi.encodeWithSignature("deposit()"));
             require(ok, "WZOO deposit failed");
         }
 
@@ -139,9 +139,7 @@ contract CreateZooPools is Script {
         // forge-lint: disable-next-line(unsafe-typecast)
         require(absTick <= uint256(int256(MAX_TICK)), "tick OOB");
 
-        uint256 ratio = absTick & 0x1 != 0
-            ? 0xfffcb933bd6fad37aa2d162d1a594001
-            : 0x100000000000000000000000000000000;
+        uint256 ratio = absTick & 0x1 != 0 ? 0xfffcb933bd6fad37aa2d162d1a594001 : 0x100000000000000000000000000000000;
         if (absTick & 0x2 != 0) ratio = (ratio * 0xfff97272373d413259a46990580e213a) >> 128;
         if (absTick & 0x4 != 0) ratio = (ratio * 0xfff2e50f5f656932ef12357cf3c7fdcc) >> 128;
         if (absTick & 0x8 != 0) ratio = (ratio * 0xffe5caca7e10e4e61c3624eaa0941cd0) >> 128;

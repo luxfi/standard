@@ -1,13 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IFreezeVotingBase
-} from "../../interfaces/deployables/IFreezeVotingBase.sol";
-import {IFreezable} from "../../interfaces/deployables/IFreezable.sol";
-import {
-    LightAccountValidator
-} from "../account-abstraction/LightAccountValidator.sol";
+import { IFreezeVotingBase } from "../../interfaces/deployables/IFreezeVotingBase.sol";
+import { IFreezable } from "../../interfaces/deployables/IFreezable.sol";
+import { LightAccountValidator } from "../account-abstraction/LightAccountValidator.sol";
 
 /**
  * @title FreezeVotingBase
@@ -31,11 +27,7 @@ import {
  *
  * @custom:security-contact security@lux.network
  */
-abstract contract FreezeVotingBase is
-    IFreezeVotingBase,
-    IFreezable,
-    LightAccountValidator
-{
+abstract contract FreezeVotingBase is IFreezeVotingBase, IFreezable, LightAccountValidator {
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
@@ -46,17 +38,29 @@ abstract contract FreezeVotingBase is
      * @custom:storage-location erc7201:DAO.FreezeVotingBase.main
      */
     struct FreezeVotingBaseStorage {
-        /** @notice Timestamp when current freeze proposal was created */
+        /**
+         * @notice Timestamp when current freeze proposal was created
+         */
         uint48 freezeProposalCreated;
-        /** @notice Accumulated votes for current freeze proposal */
+        /**
+         * @notice Accumulated votes for current freeze proposal
+         */
         uint256 freezeProposalVoteCount;
-        /** @notice Duration freeze proposals remain active */
+        /**
+         * @notice Duration freeze proposals remain active
+         */
         uint32 freezeProposalPeriod;
-        /** @notice Whether the DAO is currently frozen */
+        /**
+         * @notice Whether the DAO is currently frozen
+         */
         bool isFrozen;
-        /** @notice Voting weight required to trigger a freeze */
+        /**
+         * @notice Voting weight required to trigger a freeze
+         */
         uint256 freezeVotesThreshold;
-        /** @notice Timestamp of the most recent freeze (NEVER cleared, even on unfreeze) */
+        /**
+         * @notice Timestamp of the most recent freeze (NEVER cleared, even on unfreeze)
+         */
         uint48 lastFreezeTimestamp;
     }
 
@@ -72,11 +76,7 @@ abstract contract FreezeVotingBase is
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      * @return $ The storage struct for FreezeVotingBase
      */
-    function _getFreezeVotingBaseStorage()
-        internal
-        pure
-        returns (FreezeVotingBaseStorage storage $)
-    {
+    function _getFreezeVotingBaseStorage() internal pure returns (FreezeVotingBaseStorage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := FREEZE_VOTING_BASE_STORAGE_LOCATION
@@ -149,13 +149,7 @@ abstract contract FreezeVotingBase is
     /**
      * @inheritdoc IFreezeVotingBase
      */
-    function freezeProposalCreated()
-        public
-        view
-        virtual
-        override
-        returns (uint48)
-    {
+    function freezeProposalCreated() public view virtual override returns (uint48) {
         FreezeVotingBaseStorage storage $ = _getFreezeVotingBaseStorage();
         return $.freezeProposalCreated;
     }
@@ -163,13 +157,7 @@ abstract contract FreezeVotingBase is
     /**
      * @inheritdoc IFreezeVotingBase
      */
-    function freezeProposalVoteCount()
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function freezeProposalVoteCount() public view virtual override returns (uint256) {
         FreezeVotingBaseStorage storage $ = _getFreezeVotingBaseStorage();
         return $.freezeProposalVoteCount;
     }
@@ -177,13 +165,7 @@ abstract contract FreezeVotingBase is
     /**
      * @inheritdoc IFreezeVotingBase
      */
-    function freezeProposalPeriod()
-        public
-        view
-        virtual
-        override
-        returns (uint32)
-    {
+    function freezeProposalPeriod() public view virtual override returns (uint32) {
         FreezeVotingBaseStorage storage $ = _getFreezeVotingBaseStorage();
         return $.freezeProposalPeriod;
     }
@@ -191,13 +173,7 @@ abstract contract FreezeVotingBase is
     /**
      * @inheritdoc IFreezeVotingBase
      */
-    function freezeVotesThreshold()
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function freezeVotesThreshold() public view virtual override returns (uint256) {
         FreezeVotingBaseStorage storage $ = _getFreezeVotingBaseStorage();
         return $.freezeVotesThreshold;
     }
@@ -229,10 +205,7 @@ abstract contract FreezeVotingBase is
      * @param weightCasted_ The voting weight to add
      * @custom:throws NoVotes if weight is zero
      */
-    function _recordFreezeVote(
-        address voter_,
-        uint256 weightCasted_
-    ) internal virtual {
+    function _recordFreezeVote(address voter_, uint256 weightCasted_) internal virtual {
         // Validate non-zero voting weight
         if (weightCasted_ == 0) revert NoVotes();
 
@@ -242,9 +215,7 @@ abstract contract FreezeVotingBase is
         $.freezeProposalVoteCount += weightCasted_;
 
         // Check if threshold is reached and activate freeze immediately
-        if (
-            $.freezeProposalVoteCount >= $.freezeVotesThreshold && !$.isFrozen
-        ) {
+        if ($.freezeProposalVoteCount >= $.freezeVotesThreshold && !$.isFrozen) {
             // CRITICAL: Update lastFreezeTimestamp to enforce security invariant
             // This timestamp is NEVER cleared and ensures all transactions
             // timelocked before this moment are permanently invalidated

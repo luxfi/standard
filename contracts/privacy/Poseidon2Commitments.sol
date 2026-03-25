@@ -1,31 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {Poseidon2} from "../interfaces/IPoseidon2.sol";
+import { Poseidon2 } from "../interfaces/IPoseidon2.sol";
 
 /**
  * @title Poseidon2Commitments
  * @notice Library for creating and verifying Poseidon2-based commitments
  * @dev Implements UTXO-style note commitments using Poseidon2 hash function
- * 
+ *
  * Key advantages over Pedersen:
  * - Post-quantum secure (hash-based, not discrete log)
  * - ~2000x faster in ZK circuits
  * - 7.5x cheaper gas (800 vs 6000)
  * - Native compatibility with STARK proofs
- * 
+ *
  * Commitment scheme:
  *   commitment = Poseidon2(amount || assetId || owner || blindingFactor)
  *   nullifier = Poseidon2(commitment || ownerSecret)
- *   
+ *
  * This differs from Pedersen where:
  *   commitment = amount * G + blindingFactor * H
- * 
+ *
  * Poseidon2 commitments are:
  * - Binding: Cannot find two different (value, blinding) pairs with same commitment
  * - Hiding: Commitment reveals nothing about value (with random blinding)
  * - But NOT homomorphic: Cannot add commitments directly
- * 
+ *
  * For range proofs and balance verification, use STARK/SNARK proofs
  * with arithmetic constraints instead of relying on homomorphism.
  */
@@ -34,26 +34,26 @@ library Poseidon2Commitments {
 
     /// @notice Note structure for private transactions
     struct Note {
-        bytes32 commitment;      // Poseidon2 commitment
-        bytes32 assetId;         // Token/asset identifier
-        bytes encryptedData;     // FHE-encrypted (amount, owner)
-        uint64 createdBlock;     // Block when created
+        bytes32 commitment; // Poseidon2 commitment
+        bytes32 assetId; // Token/asset identifier
+        bytes encryptedData; // FHE-encrypted (amount, owner)
+        uint64 createdBlock; // Block when created
     }
 
     /// @notice Commitment input parameters
     struct CommitmentInput {
-        uint256 amount;          // Token amount
-        bytes32 assetId;         // Asset identifier
-        address owner;           // Owner address
-        bytes32 blindingFactor;  // Random blinding factor
+        uint256 amount; // Token amount
+        bytes32 assetId; // Asset identifier
+        address owner; // Owner address
+        bytes32 blindingFactor; // Random blinding factor
     }
 
     /// @notice Spend proof for a note
     struct SpendProof {
-        bytes32 nullifier;       // Nullifier to prevent double-spending
-        bytes32 merkleRoot;      // Root of the commitment tree
-        bytes32[] merkleProof;   // Merkle path to the note
-        bytes starkProof;        // STARK proof of valid spend
+        bytes32 nullifier; // Nullifier to prevent double-spending
+        bytes32 merkleRoot; // Root of the commitment tree
+        bytes32[] merkleProof; // Merkle path to the note
+        bytes starkProof; // STARK proof of valid spend
     }
 
     /// @dev Flag to use fallback (keccak256) when precompile unavailable
@@ -62,24 +62,12 @@ library Poseidon2Commitments {
     /// @notice Create a note commitment
     /// @param input Commitment input parameters
     /// @return commitment The Poseidon2 commitment
-    function createCommitment(
-        CommitmentInput memory input
-    ) internal view returns (bytes32 commitment) {
+    function createCommitment(CommitmentInput memory input) internal view returns (bytes32 commitment) {
         if (_usePrecompile()) {
-            commitment = Poseidon2.noteCommitment(
-                input.amount,
-                input.assetId,
-                input.owner,
-                input.blindingFactor
-            );
+            commitment = Poseidon2.noteCommitment(input.amount, input.assetId, input.owner, input.blindingFactor);
         } else {
             // Fallback for testing on chains without precompile
-            commitment = keccak256(abi.encodePacked(
-                input.amount,
-                input.assetId,
-                input.owner,
-                input.blindingFactor
-            ));
+            commitment = keccak256(abi.encodePacked(input.amount, input.assetId, input.owner, input.blindingFactor));
         }
     }
 
@@ -87,10 +75,7 @@ library Poseidon2Commitments {
     /// @param commitment Note commitment being spent
     /// @param ownerSecret Owner's spending secret
     /// @return nullifier Unique spending identifier
-    function computeNullifier(
-        bytes32 commitment,
-        bytes32 ownerSecret
-    ) internal view returns (bytes32 nullifier) {
+    function computeNullifier(bytes32 commitment, bytes32 ownerSecret) internal view returns (bytes32 nullifier) {
         if (_usePrecompile()) {
             nullifier = Poseidon2.nullifierHash(commitment, ownerSecret);
         } else {
@@ -102,10 +87,7 @@ library Poseidon2Commitments {
     /// @param left Left child
     /// @param right Right child
     /// @return parent Parent hash
-    function merkleHash(
-        bytes32 left,
-        bytes32 right
-    ) internal view returns (bytes32 parent) {
+    function merkleHash(bytes32 left, bytes32 right) internal view returns (bytes32 parent) {
         if (_usePrecompile()) {
             parent = Poseidon2.hashPair(left, right);
         } else {
@@ -118,11 +100,11 @@ library Poseidon2Commitments {
     /// @param proof Merkle proof path
     /// @param index Leaf index in tree
     /// @return root Computed root
-    function computeMerkleRoot(
-        bytes32 leaf,
-        bytes32[] memory proof,
-        uint256 index
-    ) internal view returns (bytes32 root) {
+    function computeMerkleRoot(bytes32 leaf, bytes32[] memory proof, uint256 index)
+        internal
+        view
+        returns (bytes32 root)
+    {
         if (_usePrecompile()) {
             root = Poseidon2.merkleRoot(leaf, proof, index);
         } else {
@@ -144,12 +126,11 @@ library Poseidon2Commitments {
     /// @param proof Merkle proof path
     /// @param index Leaf index
     /// @return valid True if proof is valid
-    function verifyMerkleProof(
-        bytes32 root,
-        bytes32 leaf,
-        bytes32[] memory proof,
-        uint256 index
-    ) internal view returns (bool valid) {
+    function verifyMerkleProof(bytes32 root, bytes32 leaf, bytes32[] memory proof, uint256 index)
+        internal
+        view
+        returns (bool valid)
+    {
         return computeMerkleRoot(leaf, proof, index) == root;
     }
 
@@ -159,9 +140,9 @@ library Poseidon2Commitments {
     function initZeros(uint256 depth) internal view returns (bytes32[] memory zeros) {
         zeros = new bytes32[](depth);
         zeros[0] = bytes32(0);
-        
+
         for (uint256 i = 1; i < depth; i++) {
-            zeros[i] = merkleHash(zeros[i-1], zeros[i-1]);
+            zeros[i] = merkleHash(zeros[i - 1], zeros[i - 1]);
         }
     }
 
@@ -171,27 +152,17 @@ library Poseidon2Commitments {
     /// @param owner Owner address
     /// @return input Commitment input with random blinding factor
     /// @dev In production, blinding factor should be generated securely off-chain
-    function prepareCommitment(
-        uint256 amount,
-        bytes32 assetId,
-        address owner
-    ) internal view returns (CommitmentInput memory input) {
+    function prepareCommitment(uint256 amount, bytes32 assetId, address owner)
+        internal
+        view
+        returns (CommitmentInput memory input)
+    {
         // WARNING: This is for testing only!
         // In production, use proper randomness from client side
-        bytes32 blindingFactor = keccak256(abi.encodePacked(
-            block.timestamp,
-            block.prevrandao,
-            msg.sender,
-            amount,
-            assetId
-        ));
-        
-        input = CommitmentInput({
-            amount: amount,
-            assetId: assetId,
-            owner: owner,
-            blindingFactor: blindingFactor
-        });
+        bytes32 blindingFactor =
+            keccak256(abi.encodePacked(block.timestamp, block.prevrandao, msg.sender, amount, assetId));
+
+        input = CommitmentInput({ amount: amount, assetId: assetId, owner: owner, blindingFactor: blindingFactor });
     }
 
     /// @notice Check if Poseidon2 precompile is available

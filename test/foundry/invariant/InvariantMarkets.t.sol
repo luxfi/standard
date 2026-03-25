@@ -4,10 +4,10 @@ pragma solidity ^0.8.31;
 import "forge-std/Test.sol";
 import "forge-std/StdInvariant.sol";
 
-import {Markets} from "../../../contracts/markets/Markets.sol";
-import {MarketParams, Market, Position, Id} from "../../../contracts/markets/interfaces/IMarkets.sol";
-import {MarketParamsLib} from "../../../contracts/markets/libraries/MarketParamsLib.sol";
-import {MockERC20, MockOracle, MockRateModel} from "../TestMocks.sol";
+import { Markets } from "../../../contracts/markets/Markets.sol";
+import { MarketParams, Market, Position, Id } from "../../../contracts/markets/interfaces/IMarkets.sol";
+import { MarketParamsLib } from "../../../contracts/markets/libraries/MarketParamsLib.sol";
+import { MockERC20, MockOracle, MockRateModel } from "../TestMocks.sol";
 
 /// @title MarketsHandler
 /// @notice Bounded handler for Markets invariant testing
@@ -88,12 +88,12 @@ contract MarketsHandler is Test {
         uint256 maxBorrow = (collateralAmount * mp.lltv) / 1e18;
 
         // Check available liquidity
-        (, , uint128 totalBorrowAssets, , , ) = markets.market(marketId);
+        (,, uint128 totalBorrowAssets,,,) = markets.market(marketId);
         (, uint128 totalSupplyAssets_) = _getSupplyState();
         uint256 available = totalSupplyAssets_ > totalBorrowAssets ? totalSupplyAssets_ - totalBorrowAssets : 0;
 
         // Get existing borrow shares for this actor
-        (, uint256 existingBorrowShares, ) = markets.position(marketId, actor);
+        (, uint256 existingBorrowShares,) = markets.position(marketId, actor);
         if (existingBorrowShares > 0) return; // Skip if already borrowing
 
         if (available == 0 || maxBorrow == 0) return;
@@ -103,19 +103,20 @@ contract MarketsHandler is Test {
         vm.startPrank(actor);
         try markets.borrow(mp, borrowAmount, 0, actor, actor) {
             ghost_totalBorrowed += borrowAmount;
-        } catch {}
+        } catch { }
         vm.stopPrank();
     }
 
     function repay(uint256 actorSeed, uint256 amount) external {
         address actor = _getActor(actorSeed);
 
-        (, uint256 borrowShares, ) = markets.position(marketId, actor);
+        (, uint256 borrowShares,) = markets.position(marketId, actor);
         if (borrowShares == 0) return;
 
         // Repay up to the borrow balance
-        (, , uint128 totalBorrowAssets_, uint128 totalBorrowShares_, , ) = markets.market(marketId);
-        uint256 borrowedAssets = (borrowShares * (uint256(totalBorrowAssets_) + 1)) / (uint256(totalBorrowShares_) + 1e6);
+        (,, uint128 totalBorrowAssets_, uint128 totalBorrowShares_,,) = markets.market(marketId);
+        uint256 borrowedAssets =
+            (borrowShares * (uint256(totalBorrowAssets_) + 1)) / (uint256(totalBorrowShares_) + 1e6);
         if (borrowedAssets == 0) return;
 
         amount = bound(amount, 1, borrowedAssets);
@@ -125,18 +126,19 @@ contract MarketsHandler is Test {
         loanToken.approve(address(markets), amount);
         try markets.repay(mp, amount, 0, actor, "") {
             ghost_totalRepaid += amount;
-        } catch {}
+        } catch { }
         vm.stopPrank();
     }
 
     function withdraw(uint256 actorSeed, uint256 amount) external {
         address actor = _getActor(actorSeed);
 
-        (uint256 supplyShares, , ) = markets.position(marketId, actor);
+        (uint256 supplyShares,,) = markets.position(marketId, actor);
         if (supplyShares == 0) return;
 
         (uint128 totalSupplyAssets_, uint128 totalSupplyShares_) = _getSupplyState();
-        uint256 suppliedAssets = (supplyShares * (uint256(totalSupplyAssets_) + 1)) / (uint256(totalSupplyShares_) + 1e6);
+        uint256 suppliedAssets =
+            (supplyShares * (uint256(totalSupplyAssets_) + 1)) / (uint256(totalSupplyShares_) + 1e6);
         if (suppliedAssets == 0) return;
 
         amount = bound(amount, 1, suppliedAssets);
@@ -144,7 +146,7 @@ contract MarketsHandler is Test {
         vm.startPrank(actor);
         try markets.withdraw(mp, amount, 0, actor, actor) {
             ghost_totalWithdrawn += amount;
-        } catch {}
+        } catch { }
         vm.stopPrank();
     }
 
@@ -152,7 +154,7 @@ contract MarketsHandler is Test {
         seconds_ = bound(seconds_, 1, 30 days);
 
         // Record borrow assets before time warp
-        (, , uint128 borrowBefore, , , ) = markets.market(marketId);
+        (,, uint128 borrowBefore,,,) = markets.market(marketId);
         previousTotalBorrowAssets = borrowBefore;
 
         vm.warp(block.timestamp + seconds_);
@@ -163,11 +165,11 @@ contract MarketsHandler is Test {
         loanToken.approve(address(markets), 1);
         try markets.supply(mp, 1, 0, address(this), "") {
             ghost_totalSupplied += 1;
-        } catch {}
+        } catch { }
     }
 
     function _getSupplyState() internal view returns (uint128 totalSupplyAssets_, uint128 totalSupplyShares_) {
-        (totalSupplyAssets_, totalSupplyShares_, , , , ) = markets.market(marketId);
+        (totalSupplyAssets_, totalSupplyShares_,,,,) = markets.market(marketId);
     }
 
     function _min(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -236,48 +238,34 @@ contract InvariantMarketsTest is StdInvariant, Test {
 
     /// @notice totalBorrowAssets <= totalSupplyAssets for each market
     function invariant_solvency() public view {
-        (uint128 totalSupplyAssets_, , uint128 totalBorrowAssets_, , , ) = markets.market(marketId);
+        (uint128 totalSupplyAssets_,, uint128 totalBorrowAssets_,,,) = markets.market(marketId);
         assertLe(
-            uint256(totalBorrowAssets_),
-            uint256(totalSupplyAssets_),
-            "SOLVENCY: totalBorrowAssets > totalSupplyAssets"
+            uint256(totalBorrowAssets_), uint256(totalSupplyAssets_), "SOLVENCY: totalBorrowAssets > totalSupplyAssets"
         );
     }
 
     /// @notice totalBorrowShares > 0 iff totalBorrowAssets > 0
     function invariant_sharesConsistent() public view {
-        (, , uint128 totalBorrowAssets_, uint128 totalBorrowShares_, , ) = markets.market(marketId);
+        (,, uint128 totalBorrowAssets_, uint128 totalBorrowShares_,,) = markets.market(marketId);
 
         if (totalBorrowShares_ > 0) {
-            assertGt(
-                uint256(totalBorrowAssets_),
-                0,
-                "SHARES: totalBorrowShares > 0 but totalBorrowAssets == 0"
-            );
+            assertGt(uint256(totalBorrowAssets_), 0, "SHARES: totalBorrowShares > 0 but totalBorrowAssets == 0");
         }
         if (totalBorrowAssets_ > 0) {
-            assertGt(
-                uint256(totalBorrowShares_),
-                0,
-                "SHARES: totalBorrowAssets > 0 but totalBorrowShares == 0"
-            );
+            assertGt(uint256(totalBorrowShares_), 0, "SHARES: totalBorrowAssets > 0 but totalBorrowShares == 0");
         }
     }
 
     /// @notice Sum of supply positions >= sum of borrow positions (in assets)
     function invariant_noNegativeEquity() public view {
-        (uint128 totalSupplyAssets_, , uint128 totalBorrowAssets_, , , ) = markets.market(marketId);
-        assertGe(
-            uint256(totalSupplyAssets_),
-            uint256(totalBorrowAssets_),
-            "EQUITY: supply < borrow (negative equity)"
-        );
+        (uint128 totalSupplyAssets_,, uint128 totalBorrowAssets_,,,) = markets.market(marketId);
+        assertGe(uint256(totalSupplyAssets_), uint256(totalBorrowAssets_), "EQUITY: supply < borrow (negative equity)");
     }
 
     /// @notice totalBorrowAssets never decreases unless repay/liquidation (interest only goes up)
     /// @dev We check that after accrueTime, borrow assets >= previous snapshot
     function invariant_interestAccrual() public view {
-        (, , uint128 totalBorrowAssets_, , , ) = markets.market(marketId);
+        (,, uint128 totalBorrowAssets_,,,) = markets.market(marketId);
         // Interest can only increase totalBorrowAssets.
         // Repays can decrease it but that's accounted for in ghost variables.
         // This check: the contract's borrow assets + total repaid should be >= total borrowed + previous interest

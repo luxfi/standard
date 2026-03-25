@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
 
 /**
  * @title LiquidLUX (xLUX)
@@ -63,7 +63,7 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     using SafeERC20 for IERC20;
 
     // ============ Fee Type Constants (bytes32) ============
-    
+
     bytes32 public constant FEE_DEX = keccak256("DEX");
     bytes32 public constant FEE_BRIDGE = keccak256("BRIDGE");
     bytes32 public constant FEE_LENDING = keccak256("LENDING");
@@ -74,7 +74,7 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     bytes32 public constant FEE_OTHER = keccak256("OTHER");
 
     // ============ Roles ============
-    
+
     bytes32 public constant FEE_DISTRIBUTOR_ROLE = keccak256("FEE_DISTRIBUTOR_ROLE");
     bytes32 public constant VALIDATOR_ROLE = keccak256("VALIDATOR_ROLE");
     bytes32 public constant GOVERNANCE_ROLE = keccak256("GOVERNANCE_ROLE");
@@ -95,54 +95,56 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     uint256 internal constant VIRTUAL_ASSETS = 1e6;
 
     // ============ Immutables ============
-    
+
     IERC20 public immutable lux;
 
     // ============ Configuration (Governance-controlled) ============
-    
+
     /// @notice Treasury address for performance fees
     address public treasury;
-    
+
     /// @notice Performance fee in basis points (default 10% = 1000 bps)
     uint256 public perfFeeBps = 1000;
 
     // ============ Slashing Policy ============
-    
+
     /// @notice Slashing reserve buffer (accumulated from portion of fees)
     uint256 public slashingReserve;
-    
+
     /// @notice Basis points of incoming fees directed to slashing reserve
     uint256 public slashingReserveBps = 100; // 1% default
-    
+
     /// @notice If true, losses beyond reserve are socialized across all holders
     bool public socializeLosses = true;
 
     // ============ Accounting Ledgers ============
-    
+
     /// @notice Total protocol fees received (before perf fee)
     uint256 public totalProtocolFeesIn;
-    
+
     /// @notice Total validator rewards received (no perf fee)
     uint256 public totalValidatorRewardsIn;
-    
+
     /// @notice Total performance fees taken
     uint256 public totalPerfFeesTaken;
-    
+
     /// @notice Total slashing losses applied
     uint256 public totalSlashingLosses;
-    
+
     /// @notice Fees by source type
     mapping(bytes32 => uint256) public feesBySource;
-    
+
     /// @notice Approved fee distributors (e.g., FeeSplitter)
     mapping(address => bool) public feeDistributors;
-    
+
     /// @notice Approved validator sources (e.g., ValidatorVault)
     mapping(address => bool) public validatorSources;
 
     // ============ Events ============
-    
-    event FeesReceived(address indexed from, uint256 amount, bytes32 indexed feeType, uint256 perfFee, uint256 toReserve);
+
+    event FeesReceived(
+        address indexed from, uint256 amount, bytes32 indexed feeType, uint256 perfFee, uint256 toReserve
+    );
     event ValidatorRewardsReceived(address indexed from, uint256 amount);
     event SlashingApplied(uint256 amount, uint256 fromReserve, uint256 socialized);
     event TreasuryUpdated(address indexed newTreasury);
@@ -154,7 +156,7 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     event EmergencyWithdrawal(address indexed to, uint256 amount);
 
     // ============ Errors ============
-    
+
     error InvalidAddress();
     error InvalidBps();
     error NotFeeDistributor();
@@ -164,14 +166,13 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     error ZeroAmount();
 
     // ============ Constructor ============
-    
-    constructor(
-        address _lux,
-        address _treasury,
-        address _timelock
-    ) ERC20("Liquid LUX", "xLUX") ERC20Permit("Liquid LUX") {
+
+    constructor(address _lux, address _treasury, address _timelock)
+        ERC20("Liquid LUX", "xLUX")
+        ERC20Permit("Liquid LUX")
+    {
         if (_lux == address(0) || _treasury == address(0)) revert InvalidAddress();
-        
+
         lux = IERC20(_lux);
         treasury = _treasury;
 
@@ -182,7 +183,7 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     }
 
     // ============ User Actions ============
-    
+
     /**
      * @notice Deposit LUX and receive xLUX shares
      * @param amount Amount of LUX to deposit
@@ -216,19 +217,19 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     function withdraw(uint256 shares) external nonReentrant whenNotPaused returns (uint256 amount) {
         if (shares == 0) revert ZeroAmount();
         if (balanceOf(msg.sender) < shares) revert InsufficientShares();
-        
+
         amount = _convertToAssets(shares);
         if (amount == 0) revert ZeroAmount();
-        
+
         // CEI: Effects before interactions
         _burn(msg.sender, shares);
-        
+
         // Transfer LUX to user
         lux.safeTransfer(msg.sender, amount);
     }
 
     // ============ Fee Reception ============
-    
+
     /**
      * @notice Receive protocol fees from approved distributors
      * @param amount Amount of LUX fees
@@ -237,27 +238,27 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     function receiveFees(uint256 amount, bytes32 feeType) external nonReentrant whenNotPaused {
         if (!feeDistributors[msg.sender]) revert NotFeeDistributor();
         if (amount == 0) revert ZeroAmount();
-        
+
         // Transfer LUX from distributor
         lux.safeTransferFrom(msg.sender, address(this), amount);
-        
+
         // Calculate performance fee (10%)
         uint256 perfFee = (amount * perfFeeBps) / BPS;
-        
+
         // Calculate slashing reserve contribution
         uint256 toReserve = (amount * slashingReserveBps) / BPS;
-        
+
         // Update accounting
         totalProtocolFeesIn += amount;
         totalPerfFeesTaken += perfFee;
         feesBySource[feeType] += amount;
         slashingReserve += toReserve;
-        
+
         // Send perf fee to treasury
         if (perfFee > 0) {
             lux.safeTransfer(treasury, perfFee);
         }
-        
+
         emit FeesReceived(msg.sender, amount, feeType, perfFee, toReserve);
     }
 
@@ -268,19 +269,19 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     function depositValidatorRewards(uint256 amount) external nonReentrant whenNotPaused {
         if (!validatorSources[msg.sender]) revert NotValidatorSource();
         if (amount == 0) revert ZeroAmount();
-        
+
         // Transfer LUX from validator source
         lux.safeTransferFrom(msg.sender, address(this), amount);
-        
+
         // Update accounting (no perf fee for validators)
         totalValidatorRewardsIn += amount;
         feesBySource[FEE_VALIDATOR] += amount;
-        
+
         emit ValidatorRewardsReceived(msg.sender, amount);
     }
 
     // ============ Slashing ============
-    
+
     /**
      * @notice Apply slashing loss to the vault
      * @dev Called by governance when validator is slashed
@@ -288,10 +289,10 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
      */
     function applySlashing(uint256 amount) external onlyRole(GOVERNANCE_ROLE) {
         if (amount == 0) revert ZeroAmount();
-        
+
         uint256 fromReserve = 0;
         uint256 socialized = 0;
-        
+
         // First, use slashing reserve
         if (slashingReserve >= amount) {
             slashingReserve -= amount;
@@ -299,10 +300,10 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
         } else {
             fromReserve = slashingReserve;
             slashingReserve = 0;
-            
+
             // Remaining loss
             uint256 remaining = amount - fromReserve;
-            
+
             if (socializeLosses) {
                 // Loss is socialized - reduces vault balance
                 // This effectively dilutes all xLUX holders proportionally
@@ -313,14 +314,14 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
                 revert InsufficientBalance();
             }
         }
-        
+
         totalSlashingLosses += amount;
-        
+
         emit SlashingApplied(amount, fromReserve, socialized);
     }
 
     // ============ Governance Setters (Timelock-controlled) ============
-    
+
     function setTreasury(address _treasury) external onlyRole(GOVERNANCE_ROLE) {
         if (_treasury == address(0)) revert InvalidAddress();
         treasury = _treasury;
@@ -345,7 +346,7 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     }
 
     // ============ Access Control ============
-    
+
     function addFeeDistributor(address distributor) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (distributor == address(0)) revert InvalidAddress();
         feeDistributors[distributor] = true;
@@ -369,7 +370,7 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     }
 
     // ============ Emergency ============
-    
+
     function pause() external onlyRole(EMERGENCY_ROLE) {
         _pause();
     }
@@ -384,17 +385,17 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
      */
     function emergencyWithdrawToTreasury() external onlyRole(EMERGENCY_ROLE) {
         require(paused(), "Must be paused");
-        
+
         uint256 balance = lux.balanceOf(address(this));
         if (balance == 0) revert InsufficientBalance();
-        
+
         lux.safeTransfer(treasury, balance);
-        
+
         emit EmergencyWithdrawal(treasury, balance);
     }
 
     // ============ View Functions ============
-    
+
     /**
      * @notice Total LUX assets in the vault
      */
@@ -429,15 +430,10 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
      * @return actualBalance Actual LUX balance
      * @return discrepancy Difference (should be 0 or small from rounding)
      */
-    function reconcile() external view returns (
-        uint256 expectedBalance,
-        uint256 actualBalance,
-        int256 discrepancy
-    ) {
+    function reconcile() external view returns (uint256 expectedBalance, uint256 actualBalance, int256 discrepancy) {
         // Expected = Total In - Perf Fees - Slashing Losses
         // Note: User deposits/withdrawals are already reflected in balance
-        expectedBalance = totalProtocolFeesIn + totalValidatorRewardsIn 
-                        - totalPerfFeesTaken - totalSlashingLosses;
+        expectedBalance = totalProtocolFeesIn + totalValidatorRewardsIn - totalPerfFeesTaken - totalSlashingLosses;
         actualBalance = lux.balanceOf(address(this));
         // forge-lint: disable-next-line(unsafe-typecast)
         discrepancy = int256(actualBalance) - int256(expectedBalance);
@@ -446,16 +442,20 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     /**
      * @notice Get fee breakdown by source
      */
-    function getFeeBreakdown() external view returns (
-        uint256 dex,
-        uint256 bridge,
-        uint256 lending,
-        uint256 perps,
-        uint256 liquid,
-        uint256 nft,
-        uint256 validator,
-        uint256 other
-    ) {
+    function getFeeBreakdown()
+        external
+        view
+        returns (
+            uint256 dex,
+            uint256 bridge,
+            uint256 lending,
+            uint256 perps,
+            uint256 liquid,
+            uint256 nft,
+            uint256 validator,
+            uint256 other
+        )
+    {
         return (
             feesBySource[FEE_DEX],
             feesBySource[FEE_BRIDGE],
@@ -469,7 +469,7 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     }
 
     // ============ Internal ============
-    
+
     function _convertToShares(uint256 assets) internal view returns (uint256) {
         return (assets * (totalSupply() + VIRTUAL_SHARES)) / (totalAssets() + VIRTUAL_ASSETS);
     }
@@ -479,7 +479,7 @@ contract LiquidLUX is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard, AccessCon
     }
 
     // ============ ERC20 Overrides (for ERC20Votes) ============
-    
+
     function _update(address from, address to, uint256 amount) internal override(ERC20, ERC20Votes) {
         super._update(from, to, amount);
     }

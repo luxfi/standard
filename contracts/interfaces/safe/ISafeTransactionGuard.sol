@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {IERC165} from "./IERC165.sol";
+import { IERC165 } from "./IERC165.sol";
 
 /// @title Safe Transaction Guard Interface
 interface ISafeTransactionGuard is IERC165 {

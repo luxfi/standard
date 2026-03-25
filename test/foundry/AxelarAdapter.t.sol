@@ -7,8 +7,8 @@ import {
     IAxelarGateway,
     IAxelarGasService
 } from "../../contracts/integrations/bridges/AxelarAdapter.sol";
-import {BridgeParams, BridgeRoute, BridgeStatus} from "../../contracts/interfaces/adapters/IBridgeAdapter.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { BridgeParams, BridgeRoute, BridgeStatus } from "../../contracts/interfaces/adapters/IBridgeAdapter.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MOCKS
@@ -18,7 +18,10 @@ contract MockAxelarToken is ERC20 {
     constructor() ERC20("Mock", "MCK") {
         _mint(msg.sender, 1_000_000e18);
     }
-    function mint(address to, uint256 amt) external { _mint(to, amt); }
+
+    function mint(address to, uint256 amt) external {
+        _mint(to, amt);
+    }
 }
 
 contract MockAxelarGateway is IAxelarGateway {
@@ -62,12 +65,12 @@ contract MockAxelarGateway is IAxelarGateway {
         lastAmount = amount;
     }
 
-    function validateContractCall(
-        bytes32 commandId,
-        string calldata,
-        string calldata,
-        bytes32
-    ) external view override returns (bool) {
+    function validateContractCall(bytes32 commandId, string calldata, string calldata, bytes32)
+        external
+        view
+        override
+        returns (bool)
+    {
         return _validCommands[commandId];
     }
 
@@ -108,13 +111,11 @@ contract MockAxelarGasService is IAxelarGasService {
         lastGasPayment = msg.value;
     }
 
-    function payNativeGasForContractCall(
-        address,
-        string calldata,
-        string calldata,
-        bytes calldata,
-        address
-    ) external payable override {
+    function payNativeGasForContractCall(address, string calldata, string calldata, bytes calldata, address)
+        external
+        payable
+        override
+    {
         gasPaymentReceived = true;
         lastGasPayment = msg.value;
     }
@@ -245,7 +246,7 @@ contract AxelarAdapterTest is Test {
             extraData: ""
         });
 
-        bytes32 bridgeId = adapter.bridge{value: 0.01 ether}(params);
+        bytes32 bridgeId = adapter.bridge{ value: 0.01 ether }(params);
         vm.stopPrank();
 
         assertTrue(bridgeId != bytes32(0));
@@ -259,16 +260,11 @@ contract AxelarAdapterTest is Test {
         vm.deal(alice, 1 ether);
         vm.prank(alice);
         BridgeParams memory params = BridgeParams({
-            dstChainId: ETH_CHAIN_ID,
-            token: address(token),
-            amount: 0,
-            recipient: alice,
-            minAmountOut: 0,
-            extraData: ""
+            dstChainId: ETH_CHAIN_ID, token: address(token), amount: 0, recipient: alice, minAmountOut: 0, extraData: ""
         });
 
         vm.expectRevert(AxelarAdapter.ZeroAmount.selector);
-        adapter.bridge{value: 0.01 ether}(params);
+        adapter.bridge{ value: 0.01 ether }(params);
     }
 
     function test_bridge_revert_unsupportedChain() public {
@@ -277,16 +273,11 @@ contract AxelarAdapterTest is Test {
         token.approve(address(adapter), 100e18);
 
         BridgeParams memory params = BridgeParams({
-            dstChainId: 999,
-            token: address(token),
-            amount: 100e18,
-            recipient: alice,
-            minAmountOut: 0,
-            extraData: ""
+            dstChainId: 999, token: address(token), amount: 100e18, recipient: alice, minAmountOut: 0, extraData: ""
         });
 
         vm.expectRevert(abi.encodeWithSelector(AxelarAdapter.UnsupportedChain.selector, uint256(999)));
-        adapter.bridge{value: 0.01 ether}(params);
+        adapter.bridge{ value: 0.01 ether }(params);
         vm.stopPrank();
     }
 
@@ -304,7 +295,7 @@ contract AxelarAdapterTest is Test {
         });
 
         vm.expectRevert(abi.encodeWithSelector(AxelarAdapter.UnsupportedToken.selector, address(0x1234), ETH_CHAIN_ID));
-        adapter.bridge{value: 0.01 ether}(params);
+        adapter.bridge{ value: 0.01 ether }(params);
     }
 
     // ─── Bridge Status ───────────────────────────────────────────────────────
@@ -323,7 +314,7 @@ contract AxelarAdapterTest is Test {
             extraData: ""
         });
 
-        bytes32 bridgeId = adapter.bridge{value: 0.01 ether}(params);
+        bytes32 bridgeId = adapter.bridge{ value: 0.01 ether }(params);
         vm.stopPrank();
 
         BridgeStatus memory status = adapter.getStatus(bridgeId);
@@ -350,14 +341,7 @@ contract AxelarAdapterTest is Test {
 
         bytes memory payload = abi.encode(bob, uint256(50e18), bytes(""));
 
-        adapter.executeWithToken(
-            commandId,
-            "ethereum",
-            "0xSenderAddress",
-            payload,
-            "MCK",
-            50e18
-        );
+        adapter.executeWithToken(commandId, "ethereum", "0xSenderAddress", payload, "MCK", 50e18);
 
         assertEq(token.balanceOf(bob), 50e18);
     }
@@ -367,14 +351,7 @@ contract AxelarAdapterTest is Test {
         bytes memory payload = abi.encode(bob, uint256(50e18), bytes(""));
 
         vm.expectRevert(AxelarAdapter.InvalidCommand.selector);
-        adapter.executeWithToken(
-            commandId,
-            "ethereum",
-            "0xSenderAddress",
-            payload,
-            "MCK",
-            50e18
-        );
+        adapter.executeWithToken(commandId, "ethereum", "0xSenderAddress", payload, "MCK", 50e18);
     }
 
     function test_execute() public {
@@ -425,9 +402,9 @@ contract AxelarAdapterTest is Test {
     function test_receiveNative() public {
         vm.deal(alice, 1 ether);
         vm.prank(alice);
-        (bool ok,) = address(adapter).call{value: 0.1 ether}("");
+        (bool ok,) = address(adapter).call{ value: 0.1 ether }("");
         assertTrue(ok);
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

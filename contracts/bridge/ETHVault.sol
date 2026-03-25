@@ -2,9 +2,9 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {LRC20} from "../tokens/LRC20.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { LRC20 } from "../tokens/LRC20.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title ETHVault - ETH Vault with Share Tokens
@@ -39,12 +39,7 @@ contract ETHVault is LRC20, Pausable, Ownable {
 
     event Deposit(address indexed user, uint256 amount);
 
-    event Withdraw(
-        address indexed caller,
-        address indexed receiver,
-        address indexed owner,
-        uint256 amount
-    );
+    event Withdraw(address indexed caller, address indexed receiver, address indexed owner, uint256 amount);
 
     // ═══════════════════════════════════════════════════════════════════════
     // ERRORS (H-03 fix)
@@ -60,10 +55,10 @@ contract ETHVault is LRC20, Pausable, Ownable {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(string memory name, string memory symbol) LRC20(name, symbol) Ownable(msg.sender) {}
+    constructor(string memory name, string memory symbol) LRC20(name, symbol) Ownable(msg.sender) { }
 
     // Function to receive ETH and mint shares
-    receive() external payable {}
+    receive() external payable { }
 
     /**
      * @dev deposit ETH
@@ -86,11 +81,7 @@ contract ETHVault is LRC20, Pausable, Ownable {
      * @param owner_ owner's share address
      * @dev H-03 fix: Added rate limiting and pause capability
      */
-    function withdraw(
-        uint256 amount_,
-        address receiver_,
-        address owner_
-    ) external whenNotPaused {
+    function withdraw(uint256 amount_, address receiver_, address owner_) external whenNotPaused {
         if (amount_ > address(this).balance) revert InsufficientBalance();
         if (msg.sender != owner_) {
             uint256 allowed = allowance(owner_, msg.sender);
@@ -101,7 +92,7 @@ contract ETHVault is LRC20, Pausable, Ownable {
         _validateWithdrawal(receiver_, amount_);
 
         _burn(owner_, amount_);
-        (bool success, ) = payable(receiver_).call{value: amount_}("");
+        (bool success,) = payable(receiver_).call{ value: amount_ }("");
         if (!success) revert SendFailed();
         emit Withdraw(msg.sender, receiver_, owner_, amount_);
     }

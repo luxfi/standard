@@ -76,18 +76,14 @@ contract MaliciousReentrant {
         target.buy(GenesisNFTs.NFTType.VALIDATOR, GenesisNFTs.Tier.NANO, "Attacker", type(uint256).max);
     }
 
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes calldata
-    ) external returns (bytes4) {
+    function onERC721Received(address, address, uint256, bytes calldata) external returns (bytes4) {
         if (attacking && attackCount < 3) {
             attackCount++;
             // Attempt reentrancy
             try target.buy(GenesisNFTs.NFTType.VALIDATOR, GenesisNFTs.Tier.NANO, "Reentrant", type(uint256).max) {
-                // If this succeeds, reentrancy is possible
-            } catch {
+            // If this succeeds, reentrancy is possible
+            }
+                catch {
                 // Expected - reentrancy should fail
             }
         }
@@ -223,14 +219,7 @@ contract GenesisNFTsSecurityTest is Test {
     function testOnlyOwnerCanCompleteMigration() public {
         // Deploy fresh contract
         vm.prank(owner);
-        GenesisNFTs fresh = new GenesisNFTs(
-            "ipfs://test/",
-            owner,
-            250,
-            address(wlux),
-            address(lusd),
-            address(pair)
-        );
+        GenesisNFTs fresh = new GenesisNFTs("ipfs://test/", owner, 250, address(wlux), address(lusd), address(pair));
 
         vm.prank(user1);
         vm.expectRevert();
@@ -240,14 +229,7 @@ contract GenesisNFTsSecurityTest is Test {
     function testOnlyOwnerCanMigrateMint() public {
         // Deploy fresh contract (not migrated)
         vm.prank(owner);
-        GenesisNFTs fresh = new GenesisNFTs(
-            "ipfs://test/",
-            owner,
-            250,
-            address(wlux),
-            address(lusd),
-            address(pair)
-        );
+        GenesisNFTs fresh = new GenesisNFTs("ipfs://test/", owner, 250, address(wlux), address(lusd), address(pair));
 
         vm.prank(user1);
         vm.expectRevert();
@@ -264,14 +246,8 @@ contract GenesisNFTsSecurityTest is Test {
 
     function testCannotMintBeforeMigrationComplete() public {
         // Create fresh genesis without completing migration
-        GenesisNFTs freshGenesis = new GenesisNFTs(
-            "ipfs://test/",
-            owner,
-            250,
-            address(wlux),
-            address(lusd),
-            address(pair)
-        );
+        GenesisNFTs freshGenesis =
+            new GenesisNFTs("ipfs://test/", owner, 250, address(wlux), address(lusd), address(pair));
 
         GenesisNFTs.MediaData memory data = GenesisNFTs.MediaData({
             tokenURI: "ipfs://test",
@@ -508,7 +484,8 @@ contract GenesisNFTsSecurityTest is Test {
     }
 
     function testVeryLongName() public {
-        string memory longName = "This is a very long name that might cause issues with storage or gas costs if not handled properly by the contract implementation";
+        string memory longName =
+            "This is a very long name that might cause issues with storage or gas costs if not handled properly by the contract implementation";
 
         vm.startPrank(user1);
         lusd.approve(address(genesis), type(uint256).max);
@@ -582,7 +559,7 @@ contract GenesisNFTsSecurityTest is Test {
         // Protocol may want to add custom validation for max royalty
         vm.prank(owner);
         genesis.setDefaultRoyalty(owner, 1001); // 10.01% - allowed by ERC2981
-        
+
         // Verify it was set (royaltyInfo returns fee numerator)
         (, uint256 royalty) = genesis.royaltyInfo(1, 10000);
         assertEq(royalty, 1001, "Royalty should be set to 1001 bps");
@@ -657,9 +634,7 @@ contract GenesisNFTsSecurityTest is Test {
         uint256 discountAfter15s = genesis.getCurrentDiscount();
 
         // Difference should be minimal (< 1 basis point)
-        uint256 diff = discountNow > discountAfter15s ?
-            discountNow - discountAfter15s :
-            discountAfter15s - discountNow;
+        uint256 diff = discountNow > discountAfter15s ? discountNow - discountAfter15s : discountAfter15s - discountNow;
 
         assertLt(diff, 1, "Timestamp manipulation could be profitable");
     }
@@ -692,14 +667,7 @@ contract GenesisNFTsFuzzTest is Test {
         lusd.mint(address(pair), 1_000_000e18);
         pair.mint(owner);
 
-        genesis = new GenesisNFTs(
-            "ipfs://genesis/",
-            owner,
-            250,
-            address(wlux),
-            address(lusd),
-            address(pair)
-        );
+        genesis = new GenesisNFTs("ipfs://genesis/", owner, 250, address(wlux), address(lusd), address(pair));
 
         genesis.completeMigration();
         genesis.setSalesOpen(true);
@@ -770,7 +738,7 @@ contract GenesisNFTsFuzzTest is Test {
             GenesisNFTs.NFTType(nftType),
             GenesisNFTs.Tier(tier),
             "Fuzz",
-            0  // maxPrice - no slippage protection for fuzz tests
+            0 // maxPrice - no slippage protection for fuzz tests
         );
         vm.stopPrank();
 

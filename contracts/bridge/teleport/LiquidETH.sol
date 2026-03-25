@@ -2,12 +2,12 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IBridgedToken} from "../../bridge/IBridgedToken.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IBridgedToken } from "../../bridge/IBridgedToken.sol";
 
 /**
  * @title LiquidETH
@@ -51,9 +51,9 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
 
     struct Position {
-        uint256 collateral;      // ETH deposited as collateral
-        uint256 debt;            // LETH debt (borrowed liquid token)
-        uint256 lastUpdate;      // Last position update timestamp
+        uint256 collateral; // ETH deposited as collateral
+        uint256 debt; // LETH debt (borrowed liquid token)
+        uint256 lastUpdate; // Last position update timestamp
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -122,12 +122,7 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
     event Borrowed(address indexed user, uint256 amount, uint256 newDebt);
     event Repaid(address indexed user, uint256 amount, uint256 newDebt);
     event Withdrawn(address indexed user, uint256 amount, uint256 newCollateral);
-    event Liquidated(
-        address indexed user,
-        address indexed liquidator,
-        uint256 debtRepaid,
-        uint256 collateralSeized
-    );
+    event Liquidated(address indexed user, address indexed liquidator, uint256 debtRepaid, uint256 collateralSeized);
     event YieldReceived(uint256 amount, uint256 newYieldIndex);
     event DebtRepaidByYield(address indexed user, uint256 amount);
 
@@ -377,10 +372,7 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
      * @param user Address of the position to liquidate
      * @param debtToCover Amount of LETH debt to cover
      */
-    function liquidate(
-        address user,
-        uint256 debtToCover
-    ) external nonReentrant whenNotPaused updateYield(user) {
+    function liquidate(address user, uint256 debtToCover) external nonReentrant whenNotPaused updateYield(user) {
         Position storage position = positions[user];
 
         // Check if liquidatable
@@ -443,13 +435,17 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
      * @return healthFactor Position health (>1e4 is healthy)
      * @return availableToBorrow Additional LETH available to borrow
      */
-    function getPosition(address user) external view returns (
-        uint256 ethCollateral,
-        uint256 lethDebt,
-        uint256 effectiveDebt,
-        uint256 healthFactor,
-        uint256 availableToBorrow
-    ) {
+    function getPosition(address user)
+        external
+        view
+        returns (
+            uint256 ethCollateral,
+            uint256 lethDebt,
+            uint256 effectiveDebt,
+            uint256 healthFactor,
+            uint256 availableToBorrow
+        )
+    {
         Position memory position = positions[user];
         ethCollateral = position.collateral;
         lethDebt = position.debt;

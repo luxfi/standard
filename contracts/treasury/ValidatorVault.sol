@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {IERC20, SafeERC20} from "@luxfi/standard/tokens/ERC20.sol";
-import {ReentrancyGuard} from "@luxfi/standard/utils/Utils.sol";
-import {Ownable} from "@luxfi/standard/access/Access.sol";
+import { IERC20, SafeERC20 } from "@luxfi/standard/tokens/ERC20.sol";
+import { ReentrancyGuard } from "@luxfi/standard/utils/Utils.sol";
+import { Ownable } from "@luxfi/standard/access/Access.sol";
 
 interface ILiquidLUXValidator {
     function depositValidatorRewards(uint256 amount) external;
@@ -40,43 +40,43 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
     // ============ Constants ============
-    
+
     uint256 public constant BPS = 10000;
     uint256 public constant MAX_COMMISSION = 2000; // 20% max commission
 
     // ============ Types ============
-    
+
     struct Validator {
-        address rewardAddress;   // Where to send rewards
-        uint256 commissionBps;   // Commission rate (e.g., 1000 = 10%)
-        uint256 totalDelegated;  // Total LUX delegated to this validator
-        uint256 pendingRewards;  // Accumulated rewards
+        address rewardAddress; // Where to send rewards
+        uint256 commissionBps; // Commission rate (e.g., 1000 = 10%)
+        uint256 totalDelegated; // Total LUX delegated to this validator
+        uint256 pendingRewards; // Accumulated rewards
         bool active;
     }
-    
+
     struct Delegation {
-        bytes32 validatorId;     // Which validator
-        uint256 amount;          // Amount delegated
-        uint256 rewardDebt;      // For reward calculation
+        bytes32 validatorId; // Which validator
+        uint256 amount; // Amount delegated
+        uint256 rewardDebt; // For reward calculation
     }
 
     // ============ State ============
-    
+
     IERC20 public immutable lux;
-    
+
     /// @notice Validators by ID (could be NodeID hash)
     mapping(bytes32 => Validator) public validators;
     bytes32[] public validatorIds;
-    
+
     /// @notice Delegations by user
     mapping(address => Delegation[]) public delegations;
-    
+
     /// @notice Total delegated across all validators
     uint256 public totalDelegated;
-    
+
     /// @notice Accumulated rewards per share (scaled by 1e18)
     uint256 public accRewardPerShare;
-    
+
     /// @notice Reserve for slashing coverage
     uint256 public slashingReserve;
     uint256 public slashingReserveBps = 500; // 5% to reserve
@@ -86,7 +86,7 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
 
     /// @notice LiquidLUX vault for reward forwarding (no perf fee path)
     ILiquidLUXValidator public liquidLux;
-    
+
     /// @notice Accumulated rewards pending forward to LiquidLUX
     uint256 public pendingLiquidLuxRewards;
 
@@ -99,7 +99,7 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     uint256 public totalToLiquidLux;
 
     // ============ Events ============
-    
+
     event ValidatorRegistered(bytes32 indexed validatorId, address rewardAddress, uint256 commissionBps);
     event ValidatorUpdated(bytes32 indexed validatorId, uint256 commissionBps, bool active);
     event Delegated(address indexed delegator, bytes32 indexed validatorId, uint256 amount);
@@ -111,7 +111,7 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     event SlashingReserveBpsUpdated(uint256 oldBps, uint256 newBps);
 
     // ============ Errors ============
-    
+
     error ValidatorNotFound();
     error ValidatorNotActive();
     error InvalidCommission();
@@ -124,23 +124,23 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     error ETHTransferFailed();
 
     // ============ Constructor ============
-    
+
     constructor(address _lux) Ownable(msg.sender) {
         lux = IERC20(_lux);
     }
 
     // ============ Receive Rewards ============
-    
+
     /// @notice Receive rewards from FeeSplitter
     receive() external payable {
         _distributeRewards(msg.value);
     }
-    
+
     function depositRewards(uint256 amount) external {
         lux.safeTransferFrom(msg.sender, address(this), amount);
         _distributeRewards(amount);
     }
-    
+
     function _distributeRewards(uint256 amount) internal {
         if (amount == 0 || totalDelegated == 0) return;
 
@@ -164,7 +164,7 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     }
 
     // ============ LiquidLUX Integration ============
-    
+
     /**
      * @notice Forward accumulated rewards to LiquidLUX (no performance fee)
      * @dev Validators are exempt from the 10% performance fee
@@ -183,18 +183,18 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
 
         // H-06 fix: Require minimum threshold to prevent timing manipulation
         if (forwardable < minForwardAmount) revert BelowMinimumForward();
-        
+
         // Approve exact amount (no infinite approvals)
         lux.forceApprove(address(liquidLux), forwardable);
-        
+
         // Push to LiquidLUX (no perf fee path)
         liquidLux.depositValidatorRewards(forwardable);
-        
+
         // Clear approval
         lux.forceApprove(address(liquidLux), 0);
-        
+
         totalToLiquidLux += forwardable;
-        
+
         emit RewardsToLiquidLux(forwardable);
     }
 
@@ -204,36 +204,32 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
      */
     function forwardAmountToLiquidLUX(uint256 amount) external nonReentrant {
         if (address(liquidLux) == address(0)) revert LiquidLuxNotSet();
-        
+
         uint256 balance = lux.balanceOf(address(this));
         uint256 reserved = totalDelegated + slashingReserve;
-        
+
         if (balance <= reserved || amount > balance - reserved) revert NothingToForward();
-        
+
         // Approve exact amount
         lux.forceApprove(address(liquidLux), amount);
-        
+
         // Push to LiquidLUX
         liquidLux.depositValidatorRewards(amount);
-        
+
         // Clear approval
         lux.forceApprove(address(liquidLux), 0);
-        
+
         totalToLiquidLux += amount;
-        
+
         emit RewardsToLiquidLux(amount);
     }
 
     // ============ Validator Management ============
-    
+
     /// @notice Register a new validator
-    function registerValidator(
-        bytes32 validatorId,
-        address rewardAddress,
-        uint256 commissionBps
-    ) external onlyOwner {
+    function registerValidator(bytes32 validatorId, address rewardAddress, uint256 commissionBps) external onlyOwner {
         if (commissionBps > MAX_COMMISSION) revert InvalidCommission();
-        
+
         validators[validatorId] = Validator({
             rewardAddress: rewardAddress,
             commissionBps: commissionBps,
@@ -241,139 +237,133 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
             pendingRewards: 0,
             active: true
         });
-        
+
         validatorIds.push(validatorId);
-        
+
         emit ValidatorRegistered(validatorId, rewardAddress, commissionBps);
     }
-    
+
     /// @notice Update validator settings
-    function updateValidator(
-        bytes32 validatorId,
-        uint256 commissionBps,
-        bool active
-    ) external onlyOwner {
+    function updateValidator(bytes32 validatorId, uint256 commissionBps, bool active) external onlyOwner {
         Validator storage v = validators[validatorId];
         if (v.rewardAddress == address(0)) revert ValidatorNotFound();
         if (commissionBps > MAX_COMMISSION) revert InvalidCommission();
-        
+
         v.commissionBps = commissionBps;
         v.active = active;
-        
+
         emit ValidatorUpdated(validatorId, commissionBps, active);
     }
 
     // ============ Delegation ============
-    
+
     /// @notice Delegate LUX to a validator
     function delegate(bytes32 validatorId, uint256 amount) external nonReentrant {
         Validator storage v = validators[validatorId];
         if (v.rewardAddress == address(0)) revert ValidatorNotFound();
         if (!v.active) revert ValidatorNotActive();
-        
+
         lux.safeTransferFrom(msg.sender, address(this), amount);
-        
+
         // Update validator
         v.totalDelegated += amount;
         totalDelegated += amount;
-        
+
         // Create delegation record
-        delegations[msg.sender].push(Delegation({
-            validatorId: validatorId,
-            amount: amount,
-            rewardDebt: (amount * accRewardPerShare) / 1e18
-        }));
-        
+        delegations[msg.sender].push(
+            Delegation({ validatorId: validatorId, amount: amount, rewardDebt: (amount * accRewardPerShare) / 1e18 })
+        );
+
         emit Delegated(msg.sender, validatorId, amount);
     }
-    
+
     /// @notice Undelegate from a validator
     function undelegate(uint256 delegationIndex) external nonReentrant {
         Delegation[] storage userDelegations = delegations[msg.sender];
         if (delegationIndex >= userDelegations.length) revert InsufficientDelegation();
-        
+
         Delegation memory d = userDelegations[delegationIndex];
         Validator storage v = validators[d.validatorId];
-        
+
         // Claim pending rewards first
         uint256 pending = _pendingReward(d);
         if (pending > 0) {
             // Deduct validator commission
             uint256 commission = (pending * v.commissionBps) / BPS;
             v.pendingRewards += commission;
-            
+
             uint256 delegatorReward = pending - commission;
             lux.safeTransfer(msg.sender, delegatorReward);
             totalDistributed += delegatorReward;
         }
-        
+
         // Update state
         v.totalDelegated -= d.amount;
         totalDelegated -= d.amount;
-        
+
         // Return delegated amount
         lux.safeTransfer(msg.sender, d.amount);
-        
+
         // Remove delegation (swap and pop)
         userDelegations[delegationIndex] = userDelegations[userDelegations.length - 1];
         userDelegations.pop();
-        
+
         emit Undelegated(msg.sender, d.validatorId, d.amount);
     }
 
     // ============ Rewards ============
-    
+
     /// @notice Claim pending rewards for all delegations
     function claimRewards() external nonReentrant {
         Delegation[] storage userDelegations = delegations[msg.sender];
         uint256 totalReward = 0;
-        
+
         for (uint256 i = 0; i < userDelegations.length; i++) {
             Delegation storage d = userDelegations[i];
             Validator storage v = validators[d.validatorId];
-            
+
             uint256 pending = _pendingReward(d);
             if (pending > 0) {
                 // Deduct validator commission
                 uint256 commission = (pending * v.commissionBps) / BPS;
                 v.pendingRewards += commission;
-                
+
                 totalReward += pending - commission;
-                
+
                 // Update reward debt
                 d.rewardDebt = (d.amount * accRewardPerShare) / 1e18;
             }
         }
-        
+
         if (totalReward == 0) revert NothingToClaim();
-        
+
         lux.safeTransfer(msg.sender, totalReward);
         totalDistributed += totalReward;
-        
+
         emit RewardsClaimed(msg.sender, totalReward);
     }
-    
+
     /// @notice Validator claims their commission
     function claimValidatorRewards(bytes32 validatorId) external nonReentrant {
         Validator storage v = validators[validatorId];
         if (v.rewardAddress != msg.sender) revert ValidatorNotFound();
-        
+
         uint256 amount = v.pendingRewards;
         if (amount == 0) revert NothingToClaim();
-        
+
         v.pendingRewards = 0;
         lux.safeTransfer(msg.sender, amount);
         totalDistributed += amount;
-        
+
         emit RewardsClaimed(msg.sender, amount);
     }
-    
+
     function _pendingReward(Delegation memory d) internal view returns (uint256) {
         return ((d.amount * accRewardPerShare) / 1e18) - d.rewardDebt;
     }
 
     // ============ Admin ============
-    
+
     function setSlashingReserveBps(uint256 bps) external onlyOwner {
         require(bps <= 2000, "Max 20%");
         uint256 oldBps = slashingReserveBps;
@@ -385,21 +375,21 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
     function setMinForwardAmount(uint256 amount) external onlyOwner {
         minForwardAmount = amount;
     }
-    
+
     /// @notice Set LiquidLUX vault address
     function setLiquidLUX(address _liquidLux) external onlyOwner {
         require(_liquidLux != address(0), "Invalid address");
-        
+
         // Clear any existing approval
         if (address(liquidLux) != address(0)) {
             lux.forceApprove(address(liquidLux), 0);
         }
-        
+
         liquidLux = ILiquidLUXValidator(_liquidLux);
-        
+
         emit LiquidLuxUpdated(_liquidLux);
     }
-    
+
     /// @notice Use slashing reserve to cover slashed validator
     function slash(bytes32 validatorId, uint256 amount) external onlyOwner {
         require(amount <= slashingReserve, "Insufficient reserve");
@@ -414,58 +404,61 @@ contract ValidatorVault is ReentrancyGuard, Ownable {
      */
     function withdrawETH(address payable to, uint256 amount) external onlyOwner {
         if (to == address(0)) revert ZeroAddress();
-        (bool success,) = to.call{value: amount}("");
+        (bool success,) = to.call{ value: amount }("");
         if (!success) revert ETHTransferFailed();
     }
 
     // ============ View ============
-    
+
     function getValidatorCount() external view returns (uint256) {
         return validatorIds.length;
     }
-    
+
     function getDelegationCount(address user) external view returns (uint256) {
         return delegations[user].length;
     }
-    
+
     function getPendingRewards(address user) external view returns (uint256 total) {
         Delegation[] memory userDelegations = delegations[user];
         for (uint256 i = 0; i < userDelegations.length; i++) {
             Delegation memory d = userDelegations[i];
             Validator memory v = validators[d.validatorId];
-            
+
             uint256 pending = _pendingReward(d);
             uint256 commission = (pending * v.commissionBps) / BPS;
             total += pending - commission;
         }
     }
-    
-    function getValidatorInfo(bytes32 validatorId) external view returns (
-        address rewardAddress,
-        uint256 commissionBps,
-        uint256 totalDelegatedAmount,
-        uint256 pendingRewards,
-        bool active
-    ) {
+
+    function getValidatorInfo(bytes32 validatorId)
+        external
+        view
+        returns (
+            address rewardAddress,
+            uint256 commissionBps,
+            uint256 totalDelegatedAmount,
+            uint256 pendingRewards,
+            bool active
+        )
+    {
         Validator memory v = validators[validatorId];
         return (v.rewardAddress, v.commissionBps, v.totalDelegated, v.pendingRewards, v.active);
     }
-    
+
     /// @notice Get stats including LiquidLUX forwarding
-    function getStats() external view returns (
-        uint256 received,
-        uint256 distributed,
-        uint256 toLiquidLux,
-        uint256 inReserve
-    ) {
+    function getStats()
+        external
+        view
+        returns (uint256 received, uint256 distributed, uint256 toLiquidLux, uint256 inReserve)
+    {
         return (totalReceived, totalDistributed, totalToLiquidLux, slashingReserve);
     }
-    
+
     /// @notice Get forwardable amount to LiquidLUX
     function getForwardableAmount() external view returns (uint256) {
         uint256 balance = lux.balanceOf(address(this));
         uint256 reserved = totalDelegated + slashingReserve;
-        
+
         if (balance <= reserved) return 0;
         return balance - reserved;
     }

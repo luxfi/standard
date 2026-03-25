@@ -11,7 +11,7 @@ library LX {
     // -------------------------------------------------------------------------
 
     /// @notice LXPool (LP-9010) - v4 PoolManager-compatible AMM core
-    address internal constant LX_POOL   = 0x0000000000000000000000000000000000009010;
+    address internal constant LX_POOL = 0x0000000000000000000000000000000000009010;
 
     /// @notice LXOracle (LP-9011) - Multi-source price aggregation
     address internal constant LX_ORACLE = 0x0000000000000000000000000000000000009011;
@@ -20,30 +20,30 @@ library LX {
     address internal constant LX_ROUTER = 0x0000000000000000000000000000000000009012;
 
     /// @notice LXHooks (LP-9013) - Hook contract registry
-    address internal constant LX_HOOKS  = 0x0000000000000000000000000000000000009013;
+    address internal constant LX_HOOKS = 0x0000000000000000000000000000000000009013;
 
     /// @notice LXFlash (LP-9014) - Flash loan facility
-    address internal constant LX_FLASH  = 0x0000000000000000000000000000000000009014;
+    address internal constant LX_FLASH = 0x0000000000000000000000000000000000009014;
 
     // -------------------------------------------------------------------------
     // Trading & DeFi Extensions
     // -------------------------------------------------------------------------
 
     /// @notice LXBook (LP-9020) - Permissionless orderbooks + matching + advanced orders
-    address internal constant LX_BOOK   = 0x0000000000000000000000000000000000009020;
+    address internal constant LX_BOOK = 0x0000000000000000000000000000000000009020;
 
     /// @notice LXVault (LP-9030) - Balances, margin, collateral, liquidations
-    address internal constant LX_VAULT  = 0x0000000000000000000000000000000000009030;
+    address internal constant LX_VAULT = 0x0000000000000000000000000000000000009030;
 
     /// @notice LXFeed (LP-9040) - Price feed aggregator
-    address internal constant LX_FEED   = 0x0000000000000000000000000000000000009040;
+    address internal constant LX_FEED = 0x0000000000000000000000000000000000009040;
 
     // -------------------------------------------------------------------------
     // Bridge Precompiles (LP-6xxx)
     // -------------------------------------------------------------------------
 
     /// @notice Teleport (LP-6010) - Cross-chain asset teleportation
-    address internal constant TELEPORT  = 0x0000000000000000000000000000000000006010;
+    address internal constant TELEPORT = 0x0000000000000000000000000000000000006010;
 
     // -------------------------------------------------------------------------
     // Utility Functions

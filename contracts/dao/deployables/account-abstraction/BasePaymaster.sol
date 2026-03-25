@@ -1,25 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IBasePaymaster
-} from "../../interfaces/deployables/IBasePaymaster.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {
-    OwnableUpgradeable
-} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {
-    IPaymaster
-} from "@account-abstraction/interfaces/IPaymaster.sol";
-import {
-    IEntryPoint
-} from "@account-abstraction/interfaces/IEntryPoint.sol";
-import {
-    PackedUserOperation
-} from "@account-abstraction/interfaces/PackedUserOperation.sol";
-import {
-    UserOperationLib
-} from "@account-abstraction/core/UserOperationLib.sol";
+import { IBasePaymaster } from "../../interfaces/deployables/IBasePaymaster.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { IPaymaster } from "@account-abstraction/interfaces/IPaymaster.sol";
+import { IEntryPoint } from "@account-abstraction/interfaces/IEntryPoint.sol";
+import { PackedUserOperation } from "@account-abstraction/interfaces/PackedUserOperation.sol";
+import { UserOperationLib } from "@account-abstraction/core/UserOperationLib.sol";
 
 /**
  * @title BasePaymaster
@@ -36,11 +24,7 @@ import {
  *
  * @custom:security-contact security@lux.network
  */
-abstract contract BasePaymaster is
-    IBasePaymaster,
-    IPaymaster,
-    OwnableUpgradeable
-{
+abstract contract BasePaymaster is IBasePaymaster, IPaymaster, OwnableUpgradeable {
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
@@ -51,7 +35,9 @@ abstract contract BasePaymaster is
      * @custom:storage-location erc7201:DAO.BasePaymaster.main
      */
     struct BasePaymasterStorage {
-        /** @notice The ERC-4337 entry point contract for operation validation */
+        /**
+         * @notice The ERC-4337 entry point contract for operation validation
+         */
         IEntryPoint entryPoint;
     }
 
@@ -67,29 +53,27 @@ abstract contract BasePaymaster is
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      * @return $ The storage struct for BasePaymaster
      */
-    function _getBasePaymasterStorage()
-        internal
-        pure
-        virtual
-        returns (BasePaymasterStorage storage $)
-    {
+    function _getBasePaymasterStorage() internal pure virtual returns (BasePaymasterStorage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := BASE_PAYMASTER_STORAGE_LOCATION
         }
     }
 
-    /** @notice Gas offset for paymaster validation operations as defined in UserOperationLib */
-    uint256 internal constant PAYMASTER_VALIDATION_GAS_OFFSET =
-        UserOperationLib.PAYMASTER_VALIDATION_GAS_OFFSET;
+    /**
+     * @notice Gas offset for paymaster validation operations as defined in UserOperationLib
+     */
+    uint256 internal constant PAYMASTER_VALIDATION_GAS_OFFSET = UserOperationLib.PAYMASTER_VALIDATION_GAS_OFFSET;
 
-    /** @notice Gas offset for paymaster post-operation handling as defined in UserOperationLib */
-    uint256 internal constant PAYMASTER_POSTOP_GAS_OFFSET =
-        UserOperationLib.PAYMASTER_POSTOP_GAS_OFFSET;
+    /**
+     * @notice Gas offset for paymaster post-operation handling as defined in UserOperationLib
+     */
+    uint256 internal constant PAYMASTER_POSTOP_GAS_OFFSET = UserOperationLib.PAYMASTER_POSTOP_GAS_OFFSET;
 
-    /** @notice Data offset for paymaster-specific data in user operations as defined in UserOperationLib */
-    uint256 internal constant PAYMASTER_DATA_OFFSET =
-        UserOperationLib.PAYMASTER_DATA_OFFSET;
+    /**
+     * @notice Data offset for paymaster-specific data in user operations as defined in UserOperationLib
+     */
+    uint256 internal constant PAYMASTER_DATA_OFFSET = UserOperationLib.PAYMASTER_DATA_OFFSET;
 
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
@@ -110,7 +94,10 @@ abstract contract BasePaymaster is
         // solhint-disable-previous-line func-name-mixedcase
         address _owner,
         IEntryPoint _entryPoint
-    ) internal onlyInitializing {
+    )
+        internal
+        onlyInitializing
+    {
         __Ownable_init(_owner);
         _validateEntryPointInterface(_entryPoint);
 
@@ -145,11 +132,12 @@ abstract contract BasePaymaster is
     /**
      * @inheritdoc IPaymaster
      */
-    function validatePaymasterUserOp(
-        PackedUserOperation calldata userOp_,
-        bytes32 userOpHash_,
-        uint256 maxCost_
-    ) public virtual override returns (bytes memory, uint256) {
+    function validatePaymasterUserOp(PackedUserOperation calldata userOp_, bytes32 userOpHash_, uint256 maxCost_)
+        public
+        virtual
+        override
+        returns (bytes memory, uint256)
+    {
         _requireFromEntryPoint();
         return _validatePaymasterUserOp(userOp_, userOpHash_, maxCost_);
     }
@@ -157,12 +145,11 @@ abstract contract BasePaymaster is
     /**
      * @inheritdoc IPaymaster
      */
-    function postOp(
-        PostOpMode mode_,
-        bytes calldata context_,
-        uint256 actualGasCost_,
-        uint256 actualUserOpFeePerGas_
-    ) public virtual override {
+    function postOp(PostOpMode mode_, bytes calldata context_, uint256 actualGasCost_, uint256 actualUserOpFeePerGas_)
+        public
+        virtual
+        override
+    {
         _requireFromEntryPoint();
         _postOp(mode_, context_, actualGasCost_, actualUserOpFeePerGas_);
     }
@@ -172,16 +159,13 @@ abstract contract BasePaymaster is
      */
     function deposit() public payable virtual override {
         BasePaymasterStorage storage $ = _getBasePaymasterStorage();
-        $.entryPoint.depositTo{value: msg.value}(address(this));
+        $.entryPoint.depositTo{ value: msg.value }(address(this));
     }
 
     /**
      * @inheritdoc IBasePaymaster
      */
-    function withdrawTo(
-        address payable withdrawAddress_,
-        uint256 amount_
-    ) public virtual override onlyOwner {
+    function withdrawTo(address payable withdrawAddress_, uint256 amount_) public virtual override onlyOwner {
         BasePaymasterStorage storage $ = _getBasePaymasterStorage();
         $.entryPoint.withdrawTo(withdrawAddress_, amount_);
     }
@@ -189,11 +173,9 @@ abstract contract BasePaymaster is
     /**
      * @inheritdoc IBasePaymaster
      */
-    function addStake(
-        uint32 unstakeDelaySec_
-    ) public payable virtual override onlyOwner {
+    function addStake(uint32 unstakeDelaySec_) public payable virtual override onlyOwner {
         BasePaymasterStorage storage $ = _getBasePaymasterStorage();
-        $.entryPoint.addStake{value: msg.value}(unstakeDelaySec_);
+        $.entryPoint.addStake{ value: msg.value }(unstakeDelaySec_);
     }
 
     /**
@@ -207,9 +189,7 @@ abstract contract BasePaymaster is
     /**
      * @inheritdoc IBasePaymaster
      */
-    function withdrawStake(
-        address payable withdrawAddress_
-    ) public virtual override onlyOwner {
+    function withdrawStake(address payable withdrawAddress_) public virtual override onlyOwner {
         BasePaymasterStorage storage $ = _getBasePaymasterStorage();
         $.entryPoint.withdrawStake(withdrawAddress_);
     }
@@ -228,11 +208,10 @@ abstract contract BasePaymaster is
      * @return context Optional context data to pass to postOp
      * @return validationData Validation result (0 for success, 1 for failure, or packed timestamp)
      */
-    function _validatePaymasterUserOp(
-        PackedUserOperation calldata userOp_,
-        bytes32 userOpHash_,
-        uint256 maxCost_
-    ) internal virtual returns (bytes memory context, uint256 validationData);
+    function _validatePaymasterUserOp(PackedUserOperation calldata userOp_, bytes32 userOpHash_, uint256 maxCost_)
+        internal
+        virtual
+        returns (bytes memory context, uint256 validationData);
 
     /**
      * @notice Handles post-operation logic after user operation execution
@@ -244,12 +223,10 @@ abstract contract BasePaymaster is
      * @param actualUserOpFeePerGas_ The gas price paid by this UserOp
      * @custom:throws PostOpNotImplemented if not overridden by inheriting contract
      */
-    function _postOp(
-        PostOpMode mode_,
-        bytes calldata context_,
-        uint256 actualGasCost_,
-        uint256 actualUserOpFeePerGas_
-    ) internal virtual {
+    function _postOp(PostOpMode mode_, bytes calldata context_, uint256 actualGasCost_, uint256 actualUserOpFeePerGas_)
+        internal
+        virtual
+    {
         (mode_, context_, actualGasCost_, actualUserOpFeePerGas_); // unused params
         // subclass must override this method if validatePaymasterUserOp returns a context
         revert PostOpNotImplemented();
@@ -273,14 +250,8 @@ abstract contract BasePaymaster is
      * @param entryPoint_ The EntryPoint contract to validate
      * @custom:throws InvalidEntryPointInterface if the address doesn't implement IEntryPoint
      */
-    function _validateEntryPointInterface(
-        IEntryPoint entryPoint_
-    ) internal virtual {
-        if (
-            !IERC165(address(entryPoint_)).supportsInterface(
-                type(IEntryPoint).interfaceId
-            )
-        ) {
+    function _validateEntryPointInterface(IEntryPoint entryPoint_) internal virtual {
+        if (!IERC165(address(entryPoint_)).supportsInterface(type(IEntryPoint).interfaceId)) {
             revert InvalidEntryPointInterface();
         }
     }

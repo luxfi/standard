@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {IFinder} from "./interfaces/IFinder.sol";
+import { Ownable2Step, Ownable } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { IFinder } from "./interfaces/IFinder.sol";
 
 /**
  * @title Finder
@@ -21,17 +21,18 @@ contract Finder is IFinder, Ownable2Step {
      * @notice Constructs the Finder contract.
      * @param initialOwner The initial owner of the contract.
      */
-    constructor(address initialOwner) Ownable(initialOwner) {}
+    constructor(address initialOwner) Ownable(initialOwner) { }
 
     /**
      * @notice Updates the address of the contract that implements `interfaceName`.
      * @param interfaceName bytes32 of the interface name that is either changed or registered.
      * @param implementationAddress address of the implementation contract.
      */
-    function changeImplementationAddress(
-        bytes32 interfaceName,
-        address implementationAddress
-    ) external override onlyOwner {
+    function changeImplementationAddress(bytes32 interfaceName, address implementationAddress)
+        external
+        override
+        onlyOwner
+    {
         interfacesImplemented[interfaceName] = implementationAddress;
         emit InterfaceImplementationChanged(interfaceName, implementationAddress);
     }

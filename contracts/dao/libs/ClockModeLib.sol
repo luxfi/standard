@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {ClockMode} from "../interfaces/ClockMode.sol";
-import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
+import { ClockMode } from "../interfaces/ClockMode.sol";
+import { IERC6372 } from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 
 /**
  * @title ClockModeLib
@@ -30,9 +30,10 @@ import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
  * @custom:security-contact security@lux.network
  */
 library ClockModeLib {
-    /** @notice Pre-computed hash of "mode=timestamp" for gas efficiency */
-    bytes32 internal constant CLOCK_MODE_TIMESTAMP_BYTES32 =
-        keccak256("mode=timestamp");
+    /**
+     * @notice Pre-computed hash of "mode=timestamp" for gas efficiency
+     */
+    bytes32 internal constant CLOCK_MODE_TIMESTAMP_BYTES32 = keccak256("mode=timestamp");
 
     /**
      * @notice Detects the clock mode used by a token

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IWarp, WarpLib} from "../../bridge/interfaces/IWarpMessenger.sol";
-import {IClaims} from "../claims/interfaces/IClaims.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IWarp, WarpLib } from "../../bridge/interfaces/IWarpMessenger.sol";
+import { IClaims } from "../claims/interfaces/IClaims.sol";
 
 /**
  * @title IResolver
@@ -70,19 +70,19 @@ contract Relay is Ownable, ReentrancyGuard {
 
     /// @notice Cross-chain assertion data
     struct Assertion {
-        bytes32 assertionId;        // Unique assertion ID
-        bytes32 marketId;           // Associated market ID
-        bytes32 sourceChainId;      // Chain where assertion originated
-        address asserter;           // Original asserter address
-        bytes32 questionId;         // CTF question ID
-        uint256 outcomeSlotCount;   // Number of outcomes
-        uint256 proposalBond;       // Bond amount
-        uint256 liveness;           // Liveness period in seconds
-        uint256 createdAt;          // Creation timestamp
-        uint256 resolvedAt;         // Resolution timestamp
-        AssertionStatus status;     // Current status
-        uint256[] payouts;          // Resolution payouts
-        bytes ancillaryData;        // Assertion data
+        bytes32 assertionId; // Unique assertion ID
+        bytes32 marketId; // Associated market ID
+        bytes32 sourceChainId; // Chain where assertion originated
+        address asserter; // Original asserter address
+        bytes32 questionId; // CTF question ID
+        uint256 outcomeSlotCount; // Number of outcomes
+        uint256 proposalBond; // Bond amount
+        uint256 liveness; // Liveness period in seconds
+        uint256 createdAt; // Creation timestamp
+        uint256 resolvedAt; // Resolution timestamp
+        AssertionStatus status; // Current status
+        uint256[] payouts; // Resolution payouts
+        bytes ancillaryData; // Assertion data
     }
 
     /// @notice Warp message types
@@ -144,22 +144,11 @@ contract Relay is Ownable, ReentrancyGuard {
         bytes32 questionId
     );
 
-    event AssertionForwarded(
-        bytes32 indexed assertionId,
-        bytes32 indexed oracleQuestionId
-    );
+    event AssertionForwarded(bytes32 indexed assertionId, bytes32 indexed oracleQuestionId);
 
-    event AssertionResolved(
-        bytes32 indexed assertionId,
-        bytes32 indexed marketId,
-        uint256[] payouts
-    );
+    event AssertionResolved(bytes32 indexed assertionId, bytes32 indexed marketId, uint256[] payouts);
 
-    event ResolutionBroadcast(
-        bytes32 indexed assertionId,
-        bytes32 indexed targetChainId,
-        bytes32 messageId
-    );
+    event ResolutionBroadcast(bytes32 indexed assertionId, bytes32 indexed targetChainId, bytes32 messageId);
 
     event AuthorizedHubSet(bytes32 indexed chainId, address hub);
     event MarketHubSet(address indexed marketHub);
@@ -190,13 +179,9 @@ contract Relay is Ownable, ReentrancyGuard {
      * @param _reward Default reward amount
      * @param _bond Default proposal bond
      */
-    constructor(
-        address _resolver,
-        address _claims,
-        address _rewardToken,
-        uint256 _reward,
-        uint256 _bond
-    ) Ownable(msg.sender) {
+    constructor(address _resolver, address _claims, address _rewardToken, uint256 _reward, uint256 _bond)
+        Ownable(msg.sender)
+    {
         if (_resolver == address(0) || _claims == address(0)) revert ZeroAddress();
 
         thisChainId = WarpLib.getBlockchainID();
@@ -249,8 +234,7 @@ contract Relay is Ownable, ReentrancyGuard {
      * @notice Handle assertion request from spoke chain
      */
     function _handleAssertionRequest(bytes32 sourceChainId, bytes memory payload) internal {
-        (
-            ,  // MessageType
+        (, // MessageType
             bytes32 marketId,
             address asserter,
             bytes32 questionId,
@@ -258,16 +242,10 @@ contract Relay is Ownable, ReentrancyGuard {
             uint256 proposalBond,
             uint256 liveness,
             bytes memory ancillaryData
-        ) = abi.decode(payload, (
-            MessageType, bytes32, address, bytes32, uint256, uint256, uint256, bytes
-        ));
+        ) = abi.decode(payload, (MessageType, bytes32, address, bytes32, uint256, uint256, uint256, bytes));
 
         // Generate unique assertion ID
-        bytes32 assertionId = keccak256(abi.encodePacked(
-            sourceChainId,
-            marketId,
-            assertionNonce++
-        ));
+        bytes32 assertionId = keccak256(abi.encodePacked(sourceChainId, marketId, assertionNonce++));
 
         if (assertions[assertionId].status != AssertionStatus.Unknown) revert AssertionAlreadyExists();
 
@@ -311,11 +289,7 @@ contract Relay is Ownable, ReentrancyGuard {
 
         // Initialize question on Oracle
         bytes32 oracleQuestionId = resolver.initialize(
-            assertion.ancillaryData,
-            defaultRewardToken,
-            defaultReward,
-            assertion.proposalBond,
-            assertion.liveness
+            assertion.ancillaryData, defaultRewardToken, defaultReward, assertion.proposalBond, assertion.liveness
         );
 
         // Map oracle question to our assertion
@@ -329,7 +303,7 @@ contract Relay is Ownable, ReentrancyGuard {
      */
     function _handleDisputeRequest(bytes memory payload) internal {
         // Future: Handle cross-chain disputes
-        (payload);  // Suppress unused warning
+        (payload); // Suppress unused warning
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -427,11 +401,7 @@ contract Relay is Ownable, ReentrancyGuard {
         uint256 liveness,
         bytes calldata ancillaryData
     ) external nonReentrant returns (bytes32 assertionId) {
-        assertionId = keccak256(abi.encodePacked(
-            thisChainId,
-            marketId,
-            assertionNonce++
-        ));
+        assertionId = keccak256(abi.encodePacked(thisChainId, marketId, assertionNonce++));
 
         if (proposalBond == 0) proposalBond = defaultBond;
         if (liveness == 0) liveness = defaultLiveness;
@@ -488,12 +458,7 @@ contract Relay is Ownable, ReentrancyGuard {
      * @param bond Proposal bond
      * @param liveness Liveness period
      */
-    function setDefaults(
-        address rewardToken,
-        uint256 reward,
-        uint256 bond,
-        uint256 liveness
-    ) external onlyOwner {
+    function setDefaults(address rewardToken, uint256 reward, uint256 bond, uint256 liveness) external onlyOwner {
         defaultRewardToken = rewardToken;
         defaultReward = reward;
         defaultBond = bond;
@@ -507,11 +472,7 @@ contract Relay is Ownable, ReentrancyGuard {
      * @param to Recipient
      * @param amount Amount
      */
-    function rescueTokens(
-        address token,
-        address to,
-        uint256 amount
-    ) external onlyOwner {
+    function rescueTokens(address token, address to, uint256 amount) external onlyOwner {
         IERC20(token).safeTransfer(to, amount);
     }
 

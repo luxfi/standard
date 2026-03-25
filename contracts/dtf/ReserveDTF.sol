@@ -2,11 +2,11 @@
 // Copyright (c) 2026 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title ReserveDTF
 /// @notice Basket/set token primitive for Reserve-style DTF categories:
@@ -67,7 +67,9 @@ contract ReserveDTF is ERC20, AccessControl, ReentrancyGuard {
     event Redeemed(address indexed account, uint256 sharesIn);
     event YieldHarvested(address indexed caller, address indexed token, uint256 amount);
     event ManagementFeeAccrued(uint256 sharesMinted);
-    event RebalanceStarted(uint64 startTime, uint64 endTime, uint16 startPremiumBps, uint16 endPremiumBps, bytes32 basketHash);
+    event RebalanceStarted(
+        uint64 startTime, uint64 endTime, uint16 startPremiumBps, uint16 endPremiumBps, bytes32 basketHash
+    );
     event RebalanceFinished(bytes32 executedBasketHash);
 
     Category public immutable category;
@@ -154,7 +156,7 @@ contract ReserveDTF is ERC20, AccessControl, ReentrancyGuard {
         if (weightBps == 0) revert InvalidBps();
         if (category == Category.STABLE && yieldBearing) revert InvalidConfig();
 
-        _components.push(Component({token: token, targetWeightBps: weightBps, yieldBearing: yieldBearing}));
+        _components.push(Component({ token: token, targetWeightBps: weightBps, yieldBearing: yieldBearing }));
         _componentIndexPlusOne[token] = _components.length;
         isComponent[token] = true;
         totalTargetWeightBps += weightBps;
@@ -257,12 +259,10 @@ contract ReserveDTF is ERC20, AccessControl, ReentrancyGuard {
         return _accrueManagementFee();
     }
 
-    function startRebalanceAuction(
-        uint64 duration,
-        uint16 startPremiumBps,
-        uint16 endPremiumBps,
-        bytes32 basketHash
-    ) external onlyRole(REBALANCER_ROLE) {
+    function startRebalanceAuction(uint64 duration, uint16 startPremiumBps, uint16 endPremiumBps, bytes32 basketHash)
+        external
+        onlyRole(REBALANCER_ROLE)
+    {
         if (category != Category.INDEX) revert WrongCategory();
         if (auction.active) revert AuctionActive();
         if (duration == 0 || basketHash == bytes32(0)) revert InvalidConfig();

@@ -1,24 +1,22 @@
 // SPDX-License-Identifier: MIT
 
-import {Governable} from "../access/Governable.sol";
-import {IShortsTracker} from "../core/interfaces/IShortsTracker.sol";
-import {IHandlerTarget} from "./interfaces/IHandlerTarget.sol";
+import { Governable } from "../access/Governable.sol";
+import { IShortsTracker } from "../core/interfaces/IShortsTracker.sol";
+import { IHandlerTarget } from "./interfaces/IHandlerTarget.sol";
 
 pragma solidity ^0.8.31;
 
 contract ShortsTrackerTimelock {
-    
-
     uint256 public constant BASIS_POINTS_DIVISOR = 10000;
     uint256 public constant MAX_BUFFER = 5 days;
 
-    mapping (bytes32 => uint256) public pendingActions;
+    mapping(bytes32 => uint256) public pendingActions;
 
     address public admin;
     uint256 public buffer;
 
-    mapping (address => bool) public isHandler;
-    mapping (address => uint256) public lastUpdated;
+    mapping(address => bool) public isHandler;
+    mapping(address => uint256) public lastUpdated;
     uint256 public averagePriceUpdateDelay;
     uint256 public maxAveragePriceChange;
 
@@ -45,12 +43,9 @@ contract ShortsTrackerTimelock {
     event SignalPendingAction(bytes32 action);
     event ClearAction(bytes32 action);
 
-    constructor(
-        address _admin,
-        uint256 _buffer,
-        uint256 _averagePriceUpdateDelay,
-        uint256 _maxAveragePriceChange
-    ) public {
+    constructor(address _admin, uint256 _buffer, uint256 _averagePriceUpdateDelay, uint256 _maxAveragePriceChange)
+        public
+    {
         admin = _admin;
         buffer = _buffer;
         averagePriceUpdateDelay = _averagePriceUpdateDelay;
@@ -187,15 +182,24 @@ contract ShortsTrackerTimelock {
         emit SetIsGlobalShortDataReady(address(_shortsTracker), false);
     }
 
-    function setGlobalShortAveragePrices(IShortsTracker _shortsTracker, address[] calldata _tokens, uint256[] calldata _averagePrices) external onlyHandler {
+    function setGlobalShortAveragePrices(
+        IShortsTracker _shortsTracker,
+        address[] calldata _tokens,
+        uint256[] calldata _averagePrices
+    ) external onlyHandler {
         _shortsTracker.setIsGlobalShortDataReady(false);
 
         for (uint256 i = 0; i < _tokens.length; i++) {
             address token = _tokens[i];
             uint256 oldAveragePrice = _shortsTracker.globalShortAveragePrices(token);
             uint256 newAveragePrice = _averagePrices[i];
-            uint256 diff = newAveragePrice > oldAveragePrice ? newAveragePrice - oldAveragePrice : oldAveragePrice - newAveragePrice;
-            require(diff * BASIS_POINTS_DIVISOR / oldAveragePrice < maxAveragePriceChange, "ShortsTrackerTimelock: too big change");
+            uint256 diff = newAveragePrice > oldAveragePrice
+                ? newAveragePrice - oldAveragePrice
+                : oldAveragePrice - newAveragePrice;
+            require(
+                diff * BASIS_POINTS_DIVISOR / oldAveragePrice < maxAveragePriceChange,
+                "ShortsTrackerTimelock: too big change"
+            );
 
             require(block.timestamp >= lastUpdated[token] + averagePriceUpdateDelay, "ShortsTrackerTimelock: too early");
             lastUpdated[token] = block.timestamp;

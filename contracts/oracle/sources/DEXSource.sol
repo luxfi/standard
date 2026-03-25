@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {IOracleSource} from "../interfaces/IOracleSource.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IOracleSource } from "../interfaces/IOracleSource.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /// @notice DEX precompile pool manager interface (subset needed for pricing)
 interface IPoolManagerOracle {
-    function getPool(
-        address currency0,
-        address currency1,
-        uint24 fee,
-        int24 tickSpacing,
-        address hooks
-    ) external view returns (uint160 sqrtPriceX96, int24 tick, uint128 liquidity);
+    function getPool(address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks)
+        external
+        view
+        returns (uint160 sqrtPriceX96, int24 tick, uint128 liquidity);
 }
 
 /// @title DEXSource
@@ -32,12 +29,12 @@ contract DEXSource is IOracleSource, AccessControl {
 
     /// @notice Pool configuration for each asset
     struct PoolConfig {
-        address currency0;      // Lower address token
-        address currency1;      // Higher address token
-        uint24 fee;             // Fee tier (e.g., 3000 = 0.30%)
-        int24 tickSpacing;      // Tick spacing
-        address hooks;          // Hook address (0x0 for none)
-        bool assetIsCurrency0;  // True if asset is currency0
+        address currency0; // Lower address token
+        address currency1; // Higher address token
+        uint24 fee; // Fee tier (e.g., 3000 = 0.30%)
+        int24 tickSpacing; // Tick spacing
+        address hooks; // Hook address (0x0 for none)
+        bool assetIsCurrency0; // True if asset is currency0
     }
     mapping(address => PoolConfig) public poolConfigs;
 
@@ -66,12 +63,7 @@ contract DEXSource is IOracleSource, AccessControl {
     /// @param fee Fee tier (e.g., 3000 for 0.30%)
     /// @param tickSpacing Tick spacing for the pool
     /// @param hooks Hook contract address (address(0) for none)
-    function setPool(
-        address asset,
-        uint24 fee,
-        int24 tickSpacing,
-        address hooks
-    ) external onlyRole(ADMIN_ROLE) {
+    function setPool(address asset, uint24 fee, int24 tickSpacing, address hooks) external onlyRole(ADMIN_ROLE) {
         // Sort currencies (required by pool key)
         (address currency0, address currency1, bool assetIsCurrency0) = _sortCurrencies(asset, quoteToken);
 
@@ -102,7 +94,7 @@ contract DEXSource is IOracleSource, AccessControl {
         if (config.currency0 == address(0)) revert PoolNotConfigured(asset);
 
         // Call PoolManager precompile
-        (uint160 sqrtPriceX96, , uint128 liquidity) = _getPool(config);
+        (uint160 sqrtPriceX96,, uint128 liquidity) = _getPool(config);
 
         if (sqrtPriceX96 == 0) revert PoolNotInitialized(asset);
         if (liquidity < minLiquidity) revert InsufficientLiquidity(asset, liquidity);
@@ -144,7 +136,7 @@ contract DEXSource is IOracleSource, AccessControl {
         PoolConfig memory config = poolConfigs[asset];
         if (config.currency0 == address(0)) revert PoolNotConfigured(asset);
 
-        (, tick, ) = _getPool(config);
+        (, tick,) = _getPool(config);
     }
 
     /// @notice Get current liquidity for an asset
@@ -154,7 +146,7 @@ contract DEXSource is IOracleSource, AccessControl {
         PoolConfig memory config = poolConfigs[asset];
         if (config.currency0 == address(0)) revert PoolNotConfigured(asset);
 
-        (, , liquidity) = _getPool(config);
+        (,, liquidity) = _getPool(config);
     }
 
     // =========================================================================
@@ -162,7 +154,9 @@ contract DEXSource is IOracleSource, AccessControl {
     // =========================================================================
 
     function _getPool(PoolConfig memory config)
-        internal view returns (uint160 sqrtPriceX96, int24 tick, uint128 liquidity)
+        internal
+        view
+        returns (uint160 sqrtPriceX96, int24 tick, uint128 liquidity)
     {
         // Static call to precompile
         (bool success, bytes memory data) = POOL_MANAGER.staticcall(
@@ -186,7 +180,9 @@ contract DEXSource is IOracleSource, AccessControl {
     }
 
     function _sortCurrencies(address tokenA, address tokenB)
-        internal pure returns (address currency0, address currency1, bool aIsCurrency0)
+        internal
+        pure
+        returns (address currency0, address currency1, bool aIsCurrency0)
     {
         if (tokenA < tokenB) {
             return (tokenA, tokenB, true);
@@ -194,9 +190,7 @@ contract DEXSource is IOracleSource, AccessControl {
         return (tokenB, tokenA, false);
     }
 
-    function _sqrtPriceX96ToPrice(uint160 sqrtPriceX96, bool assetIsCurrency0)
-        internal pure returns (uint256 price)
-    {
+    function _sqrtPriceX96ToPrice(uint160 sqrtPriceX96, bool assetIsCurrency0) internal pure returns (uint256 price) {
         // sqrtPriceX96 = sqrt(currency1/currency0) * 2^96
         // price (currency0 in terms of currency1) = (sqrtPriceX96 / 2^96)^2
 

@@ -1,32 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IStrategyV1} from "../../interfaces/deployables/IStrategyV1.sol";
-import {
-    IVotingTypes
-} from "../../interfaces/deployables/IVotingTypes.sol";
-import {
-    IVotingWeightV1
-} from "../../interfaces/deployables/IVotingWeightV1.sol";
-import {
-    IVoteTrackerV1
-} from "../../interfaces/deployables/IVoteTrackerV1.sol";
-import {
-    IProposerAdapterBaseV1
-} from "../../interfaces/deployables/IProposerAdapterBaseV1.sol";
-import {
-    ILightAccountValidator
-} from "../../interfaces/deployables/ILightAccountValidator.sol";
-import {IVersion} from "../../interfaces/deployables/IVersion.sol";
-import {IDeploymentBlock} from "../../interfaces/IDeploymentBlock.sol";
-import {
-    LightAccountValidator
-} from "../account-abstraction/LightAccountValidator.sol";
-import {
-    DeploymentBlockInitializable
-} from "../../DeploymentBlockInitializable.sol";
-import {InitializerEventEmitter} from "../../InitializerEventEmitter.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { IStrategyV1 } from "../../interfaces/deployables/IStrategyV1.sol";
+import { IVotingTypes } from "../../interfaces/deployables/IVotingTypes.sol";
+import { IVotingWeightV1 } from "../../interfaces/deployables/IVotingWeightV1.sol";
+import { IVoteTrackerV1 } from "../../interfaces/deployables/IVoteTrackerV1.sol";
+import { IProposerAdapterBaseV1 } from "../../interfaces/deployables/IProposerAdapterBaseV1.sol";
+import { ILightAccountValidator } from "../../interfaces/deployables/ILightAccountValidator.sol";
+import { IVersion } from "../../interfaces/deployables/IVersion.sol";
+import { IDeploymentBlock } from "../../interfaces/IDeploymentBlock.sol";
+import { LightAccountValidator } from "../account-abstraction/LightAccountValidator.sol";
+import { DeploymentBlockInitializable } from "../../DeploymentBlockInitializable.sol";
+import { InitializerEventEmitter } from "../../InitializerEventEmitter.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
  * @title StrategyV1
@@ -64,27 +50,49 @@ contract StrategyV1 is
      * @custom:storage-location erc7201:DAO.Strategy.main
      */
     struct StrategyStorage {
-        /** @notice Address that can initialize proposals and manage freeze voters (typically Governor) */
+        /**
+         * @notice Address that can initialize proposals and manage freeze voters (typically Governor)
+         */
         address strategyAdmin;
-        /** @notice Fixed duration in seconds for all proposal voting periods */
+        /**
+         * @notice Fixed duration in seconds for all proposal voting periods
+         */
         uint32 votingPeriod;
-        /** @notice Minimum total weight (YES + ABSTAIN) required for quorum */
+        /**
+         * @notice Minimum total weight (YES + ABSTAIN) required for quorum
+         */
         uint256 quorumThreshold;
-        /** @notice Numerator for basis calculation (denominator is 1,000,000) */
+        /**
+         * @notice Numerator for basis calculation (denominator is 1,000,000)
+         */
         uint256 basisNumerator;
-        /** @notice Mapping from proposal ID to voting details and tallies */
+        /**
+         * @notice Mapping from proposal ID to voting details and tallies
+         */
         mapping(uint32 proposalId => ProposalVotingDetails proposalVotingDetails) proposalVotingDetails;
-        /** @notice Array of configured voting configurations */
+        /**
+         * @notice Array of configured voting configurations
+         */
         IVotingTypes.VotingConfig[] votingConfigs;
-        /** @notice Array of configured proposer adapter addresses */
+        /**
+         * @notice Array of configured proposer adapter addresses
+         */
         address[] proposerAdapters;
-        /** @notice Quick lookup for valid proposer adapters */
+        /**
+         * @notice Quick lookup for valid proposer adapters
+         */
         mapping(address proposerAdapter => bool isProposerAdapter) isProposerAdapter;
-        /** @notice Tracks authorized freeze voting contracts */
+        /**
+         * @notice Tracks authorized freeze voting contracts
+         */
         mapping(address freezeVoterContract => bool isAuthorizedFreezeVoter) authorizedFreezeVotersMapping;
-        /** @notice Array of authorized freeze voter addresses for enumeration */
+        /**
+         * @notice Array of authorized freeze voter addresses for enumeration
+         */
         address[] authorizedFreezeVotersArray;
-        /** @notice Tracks if someone tried to vote after voting period ended */
+        /**
+         * @notice Tracks if someone tried to vote after voting period ended
+         */
         mapping(uint32 proposalId => bool voteCastedAfterVotingPeriodEnded) voteCastedAfterVotingPeriodEnded;
     }
 
@@ -100,11 +108,7 @@ contract StrategyV1 is
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      * @return $ The storage struct for StrategyV1
      */
-    function _getStrategyStorage()
-        internal
-        pure
-        returns (StrategyStorage storage $)
-    {
+    function _getStrategyStorage() internal pure returns (StrategyStorage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := STRATEGY_STORAGE_LOCATION
@@ -157,22 +161,15 @@ contract StrategyV1 is
 
         // Validate basis numerator is within acceptable range
         // Must be at least 50% (500,000) and less than 100% (1,000,000)
-        if (
-            basisNumerator_ >= BASIS_DENOMINATOR ||
-            basisNumerator_ < BASIS_DENOMINATOR / 2
-        ) revert InvalidBasisNumerator();
+        if (basisNumerator_ >= BASIS_DENOMINATOR || basisNumerator_ < BASIS_DENOMINATOR / 2) {
+            revert InvalidBasisNumerator();
+        }
 
         // Initialize parent contracts
         __LightAccountValidator_init(lightAccountFactory_);
         __DeploymentBlockInitializable_init();
         __InitializerEventEmitter_init(
-            abi.encode(
-                votingPeriod_,
-                quorumThreshold_,
-                basisNumerator_,
-                proposerAdapters_,
-                lightAccountFactory_
-            )
+            abi.encode(votingPeriod_, quorumThreshold_, basisNumerator_, proposerAdapters_, lightAccountFactory_)
         );
 
         // Store voting configuration
@@ -183,7 +180,7 @@ contract StrategyV1 is
         $.proposerAdapters = proposerAdapters_;
 
         // Mark all provided adapters as valid proposer adapters
-        for (uint256 i = 0; i < proposerAdapters_.length; ) {
+        for (uint256 i = 0; i < proposerAdapters_.length;) {
             $.isProposerAdapter[proposerAdapters_[i]] = true;
             unchecked {
                 ++i;
@@ -194,10 +191,12 @@ contract StrategyV1 is
     /**
      * @inheritdoc IStrategyV1
      */
-    function initialize2(
-        address strategyAdmin_,
-        IVotingTypes.VotingConfig[] calldata votingConfigs_
-    ) public virtual override reinitializer(2) {
+    function initialize2(address strategyAdmin_, IVotingTypes.VotingConfig[] calldata votingConfigs_)
+        public
+        virtual
+        override
+        reinitializer(2)
+    {
         // Validate at least one voting config is provided
         if (votingConfigs_.length == 0) {
             revert NoVotingConfigs();
@@ -209,7 +208,7 @@ contract StrategyV1 is
         $.strategyAdmin = strategyAdmin_;
 
         // Store the array of voting configurations
-        for (uint256 i = 0; i < votingConfigs_.length; ) {
+        for (uint256 i = 0; i < votingConfigs_.length;) {
             $.votingConfigs.push(votingConfigs_[i]);
             unchecked {
                 ++i;
@@ -258,9 +257,13 @@ contract StrategyV1 is
     /**
      * @inheritdoc IStrategyV1
      */
-    function proposalVotingDetails(
-        uint32 proposalId
-    ) public view virtual override returns (ProposalVotingDetails memory) {
+    function proposalVotingDetails(uint32 proposalId)
+        public
+        view
+        virtual
+        override
+        returns (ProposalVotingDetails memory)
+    {
         StrategyStorage storage $ = _getStrategyStorage();
         return $.proposalVotingDetails[proposalId];
     }
@@ -268,13 +271,7 @@ contract StrategyV1 is
     /**
      * @inheritdoc IStrategyV1
      */
-    function votingConfigs()
-        public
-        view
-        virtual
-        override
-        returns (IVotingTypes.VotingConfig[] memory)
-    {
+    function votingConfigs() public view virtual override returns (IVotingTypes.VotingConfig[] memory) {
         StrategyStorage storage $ = _getStrategyStorage();
         return $.votingConfigs;
     }
@@ -282,9 +279,13 @@ contract StrategyV1 is
     /**
      * @inheritdoc IStrategyV1
      */
-    function votingConfig(
-        uint256 configIndex_
-    ) public view virtual override returns (IVotingTypes.VotingConfig memory) {
+    function votingConfig(uint256 configIndex_)
+        public
+        view
+        virtual
+        override
+        returns (IVotingTypes.VotingConfig memory)
+    {
         StrategyStorage storage $ = _getStrategyStorage();
         if (configIndex_ >= $.votingConfigs.length) {
             revert InvalidVotingConfig(configIndex_);
@@ -295,9 +296,7 @@ contract StrategyV1 is
     /**
      * @inheritdoc IStrategyV1
      */
-    function isProposerAdapter(
-        address proposerAdapter_
-    ) public view virtual override returns (bool) {
+    function isProposerAdapter(address proposerAdapter_) public view virtual override returns (bool) {
         StrategyStorage storage $ = _getStrategyStorage();
         return $.isProposerAdapter[proposerAdapter_];
     }
@@ -305,13 +304,7 @@ contract StrategyV1 is
     /**
      * @inheritdoc IStrategyV1
      */
-    function proposerAdapters()
-        public
-        view
-        virtual
-        override
-        returns (address[] memory)
-    {
+    function proposerAdapters() public view virtual override returns (address[] memory) {
         StrategyStorage storage $ = _getStrategyStorage();
         return $.proposerAdapters;
     }
@@ -319,9 +312,7 @@ contract StrategyV1 is
     /**
      * @inheritdoc IStrategyV1
      */
-    function voteCastedAfterVotingPeriodEnded(
-        uint32 proposalId_
-    ) public view virtual override returns (bool) {
+    function voteCastedAfterVotingPeriodEnded(uint32 proposalId_) public view virtual override returns (bool) {
         StrategyStorage storage $ = _getStrategyStorage();
         return $.voteCastedAfterVotingPeriodEnded[proposalId_];
     }
@@ -330,13 +321,9 @@ contract StrategyV1 is
      * @inheritdoc IStrategyV1
      * @dev Calculates quorum based on YES + ABSTAIN votes. NO votes do not contribute to quorum.
      */
-    function isQuorumMet(
-        uint32 proposalId_
-    ) public view virtual override returns (bool) {
+    function isQuorumMet(uint32 proposalId_) public view virtual override returns (bool) {
         StrategyStorage storage $ = _getStrategyStorage();
-        ProposalVotingDetails storage proposal = $.proposalVotingDetails[
-            proposalId_
-        ];
+        ProposalVotingDetails storage proposal = $.proposalVotingDetails[proposalId_];
 
         if (proposal.votingEndTimestamp == 0) {
             revert ProposalNotInitialized();
@@ -351,21 +338,15 @@ contract StrategyV1 is
      * @dev Uses integer multiplication to avoid division precision loss.
      * Formula: yesVotes * BASIS_DENOMINATOR > (yesVotes + noVotes) * basisNumerator
      */
-    function isBasisMet(
-        uint32 _proposalId
-    ) public view virtual override returns (bool) {
+    function isBasisMet(uint32 _proposalId) public view virtual override returns (bool) {
         StrategyStorage storage $ = _getStrategyStorage();
-        ProposalVotingDetails storage proposal = $.proposalVotingDetails[
-            _proposalId
-        ];
+        ProposalVotingDetails storage proposal = $.proposalVotingDetails[_proposalId];
 
         if (proposal.votingEndTimestamp == 0) {
             revert ProposalNotInitialized();
         }
 
-        return
-            (proposal.yesVotes * BASIS_DENOMINATOR) >
-            ((proposal.yesVotes + proposal.noVotes) * $.basisNumerator);
+        return (proposal.yesVotes * BASIS_DENOMINATOR) > ((proposal.yesVotes + proposal.noVotes) * $.basisNumerator);
     }
 
     /**
@@ -375,13 +356,9 @@ contract StrategyV1 is
      * 2. Quorum is met (YES + ABSTAIN votes >= quorumThreshold)
      * 3. Basis is met (YES votes exceed required percentage of YES + NO votes)
      */
-    function isPassed(
-        uint32 _proposalId
-    ) public view virtual override returns (bool) {
+    function isPassed(uint32 _proposalId) public view virtual override returns (bool) {
         StrategyStorage storage $ = _getStrategyStorage();
-        ProposalVotingDetails storage proposal = $.proposalVotingDetails[
-            _proposalId
-        ];
+        ProposalVotingDetails storage proposal = $.proposalVotingDetails[_proposalId];
 
         if (proposal.votingEndTimestamp == 0) {
             revert ProposalNotInitialized();
@@ -398,33 +375,27 @@ contract StrategyV1 is
      * @inheritdoc IStrategyV1
      * @dev Delegates the eligibility check to the specified proposer adapter
      */
-    function isProposer(
-        address address_,
-        address proposerAdapter_,
-        bytes calldata proposerAdapterData_
-    ) public view virtual override returns (bool) {
+    function isProposer(address address_, address proposerAdapter_, bytes calldata proposerAdapterData_)
+        public
+        view
+        virtual
+        override
+        returns (bool)
+    {
         StrategyStorage storage $ = _getStrategyStorage();
         if (!$.isProposerAdapter[proposerAdapter_]) {
             revert InvalidProposerAdapter();
         }
 
-        return
-            IProposerAdapterBaseV1(proposerAdapter_).isProposer(
-                address_,
-                proposerAdapterData_
-            );
+        return IProposerAdapterBaseV1(proposerAdapter_).isProposer(address_, proposerAdapterData_);
     }
 
     /**
      * @inheritdoc IStrategyV1
      */
-    function getVotingTimestamps(
-        uint32 proposalId_
-    ) public view virtual override returns (uint48, uint48) {
+    function getVotingTimestamps(uint32 proposalId_) public view virtual override returns (uint48, uint48) {
         StrategyStorage storage $ = _getStrategyStorage();
-        ProposalVotingDetails storage details = $.proposalVotingDetails[
-            proposalId_
-        ];
+        ProposalVotingDetails storage details = $.proposalVotingDetails[proposalId_];
         if (details.votingEndTimestamp == 0) revert ProposalNotInitialized();
         return (details.votingStartTimestamp, details.votingEndTimestamp);
     }
@@ -432,13 +403,9 @@ contract StrategyV1 is
     /**
      * @inheritdoc IStrategyV1
      */
-    function getVotingStartBlock(
-        uint32 proposalId_
-    ) public view virtual override returns (uint32) {
+    function getVotingStartBlock(uint32 proposalId_) public view virtual override returns (uint32) {
         StrategyStorage storage $ = _getStrategyStorage();
-        ProposalVotingDetails storage details = $.proposalVotingDetails[
-            proposalId_
-        ];
+        ProposalVotingDetails storage details = $.proposalVotingDetails[proposalId_];
         if (details.votingEndTimestamp == 0) revert ProposalNotInitialized();
         return details.votingStartBlock;
     }
@@ -446,9 +413,7 @@ contract StrategyV1 is
     /**
      * @inheritdoc IStrategyV1
      */
-    function isAuthorizedFreezeVoter(
-        address freezeVoterContract_
-    ) public view virtual override returns (bool) {
+    function isAuthorizedFreezeVoter(address freezeVoterContract_) public view virtual override returns (bool) {
         StrategyStorage storage $ = _getStrategyStorage();
         return $.authorizedFreezeVotersMapping[freezeVoterContract_];
     }
@@ -456,13 +421,7 @@ contract StrategyV1 is
     /**
      * @inheritdoc IStrategyV1
      */
-    function authorizedFreezeVoters()
-        public
-        view
-        virtual
-        override
-        returns (address[] memory)
-    {
+    function authorizedFreezeVoters() public view virtual override returns (address[] memory) {
         StrategyStorage storage $ = _getStrategyStorage();
         return $.authorizedFreezeVotersArray;
     }
@@ -500,9 +459,7 @@ contract StrategyV1 is
         StrategyStorage storage $ = _getStrategyStorage();
 
         // Step 1: Verify proposal exists by checking for initialized voting details
-        ProposalVotingDetails storage details = $.proposalVotingDetails[
-            proposalId_
-        ];
+        ProposalVotingDetails storage details = $.proposalVotingDetails[proposalId_];
 
         // Proposal doesn't exist if voting end timestamp is zero
         if (details.votingEndTimestamp == 0) {
@@ -524,40 +481,27 @@ contract StrategyV1 is
         uint256 totalVotingWeight = 0;
 
         // Step 4: Iterate through each voting config to validate and sum voting weights
-        for (uint256 i = 0; i < votingConfigsData_.length; ) {
-            IVotingTypes.VotingConfigVoteData
-                memory configData = votingConfigsData_[i];
+        for (uint256 i = 0; i < votingConfigsData_.length;) {
+            IVotingTypes.VotingConfigVoteData memory configData = votingConfigsData_[i];
 
             // Verify the config index is valid
             if (configData.configIndex >= $.votingConfigs.length) {
                 return false;
             }
 
-            IVotingTypes.VotingConfig memory config = $.votingConfigs[
-                configData.configIndex
-            ];
+            IVotingTypes.VotingConfig memory config = $.votingConfigs[configData.configIndex];
 
             // Calculate voting weight using paymaster-safe method
             // This avoids banned opcodes during ERC-4337 validation phase
             uint256 votingWeight = IVotingWeightV1(config.votingWeight)
-                .getVotingWeightForPaymaster(
-                    voter_,
-                    details.votingStartTimestamp,
-                    configData.voteData
-                );
+                .getVotingWeightForPaymaster(voter_, details.votingStartTimestamp, configData.voteData);
 
             if (votingWeight == 0) {
                 return false;
             }
 
             // Check if already voted with this config
-            if (
-                IVoteTrackerV1(config.voteTracker).hasVoted(
-                    proposalId_,
-                    voter_,
-                    configData.voteData
-                )
-            ) {
+            if (IVoteTrackerV1(config.voteTracker).hasVoted(proposalId_, voter_, configData.voteData)) {
                 return false;
             }
 
@@ -580,13 +524,9 @@ contract StrategyV1 is
      * @dev Sets voting timestamps based on current block time and configured voting period.
      * Resets all vote counts to zero, allowing proposals to be re-initialized if needed.
      */
-    function initializeProposal(
-        uint32 proposalId_
-    ) public virtual override onlyStrategyAdmin {
+    function initializeProposal(uint32 proposalId_) public virtual override onlyStrategyAdmin {
         StrategyStorage storage $ = _getStrategyStorage();
-        ProposalVotingDetails storage proposal = $.proposalVotingDetails[
-            proposalId_
-        ];
+        ProposalVotingDetails storage proposal = $.proposalVotingDetails[proposalId_];
         proposal.votingStartTimestamp = uint48(block.timestamp);
         proposal.votingEndTimestamp = uint48(block.timestamp + $.votingPeriod);
         proposal.votingStartBlock = uint32(block.number);
@@ -595,10 +535,7 @@ contract StrategyV1 is
         proposal.abstainVotes = 0;
 
         emit ProposalInitialized(
-            proposalId_,
-            proposal.votingStartTimestamp,
-            proposal.votingEndTimestamp,
-            proposal.votingStartBlock
+            proposalId_, proposal.votingStartTimestamp, proposal.votingEndTimestamp, proposal.votingStartBlock
         );
     }
 
@@ -623,15 +560,10 @@ contract StrategyV1 is
 
         // Step 1: Resolve the actual voter address (support for Light Accounts/ERC-4337)
         // If lightAccountIndex_ > 0, this resolves to the Light Account owner
-        address resolvedVoter = potentialLightAccountResolvedOwner(
-            msg.sender,
-            lightAccountIndex_
-        );
+        address resolvedVoter = potentialLightAccountResolvedOwner(msg.sender, lightAccountIndex_);
 
         StrategyStorage storage $ = _getStrategyStorage();
-        ProposalVotingDetails storage proposal = $.proposalVotingDetails[
-            proposalId_
-        ];
+        ProposalVotingDetails storage proposal = $.proposalVotingDetails[proposalId_];
 
         // Step 2: Verify the proposal has been initialized
         if (proposal.votingEndTimestamp == 0) {
@@ -653,28 +585,19 @@ contract StrategyV1 is
         // Step 4: Process votes through each config and accumulate voting weights
         uint256 totalWeightForThisVoteTransaction = 0;
 
-        for (uint256 i = 0; i < votingConfigsData_.length; ) {
-            IVotingTypes.VotingConfigVoteData
-                memory configData = votingConfigsData_[i];
+        for (uint256 i = 0; i < votingConfigsData_.length;) {
+            IVotingTypes.VotingConfigVoteData memory configData = votingConfigsData_[i];
 
             // Verify the config index is valid
             if (configData.configIndex >= $.votingConfigs.length) {
                 revert InvalidVotingConfig(configData.configIndex);
             }
 
-            IVotingTypes.VotingConfig memory config = $.votingConfigs[
-                configData.configIndex
-            ];
+            IVotingTypes.VotingConfig memory config = $.votingConfigs[configData.configIndex];
 
             // Calculate voting weight and get processed data
-            (
-                uint256 votingWeight,
-                bytes memory processedData
-            ) = IVotingWeightV1(config.votingWeight).calculateWeight(
-                    resolvedVoter,
-                    proposal.votingStartTimestamp,
-                    configData.voteData
-                );
+            (uint256 votingWeight, bytes memory processedData) = IVotingWeightV1(config.votingWeight)
+                .calculateWeight(resolvedVoter, proposal.votingStartTimestamp, configData.voteData);
 
             // Ensure valid voting weight
             if (votingWeight == 0) {
@@ -682,11 +605,7 @@ contract StrategyV1 is
             }
 
             // Record the vote to prevent double voting
-            IVoteTrackerV1(config.voteTracker).recordVote(
-                proposalId_,
-                resolvedVoter,
-                processedData
-            );
+            IVoteTrackerV1(config.voteTracker).recordVote(proposalId_, resolvedVoter, processedData);
 
             totalWeightForThisVoteTransaction += votingWeight;
 
@@ -707,12 +626,7 @@ contract StrategyV1 is
         }
 
         // Step 6: Emit voting event with aggregated weight
-        emit Voted(
-            resolvedVoter,
-            proposalId_,
-            VoteType(voteType_),
-            totalWeightForThisVoteTransaction
-        );
+        emit Voted(resolvedVoter, proposalId_, VoteType(voteType_), totalWeightForThisVoteTransaction);
     }
 
     /**
@@ -720,9 +634,7 @@ contract StrategyV1 is
      * @dev Maintains both a mapping for O(1) lookups and an array for enumeration.
      * Prevents duplicates in the array while allowing re-authorization.
      */
-    function addAuthorizedFreezeVoter(
-        address freezeVoterContract_
-    ) public virtual override onlyStrategyAdmin {
+    function addAuthorizedFreezeVoter(address freezeVoterContract_) public virtual override onlyStrategyAdmin {
         if (freezeVoterContract_ == address(0)) revert InvalidAddress();
 
         StrategyStorage storage $ = _getStrategyStorage();
@@ -740,20 +652,16 @@ contract StrategyV1 is
      * @dev Uses swap-and-pop pattern for gas-efficient array removal.
      * Sets mapping to false regardless of whether the address was previously authorized.
      */
-    function removeAuthorizedFreezeVoter(
-        address freezeVoterContract_
-    ) public virtual override onlyStrategyAdmin {
+    function removeAuthorizedFreezeVoter(address freezeVoterContract_) public virtual override onlyStrategyAdmin {
         if (freezeVoterContract_ == address(0)) revert InvalidAddress();
 
         StrategyStorage storage $ = _getStrategyStorage();
 
         if ($.authorizedFreezeVotersMapping[freezeVoterContract_]) {
-            for (uint256 i = 0; i < $.authorizedFreezeVotersArray.length; ) {
+            for (uint256 i = 0; i < $.authorizedFreezeVotersArray.length;) {
                 if ($.authorizedFreezeVotersArray[i] == freezeVoterContract_) {
-                    $.authorizedFreezeVotersArray[i] = $
-                        .authorizedFreezeVotersArray[
-                            $.authorizedFreezeVotersArray.length - 1
-                        ];
+                    $.authorizedFreezeVotersArray[i] =
+                        $.authorizedFreezeVotersArray[$.authorizedFreezeVotersArray.length - 1];
                     $.authorizedFreezeVotersArray.pop();
                     break;
                 }
@@ -791,14 +699,9 @@ contract StrategyV1 is
      * @inheritdoc ERC165
      * @dev Supports IStrategyV1, ILightAccountValidator, IVersion, IDeploymentBlock, and IERC165
      */
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId_ == type(IStrategyV1).interfaceId ||
-            interfaceId_ == type(ILightAccountValidator).interfaceId ||
-            interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            super.supportsInterface(interfaceId_);
+    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
+        return interfaceId_ == type(IStrategyV1).interfaceId || interfaceId_ == type(ILightAccountValidator).interfaceId
+            || interfaceId_ == type(IVersion).interfaceId || interfaceId_ == type(IDeploymentBlock).interfaceId
+            || super.supportsInterface(interfaceId_);
     }
 }

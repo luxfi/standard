@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {FROST} from "./FROST.sol";
-import {IERC1271, ILegacyERC1271} from "./interfaces/IERC1271.sol";
+import { FROST } from "./FROST.sol";
+import { IERC1271, ILegacyERC1271 } from "./interfaces/IERC1271.sol";
 
 /// @title Safe FROST Signer
 /// @notice Safe smart account owner that can verify FROST(secp256k1, SHA-256)

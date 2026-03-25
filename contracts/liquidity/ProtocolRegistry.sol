@@ -6,7 +6,6 @@ pragma solidity ^0.8.31;
 /// @notice Registry of all supported DeFi protocols across chains
 /// @dev Use this as reference for adapter development
 library ProtocolRegistry {
-
     /*//////////////////////////////////////////////////////////////
                               EVM - DEX
     //////////////////////////////////////////////////////////////*/
@@ -263,7 +262,7 @@ library ProtocolRegistry {
 
     struct ProtocolInfo {
         string name;
-        uint32 chainId;     // 1=ETH, 56=BSC, 42161=ARB, etc
+        uint32 chainId; // 1=ETH, 56=BSC, 42161=ARB, etc
         uint8 protocolType; // 0=DEX, 1=Lending, 2=Perps, 3=Staking, 4=Bridge
         address mainContract;
         string docs;

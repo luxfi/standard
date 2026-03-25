@@ -73,11 +73,7 @@ interface IStableSwap {
      * @param tokensBought Amount of tokens bought
      */
     event TokenExchange(
-        address indexed buyer,
-        uint256 soldId,
-        uint256 tokensSold,
-        uint256 boughtId,
-        uint256 tokensBought
+        address indexed buyer, uint256 soldId, uint256 tokensSold, uint256 boughtId, uint256 tokensBought
     );
 
     /**
@@ -89,11 +85,7 @@ interface IStableSwap {
      * @param lpTokenSupply Total LP token supply after mint
      */
     event AddLiquidity(
-        address indexed provider,
-        uint256[] tokenAmounts,
-        uint256[] fees,
-        uint256 invariant,
-        uint256 lpTokenSupply
+        address indexed provider, uint256[] tokenAmounts, uint256[] fees, uint256 invariant, uint256 lpTokenSupply
     );
 
     /**
@@ -103,12 +95,7 @@ interface IStableSwap {
      * @param fees Fees charged (zero for proportional)
      * @param lpTokenSupply Total LP token supply after burn
      */
-    event RemoveLiquidity(
-        address indexed provider,
-        uint256[] tokenAmounts,
-        uint256[] fees,
-        uint256 lpTokenSupply
-    );
+    event RemoveLiquidity(address indexed provider, uint256[] tokenAmounts, uint256[] fees, uint256 lpTokenSupply);
 
     /**
      * @notice Emitted when liquidity is removed in a single token
@@ -117,12 +104,7 @@ interface IStableSwap {
      * @param tokenAmount LP tokens burned
      * @param coinAmount Amount of token received
      */
-    event RemoveLiquidityOne(
-        address indexed provider,
-        uint256 tokenIndex,
-        uint256 tokenAmount,
-        uint256 coinAmount
-    );
+    event RemoveLiquidityOne(address indexed provider, uint256 tokenIndex, uint256 tokenAmount, uint256 coinAmount);
 
     /**
      * @notice Emitted when liquidity is removed in imbalanced amounts
@@ -133,11 +115,7 @@ interface IStableSwap {
      * @param lpTokenSupply Total LP token supply after burn
      */
     event RemoveLiquidityImbalance(
-        address indexed provider,
-        uint256[] tokenAmounts,
-        uint256[] fees,
-        uint256 invariant,
-        uint256 lpTokenSupply
+        address indexed provider, uint256[] tokenAmounts, uint256[] fees, uint256 invariant, uint256 lpTokenSupply
     );
 
     /**
@@ -147,12 +125,7 @@ interface IStableSwap {
      * @param initialTime Ramp start time
      * @param futureTime Ramp end time
      */
-    event RampA(
-        uint256 oldA,
-        uint256 newA,
-        uint256 initialTime,
-        uint256 futureTime
-    );
+    event RampA(uint256 oldA, uint256 newA, uint256 initialTime, uint256 futureTime);
 
     /**
      * @notice Emitted when A ramp is stopped
@@ -261,13 +234,7 @@ interface IStableSwap {
      * @param deadline Transaction deadline
      * @return dy Amount of token j received
      */
-    function exchange(
-        uint256 i,
-        uint256 j,
-        uint256 dx,
-        uint256 minDy,
-        uint256 deadline
-    ) external returns (uint256 dy);
+    function exchange(uint256 i, uint256 j, uint256 dx, uint256 minDy, uint256 deadline) external returns (uint256 dy);
 
     // ═══════════════════════════════════════════════════════════════════════
     // LIQUIDITY FUNCTIONS
@@ -280,11 +247,9 @@ interface IStableSwap {
      * @param deadline Transaction deadline
      * @return mintAmount Amount of LP tokens minted
      */
-    function addLiquidity(
-        uint256[] calldata amounts,
-        uint256 minMintAmount,
-        uint256 deadline
-    ) external returns (uint256 mintAmount);
+    function addLiquidity(uint256[] calldata amounts, uint256 minMintAmount, uint256 deadline)
+        external
+        returns (uint256 mintAmount);
 
     /**
      * @notice Remove liquidity proportionally
@@ -293,11 +258,9 @@ interface IStableSwap {
      * @param deadline Transaction deadline
      * @return amounts Actual amounts received
      */
-    function removeLiquidity(
-        uint256 amount,
-        uint256[] calldata minAmounts,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
+    function removeLiquidity(uint256 amount, uint256[] calldata minAmounts, uint256 deadline)
+        external
+        returns (uint256[] memory amounts);
 
     /**
      * @notice Remove liquidity in a single token
@@ -307,12 +270,9 @@ interface IStableSwap {
      * @param deadline Transaction deadline
      * @return dy Amount of token received
      */
-    function removeLiquidityOneCoin(
-        uint256 tokenAmount,
-        uint256 i,
-        uint256 minAmount,
-        uint256 deadline
-    ) external returns (uint256 dy);
+    function removeLiquidityOneCoin(uint256 tokenAmount, uint256 i, uint256 minAmount, uint256 deadline)
+        external
+        returns (uint256 dy);
 
     /**
      * @notice Remove liquidity in imbalanced amounts
@@ -321,11 +281,9 @@ interface IStableSwap {
      * @param deadline Transaction deadline
      * @return burnAmount Actual LP tokens burned
      */
-    function removeLiquidityImbalance(
-        uint256[] calldata amounts,
-        uint256 maxBurnAmount,
-        uint256 deadline
-    ) external returns (uint256 burnAmount);
+    function removeLiquidityImbalance(uint256[] calldata amounts, uint256 maxBurnAmount, uint256 deadline)
+        external
+        returns (uint256 burnAmount);
 
     // ═══════════════════════════════════════════════════════════════════════
     // ADMIN FUNCTIONS

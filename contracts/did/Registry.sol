@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @title Registry
@@ -46,27 +46,27 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable, Re
     // ═══════════════════════════════════════════════════════════════════════
 
     struct ClaimParams {
-        string name;           // Username (alphanumeric, 1-63 chars)
-        uint256 chainId;       // Target chain namespace
-        uint256 stakeAmount;   // Tokens to stake
-        address owner;         // Identity owner
-        string referrer;       // Referrer DID (for discount)
+        string name; // Username (alphanumeric, 1-63 chars)
+        uint256 chainId; // Target chain namespace
+        uint256 stakeAmount; // Tokens to stake
+        address owner; // Identity owner
+        string referrer; // Referrer DID (for discount)
     }
 
     struct IdentityData {
-        uint256 boundNft;           // NFT token ID
-        uint256 stakedTokens;       // Staked amount
-        string encryptionKey;       // Public encryption key
-        string signatureKey;        // Public signature key
-        bool routing;               // Direct address vs proxy
-        string[] nodes;             // Node addresses or proxy nodes
-        uint256 delegatedTokens;    // Tokens delegated to others
-        uint256 lastUpdated;        // Last update timestamp
+        uint256 boundNft; // NFT token ID
+        uint256 stakedTokens; // Staked amount
+        string encryptionKey; // Public encryption key
+        string signatureKey; // Public signature key
+        bool routing; // Direct address vs proxy
+        string[] nodes; // Node addresses or proxy nodes
+        uint256 delegatedTokens; // Tokens delegated to others
+        uint256 lastUpdated; // Last update timestamp
     }
 
     struct Delegation {
-        string delegatee;      // DID of delegatee
-        uint256 amount;        // Delegated amount
+        string delegatee; // DID of delegatee
+        uint256 amount; // Delegated amount
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -161,11 +161,7 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable, Re
         _disableInitializers();
     }
 
-    function initialize(
-        address owner_,
-        address stakingToken_,
-        address identityNft_
-    ) public initializer {
+    function initialize(address owner_, address stakingToken_, address identityNft_) public initializer {
         __Ownable_init(owner_);
         __Ownable2Step_init();
 
@@ -202,15 +198,15 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable, Re
         domains[31337] = "local.id";
 
         // Pricing tiers (in staking token units)
-        price1Char = 100000 * 1e18;     // 100,000 tokens
-        price2Char = 10000 * 1e18;      // 10,000 tokens
-        price3Char = 1000 * 1e18;       // 1,000 tokens
-        price4Char = 100 * 1e18;        // 100 tokens
-        price5PlusChar = 10 * 1e18;     // 10 tokens
-        referrerDiscountBps = 5000;     // 50% discount
+        price1Char = 100000 * 1e18; // 100,000 tokens
+        price2Char = 10000 * 1e18; // 10,000 tokens
+        price3Char = 1000 * 1e18; // 1,000 tokens
+        price4Char = 100 * 1e18; // 100 tokens
+        price5PlusChar = 10 * 1e18; // 10 tokens
+        referrerDiscountBps = 5000; // 50% discount
     }
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+    function _authorizeUpgrade(address) internal override onlyOwner { }
 
     // ═══════════════════════════════════════════════════════════════════════
     // CLAIM / UNCLAIM
@@ -233,12 +229,11 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable, Re
      * @param owner Identity owner
      * @param secret Secret value for commitment
      */
-    function computeCommitment(
-        string calldata name,
-        uint256 chainId,
-        address owner,
-        bytes32 secret
-    ) external pure returns (bytes32) {
+    function computeCommitment(string calldata name, uint256 chainId, address owner, bytes32 secret)
+        external
+        pure
+        returns (bytes32)
+    {
         return keccak256(abi.encodePacked(name, chainId, owner, secret));
     }
 
@@ -343,11 +338,7 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable, Re
     /**
      * @notice Set encryption and signature keys
      */
-    function setKeys(
-        string calldata did,
-        string calldata encryptionKey,
-        string calldata signatureKey
-    ) external {
+    function setKeys(string calldata did, string calldata encryptionKey, string calldata signatureKey) external {
         _requireOwner(did);
 
         IdentityData storage data = _data[did];
@@ -361,11 +352,7 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable, Re
     /**
      * @notice Set node routing
      */
-    function setNodes(
-        string calldata did,
-        bool routing,
-        string[] calldata nodes
-    ) external {
+    function setNodes(string calldata did, bool routing, string[] calldata nodes) external {
         _requireOwner(did);
 
         IdentityData storage data = _data[did];
@@ -396,11 +383,7 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable, Re
     /**
      * @notice Update custom records
      */
-    function updateRecords(
-        string calldata did,
-        string[] calldata keys,
-        string[] calldata values
-    ) external {
+    function updateRecords(string calldata did, string[] calldata keys, string[] calldata values) external {
         _requireOwner(did);
         if (keys.length != values.length) revert InputMismatch();
 
@@ -482,10 +465,10 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable, Re
     /**
      * @notice Update pricing
      */
-    function setPricing(
-        uint256 p1, uint256 p2, uint256 p3, uint256 p4, uint256 p5,
-        uint256 discountBps
-    ) external onlyOwner {
+    function setPricing(uint256 p1, uint256 p2, uint256 p3, uint256 p4, uint256 p5, uint256 discountBps)
+        external
+        onlyOwner
+    {
         require(discountBps <= 10000, "Invalid discount");
         price1Char = p1;
         price2Char = p2;
@@ -542,8 +525,8 @@ contract Registry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable, Re
         for (uint256 i = 0; i < b.length; i++) {
             bytes1 c = b[i];
             // H-04: Only lowercase and digits allowed
-            bool valid = (c >= 0x30 && c <= 0x39) ||  // 0-9
-                        (c >= 0x61 && c <= 0x7A);      // a-z only (no A-Z, no _)
+            bool valid = (c >= 0x30 && c <= 0x39) // 0-9
+                || (c >= 0x61 && c <= 0x7A); // a-z only (no A-Z, no _)
             if (!valid) return false;
         }
         return true;

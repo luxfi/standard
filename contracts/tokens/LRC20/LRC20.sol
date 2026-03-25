@@ -2,14 +2,14 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import {ERC20Pausable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
-import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
-import {ERC20FlashMint} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20FlashMint.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import { ERC20Pausable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
+import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
+import { ERC20FlashMint } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20FlashMint.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
 
 /**
  * @title LRC20
@@ -23,15 +23,7 @@ import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
  * - FlashMint: Flash loan capability
  * - AccessControl: Role-based permissions
  */
-contract LRC20 is
-    ERC20,
-    ERC20Burnable,
-    ERC20Pausable,
-    ERC20Permit,
-    ERC20Votes,
-    ERC20FlashMint,
-    AccessControl
-{
+contract LRC20 is ERC20, ERC20Burnable, ERC20Pausable, ERC20Permit, ERC20Votes, ERC20FlashMint, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
@@ -44,12 +36,10 @@ contract LRC20 is
      * @param decimals_ Token decimals (default 18)
      * @param initialSupply Initial supply to mint to deployer
      */
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        uint8 decimals_,
-        uint256 initialSupply
-    ) ERC20(name_, symbol_) ERC20Permit(name_) {
+    constructor(string memory name_, string memory symbol_, uint8 decimals_, uint256 initialSupply)
+        ERC20(name_, symbol_)
+        ERC20Permit(name_)
+    {
         _decimals = decimals_;
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -93,19 +83,11 @@ contract LRC20 is
 
     // ============ Required Overrides ============
 
-    function _update(address from, address to, uint256 value)
-        internal
-        override(ERC20, ERC20Pausable, ERC20Votes)
-    {
+    function _update(address from, address to, uint256 value) internal override(ERC20, ERC20Pausable, ERC20Votes) {
         super._update(from, to, value);
     }
 
-    function nonces(address owner)
-        public
-        view
-        override(ERC20Permit, Nonces)
-        returns (uint256)
-    {
+    function nonces(address owner) public view override(ERC20Permit, Nonces) returns (uint256) {
         return super.nonces(owner);
     }
 }

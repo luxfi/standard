@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {FHE, euint32, Euint32} from "../FHE.sol";
-import {PermissionedV2, PermissionV2} from "../access/PermissionedV2.sol";
+import { FHE, euint32, Euint32 } from "../FHE.sol";
+import { PermissionedV2, PermissionV2 } from "../access/PermissionedV2.sol";
 
 contract PermissionedV2Counter is PermissionedV2 {
     mapping(address => euint32) private userCounter;
@@ -21,18 +21,16 @@ contract PermissionedV2Counter is PermissionedV2 {
         return FHE.reveal(userCounter[user]);
     }
 
-    function getCounterPermit(
-        PermissionV2 memory permission
-    ) public view withPermission(permission) returns (uint32) {
+    function getCounterPermit(PermissionV2 memory permission) public view withPermission(permission) returns (uint32) {
         return FHE.reveal(userCounter[permission.issuer]);
     }
 
-    function getCounterPermitSealed(
-        PermissionV2 memory permission
-    ) public view withPermission(permission) returns (bytes memory) {
-        return FHE.sealoutput(
-            userCounter[permission.issuer],
-            permission.sealingKey
-        );
+    function getCounterPermitSealed(PermissionV2 memory permission)
+        public
+        view
+        withPermission(permission)
+        returns (bytes memory)
+    {
+        return FHE.sealoutput(userCounter[permission.issuer], permission.sealingKey);
     }
 }

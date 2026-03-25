@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.31;
 
-import {IERC1271, ILegacyERC1271} from "./interfaces/IERC1271.sol";
-import {IERC165} from "./interfaces/IERC165.sol";
+import { IERC1271, ILegacyERC1271 } from "./interfaces/IERC1271.sol";
+import { IERC165 } from "./interfaces/IERC165.sol";
 
 /// @title IFROST
 /// @dev Interface for FROST Schnorr threshold signature precompile
@@ -31,32 +31,28 @@ interface ICGGMP21 {
 /// @title IMLDSA
 /// @dev Interface for ML-DSA post-quantum signature precompile
 interface IMLDSA {
-    function verify(
-        bytes calldata publicKey,
-        bytes calldata message,
-        bytes calldata signature
-    ) external view returns (bool valid);
+    function verify(bytes calldata publicKey, bytes calldata message, bytes calldata signature)
+        external
+        view
+        returns (bool valid);
 }
 
 /// @title IRingtailThreshold
 /// @dev Interface for Ringtail post-quantum threshold signature precompile
 interface IRingtailThreshold {
-    function verifyThreshold(
-        uint32 threshold,
-        uint32 totalParties,
-        bytes32 messageHash,
-        bytes calldata signature
-    ) external view returns (bool valid);
+    function verifyThreshold(uint32 threshold, uint32 totalParties, bytes32 messageHash, bytes calldata signature)
+        external
+        view
+        returns (bool valid);
 }
 
 /// @title IBLS
 /// @dev Interface for BLS signature verification precompile (Quasar consensus)
 interface IBLS {
-    function verify(
-        bytes calldata publicKey,
-        bytes32 messageHash,
-        bytes calldata signature
-    ) external view returns (bool valid);
+    function verify(bytes calldata publicKey, bytes32 messageHash, bytes calldata signature)
+        external
+        view
+        returns (bool valid);
 }
 
 /// @title QuantumSafe
@@ -102,12 +98,12 @@ contract QuantumSafe is IERC1271, ILegacyERC1271, IERC165 {
 
     /// @notice Signature algorithm types
     enum Algorithm {
-        FROST,      // Schnorr threshold (t-of-n) - NOT quantum-safe
-        CGGMP21,    // ECDSA threshold (t-of-n) - NOT quantum-safe
-        MLDSA,      // Post-quantum single signer (FIPS 204)
-        RINGTAIL,   // Post-quantum threshold (LWE-based lattice)
-        HYBRID,     // BLS + Ringtail (aggregated classical + PQ threshold)
-        HYBRID_PQ   // Ringtail + ML-DSA (full PQ: threshold + single)
+        FROST, // Schnorr threshold (t-of-n) - NOT quantum-safe
+        CGGMP21, // ECDSA threshold (t-of-n) - NOT quantum-safe
+        MLDSA, // Post-quantum single signer (FIPS 204)
+        RINGTAIL, // Post-quantum threshold (LWE-based lattice)
+        HYBRID, // BLS + Ringtail (aggregated classical + PQ threshold)
+        HYBRID_PQ // Ringtail + ML-DSA (full PQ: threshold + single)
     }
 
     /// @notice The algorithm this signer uses
@@ -174,8 +170,7 @@ contract QuantumSafe is IERC1271, ILegacyERC1271, IERC165 {
             totalSigners = _totalSigners;
             frostPublicKey = _frostPubKey;
             signer = address(uint160(uint256(keccak256(abi.encodePacked(_frostPubKey)))));
-        }
-        else if (_algorithm == Algorithm.CGGMP21) {
+        } else if (_algorithm == Algorithm.CGGMP21) {
             if (_threshold == 0 || _threshold > _totalSigners) revert InvalidThreshold();
             if (_cggmpPubKey.length != CGGMP21_PUBKEY_SIZE || _cggmpPubKey[0] != 0x04) revert InvalidPublicKey();
             threshold = _threshold;
@@ -187,47 +182,48 @@ contract QuantumSafe is IERC1271, ILegacyERC1271, IERC165 {
                 pubKeyNoPrefix[i] = _cggmpPubKey[i + 1];
             }
             signer = address(uint160(uint256(keccak256(pubKeyNoPrefix))));
-        }
-        else if (_algorithm == Algorithm.MLDSA) {
+        } else if (_algorithm == Algorithm.MLDSA) {
             if (_mldsaPubKey.length != MLDSA_PUBKEY_SIZE) revert InvalidPublicKey();
             threshold = 0;
             totalSigners = 0;
             _mldsaPublicKey = _mldsaPubKey;
             signer = address(uint160(uint256(keccak256(_mldsaPubKey))));
-        }
-        else if (_algorithm == Algorithm.RINGTAIL) {
+        } else if (_algorithm == Algorithm.RINGTAIL) {
             if (_threshold == 0 || _threshold > _totalSigners) revert InvalidThreshold();
-            if (_ringtailPubKey.length < RINGTAIL_MIN_PUBKEY_SIZE || 
-                _ringtailPubKey.length > RINGTAIL_MAX_PUBKEY_SIZE) revert InvalidPublicKey();
+            if (_ringtailPubKey.length < RINGTAIL_MIN_PUBKEY_SIZE || _ringtailPubKey.length > RINGTAIL_MAX_PUBKEY_SIZE)
+            {
+                revert InvalidPublicKey();
+            }
             threshold = _threshold;
             totalSigners = _totalSigners;
             _ringtailPublicKey = _ringtailPubKey;
             signer = address(uint160(uint256(keccak256(_ringtailPubKey))));
-        }
-        else if (_algorithm == Algorithm.HYBRID) {
+        } else if (_algorithm == Algorithm.HYBRID) {
             // HYBRID = BLS + Ringtail (classical aggregation + post-quantum threshold)
             if (_threshold == 0 || _threshold > _totalSigners) revert InvalidThreshold();
             if (_blsPubKey.length != BLS_PUBKEY_SIZE) revert InvalidPublicKey();
-            if (_ringtailPubKey.length < RINGTAIL_MIN_PUBKEY_SIZE ||
-                _ringtailPubKey.length > RINGTAIL_MAX_PUBKEY_SIZE) revert InvalidPublicKey();
+            if (_ringtailPubKey.length < RINGTAIL_MIN_PUBKEY_SIZE || _ringtailPubKey.length > RINGTAIL_MAX_PUBKEY_SIZE)
+            {
+                revert InvalidPublicKey();
+            }
             threshold = _threshold;
             totalSigners = _totalSigners;
             _blsPublicKey = _blsPubKey;
             _ringtailPublicKey = _ringtailPubKey;
             signer = address(uint160(uint256(keccak256(abi.encodePacked(_blsPubKey, _ringtailPubKey)))));
-        }
-        else if (_algorithm == Algorithm.HYBRID_PQ) {
+        } else if (_algorithm == Algorithm.HYBRID_PQ) {
             if (_threshold == 0 || _threshold > _totalSigners) revert InvalidThreshold();
-            if (_ringtailPubKey.length < RINGTAIL_MIN_PUBKEY_SIZE ||
-                _ringtailPubKey.length > RINGTAIL_MAX_PUBKEY_SIZE) revert InvalidPublicKey();
+            if (_ringtailPubKey.length < RINGTAIL_MIN_PUBKEY_SIZE || _ringtailPubKey.length > RINGTAIL_MAX_PUBKEY_SIZE)
+            {
+                revert InvalidPublicKey();
+            }
             if (_mldsaPubKey.length != MLDSA_PUBKEY_SIZE) revert InvalidPublicKey();
             threshold = _threshold;
             totalSigners = _totalSigners;
             _ringtailPublicKey = _ringtailPubKey;
             _mldsaPublicKey = _mldsaPubKey;
             signer = address(uint160(uint256(keccak256(abi.encodePacked(_ringtailPubKey, _mldsaPubKey)))));
-        }
-        else {
+        } else {
             revert InvalidAlgorithm();
         }
     }
@@ -256,20 +252,15 @@ contract QuantumSafe is IERC1271, ILegacyERC1271, IERC165 {
     function _isValidSignature(bytes32 messageHash, bytes calldata signature) public view returns (bool) {
         if (algorithm == Algorithm.FROST) {
             return _verifyFROST(messageHash, signature);
-        }
-        else if (algorithm == Algorithm.CGGMP21) {
+        } else if (algorithm == Algorithm.CGGMP21) {
             return _verifyCGGMP21(messageHash, signature);
-        }
-        else if (algorithm == Algorithm.MLDSA) {
+        } else if (algorithm == Algorithm.MLDSA) {
             return _verifyMLDSA(messageHash, signature);
-        }
-        else if (algorithm == Algorithm.RINGTAIL) {
+        } else if (algorithm == Algorithm.RINGTAIL) {
             return _verifyRingtail(messageHash, signature);
-        }
-        else if (algorithm == Algorithm.HYBRID) {
+        } else if (algorithm == Algorithm.HYBRID) {
             return _verifyHybrid(messageHash, signature);
-        }
-        else if (algorithm == Algorithm.HYBRID_PQ) {
+        } else if (algorithm == Algorithm.HYBRID_PQ) {
             return _verifyHybridPQ(messageHash, signature);
         }
         return false;
@@ -279,37 +270,21 @@ contract QuantumSafe is IERC1271, ILegacyERC1271, IERC165 {
     function _verifyFROST(bytes32 messageHash, bytes calldata signature) internal view returns (bool) {
         if (signature.length != FROST_SIG_SIZE) return false;
 
-        return IFROST(FROST_PRECOMPILE).verify(
-            threshold,
-            totalSigners,
-            frostPublicKey,
-            messageHash,
-            signature
-        );
+        return IFROST(FROST_PRECOMPILE).verify(threshold, totalSigners, frostPublicKey, messageHash, signature);
     }
 
     /// @dev Verify CGGMP21 threshold ECDSA signature
     function _verifyCGGMP21(bytes32 messageHash, bytes calldata signature) internal view returns (bool) {
         if (signature.length != CGGMP21_SIG_SIZE) return false;
 
-        return ICGGMP21(CGGMP21_PRECOMPILE).verify(
-            threshold,
-            totalSigners,
-            _cggmpPublicKey,
-            messageHash,
-            signature
-        );
+        return ICGGMP21(CGGMP21_PRECOMPILE).verify(threshold, totalSigners, _cggmpPublicKey, messageHash, signature);
     }
 
     /// @dev Verify ML-DSA post-quantum signature
     function _verifyMLDSA(bytes32 messageHash, bytes calldata signature) internal view returns (bool) {
         if (signature.length != MLDSA_SIG_SIZE) return false;
 
-        return IMLDSA(MLDSA_PRECOMPILE).verify(
-            _mldsaPublicKey,
-            abi.encodePacked(messageHash),
-            signature
-        );
+        return IMLDSA(MLDSA_PRECOMPILE).verify(_mldsaPublicKey, abi.encodePacked(messageHash), signature);
     }
 
     /// @dev Verify Ringtail post-quantum threshold signature
@@ -318,12 +293,7 @@ contract QuantumSafe is IERC1271, ILegacyERC1271, IERC165 {
             return false;
         }
 
-        return IRingtailThreshold(RINGTAIL_PRECOMPILE).verifyThreshold(
-            threshold,
-            totalSigners,
-            messageHash,
-            signature
-        );
+        return IRingtailThreshold(RINGTAIL_PRECOMPILE).verifyThreshold(threshold, totalSigners, messageHash, signature);
     }
 
     /// @dev Verify hybrid BLS + Ringtail signature
@@ -339,18 +309,10 @@ contract QuantumSafe is IERC1271, ILegacyERC1271, IERC165 {
         bytes calldata ringtailSig = signature[BLS_SIG_SIZE:signature.length];
 
         // Both must verify
-        bool blsValid = IBLS(BLS_PRECOMPILE).verify(
-            _blsPublicKey,
-            messageHash,
-            blsSig
-        );
+        bool blsValid = IBLS(BLS_PRECOMPILE).verify(_blsPublicKey, messageHash, blsSig);
 
-        bool ringtailValid = IRingtailThreshold(RINGTAIL_PRECOMPILE).verifyThreshold(
-            threshold,
-            totalSigners,
-            messageHash,
-            ringtailSig
-        );
+        bool ringtailValid = IRingtailThreshold(RINGTAIL_PRECOMPILE)
+            .verifyThreshold(threshold, totalSigners, messageHash, ringtailSig);
 
         return blsValid && ringtailValid;
     }
@@ -369,18 +331,10 @@ contract QuantumSafe is IERC1271, ILegacyERC1271, IERC165 {
         bytes calldata mldsaSig = signature[ringtailLen:signature.length];
 
         // Both must verify
-        bool ringtailValid = IRingtailThreshold(RINGTAIL_PRECOMPILE).verifyThreshold(
-            threshold,
-            totalSigners,
-            messageHash,
-            ringtailSig
-        );
+        bool ringtailValid = IRingtailThreshold(RINGTAIL_PRECOMPILE)
+            .verifyThreshold(threshold, totalSigners, messageHash, ringtailSig);
 
-        bool mldsaValid = IMLDSA(MLDSA_PRECOMPILE).verify(
-            _mldsaPublicKey,
-            abi.encodePacked(messageHash),
-            mldsaSig
-        );
+        bool mldsaValid = IMLDSA(MLDSA_PRECOMPILE).verify(_mldsaPublicKey, abi.encodePacked(messageHash), mldsaSig);
 
         return ringtailValid && mldsaValid;
     }
@@ -401,8 +355,7 @@ contract QuantumSafe is IERC1271, ILegacyERC1271, IERC165 {
 
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
-        return interfaceId == type(IERC1271).interfaceId ||
-               interfaceId == type(IERC165).interfaceId;
+        return interfaceId == type(IERC1271).interfaceId || interfaceId == type(IERC165).interfaceId;
     }
 
     /// @notice Get algorithm name
@@ -418,19 +371,14 @@ contract QuantumSafe is IERC1271, ILegacyERC1271, IERC165 {
 
     /// @notice Check if algorithm is quantum-resistant
     function isQuantumResistant() external view returns (bool) {
-        return algorithm == Algorithm.MLDSA || 
-               algorithm == Algorithm.RINGTAIL || 
-               algorithm == Algorithm.HYBRID ||
-               algorithm == Algorithm.HYBRID_PQ;
+        return algorithm == Algorithm.MLDSA || algorithm == Algorithm.RINGTAIL || algorithm == Algorithm.HYBRID
+            || algorithm == Algorithm.HYBRID_PQ;
     }
 
     /// @notice Check if algorithm is threshold-based
     function isThreshold() external view returns (bool) {
-        return algorithm == Algorithm.FROST ||
-               algorithm == Algorithm.CGGMP21 ||
-               algorithm == Algorithm.RINGTAIL ||
-               algorithm == Algorithm.HYBRID ||
-               algorithm == Algorithm.HYBRID_PQ;
+        return algorithm == Algorithm.FROST || algorithm == Algorithm.CGGMP21 || algorithm == Algorithm.RINGTAIL
+            || algorithm == Algorithm.HYBRID || algorithm == Algorithm.HYBRID_PQ;
     }
 
     /// @notice Get expected signature size for the algorithm (returns range for variable-size)
@@ -461,40 +409,17 @@ contract QuantumSafeFactory {
     );
 
     /// @notice Deploy a FROST-based QuantumSafe (NOT quantum-resistant)
-    function deployFROST(
-        uint32 threshold,
-        uint32 totalSigners,
-        bytes32 publicKey
-    ) external returns (address) {
-        QuantumSafe qs = new QuantumSafe(
-            QuantumSafe.Algorithm.FROST,
-            threshold,
-            totalSigners,
-            publicKey,
-            "",
-            "",
-            "",
-            ""
-        );
+    function deployFROST(uint32 threshold, uint32 totalSigners, bytes32 publicKey) external returns (address) {
+        QuantumSafe qs =
+            new QuantumSafe(QuantumSafe.Algorithm.FROST, threshold, totalSigners, publicKey, "", "", "", "");
         emit QuantumSafeDeployed(address(qs), QuantumSafe.Algorithm.FROST, threshold, totalSigners, false);
         return address(qs);
     }
 
     /// @notice Deploy a CGGMP21-based QuantumSafe (NOT quantum-resistant)
-    function deployCGGMP21(
-        uint32 threshold,
-        uint32 totalSigners,
-        bytes calldata publicKey
-    ) external returns (address) {
+    function deployCGGMP21(uint32 threshold, uint32 totalSigners, bytes calldata publicKey) external returns (address) {
         QuantumSafe qs = new QuantumSafe(
-            QuantumSafe.Algorithm.CGGMP21,
-            threshold,
-            totalSigners,
-            bytes32(0),
-            publicKey,
-            "",
-            "",
-            ""
+            QuantumSafe.Algorithm.CGGMP21, threshold, totalSigners, bytes32(0), publicKey, "", "", ""
         );
         emit QuantumSafeDeployed(address(qs), QuantumSafe.Algorithm.CGGMP21, threshold, totalSigners, false);
         return address(qs);
@@ -502,35 +427,18 @@ contract QuantumSafeFactory {
 
     /// @notice Deploy an ML-DSA-based QuantumSafe (quantum-resistant, single signer)
     function deployMLDSA(bytes calldata publicKey) external returns (address) {
-        QuantumSafe qs = new QuantumSafe(
-            QuantumSafe.Algorithm.MLDSA,
-            0,
-            0,
-            bytes32(0),
-            "",
-            publicKey,
-            "",
-            ""
-        );
+        QuantumSafe qs = new QuantumSafe(QuantumSafe.Algorithm.MLDSA, 0, 0, bytes32(0), "", publicKey, "", "");
         emit QuantumSafeDeployed(address(qs), QuantumSafe.Algorithm.MLDSA, 0, 0, true);
         return address(qs);
     }
 
     /// @notice Deploy a Ringtail-based QuantumSafe (quantum-resistant threshold)
-    function deployRingtail(
-        uint32 threshold,
-        uint32 totalSigners,
-        bytes calldata publicKey
-    ) external returns (address) {
+    function deployRingtail(uint32 threshold, uint32 totalSigners, bytes calldata publicKey)
+        external
+        returns (address)
+    {
         QuantumSafe qs = new QuantumSafe(
-            QuantumSafe.Algorithm.RINGTAIL,
-            threshold,
-            totalSigners,
-            bytes32(0),
-            "",
-            "",
-            publicKey,
-            ""
+            QuantumSafe.Algorithm.RINGTAIL, threshold, totalSigners, bytes32(0), "", "", publicKey, ""
         );
         emit QuantumSafeDeployed(address(qs), QuantumSafe.Algorithm.RINGTAIL, threshold, totalSigners, true);
         return address(qs);
@@ -544,14 +452,7 @@ contract QuantumSafeFactory {
         bytes calldata ringtailPublicKey
     ) external returns (address) {
         QuantumSafe qs = new QuantumSafe(
-            QuantumSafe.Algorithm.HYBRID,
-            threshold,
-            totalSigners,
-            bytes32(0),
-            "",
-            "",
-            ringtailPublicKey,
-            blsPublicKey
+            QuantumSafe.Algorithm.HYBRID, threshold, totalSigners, bytes32(0), "", "", ringtailPublicKey, blsPublicKey
         );
         emit QuantumSafeDeployed(address(qs), QuantumSafe.Algorithm.HYBRID, threshold, totalSigners, true);
         return address(qs);

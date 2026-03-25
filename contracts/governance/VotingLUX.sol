@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title VotingLUX
@@ -29,21 +29,21 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract VotingLUX {
     /// @notice xLUX token (LiquidLUX shares)
     IERC20 public immutable xLUX;
-    
+
     /// @notice DLUX governance token
     IERC20 public immutable dLUX;
-    
+
     /// @notice Token metadata
     string public constant name = "Voting LUX";
-    string public constant symbol = "vLUX2";  // vLUX2 to differentiate from existing vLUX
+    string public constant symbol = "vLUX2"; // vLUX2 to differentiate from existing vLUX
     uint8 public constant decimals = 18;
 
     // ============ Errors ============
-    
+
     error NonTransferable();
 
     // ============ Constructor ============
-    
+
     constructor(address _xLUX, address _dLUX) {
         require(_xLUX != address(0) && _dLUX != address(0), "Invalid address");
         xLUX = IERC20(_xLUX);
@@ -51,7 +51,7 @@ contract VotingLUX {
     }
 
     // ============ ERC20-like View Functions (Read Only) ============
-    
+
     /**
      * @notice Get voting power for an address
      * @param account The address to query
@@ -70,7 +70,7 @@ contract VotingLUX {
     }
 
     // ============ Checkpointed Voting (if tokens support ERC20Votes) ============
-    
+
     /**
      * @notice Get past voting power at a specific block
      * @dev Falls back to current balance if tokens don't support getPastVotes
@@ -96,7 +96,7 @@ contract VotingLUX {
     }
 
     // ============ Non-Transferable ============
-    
+
     /**
      * @notice Transfer is disabled - voting power is non-transferable
      */
@@ -126,7 +126,7 @@ contract VotingLUX {
     }
 
     // ============ Component Breakdown ============
-    
+
     /**
      * @notice Get breakdown of voting power components
      * @param account The address to query
@@ -134,31 +134,30 @@ contract VotingLUX {
      * @return dLuxBalance DLUX component
      * @return total Total voting power
      */
-    function getVotingPowerBreakdown(address account) external view returns (
-        uint256 xLuxBalance,
-        uint256 dLuxBalance,
-        uint256 total
-    ) {
+    function getVotingPowerBreakdown(address account)
+        external
+        view
+        returns (uint256 xLuxBalance, uint256 dLuxBalance, uint256 total)
+    {
         xLuxBalance = xLUX.balanceOf(account);
         dLuxBalance = dLUX.balanceOf(account);
         total = xLuxBalance + dLuxBalance;
     }
 
     // ============ Internal ============
-    
+
     /**
      * @dev Try to get past votes, fallback to current balance
      */
     function _getPastVotes(address token, address account, uint256 blockNumber) internal view returns (uint256) {
         // Try ERC20Votes interface
-        (bool success, bytes memory data) = token.staticcall(
-            abi.encodeWithSignature("getPastVotes(address,uint256)", account, blockNumber)
-        );
-        
+        (bool success, bytes memory data) =
+            token.staticcall(abi.encodeWithSignature("getPastVotes(address,uint256)", account, blockNumber));
+
         if (success && data.length >= 32) {
             return abi.decode(data, (uint256));
         }
-        
+
         // Fallback to current balance
         return IERC20(token).balanceOf(account);
     }
@@ -168,14 +167,13 @@ contract VotingLUX {
      */
     function _getPastTotalSupply(address token, uint256 blockNumber) internal view returns (uint256) {
         // Try ERC20Votes interface
-        (bool success, bytes memory data) = token.staticcall(
-            abi.encodeWithSignature("getPastTotalSupply(uint256)", blockNumber)
-        );
-        
+        (bool success, bytes memory data) =
+            token.staticcall(abi.encodeWithSignature("getPastTotalSupply(uint256)", blockNumber));
+
         if (success && data.length >= 32) {
             return abi.decode(data, (uint256));
         }
-        
+
         // Fallback to current supply
         return IERC20(token).totalSupply();
     }

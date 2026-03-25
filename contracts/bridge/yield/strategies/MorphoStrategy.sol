@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.24;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title Morpho Protocol Yield Strategies
 /// @notice Yield strategies for Morpho Blue isolated lending and MetaMorpho vaults
@@ -91,20 +91,12 @@ interface IMorpho {
     ) external returns (uint256 assetsRepaid, uint256 sharesRepaid);
 
     /// @notice Supply collateral to a market
-    function supplyCollateral(
-        MarketParams memory marketParams,
-        uint256 assets,
-        address onBehalf,
-        bytes memory data
-    ) external;
+    function supplyCollateral(MarketParams memory marketParams, uint256 assets, address onBehalf, bytes memory data)
+        external;
 
     /// @notice Withdraw collateral from a market
-    function withdrawCollateral(
-        MarketParams memory marketParams,
-        uint256 assets,
-        address onBehalf,
-        address receiver
-    ) external;
+    function withdrawCollateral(MarketParams memory marketParams, uint256 assets, address onBehalf, address receiver)
+        external;
 
     /// @notice Liquidate an underwater position
     function liquidate(
@@ -176,15 +168,14 @@ interface IMorphoChainlinkOracleV2 {
 
 /// @notice Interest Rate Model interface
 interface IIrm {
-    function borrowRateView(
-        IMorpho.MarketParams memory marketParams,
-        IMorpho.Market memory market
-    ) external view returns (uint256);
+    function borrowRateView(IMorpho.MarketParams memory marketParams, IMorpho.Market memory market)
+        external
+        view
+        returns (uint256);
 
-    function borrowRate(
-        IMorpho.MarketParams memory marketParams,
-        IMorpho.Market memory market
-    ) external returns (uint256);
+    function borrowRate(IMorpho.MarketParams memory marketParams, IMorpho.Market memory market)
+        external
+        returns (uint256);
 }
 
 // =============================================================================
@@ -308,20 +299,28 @@ contract MorphoBlueStrategy is Ownable, ReentrancyGuard {
     // =========================================================================
 
     /// @notice
-    function deposit(uint256 amount) external payable onlyController whenNotPaused nonReentrant returns (uint256 shares) {
+    function deposit(uint256 amount)
+        external
+        payable
+        onlyController
+        whenNotPaused
+        nonReentrant
+        returns (uint256 shares)
+    {
         if (amount == 0) revert ZeroAmount();
 
         // Transfer assets from controller
         loanToken.safeTransferFrom(msg.sender, address(this), amount);
 
         // Supply to Morpho Blue
-        (uint256 assetsSupplied, uint256 sharesSupplied) = IMorpho(MORPHO).supply(
-            marketParams,
-            amount,
-            0, // shares = 0, supplying by assets
-            address(this),
-            "" // no callback data
-        );
+        (uint256 assetsSupplied, uint256 sharesSupplied) = IMorpho(MORPHO)
+            .supply(
+                marketParams,
+                amount,
+                0, // shares = 0, supplying by assets
+                address(this),
+                "" // no callback data
+            );
 
         if (assetsSupplied == 0) revert DepositFailed();
 
@@ -339,13 +338,14 @@ contract MorphoBlueStrategy is Ownable, ReentrancyGuard {
         if (shares > pos.supplyShares) revert InsufficientShares();
 
         // Withdraw from Morpho Blue by shares
-        (uint256 assetsWithdrawn,) = IMorpho(MORPHO).withdraw(
-            marketParams,
-            0, // assets = 0, withdrawing by shares
-            shares,
-            address(this),
-            msg.sender
-        );
+        (uint256 assetsWithdrawn,) = IMorpho(MORPHO)
+            .withdraw(
+                marketParams,
+                0, // assets = 0, withdrawing by shares
+                shares,
+                address(this),
+                msg.sender
+            );
 
         if (assetsWithdrawn == 0) revert WithdrawFailed();
 
@@ -482,13 +482,7 @@ contract MorphoBlueStrategy is Ownable, ReentrancyGuard {
     function emergencyWithdraw() external onlyOwner {
         IMorpho.Position memory pos = IMorpho(MORPHO).position(marketId, address(this));
         if (pos.supplyShares > 0) {
-            (uint256 assets,) = IMorpho(MORPHO).withdraw(
-                marketParams,
-                0,
-                pos.supplyShares,
-                address(this),
-                owner()
-            );
+            (uint256 assets,) = IMorpho(MORPHO).withdraw(marketParams, 0, pos.supplyShares, address(this), owner());
             totalDeposited = 0;
             emit Withdrawn(owner(), assets, pos.supplyShares);
         }
@@ -511,20 +505,12 @@ contract MorphoBlueStrategy is Ownable, ReentrancyGuard {
     }
 
     /// @notice Convert shares to assets (Morpho math with virtual amounts)
-    function _toAssets(
-        uint256 shares,
-        uint256 totalAssetsMkt,
-        uint256 totalSharesMkt
-    ) internal pure returns (uint256) {
+    function _toAssets(uint256 shares, uint256 totalAssetsMkt, uint256 totalSharesMkt) internal pure returns (uint256) {
         return (shares * (totalAssetsMkt + VIRTUAL_ASSETS)) / (totalSharesMkt + VIRTUAL_SHARES);
     }
 
     /// @notice Convert assets to shares (Morpho math with virtual amounts)
-    function _toShares(
-        uint256 assets,
-        uint256 totalAssetsMkt,
-        uint256 totalSharesMkt
-    ) internal pure returns (uint256) {
+    function _toShares(uint256 assets, uint256 totalAssetsMkt, uint256 totalSharesMkt) internal pure returns (uint256) {
         return (assets * (totalSharesMkt + VIRTUAL_SHARES)) / (totalAssetsMkt + VIRTUAL_ASSETS);
     }
 }
@@ -622,12 +608,7 @@ contract MetaMorphoStrategy is Ownable, ReentrancyGuard {
     /// @param _controller Controller address
     /// @param strategyName Name for identification
     /// @param _owner Owner address
-    constructor(
-        address _vault,
-        address _controller,
-        string memory strategyName,
-        address _owner
-    ) Ownable(_owner) {
+    constructor(address _vault, address _controller, string memory strategyName, address _owner) Ownable(_owner) {
         if (_vault == address(0)) revert InvalidVault();
 
         vault = IMetaMorpho(_vault);
@@ -644,7 +625,14 @@ contract MetaMorphoStrategy is Ownable, ReentrancyGuard {
     // =========================================================================
 
     /// @notice
-    function deposit(uint256 amount) external payable onlyController whenNotPaused nonReentrant returns (uint256 shares) {
+    function deposit(uint256 amount)
+        external
+        payable
+        onlyController
+        whenNotPaused
+        nonReentrant
+        returns (uint256 shares)
+    {
         if (amount == 0) revert ZeroAmount();
 
         // Check max deposit
@@ -861,28 +849,19 @@ contract MetaMorphoStrategy is Ownable, ReentrancyGuard {
 /// @title Morpho Strategy Factory
 /// @notice Factory for deploying Morpho yield strategies
 contract MorphoStrategyFactory is Ownable {
-
     // =========================================================================
     // EVENTS
     // =========================================================================
 
-    event MorphoBlueStrategyDeployed(
-        address indexed strategy,
-        bytes32 indexed mktId,
-        string strategyName
-    );
+    event MorphoBlueStrategyDeployed(address indexed strategy, bytes32 indexed mktId, string strategyName);
 
-    event MetaMorphoStrategyDeployed(
-        address indexed strategy,
-        address indexed vaultAddr,
-        string strategyName
-    );
+    event MetaMorphoStrategyDeployed(address indexed strategy, address indexed vaultAddr, string strategyName);
 
     // =========================================================================
     // CONSTRUCTOR
     // =========================================================================
 
-    constructor() Ownable(msg.sender) {}
+    constructor() Ownable(msg.sender) { }
 
     // =========================================================================
     // DEPLOYMENT FUNCTIONS
@@ -897,18 +876,9 @@ contract MorphoStrategyFactory is Ownable {
         address controller,
         string calldata strategyName
     ) external onlyOwner returns (address) {
-        MorphoBlueStrategy strategy = new MorphoBlueStrategy(
-            morphoMarketParams,
-            controller,
-            strategyName,
-            msg.sender
-        );
+        MorphoBlueStrategy strategy = new MorphoBlueStrategy(morphoMarketParams, controller, strategyName, msg.sender);
 
-        emit MorphoBlueStrategyDeployed(
-            address(strategy),
-            strategy.marketId(),
-            strategyName
-        );
+        emit MorphoBlueStrategyDeployed(address(strategy), strategy.marketId(), strategyName);
 
         return address(strategy);
     }
@@ -917,23 +887,14 @@ contract MorphoStrategyFactory is Ownable {
     /// @param metaMorphoVault MetaMorpho vault address
     /// @param controller Controller address
     /// @param strategyName Strategy name
-    function deployMetaMorphoStrategy(
-        address metaMorphoVault,
-        address controller,
-        string calldata strategyName
-    ) external onlyOwner returns (address) {
-        MetaMorphoStrategy strategy = new MetaMorphoStrategy(
-            metaMorphoVault,
-            controller,
-            strategyName,
-            msg.sender
-        );
+    function deployMetaMorphoStrategy(address metaMorphoVault, address controller, string calldata strategyName)
+        external
+        onlyOwner
+        returns (address)
+    {
+        MetaMorphoStrategy strategy = new MetaMorphoStrategy(metaMorphoVault, controller, strategyName, msg.sender);
 
-        emit MetaMorphoStrategyDeployed(
-            address(strategy),
-            metaMorphoVault,
-            strategyName
-        );
+        emit MetaMorphoStrategyDeployed(address(strategy), metaMorphoVault, strategyName);
 
         return address(strategy);
     }
@@ -947,37 +908,34 @@ contract MorphoStrategyFactory is Ownable {
 /// @notice Strategy for Steakhouse USDC MetaMorpho vault
 /// @dev Steakhouse USDC vault: 0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB
 contract MetaMorphoUSDCStrategy is MetaMorphoStrategy {
-
     /// @notice Steakhouse USDC MetaMorpho vault (mainnet)
     address public constant STEAKHOUSE_USDC = 0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB;
 
     constructor(address _controller, address _owner)
         MetaMorphoStrategy(STEAKHOUSE_USDC, _controller, "MetaMorpho Steakhouse USDC", _owner)
-    {}
+    { }
 }
 
 /// @title MetaMorpho WETH Strategy
 /// @notice Strategy for Steakhouse WETH MetaMorpho vault
 /// @dev Steakhouse WETH vault: 0xBeEf020372F0bA93E43fB68E0F98edEc3f5e50d2
 contract MetaMorphoWETHStrategy is MetaMorphoStrategy {
-
     /// @notice Steakhouse WETH MetaMorpho vault (mainnet)
     address public constant STEAKHOUSE_WETH = 0xBeEf020372F0bA93E43fB68E0F98edEc3f5e50d2;
 
     constructor(address _controller, address _owner)
         MetaMorphoStrategy(STEAKHOUSE_WETH, _controller, "MetaMorpho Steakhouse WETH", _owner)
-    {}
+    { }
 }
 
 /// @title MetaMorpho USDT Strategy
 /// @notice Strategy for Flagship USDT MetaMorpho vault
 /// @dev Flagship USDT vault: 0x8CB3649114051cA5119141a34C200D65dc0Faa73
 contract MetaMorphoUSDTStrategy is MetaMorphoStrategy {
-
     /// @notice Flagship USDT MetaMorpho vault (mainnet)
     address public constant FLAGSHIP_USDT = 0x8CB3649114051cA5119141a34C200D65dc0Faa73;
 
     constructor(address _controller, address _owner)
         MetaMorphoStrategy(FLAGSHIP_USDT, _controller, "MetaMorpho Flagship USDT", _owner)
-    {}
+    { }
 }

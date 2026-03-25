@@ -2,23 +2,23 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title Aster Trading Data Input
 /// @notice Struct for opening positions on Aster DEX
 struct OpenDataInput {
-    address pairBase;      // Trading pair base asset (e.g., WBTC)
-    bool isLong;           // True for long, false for short
-    address tokenIn;       // Margin token (USDT/USDC)
-    uint256 amountIn;      // Margin amount (token decimals, e.g., 1e18 for USDT)
-    uint256 qty;           // Position quantity (1e10 decimals)
-    uint256 price;         // Worst acceptable price (1e8 decimals)
-    uint256 stopLoss;      // Stop loss price (1e8), 0 to disable
-    uint256 takeProfit;    // Take profit price (1e8), 0 to disable
-    uint256 broker;        // Broker ID for referrals
+    address pairBase; // Trading pair base asset (e.g., WBTC)
+    bool isLong; // True for long, false for short
+    address tokenIn; // Margin token (USDT/USDC)
+    uint256 amountIn; // Margin amount (token decimals, e.g., 1e18 for USDT)
+    uint256 qty; // Position quantity (1e10 decimals)
+    uint256 price; // Worst acceptable price (1e8 decimals)
+    uint256 stopLoss; // Stop loss price (1e8), 0 to disable
+    uint256 takeProfit; // Take profit price (1e8), 0 to disable
+    uint256 broker; // Broker ID for referrals
 }
 
 /// @title Aster Trading Interface
@@ -200,7 +200,7 @@ contract LuxAsterAdapter is Ownable, ReentrancyGuard {
         if (isLong) {
             worstPrice = (currentPrice * 1005) / 1000; // 0.5% higher for longs
         } else {
-            worstPrice = (currentPrice * 995) / 1000;  // 0.5% lower for shorts
+            worstPrice = (currentPrice * 995) / 1000; // 0.5% lower for shorts
         }
 
         // Build trade data
@@ -220,26 +220,13 @@ contract LuxAsterAdapter is Ownable, ReentrancyGuard {
         ASTER.openMarketTrade(data);
 
         // Generate trade hash (matches Aster's internal hash)
-        tradeHash = keccak256(abi.encodePacked(
-            msg.sender,
-            pairBase,
-            isLong,
-            block.timestamp
-        ));
+        tradeHash = keccak256(abi.encodePacked(msg.sender, pairBase, isLong, block.timestamp));
 
         // Track position
         userPositions[msg.sender].push(tradeHash);
         positionOwner[tradeHash] = msg.sender;
 
-        emit PositionOpened(
-            msg.sender,
-            tradeHash,
-            pairBase,
-            isLong,
-            margin,
-            leverage,
-            positionValue
-        );
+        emit PositionOpened(msg.sender, tradeHash, pairBase, isLong, margin, leverage, positionValue);
     }
 
     /// @notice Open a leveraged position with native token (BNB)
@@ -248,13 +235,12 @@ contract LuxAsterAdapter is Ownable, ReentrancyGuard {
     /// @param leverage Leverage multiplier (2-1001)
     /// @param stopLoss Stop loss price (1e8), 0 to disable
     /// @param takeProfit Take profit price (1e8), 0 to disable
-    function openPositionNative(
-        address pairBase,
-        bool isLong,
-        uint256 leverage,
-        uint256 stopLoss,
-        uint256 takeProfit
-    ) external payable nonReentrant returns (bytes32 tradeHash) {
+    function openPositionNative(address pairBase, bool isLong, uint256 leverage, uint256 stopLoss, uint256 takeProfit)
+        external
+        payable
+        nonReentrant
+        returns (bytes32 tradeHash)
+    {
         if (paused) revert Paused();
         if (leverage < MIN_LEVERAGE || leverage > MAX_LEVERAGE) revert InvalidLeverage();
         if (msg.value == 0) revert InvalidMargin();
@@ -288,27 +274,14 @@ contract LuxAsterAdapter is Ownable, ReentrancyGuard {
         });
 
         // Execute on Aster with native token
-        ASTER.openMarketTradeBNB{value: margin}(data);
+        ASTER.openMarketTradeBNB{ value: margin }(data);
 
-        tradeHash = keccak256(abi.encodePacked(
-            msg.sender,
-            pairBase,
-            isLong,
-            block.timestamp
-        ));
+        tradeHash = keccak256(abi.encodePacked(msg.sender, pairBase, isLong, block.timestamp));
 
         userPositions[msg.sender].push(tradeHash);
         positionOwner[tradeHash] = msg.sender;
 
-        emit PositionOpened(
-            msg.sender,
-            tradeHash,
-            pairBase,
-            isLong,
-            margin,
-            leverage,
-            positionValue
-        );
+        emit PositionOpened(msg.sender, tradeHash, pairBase, isLong, margin, leverage, positionValue);
     }
 
     /// @notice Close an existing position
@@ -329,11 +302,7 @@ contract LuxAsterAdapter is Ownable, ReentrancyGuard {
     /// @param tradeHash The position identifier
     /// @param tokenIn Margin token address
     /// @param amount Amount to add
-    function addMargin(
-        bytes32 tradeHash,
-        address tokenIn,
-        uint256 amount
-    ) external nonReentrant {
+    function addMargin(bytes32 tradeHash, address tokenIn, uint256 amount) external nonReentrant {
         if (positionOwner[tradeHash] != msg.sender) revert NotPositionOwner();
         if (!supportedTokens[tokenIn]) revert UnsupportedToken();
 
@@ -351,11 +320,7 @@ contract LuxAsterAdapter is Ownable, ReentrancyGuard {
     /// @param tradeHash The position identifier
     /// @param stopLoss New stop loss price (1e8)
     /// @param takeProfit New take profit price (1e8)
-    function updateRiskParams(
-        bytes32 tradeHash,
-        uint256 stopLoss,
-        uint256 takeProfit
-    ) external nonReentrant {
+    function updateRiskParams(bytes32 tradeHash, uint256 stopLoss, uint256 takeProfit) external nonReentrant {
         if (positionOwner[tradeHash] != msg.sender) revert NotPositionOwner();
 
         ASTER.updateTradeTpAndSl(tradeHash, stopLoss, takeProfit);
@@ -378,11 +343,11 @@ contract LuxAsterAdapter is Ownable, ReentrancyGuard {
     }
 
     /// @notice Calculate position size for given margin and leverage
-    function calculatePositionSize(
-        address pairBase,
-        uint256 margin,
-        uint256 leverage
-    ) external view returns (uint256 qty, uint256 positionValue) {
+    function calculatePositionSize(address pairBase, uint256 margin, uint256 leverage)
+        external
+        view
+        returns (uint256 qty, uint256 positionValue)
+    {
         uint256 price = priceFeed.getPrice(pairBase);
         positionValue = margin * leverage;
         qty = (positionValue * QTY_DECIMALS) / price;
@@ -390,12 +355,11 @@ contract LuxAsterAdapter is Ownable, ReentrancyGuard {
 
     /// @notice Calculate liquidation price for a position
     /// @dev Aster uses 90% liquidation rate
-    function calculateLiquidationPrice(
-        address pairBase,
-        bool isLong,
-        uint256 margin,
-        uint256 leverage
-    ) external view returns (uint256 liqPrice) {
+    function calculateLiquidationPrice(address pairBase, bool isLong, uint256 margin, uint256 leverage)
+        external
+        view
+        returns (uint256 liqPrice)
+    {
         uint256 entryPrice = priceFeed.getPrice(pairBase);
         uint256 positionValue = margin * leverage;
 
@@ -458,5 +422,5 @@ contract LuxAsterAdapter is Ownable, ReentrancyGuard {
         }
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

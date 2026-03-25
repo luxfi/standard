@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.31;
 
-import {Monotonicity, ObligationLib} from "@luxfi/contracts/interfaces/core/IObligation.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { Monotonicity, ObligationLib } from "@luxfi/contracts/interfaces/core/IObligation.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════╗
@@ -45,29 +45,29 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 
 /// @notice Lending pool state
 struct LendingPool {
-    IERC20 asset;               // Underlying asset
-    uint256 totalDeposits;      // Total supplied
-    uint256 totalBorrows;       // Total borrowed
-    uint256 borrowRate;         // Current borrow rate (per second, scaled by 1e18)
-    uint256 supplyRate;         // Current supply rate (per second, scaled by 1e18)
-    uint256 lastUpdate;         // Last accrual timestamp
-    uint256 borrowIndex;        // Accumulated borrow interest index
-    uint256 supplyIndex;        // Accumulated supply interest index
-    uint256 reserveFactor;      // Protocol fee (basis points)
+    IERC20 asset; // Underlying asset
+    uint256 totalDeposits; // Total supplied
+    uint256 totalBorrows; // Total borrowed
+    uint256 borrowRate; // Current borrow rate (per second, scaled by 1e18)
+    uint256 supplyRate; // Current supply rate (per second, scaled by 1e18)
+    uint256 lastUpdate; // Last accrual timestamp
+    uint256 borrowIndex; // Accumulated borrow interest index
+    uint256 supplyIndex; // Accumulated supply interest index
+    uint256 reserveFactor; // Protocol fee (basis points)
 }
 
 /// @notice User deposit position
 struct SupplyPosition {
-    uint256 principal;          // Amount deposited
-    uint256 lastIndex;          // Index at last interaction
+    uint256 principal; // Amount deposited
+    uint256 lastIndex; // Index at last interaction
 }
 
 /// @notice User borrow position (INCREASING obligation)
 struct BorrowPosition {
-    uint256 principal;          // Initial borrowed amount
-    uint256 lastIndex;          // Index at last interaction
-    uint256 collateralValue;    // Collateral backing this loan
-    address collateralAsset;    // Collateral token
+    uint256 principal; // Initial borrowed amount
+    uint256 lastIndex; // Index at last interaction
+    uint256 collateralValue; // Collateral backing this loan
+    address collateralAsset; // Collateral token
 }
 
 /// @notice Adapter errors
@@ -89,8 +89,8 @@ contract CompoundAdapter is ReentrancyGuard {
     uint256 public constant SECONDS_PER_YEAR = 365 days;
     uint256 public constant SCALE = 1e18;
     uint256 public constant LIQUIDATION_THRESHOLD = 8000; // 80% LTV triggers liquidation
-    uint256 public constant LIQUIDATION_BONUS = 500;      // 5% bonus to liquidators
-    uint256 public constant MAX_LTV = 7500;               // 75% max borrow
+    uint256 public constant LIQUIDATION_BONUS = 500; // 5% bonus to liquidators
+    uint256 public constant MAX_LTV = 7500; // 75% max borrow
     uint256 public constant HEALTH_PRECISION = 10000;
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -141,11 +141,7 @@ contract CompoundAdapter is ReentrancyGuard {
      * @param baseRate Base borrow rate (APR in basis points)
      * @param reserveFactor Protocol fee (basis points)
      */
-    function initializePool(
-        address asset,
-        uint256 baseRate,
-        uint256 reserveFactor
-    ) external {
+    function initializePool(address asset, uint256 baseRate, uint256 reserveFactor) external {
         LendingPool storage pool = pools[asset];
         require(address(pool.asset) == address(0), "Already initialized");
 
@@ -239,12 +235,10 @@ contract CompoundAdapter is ReentrancyGuard {
      * @param collateralAsset Collateral asset
      * @param collateralAmount Collateral amount
      */
-    function borrow(
-        address asset,
-        uint256 amount,
-        address collateralAsset,
-        uint256 collateralAmount
-    ) external nonReentrant {
+    function borrow(address asset, uint256 amount, address collateralAsset, uint256 collateralAmount)
+        external
+        nonReentrant
+    {
         if (amount == 0) revert ZeroAmount();
 
         LendingPool storage pool = pools[asset];
@@ -333,11 +327,7 @@ contract CompoundAdapter is ReentrancyGuard {
      * @notice Liquidate an unhealthy position
      * @dev Risk intervention when health < 1.0
      */
-    function liquidate(
-        address borrower,
-        address asset,
-        uint256 repayAmount
-    ) external nonReentrant {
+    function liquidate(address borrower, address asset, uint256 repayAmount) external nonReentrant {
         LendingPool storage pool = pools[asset];
         if (address(pool.asset) == address(0)) revert PoolNotInitialized();
 
@@ -406,27 +396,30 @@ contract CompoundAdapter is ReentrancyGuard {
     // INTERNAL HELPERS
     // ═══════════════════════════════════════════════════════════════════════════
 
-    function _getSupplyBalance(
-        SupplyPosition storage position,
-        LendingPool storage pool
-    ) internal view returns (uint256) {
+    function _getSupplyBalance(SupplyPosition storage position, LendingPool storage pool)
+        internal
+        view
+        returns (uint256)
+    {
         if (position.principal == 0) return 0;
         return (position.principal * pool.supplyIndex) / position.lastIndex;
     }
 
-    function _getBorrowBalance(
-        BorrowPosition storage position,
-        LendingPool storage pool
-    ) internal view returns (uint256) {
+    function _getBorrowBalance(BorrowPosition storage position, LendingPool storage pool)
+        internal
+        view
+        returns (uint256)
+    {
         if (position.principal == 0) return 0;
         // THIS IS THE INCREASING OBLIGATION
         return (position.principal * pool.borrowIndex) / position.lastIndex;
     }
 
-    function _calculateHealth(
-        BorrowPosition storage position,
-        LendingPool storage pool
-    ) internal view returns (uint256) {
+    function _calculateHealth(BorrowPosition storage position, LendingPool storage pool)
+        internal
+        view
+        returns (uint256)
+    {
         uint256 debt = _getBorrowBalance(position, pool);
         if (debt == 0) return type(uint256).max;
 
@@ -434,11 +427,11 @@ contract CompoundAdapter is ReentrancyGuard {
         return (liquidationValue * HEALTH_PRECISION) / debt;
     }
 
-    function _getCollateralValue(
-        address collateralAsset,
-        uint256 amount,
-        address borrowAsset
-    ) internal view returns (uint256) {
+    function _getCollateralValue(address collateralAsset, uint256 amount, address borrowAsset)
+        internal
+        view
+        returns (uint256)
+    {
         // Simplified: assume 1:1 pricing
         // Real implementation would use oracle
         return amount;
@@ -505,15 +498,11 @@ contract CompoundAdapter is ReentrancyGuard {
      * @notice Project future debt
      * @dev Shows how debt GROWS over time
      */
-    function projectDebt(
-        address user,
-        address asset,
-        uint256 timeInSeconds
-    ) external view returns (
-        uint256 currentDebt,
-        uint256 projectedDebt,
-        uint256 interestAccrued
-    ) {
+    function projectDebt(address user, address asset, uint256 timeInSeconds)
+        external
+        view
+        returns (uint256 currentDebt, uint256 projectedDebt, uint256 interestAccrued)
+    {
         LendingPool storage pool = pools[asset];
         BorrowPosition storage position = borrowPositions[user][asset];
 
@@ -529,15 +518,16 @@ contract CompoundAdapter is ReentrancyGuard {
      * @notice Compare with ethical alternative
      * @dev Returns data for AlchemicCredit comparison
      */
-    function compareWithEthical(
-        uint256 amount,
-        uint256 timeInSeconds
-    ) external view returns (
-        uint256 compoundDebt,      // What you'd owe with Compound
-        uint256 alchemicDebt,     // What you'd owe with Alchemic (0 eventually)
-        uint256 difference,       // How much more you'd pay
-        string memory verdict
-    ) {
+    function compareWithEthical(uint256 amount, uint256 timeInSeconds)
+        external
+        view
+        returns (
+            uint256 compoundDebt, // What you'd owe with Compound
+            uint256 alchemicDebt, // What you'd owe with Alchemic (0 eventually)
+            uint256 difference, // How much more you'd pay
+            string memory verdict
+        )
+    {
         // Assume 10% APR for Compound
         uint256 interestRate = (1000 * SCALE) / (10000 * SECONDS_PER_YEAR);
         uint256 interest = (amount * interestRate * timeInSeconds) / SCALE;
