@@ -3,10 +3,12 @@
 pragma solidity ^0.8.31;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IVault} from "../core/interfaces/IVault.sol";
 
 contract BalanceUpdater {
-    
+    using SafeERC20 for IERC20;
+
 
     function updateBalance(
         address _vault,
@@ -21,8 +23,8 @@ contract BalanceUpdater {
         uint256 balance = token.balanceOf(_vault);
 
         uint256 transferAmount = poolAmount + fee - balance;
-        token.transferFrom(msg.sender, _vault, transferAmount);
-        IERC20(_lpusd).transferFrom(msg.sender, _vault, _lpusdAmount);
+        token.safeTransferFrom(msg.sender, _vault, transferAmount);
+        IERC20(_lpusd).safeTransferFrom(msg.sender, _vault, _lpusdAmount);
 
         vault.sellLPUSD(_token, msg.sender);
     }

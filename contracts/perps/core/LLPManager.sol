@@ -244,7 +244,7 @@ contract LLPManager is ReentrancyGuard, Governable, ILLPManager {
 
         IMintable(llp).burn(_account, _llpAmount);
 
-        IERC20(lpusd).transfer(address(vault), lpusdAmount);
+        IERC20(lpusd).safeTransfer(address(vault), lpusdAmount);
         uint256 amountOut = vault.sellLPUSD(_tokenOut, _receiver);
         require(amountOut >= _minOut, "LlpManager: insufficient output");
 

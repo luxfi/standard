@@ -3,6 +3,7 @@
 pragma solidity ^0.8.31;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import {IPancakeRouter} from "../amm/interfaces/IPancakeRouter.sol";
@@ -10,7 +11,8 @@ import {IGMT} from "./interfaces/IGMT.sol";
 import {ITimelockTarget} from "../peripherals/interfaces/ITimelockTarget.sol";
 
 contract Treasury is ReentrancyGuard, ITimelockTarget {
-    
+    using SafeERC20 for IERC20;
+
 
     uint256 constant PRECISION = 1000000;
     uint256 constant BASIS_POINTS_DIVISOR = 10000;
@@ -114,13 +116,13 @@ contract Treasury is ReentrancyGuard, ITimelockTarget {
 
         // receive BUSD
         uint256 busdBefore = IERC20(busd).balanceOf(address(this));
-        IERC20(busd).transferFrom(account, address(this), _busdAmount);
+        IERC20(busd).safeTransferFrom(account, address(this), _busdAmount);
         uint256 busdAfter = IERC20(busd).balanceOf(address(this));
         require(busdAfter - busdBefore == _busdAmount, "Treasury: invalid transfer");
 
         // send GMT
         uint256 gmtAmount = _busdAmount * PRECISION / gmtPresalePrice;
-        IERC20(gmt).transfer(account, gmtAmount);
+        IERC20(gmt).safeTransfer(account, gmtAmount);
     }
 
     function addLiquidity() external onlyGov nonReentrant {
@@ -149,12 +151,12 @@ contract Treasury is ReentrancyGuard, ITimelockTarget {
         IGMT(gmt).beginMigration();
 
         uint256 fundAmount = busdReceived - busdAmount;
-        IERC20(busd).transfer(fund, fundAmount);
+        IERC20(busd).safeTransfer(fund, fundAmount);
     }
 
     function withdrawToken(address _token, address _account, uint256 _amount) external override onlyGov nonReentrant {
         require(block.timestamp > unlockTime, "Treasury: unlockTime not yet passed");
-        IERC20(_token).transfer(_account, _amount);
+        IERC20(_token).safeTransfer(_account, _amount);
     }
 
     function increaseBusdBasisPoints(uint256 _busdBasisPoints) external onlyGov nonReentrant {

@@ -3,11 +3,13 @@
 pragma solidity ^0.8.31;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {Governable} from "../access/Governable.sol";
 
 contract BatchSender is Governable {
-    
+    using SafeERC20 for IERC20;
+
 
     mapping (address => bool) public isHandler;
 
@@ -43,7 +45,7 @@ contract BatchSender is Governable {
         for (uint256 i = 0; i < _accounts.length; i++) {
             address account = _accounts[i];
             uint256 amount = _amounts[i];
-            _token.transferFrom(msg.sender, account, amount);
+            _token.safeTransferFrom(msg.sender, account, amount);
         }
 
         emit BatchSend(_typeId, address(_token), _accounts, _amounts);

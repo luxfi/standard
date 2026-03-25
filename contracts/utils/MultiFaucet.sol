@@ -2,12 +2,15 @@
 pragma solidity ^0.8.31;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title MultiFaucet
 /// @notice Testnet faucet that distributes multiple tokens
 /// @dev Supports rate limiting and configurable drip amounts
 contract MultiFaucet is Ownable {
+    using SafeERC20 for IERC20;
+
     /// @notice Token configuration
     struct TokenConfig {
         uint256 dripAmount;    // Amount per request
@@ -60,7 +63,7 @@ contract MultiFaucet is Ownable {
         }
 
         lastDrip[msg.sender][token] = block.timestamp;
-        IERC20(token).transfer(msg.sender, config.dripAmount);
+        IERC20(token).safeTransfer(msg.sender, config.dripAmount);
 
         emit Drip(msg.sender, token, config.dripAmount);
     }
@@ -107,7 +110,7 @@ contract MultiFaucet is Ownable {
             if (IERC20(token).balanceOf(address(this)) < config.dripAmount) continue;
 
             lastDrip[msg.sender][token] = block.timestamp;
-            IERC20(token).transfer(msg.sender, config.dripAmount);
+            IERC20(token).safeTransfer(msg.sender, config.dripAmount);
             emit Drip(msg.sender, token, config.dripAmount);
         }
     }
@@ -144,7 +147,7 @@ contract MultiFaucet is Ownable {
 
     /// @notice Withdraw tokens (admin)
     function withdraw(address token, uint256 amount) external onlyOwner {
-        IERC20(token).transfer(owner(), amount);
+        IERC20(token).safeTransfer(owner(), amount);
     }
 
     /// @notice Withdraw native (admin)

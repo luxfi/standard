@@ -4,9 +4,12 @@ pragma solidity ^0.8.31;
 
 import {Token} from "../../mocks/PerpsTestToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IPancakeRouter} from "./interfaces/IPancakeRouter.sol";
 
 contract PancakeRouter is IPancakeRouter {
+    using SafeERC20 for IERC20;
+
     address public pair;
 
     constructor(address _pair) public {
@@ -27,8 +30,8 @@ contract PancakeRouter is IPancakeRouter {
 
         Token(pair).mint(to, 1000);
 
-        IERC20(tokenA).transferFrom(msg.sender, pair, amountADesired);
-        IERC20(tokenB).transferFrom(msg.sender, pair, amountBDesired);
+        IERC20(tokenA).safeTransferFrom(msg.sender, pair, amountADesired);
+        IERC20(tokenB).safeTransferFrom(msg.sender, pair, amountBDesired);
 
         amountA = amountADesired;
         amountB = amountBDesired;
