@@ -2,12 +2,14 @@
 pragma solidity ^0.8.31;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title AMMV3Pool - Concentrated Liquidity Pool
 /// @notice Implements Uniswap V3-style concentrated liquidity
 /// @dev Supports range orders and capital-efficient liquidity provision
 contract AMMV3Pool is ReentrancyGuard {
+    using SafeERC20 for IERC20;
     // Tick math constants
     int24 internal constant MIN_TICK = -887272;
     int24 internal constant MAX_TICK = -MIN_TICK;
@@ -167,11 +169,11 @@ contract AMMV3Pool is ReentrancyGuard {
 
         if (amount0 > 0) {
             position.tokensOwed0 -= amount0;
-            IERC20(token0).transfer(recipient, amount0);
+            IERC20(token0).safeTransfer(recipient, amount0);
         }
         if (amount1 > 0) {
             position.tokensOwed1 -= amount1;
-            IERC20(token1).transfer(recipient, amount1);
+            IERC20(token1).safeTransfer(recipient, amount1);
         }
 
         emit Collect(msg.sender, recipient, tickLower, tickUpper, amount0, amount1);
@@ -224,11 +226,11 @@ contract AMMV3Pool is ReentrancyGuard {
         if (zeroForOne) {
             amount0 = int256(amountIn);
             amount1 = -int256(amountOut);
-            IERC20(token1).transfer(recipient, amountOut);
+            IERC20(token1).safeTransfer(recipient, amountOut);
         } else {
             amount0 = -int256(amountOut);
             amount1 = int256(amountIn);
-            IERC20(token0).transfer(recipient, amountOut);
+            IERC20(token0).safeTransfer(recipient, amountOut);
         }
 
         emit Swap(msg.sender, recipient, amount0, amount1, sqrtPriceX96, liquidity, tick);
@@ -247,8 +249,8 @@ contract AMMV3Pool is ReentrancyGuard {
         uint256 balance0Before = IERC20(token0).balanceOf(address(this));
         uint256 balance1Before = IERC20(token1).balanceOf(address(this));
 
-        if (amount0 > 0) IERC20(token0).transfer(recipient, amount0);
-        if (amount1 > 0) IERC20(token1).transfer(recipient, amount1);
+        if (amount0 > 0) IERC20(token0).safeTransfer(recipient, amount0);
+        if (amount1 > 0) IERC20(token1).safeTransfer(recipient, amount1);
 
         // Callback
         IFlashCallback(msg.sender).flashCallback(fee0, fee1, data);

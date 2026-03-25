@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../access/Governable.sol";
 import "./interfaces/IRewardTracker.sol";
 import "./interfaces/IVester.sol";
-import "../tokens/Token.sol";
+import "../../mocks/PerpsTestToken.sol";
 
 /// @title VesterCap
 /// @notice Manages DLUX (governance token) staking caps and conversions

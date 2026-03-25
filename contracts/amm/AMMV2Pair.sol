@@ -3,12 +3,14 @@ pragma solidity ^0.8.31;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title AMMV2Pair - Uniswap V2 Compatible LP Token
 /// @notice Liquidity pair for token swaps with constant product AMM
 /// @dev ERC20 LP token representing share of pool liquidity
 contract AMMV2Pair is ERC20, ReentrancyGuard {
+    using SafeERC20 for IERC20;
     uint256 public constant MINIMUM_LIQUIDITY = 1000;
 
     address public factory;
@@ -85,8 +87,8 @@ contract AMMV2Pair is ERC20, ReentrancyGuard {
         amount1 = (liquidity * balance1) / _totalSupply;
         require(amount0 > 0 && amount1 > 0, "AMMV2: INSUFFICIENT_LIQUIDITY_BURNED");
         _burn(address(this), liquidity);
-        IERC20(_token0).transfer(to, amount0);
-        IERC20(_token1).transfer(to, amount1);
+        IERC20(_token0).safeTransfer(to, amount0);
+        IERC20(_token1).safeTransfer(to, amount1);
         balance0 = IERC20(_token0).balanceOf(address(this));
         balance1 = IERC20(_token1).balanceOf(address(this));
 
@@ -105,8 +107,8 @@ contract AMMV2Pair is ERC20, ReentrancyGuard {
             address _token0 = token0;
             address _token1 = token1;
             require(to != _token0 && to != _token1, "AMMV2: INVALID_TO");
-            if (amount0Out > 0) IERC20(_token0).transfer(to, amount0Out);
-            if (amount1Out > 0) IERC20(_token1).transfer(to, amount1Out);
+            if (amount0Out > 0) IERC20(_token0).safeTransfer(to, amount0Out);
+            if (amount1Out > 0) IERC20(_token1).safeTransfer(to, amount1Out);
             balance0 = IERC20(_token0).balanceOf(address(this));
             balance1 = IERC20(_token1).balanceOf(address(this));
         }
@@ -126,8 +128,8 @@ contract AMMV2Pair is ERC20, ReentrancyGuard {
     function skim(address to) external nonReentrant {
         address _token0 = token0;
         address _token1 = token1;
-        IERC20(_token0).transfer(to, IERC20(_token0).balanceOf(address(this)) - reserve0);
-        IERC20(_token1).transfer(to, IERC20(_token1).balanceOf(address(this)) - reserve1);
+        IERC20(_token0).safeTransfer(to, IERC20(_token0).balanceOf(address(this)) - reserve0);
+        IERC20(_token1).safeTransfer(to, IERC20(_token1).balanceOf(address(this)) - reserve1);
     }
 
     function sync() external nonReentrant {

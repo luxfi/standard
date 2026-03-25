@@ -51,24 +51,24 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @dev Simplified deployment for Mainnet, Testnet, and Devnet
  *
  * Networks (all use chain-id 1337 in dev mode):
- * - Mainnet: http://209.38.175.130:9630/ext/bc/C/rpc
- * - Testnet: http://24.199.70.106:9640/ext/bc/C/rpc
- * - Devnet: http://24.199.74.128:9650/ext/bc/C/rpc
+ * - Mainnet: https://api.lux.network/ext/bc/C/rpc
+ * - Testnet: https://api.lux-test.network/ext/bc/C/rpc
+ * - Devnet: https://api.lux-dev.network/ext/bc/C/rpc
  *
  * Funded account (from "light energy" mnemonic):
  * - Primary: 0x35D64Ff3f618f7a17DF34DCb21be375A4686a8de
  *
  * Usage:
- *   export LUX_MNEMONIC="light light light light light light light light light light light energy"
+ *   export LUX_MNEMONIC="<your-mnemonic>"
  *
  *   # Deploy to mainnet
- *   forge script contracts/script/DeployMultiNetwork.s.sol --rpc-url http://209.38.175.130:9630/ext/bc/C/rpc --broadcast -vvv
+ *   forge script contracts/script/DeployMultiNetwork.s.sol --rpc-url https://api.lux.network/ext/bc/C/rpc --broadcast -vvv
  *
  *   # Deploy to testnet
- *   forge script contracts/script/DeployMultiNetwork.s.sol --rpc-url http://24.199.70.106:9640/ext/bc/C/rpc --broadcast -vvv
+ *   forge script contracts/script/DeployMultiNetwork.s.sol --rpc-url https://api.lux-test.network/ext/bc/C/rpc --broadcast -vvv
  *
  *   # Deploy to devnet
- *   forge script contracts/script/DeployMultiNetwork.s.sol --rpc-url http://24.199.74.128:9650/ext/bc/C/rpc --broadcast -vvv
+ *   forge script contracts/script/DeployMultiNetwork.s.sol --rpc-url https://api.lux-dev.network/ext/bc/C/rpc --broadcast -vvv
  */
 contract DeployMultiNetwork is Script {
     // Deployer
