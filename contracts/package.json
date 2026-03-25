@@ -1,6 +1,6 @@
 {
   "name": "@luxfi/contracts",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "Lux Standard Library - Official Solidity smart contracts for Lux Network",
   "license": "BSD-3-Clause",
   "repository": {
