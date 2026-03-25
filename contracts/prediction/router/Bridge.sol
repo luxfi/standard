@@ -6,6 +6,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IWarp, WarpLib} from "../../bridge/interfaces/IWarpMessenger.sol";
 import {IClaims} from "../claims/interfaces/IClaims.sol";
 
@@ -69,6 +70,8 @@ contract WrappedPosition is ERC1155 {
  * - Resolution data verified via Warp from authoritative source
  */
 contract Bridge is Ownable, ReentrancyGuard, IERC1155Receiver {
+    using SafeERC20 for IERC20;
+
     // ═══════════════════════════════════════════════════════════════════════
     // TYPES
     // ═══════════════════════════════════════════════════════════════════════
@@ -529,7 +532,7 @@ contract Bridge is Ownable, ReentrancyGuard, IERC1155Receiver {
         // Transfer collateral to owner
         uint256 balance = collateralToken.balanceOf(address(this));
         if (balance > 0) {
-            collateralToken.transfer(msg.sender, balance);
+            collateralToken.safeTransfer(msg.sender, balance);
         }
     }
 

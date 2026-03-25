@@ -15,9 +15,11 @@ import {IMintable} from "../tokens/interfaces/IMintable.sol";
 import {ILPUSD} from "../tokens/interfaces/ILPUSD.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract LPXTimelock is ILPXTimelock {
-    
+    using SafeERC20 for IERC20;
+
 
     uint256 public constant PRICE_PRECISION = 10 ** 30;
     uint256 public constant MAX_BUFFER = 7 days;
@@ -286,7 +288,7 @@ contract LPXTimelock is ILPXTimelock {
     }
 
     function transferIn(address _sender, address _token, uint256 _amount) external onlyAdmin {
-        IERC20(_token).transferFrom(_sender, address(this), _amount);
+        IERC20(_token).safeTransferFrom(_sender, address(this), _amount);
     }
 
     function signalApprove(address _token, address _spender, uint256 _amount) external onlyAdmin {
@@ -384,7 +386,7 @@ contract LPXTimelock is ILPXTimelock {
         ILPUSD(lpusd).addVault(address(this));
 
         ILPUSD(lpusd).mint(address(this), _amount);
-        IERC20(lpusd).transfer(address(_vault), _amount);
+        IERC20(lpusd).safeTransfer(address(_vault), _amount);
 
         IVault(_vault).sellLPUSD(_token, mintReceiver);
 

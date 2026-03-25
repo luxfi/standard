@@ -3,6 +3,7 @@ pragma solidity ^0.8.31;
 
 import {Script, console} from "forge-std/Script.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {AMMV3Factory} from "@luxfi/contracts/amm/AMMV3Factory.sol";
 import {AMMV3Pool} from "@luxfi/contracts/amm/AMMV3Pool.sol";
 import {LuxMainnet} from "@luxfi/contracts/deployments/Addresses.sol";
@@ -30,6 +31,7 @@ import {LuxMainnet} from "@luxfi/contracts/deployments/Addresses.sol";
  *     --rpc-url https://api.lux.network/mainnet/ext/bc/C/rpc --broadcast --legacy -vvv
  */
 contract CreateInitialPools is Script {
+    using SafeERC20 for IERC20;
     // --- V3 constants ---
     uint24 constant FEE_30BPS = 3000;
     int24 constant TICK_SPACING = 60;
@@ -215,7 +217,7 @@ contract CreateInitialPools is Script {
 
         // Transfer the one-sided token to the pool (push pattern)
         address token = isToken0 ? v3.token0() : v3.token1();
-        IERC20(token).transfer(pool, tokenAmount);
+        IERC20(token).safeTransfer(pool, tokenAmount);
 
         // V3 mint expects both tokens to be present. For one-sided, only one token
         // is needed but the pool checks balances. The other side should require 0.

@@ -3,11 +3,13 @@
 pragma solidity ^0.8.31;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IGMT} from "./interfaces/IGMT.sol";
 import {ITimelockTarget} from "../peripherals/interfaces/ITimelockTarget.sol";
 
 contract GMT is IERC20, IGMT, ITimelockTarget {
-    
+    using SafeERC20 for IERC20;
+
 
     string public constant name = "Gambit";
     string public constant symbol = "GMT";
@@ -99,7 +101,7 @@ contract GMT is IERC20, IGMT, ITimelockTarget {
 
     // to help users who accidentally send their tokens to this contract
     function withdrawToken(address _token, address _account, uint256 _amount) external override onlyGov {
-        IERC20(_token).transfer(_account, _amount);
+        IERC20(_token).safeTransfer(_account, _amount);
     }
 
     function balanceOf(address _account) external view override returns (uint256) {

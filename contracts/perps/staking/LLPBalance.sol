@@ -3,10 +3,12 @@
 pragma solidity ^0.8.31;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ILLPManager} from "../core/interfaces/ILLPManager.sol";
 
 contract LLPBalance {
-    
+    using SafeERC20 for IERC20;
+
 
     ILLPManager public llpManager;
     address public stakedLlpTracker;
@@ -62,6 +64,6 @@ contract LLPBalance {
             "LLPBalance: cooldown duration not yet passed"
         );
 
-        IERC20(stakedLlpTracker).transferFrom(_sender, _recipient, _amount);
+        IERC20(stakedLlpTracker).safeTransferFrom(_sender, _recipient, _amount);
     }
 }

@@ -3,6 +3,7 @@ pragma solidity ^0.8.31;
 
 import {Script, console} from "forge-std/Script.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {AMMV3Factory} from "@luxfi/contracts/amm/AMMV3Factory.sol";
 import {AMMV3Pool} from "@luxfi/contracts/amm/AMMV3Pool.sol";
 import {ZooMainnet} from "@luxfi/contracts/deployments/Addresses.sol";
@@ -24,6 +25,7 @@ import {ZooMainnet} from "@luxfi/contracts/deployments/Addresses.sol";
  *     --rpc-url https://api.lux.network/mainnet/ext/bc/zoo/rpc --broadcast --legacy -vvv
  */
 contract CreateZooPools is Script {
+    using SafeERC20 for IERC20;
     // --- V3 constants ---
     uint24 constant FEE_30BPS = 3000;
     int24 constant TICK_SPACING = 60;
@@ -103,7 +105,7 @@ contract CreateZooPools is Script {
             return;
         }
 
-        IERC20(WZOO).transfer(pool, zooAmount);
+        IERC20(WZOO).safeTransfer(pool, zooAmount);
         v3.mint(deployer, tickLower, tickUpper, liq);
 
         console.log("  Minted one-sided ZOO position:");

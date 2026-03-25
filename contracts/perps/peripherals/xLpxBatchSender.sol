@@ -3,12 +3,14 @@
 pragma solidity ^0.8.31;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {IVester} from "../staking/interfaces/IVester.sol";
 import {IRewardTracker} from "../staking/interfaces/IRewardTracker.sol";
 
 contract xLpxBatchSender {
-    
+    using SafeERC20 for IERC20;
+
 
     address public admin;
     address public xLpx;
@@ -32,7 +34,7 @@ contract xLpxBatchSender {
         IRewardTracker rewardTracker = IRewardTracker(_vester.rewardTracker());
 
         for (uint256 i = 0; i < _accounts.length; i++) {
-            IERC20(xLpx).transferFrom(msg.sender, _accounts[i], _amounts[i]);
+            IERC20(xLpx).safeTransferFrom(msg.sender, _accounts[i], _amounts[i]);
 
             uint256 nextTransferredCumulativeReward = _vester.transferredCumulativeRewards(_accounts[i]) + _amounts[i];
             _vester.setTransferredCumulativeRewards(_accounts[i], nextTransferredCumulativeReward);

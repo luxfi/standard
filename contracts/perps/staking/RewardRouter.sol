@@ -364,7 +364,7 @@ contract RewardRouter is IRewardRouter, ReentrancyGuard, Governable {
 
         uint256 xLPXBalance = IERC20(xLPX).balanceOf(_sender);
         if (xLPXBalance > 0) {
-            IERC20(xLPX).transferFrom(_sender, receiver, xLPXBalance);
+            IERC20(xLPX).safeTransferFrom(_sender, receiver, xLPXBalance);
         }
 
         uint256 dluxBalance = IERC20(dlux).balanceOf(_sender);

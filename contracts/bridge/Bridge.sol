@@ -15,6 +15,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {LRC20B} from "./LRC20B.sol";
@@ -23,6 +24,7 @@ import {BridgeVault} from "./BridgeVault.sol";
 contract Bridge is Ownable, AccessControl, ReentrancyGuard {
     // Use the library functions from OpenZeppelin
     using Strings for uint256;
+    using SafeERC20 for IERC20;
 
     uint256 public feeRate = 100; // Fee rate 1% decimals 4
     bool withdrawalEnabled = true;
@@ -206,7 +208,7 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
      */
     function vaultDeposit(uint256 amount_, address tokenAddr_) public payable nonReentrant {
         if (tokenAddr_ != address(0)) {
-            IERC20(tokenAddr_).transferFrom(
+            IERC20(tokenAddr_).safeTransferFrom(
                 msg.sender,
                 address(vault),
                 amount_

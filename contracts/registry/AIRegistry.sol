@@ -5,6 +5,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 interface AITokenInterface is IERC20 {
     function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
@@ -29,6 +30,7 @@ interface AINftInterface {
  * - Arbitrum Sepolia testnet
  */
 contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
+    using SafeERC20 for IERC20;
 
     // Structs
     struct ClaimIdentityParams {
@@ -216,7 +218,7 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
         if (params.stakeAmount < requiredStake) revert InsufficientStakeAmountForIdentity();
 
         // Transfer stake
-        shinToken.transferFrom(caller, address(this), params.stakeAmount);
+        IERC20(address(shinToken)).safeTransferFrom(caller, address(this), params.stakeAmount);
 
         // Mint NFT
         uint256 tokenId = aiNft.mint(params.owner);
@@ -373,7 +375,7 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     function increaseStake(string calldata identity, uint256 amount) external {
         _requireOwner(identity);
 
-        shinToken.transferFrom(msg.sender, address(this), amount);
+        IERC20(address(shinToken)).safeTransferFrom(msg.sender, address(this), amount);
 
         IdentityData storage data = _identityData[identity];
         data.stakedTokens += amount;
@@ -399,7 +401,7 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
         data.stakedTokens -= amount;
         data.lastUpdated = block.timestamp;
 
-        shinToken.transfer(msg.sender, amount);
+        IERC20(address(shinToken)).safeTransfer(msg.sender, amount);
 
         emit StakeUpdate(identity, data.stakedTokens);
     }
@@ -457,7 +459,7 @@ contract AIRegistry is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
 
         // Return staked tokens
         if (data.stakedTokens > 0) {
-            shinToken.transfer(msg.sender, data.stakedTokens);
+            IERC20(address(shinToken)).safeTransfer(msg.sender, data.stakedTokens);
         }
 
         // Burn NFT
