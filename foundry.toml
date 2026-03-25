@@ -196,6 +196,26 @@ remappings = [
     "murky/=lib/seaport/lib/murky/src/",
 ]
 
+# Halmos symbolic verification profile
+# Build with: FOUNDRY_PROFILE=halmos forge build
+# Run with: FOUNDRY_PROFILE=halmos halmos --contract <TestName> --function check
+[profile.halmos]
+src = "test/halmos"
+out = "out-halmos"
+libs = ["lib"]
+test = "test/halmos"
+script = "empty"
+solc_version = "0.8.31"
+auto_detect_solc = true
+evm_version = "cancun"
+via_ir = false
+optimizer = false
+ast = true
+remappings = [
+    "forge-std/=lib/forge-std/src/",
+    "hardhat/=lib/forge-std/src/",
+]
+
 # Lint: only run safety lints, suppress naming convention notes
 # Naming follows upstream forks (GMX, Uniswap) for ABI compatibility
 [profile.default.lint]
