@@ -9,7 +9,7 @@ SLITHER := $(VENV)/bin/slither
 SEMGREP := $(VENV)/bin/semgrep
 ADERYN := $(HOME)/.cyfrin/bin/aderyn
 
-.PHONY: all build test clean deploy lint fmt audit security venv
+.PHONY: all build test clean deploy lint fmt audit security venv halmos
 
 # ═══════════════════════════════════════════════════════════════════
 # Build & Test
@@ -98,6 +98,15 @@ security: slither semgrep aderyn
 # Full audit: lint + test + security
 audit: lint test security
 	@echo "Full audit complete."
+
+# ═══════════════════════════════════════════════════════════════════
+# Symbolic Execution (Halmos)
+# ═══════════════════════════════════════════════════════════════════
+
+HALMOS := $(VENV)/bin/halmos
+
+halmos: venv
+	$(HALMOS) --solver-timeout-branching 10s --solver-timeout-assertion 300s --function check
 
 # ═══════════════════════════════════════════════════════════════════
 # Deploy

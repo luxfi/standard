@@ -72,11 +72,10 @@ contract HalmosLiquidLUXTest is Test {
     // ==================================================================================
 
     /// @notice Prove: second depositor gets > 0 shares despite donation attack
-    function check_virtualSharesPreventInflation(
-        uint256 firstDeposit,
-        uint256 donation,
-        uint256 secondDeposit
-    ) public pure {
+    function check_virtualSharesPreventInflation(uint256 firstDeposit, uint256 donation, uint256 secondDeposit)
+        public
+        pure
+    {
         vm.assume(firstDeposit > MINIMUM_LIQUIDITY * 2 && firstDeposit < 1e24);
         vm.assume(donation < 1e24);
         vm.assume(secondDeposit >= 1e18 && secondDeposit < 1e24);
@@ -97,10 +96,7 @@ contract HalmosLiquidLUXTest is Test {
     // ==================================================================================
 
     /// @notice Prove: dead address shares retain value after attacker withdraws
-    function check_minimumLiquidityPreventsFullDrain(
-        uint256 firstDeposit,
-        uint256 donation
-    ) public pure {
+    function check_minimumLiquidityPreventsFullDrain(uint256 firstDeposit, uint256 donation) public pure {
         vm.assume(firstDeposit > MINIMUM_LIQUIDITY * 2 && firstDeposit < 1e24);
         vm.assume(donation < 1e24);
 

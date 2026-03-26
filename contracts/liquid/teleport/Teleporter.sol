@@ -108,8 +108,22 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
     /// @notice Processed yield nonces (replay protection)
     mapping(uint256 => mapping(uint256 => bool)) public processedYields; // srcChainId => yieldNonce => processed
 
-    /// @notice Pending withdraw nonces
-    mapping(uint256 => bool) public pendingWithdraws;
+    /// @notice Pending withdraw details (C-04 fix: struct for MPC verification)
+    struct PendingWithdraw {
+        address user;
+        uint256 amount;
+        uint256 srcChainId;
+        uint256 timestamp;
+    }
+
+    /// @notice Pending withdraws by nonce (C-04 fix: sequential nonce)
+    mapping(uint256 => PendingWithdraw) public pendingWithdraws;
+
+    /// @notice Global sequential withdraw nonce (C-04 fix: replaces hash-based nonce)
+    uint256 public globalWithdrawNonce;
+
+    /// @notice Monotonic backing nonce per source chain (C-03 fix: replaces block.timestamp)
+    mapping(bytes32 => uint256) public backingNonce;
 
     /// @notice Latest backing attestation per source chain
     mapping(uint256 => BackingAttestation) public backingAttestations;
@@ -304,11 +318,11 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
         // Burn collateral from user
         collateralToken.burnFrom(msg.sender, amount);
 
-        // Generate withdraw nonce
-        withdrawNonce =
-            uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, amount, srcChainId, block.number)));
+        // C-04 fix: Sequential withdraw nonce (not hash-based)
+        withdrawNonce = ++globalWithdrawNonce;
 
-        pendingWithdraws[withdrawNonce] = true;
+        pendingWithdraws[withdrawNonce] =
+            PendingWithdraw({ user: msg.sender, amount: amount, srcChainId: srcChainId, timestamp: block.timestamp });
         totalBurned += amount;
 
         emit BurnedForWithdraw(msg.sender, amount, withdrawNonce);
@@ -327,8 +341,10 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
      * @param signature MPC signature
      */
     function updateBacking(uint256 srcChainId, uint256 totalBacking, bytes calldata signature) external {
-        // Verify MPC signature
-        bytes32 messageHash = keccak256(abi.encodePacked("BACKING", srcChainId, totalBacking, block.timestamp));
+        // C-03 fix: Use monotonic nonce instead of block.timestamp in signature hash
+        bytes32 chainKey = keccak256(abi.encodePacked("BACKING", srcChainId));
+        uint256 nonce = backingNonce[chainKey]++;
+        bytes32 messageHash = keccak256(abi.encodePacked("BACKING", srcChainId, totalBacking, nonce));
         bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
         address signer = ECDSA.recover(ethSignedHash, signature);
 
