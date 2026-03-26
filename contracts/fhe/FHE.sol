@@ -319,10 +319,9 @@ library FHE {
             rhs = asEuint128(0);
         }
 
-        return
-            ebool.wrap(
-                FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.lte)
-            );
+        return ebool.wrap(
+            FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.lte)
+        );
     }
 
     /// @notice Perform the subtraction operation on two parameters of type euint8
@@ -979,10 +978,9 @@ library FHE {
             rhs = asEuint128(0);
         }
 
-        return
-            ebool.wrap(
-                FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.gte)
-            );
+        return ebool.wrap(
+            FHENetwork.mathOp(Utils.EUINT128_TFHE, euint128.unwrap(lhs), euint128.unwrap(rhs), FunctionId.gte)
+        );
     }
 
     /// @notice Perform the remainder operation on two parameters of type euint8
@@ -3229,18 +3227,16 @@ library FHE {
 
     /// @notice Converts an encrypted input to euint128
     function asEuint128(einput encryptedInput, bytes memory inputProof) internal returns (euint128) {
-        return
-            euint128.wrap(
-                FHENetwork.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EUINT128_TFHE)
-            );
+        return euint128.wrap(
+            FHENetwork.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EUINT128_TFHE)
+        );
     }
 
     /// @notice Converts an encrypted input to euint256
     function asEuint256(einput encryptedInput, bytes memory inputProof) internal returns (euint256) {
-        return
-            euint256.wrap(
-                FHENetwork.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EUINT256_TFHE)
-            );
+        return euint256.wrap(
+            FHENetwork.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EUINT256_TFHE)
+        );
     }
 
     /// @notice Converts a euint128 to an euint256
@@ -3250,10 +3246,9 @@ library FHE {
 
     /// @notice Converts an encrypted input to eaddress
     function asEaddress(einput encryptedInput, bytes memory inputProof) internal returns (eaddress) {
-        return
-            eaddress.wrap(
-                FHENetwork.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EADDRESS_TFHE)
-            );
+        return eaddress.wrap(
+            FHENetwork.verifyInput(uint256(einput.unwrap(encryptedInput)), inputProof, Utils.EADDRESS_TFHE)
+        );
     }
 
     /// @notice Grants permission to an account to operate on the encrypted boolean value

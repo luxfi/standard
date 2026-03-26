@@ -515,8 +515,8 @@ contract Markets is IMarkets, ReentrancyGuard {
         uint256 collateralValue = position[id][borrower].collateral.mulDivDown(collateralPrice, ORACLE_PRICE_SCALE);
         uint256 maxBorrow = collateralValue.mulDivDown(marketParams.lltv, 1e18);
 
-        uint256 borrowed = position[id][borrower].borrowShares
-        .toAssetsUp(market[id].totalBorrowAssets, market[id].totalBorrowShares);
+        uint256 borrowed =
+            position[id][borrower].borrowShares.toAssetsUp(market[id].totalBorrowAssets, market[id].totalBorrowShares);
 
         return borrowed <= maxBorrow;
     }

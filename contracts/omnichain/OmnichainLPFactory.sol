@@ -112,9 +112,8 @@ contract OmnichainLPFactory is Ownable {
     function calculatePairAddress(address token0, address token1) external view returns (address) {
         require(token0 < token1, "OmnichainLPFactory: Invalid token order");
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
-        bytes32 hash = keccak256(
-            abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(type(OmnichainLP).creationCode))
-        );
+        bytes32 hash =
+            keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(type(OmnichainLP).creationCode)));
         return address(uint160(uint256(hash)));
     }
 }
