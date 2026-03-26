@@ -311,8 +311,8 @@ contract QuantumSafe is IERC1271, ILegacyERC1271, IERC165 {
         // Both must verify
         bool blsValid = IBLS(BLS_PRECOMPILE).verify(_blsPublicKey, messageHash, blsSig);
 
-        bool ringtailValid = IRingtailThreshold(RINGTAIL_PRECOMPILE)
-            .verifyThreshold(threshold, totalSigners, messageHash, ringtailSig);
+        bool ringtailValid =
+            IRingtailThreshold(RINGTAIL_PRECOMPILE).verifyThreshold(threshold, totalSigners, messageHash, ringtailSig);
 
         return blsValid && ringtailValid;
     }
@@ -331,8 +331,8 @@ contract QuantumSafe is IERC1271, ILegacyERC1271, IERC165 {
         bytes calldata mldsaSig = signature[ringtailLen:signature.length];
 
         // Both must verify
-        bool ringtailValid = IRingtailThreshold(RINGTAIL_PRECOMPILE)
-            .verifyThreshold(threshold, totalSigners, messageHash, ringtailSig);
+        bool ringtailValid =
+            IRingtailThreshold(RINGTAIL_PRECOMPILE).verifyThreshold(threshold, totalSigners, messageHash, ringtailSig);
 
         bool mldsaValid = IMLDSA(MLDSA_PRECOMPILE).verify(_mldsaPublicKey, abi.encodePacked(messageHash), mldsaSig);
 
