@@ -33,8 +33,9 @@ contract BridgedETH is LRC20B {
 
     constructor() LRC20B(_name, _symbol) { }
 
+    /// @notice Mint via daily-limited bridgeMint (C-01 fix: no direct _mint bypass)
     function mint(address account, uint256 amount) public onlyAdmin {
-        _mint(account, amount);
+        bridgeMint(account, amount);
     }
 
     function burn(address account, uint256 amount) public onlyAdmin {

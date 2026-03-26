@@ -5,9 +5,9 @@ import "forge-std/Test.sol";
 
 // Core tokens
 import { WLUX } from "../../contracts/tokens/WLUX.sol";
-import { LuxUSD } from "../../contracts/liquid/tokens/LUSD.sol";
-import { LuxETH } from "../../contracts/liquid/tokens/LETH.sol";
-import { LuxBTC } from "../../contracts/liquid/tokens/LBTC.sol";
+import { LiquidUSD } from "../../contracts/liquid/tokens/LUSD.sol";
+import { LiquidETH } from "../../contracts/liquid/tokens/LETH.sol";
+import { LiquidBTC } from "../../contracts/liquid/tokens/LBTC.sol";
 
 // Staking
 import { sLUX as StakedLUX } from "../../contracts/staking/sLUX.sol";
@@ -82,9 +82,9 @@ contract LuxE2ETest is Test {
 
     // Core tokens
     WLUX public wlux;
-    LuxUSD public lusd;
-    LuxETH public leth;
-    LuxBTC public lbtc;
+    LiquidUSD public lusd;
+    LiquidETH public leth;
+    LiquidBTC public lbtc;
 
     // Staking
     StakedLUX public stakedLux;
@@ -147,9 +147,9 @@ contract LuxE2ETest is Test {
 
         // ========== Deploy Core Tokens ==========
         wlux = new WLUX();
-        lusd = new LuxUSD();
-        leth = new LuxETH();
-        lbtc = new LuxBTC();
+        lusd = new LiquidUSD();
+        leth = new LiquidETH();
+        lbtc = new LiquidBTC();
 
         // ========== Deploy Staking ==========
         stakedLux = new StakedLUX(address(wlux));

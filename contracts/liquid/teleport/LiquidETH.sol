@@ -322,12 +322,13 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
         // Reduce total debt (yield burns debt)
         uint256 debtReduction = effectiveAmount > totalDebt ? totalDebt : effectiveAmount;
         totalDebt -= debtReduction;
-        accumulatedYield += amount;
+        accumulatedYield += effectiveAmount;
 
-        // Burn the yield tokens
-        liquidToken.burn(address(this), amount);
+        // H-06 fix: Burn only effectiveAmount, not the full amount
+        // Unused portion (amount - effectiveAmount) stays in contract for next yield cycle
+        liquidToken.burn(address(this), effectiveAmount);
 
-        emit YieldReceived(amount, yieldIndex);
+        emit YieldReceived(effectiveAmount, yieldIndex);
     }
 
     /**
@@ -358,9 +359,9 @@ contract LiquidETH is Ownable, AccessControl, ReentrancyGuard {
         // Reduce total debt
         uint256 debtReduction = effectiveAmount > totalDebt ? totalDebt : effectiveAmount;
         totalDebt -= debtReduction;
-        accumulatedYield += amount;
+        accumulatedYield += effectiveAmount;
 
-        emit YieldReceived(amount, yieldIndex);
+        emit YieldReceived(effectiveAmount, yieldIndex);
     }
 
     // ═══════════════════════════════════════════════════════════════════════

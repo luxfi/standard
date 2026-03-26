@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 
 // Core tokens - Lux native
 import { WLUX } from "../../contracts/tokens/WLUX.sol";
-import { LuxUSD } from "../../contracts/liquid/tokens/LUSD.sol";
+import { LiquidUSD } from "../../contracts/liquid/tokens/LUSD.sol";
 import { ILRC20 } from "../../contracts/tokens/interfaces/ILRC20.sol";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -195,7 +195,7 @@ contract LuxFullStackIntegration is Test {
 
     // Core tokens
     WLUX public wlux;
-    LuxUSD public lusd;
+    LiquidUSD public lusd;
     MockAlUSD public alUSD;
 
     // AMM
@@ -217,7 +217,7 @@ contract LuxFullStackIntegration is Test {
 
         // Deploy core tokens
         wlux = new WLUX();
-        lusd = new LuxUSD();
+        lusd = new LiquidUSD();
         alUSD = new MockAlUSD();
 
         console.log("WLUX:", address(wlux));

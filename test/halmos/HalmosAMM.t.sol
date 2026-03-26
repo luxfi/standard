@@ -73,11 +73,7 @@ contract HalmosAMMTest is Test {
     // ================================================================
 
     /// @notice Prove: den*(r1-out) >= r1*r0*1000 for swap 0->1
-    function check_outputBoundedness_zeroForOne(
-        uint24 _r0,
-        uint24 _r1,
-        uint24 _a
-    ) public pure {
+    function check_outputBoundedness_zeroForOne(uint24 _r0, uint24 _r1, uint24 _a) public pure {
         uint256 r0 = uint256(_r0);
         uint256 r1 = uint256(_r1);
         uint256 a = uint256(_a);
@@ -99,11 +95,7 @@ contract HalmosAMMTest is Test {
     }
 
     /// @notice Prove: den*(r0-out) >= r0*r1*1000 for swap 1->0
-    function check_outputBoundedness_oneForZero(
-        uint24 _r0,
-        uint24 _r1,
-        uint24 _a
-    ) public pure {
+    function check_outputBoundedness_oneForZero(uint24 _r0, uint24 _r1, uint24 _a) public pure {
         uint256 r0 = uint256(_r0);
         uint256 r1 = uint256(_r1);
         uint256 a = uint256(_a);
@@ -217,14 +209,10 @@ contract HalmosAMMTest is Test {
     // ================================================================
 
     /// @notice Prove: fee-adjusted K passing implies raw K holds
-    function check_feeAdjustedKImpliesRawK(
-        uint24 _r0,
-        uint24 _r1,
-        uint24 _b0,
-        uint24 _b1,
-        uint24 _in0,
-        uint24 _in1
-    ) public pure {
+    function check_feeAdjustedKImpliesRawK(uint24 _r0, uint24 _r1, uint24 _b0, uint24 _b1, uint24 _in0, uint24 _in1)
+        public
+        pure
+    {
         uint256 r0 = uint256(_r0);
         uint256 r1 = uint256(_r1);
         uint256 b0 = uint256(_b0);
@@ -258,12 +246,7 @@ contract HalmosAMMTest is Test {
     // ================================================================
 
     /// @notice Prove: second depositor gets > 0 shares for proportional deposit
-    function check_minimumLiquidityProtectsDepositor(
-        uint8 _d0a,
-        uint8 _d1a,
-        uint8 _d0b,
-        uint8 _d1b
-    ) public pure {
+    function check_minimumLiquidityProtectsDepositor(uint8 _d0a, uint8 _d1a, uint8 _d0b, uint8 _d1b) public pure {
         uint256 d0a = uint256(_d0a);
         uint256 d1a = uint256(_d1a);
         uint256 d0b = uint256(_d0b);

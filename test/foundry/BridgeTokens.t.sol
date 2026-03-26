@@ -17,9 +17,9 @@ import "@openzeppelin/contracts/access/IAccessControl.sol";
  */
 contract BridgeTokensTest is Test {
     // Lux bridge tokens
-    LuxETH public leth;
-    LuxBTC public lbtc;
-    LuxUSD public lusd;
+    LiquidETH public leth;
+    LiquidBTC public lbtc;
+    LiquidUSD public lusd;
 
     // Test accounts
     address public deployer;
@@ -48,9 +48,9 @@ contract BridgeTokensTest is Test {
         attacker = makeAddr("attacker");
 
         // Deploy Lux bridge tokens
-        leth = new LuxETH();
-        lbtc = new LuxBTC();
-        lusd = new LuxUSD();
+        leth = new LiquidETH();
+        lbtc = new LiquidBTC();
+        lusd = new LiquidUSD();
 
         // Grant admin role to MPC bridge
         leth.grantAdmin(mpcBridge);
@@ -511,7 +511,6 @@ contract BridgeTokensTest is Test {
 
         address[] memory admins = new address[](adminCount);
 
-        // Grant admin roles
         for (uint8 i = 0; i < adminCount; i++) {
             admins[i] = address(uint160(1000 + i));
             leth.grantAdmin(admins[i]);

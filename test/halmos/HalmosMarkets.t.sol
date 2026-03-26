@@ -70,10 +70,7 @@ contract HalmosMarketsTest is Test {
     // ==================================================================================
 
     /// @notice Prove: after a supply + borrow sequence, borrow never exceeds supply
-    function check_borrowNeverExceedsSupply(
-        uint256 supplyAmount,
-        uint256 borrowAmount
-    ) public pure {
+    function check_borrowNeverExceedsSupply(uint256 supplyAmount, uint256 borrowAmount) public pure {
         vm.assume(supplyAmount > 0 && supplyAmount < type(uint128).max);
         vm.assume(borrowAmount > 0 && borrowAmount <= supplyAmount);
 
@@ -178,11 +175,10 @@ contract HalmosMarketsTest is Test {
     // ==================================================================================
 
     /// @notice Prove: repaying assets always reduces totalBorrowAssets
-    function check_repayReducesBorrow(
-        uint256 totalBorrowAssets,
-        uint256 totalBorrowShares,
-        uint256 repayAssets
-    ) public pure {
+    function check_repayReducesBorrow(uint256 totalBorrowAssets, uint256 totalBorrowShares, uint256 repayAssets)
+        public
+        pure
+    {
         vm.assume(totalBorrowAssets > 0 && totalBorrowAssets < type(uint96).max);
         vm.assume(totalBorrowShares > 0 && totalBorrowShares < type(uint96).max);
         vm.assume(repayAssets > 0 && repayAssets <= totalBorrowAssets);
@@ -203,11 +199,10 @@ contract HalmosMarketsTest is Test {
     // ==================================================================================
 
     /// @notice Prove: interest adds equally to borrow and supply (no value leak)
-    function check_interestAccrualSolvency(
-        uint256 totalSupplyAssets,
-        uint256 totalBorrowAssets,
-        uint256 interest
-    ) public pure {
+    function check_interestAccrualSolvency(uint256 totalSupplyAssets, uint256 totalBorrowAssets, uint256 interest)
+        public
+        pure
+    {
         vm.assume(totalSupplyAssets > 0 && totalSupplyAssets < type(uint96).max);
         vm.assume(totalBorrowAssets > 0 && totalBorrowAssets <= totalSupplyAssets);
         vm.assume(interest > 0 && interest < type(uint64).max);
