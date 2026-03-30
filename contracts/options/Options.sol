@@ -7,6 +7,7 @@ import { ERC1155 } from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { IOracle } from "../interfaces/options/IOracle.sol";
 
 /**
  * @title Options
@@ -38,18 +39,18 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
     }
 
     struct OptionSeries {
-        address underlying; // Underlying asset
-        address quote; // Quote asset (collateral for puts, payment for calls)
-        uint256 strikePrice; // Strike price in quote decimals
-        uint256 expiry; // Expiration timestamp
-        OptionType optionType; // CALL or PUT
-        SettlementType settlement; // CASH or PHYSICAL
+        address underlying;
+        address quote;
+        uint256 strikePrice;
+        uint256 expiry;
+        OptionType optionType;
+        SettlementType settlement;
         bool exists;
     }
 
     struct Position {
-        uint256 written; // Options written (short)
-        uint256 collateral; // Collateral deposited
+        uint256 written;
+        uint256 collateral;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -58,6 +59,7 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
+    bytes32 public constant EXERCISE_ROLE = keccak256("EXERCISE_ROLE");
 
     uint256 public constant PRECISION = 1e18;
     uint256 public constant BPS = 10000;
@@ -101,8 +103,8 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
     /// @notice Next series ID
     uint256 public nextSeriesId = 1;
 
-    /// @notice Underlying token decimals cache
-    mapping(address => uint8) public tokenDecimals;
+    /// @notice Underlying token decimals cache (stored as decimals + 1 so 0 means uncached)
+    mapping(address => uint8) internal _tokenDecimalsPlus1;
 
     // ═══════════════════════════════════════════════════════════════════════
     // EVENTS
@@ -199,12 +201,12 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
             exists: true
         });
 
-        // Cache decimals
-        if (tokenDecimals[underlying] == 0) {
-            tokenDecimals[underlying] = _getDecimals(underlying);
+        // Cache decimals (stored as value + 1 so 0 means uncached)
+        if (_tokenDecimalsPlus1[underlying] == 0) {
+            _tokenDecimalsPlus1[underlying] = _getDecimals(underlying) + 1;
         }
-        if (tokenDecimals[quote] == 0) {
-            tokenDecimals[quote] = _getDecimals(quote);
+        if (_tokenDecimalsPlus1[quote] == 0) {
+            _tokenDecimalsPlus1[quote] = _getDecimals(quote) + 1;
         }
 
         emit SeriesCreated(seriesId, underlying, quote, strikePrice, expiry, optionType, settlement);
@@ -236,19 +238,17 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
         // Calculate collateral requirement
         collateralRequired = _calculateCollateral(seriesId, amount);
 
-        // Transfer collateral
+        // Transfer collateral + fee separately so position stays fully collateralized
         address collateralToken = series.optionType == OptionType.CALL ? series.underlying : series.quote;
-
-        IERC20(collateralToken).safeTransferFrom(msg.sender, address(this), collateralRequired);
-
-        // Apply writing fee
         uint256 fee = (collateralRequired * writeFeeBps) / BPS;
+
+        IERC20(collateralToken).safeTransferFrom(msg.sender, address(this), collateralRequired + fee);
+
         if (fee > 0) {
             IERC20(collateralToken).safeTransfer(feeReceiver, fee);
-            collateralRequired -= fee;
         }
 
-        // Update position
+        // Update position — full collateral recorded, fee already sent separately
         Position storage pos = positions[seriesId][msg.sender];
         pos.written += amount;
         pos.collateral += collateralRequired;
@@ -341,10 +341,8 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
         uint256 fee = (payout * exerciseFeeBps) / BPS;
         payout -= fee;
 
-        // Transfer payout
-        address payoutToken = series.settlement == SettlementType.CASH
-            ? series.quote
-            : (series.optionType == OptionType.CALL ? series.underlying : series.quote);
+        // Transfer payout — always in the collateral token (underlying for calls, quote for puts)
+        address payoutToken = series.optionType == OptionType.CALL ? series.underlying : series.quote;
 
         if (fee > 0) {
             IERC20(payoutToken).safeTransfer(feeReceiver, fee);
@@ -387,9 +385,40 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
         emit CollateralClaimed(seriesId, msg.sender, amount);
     }
 
+    /**
+     * @notice Release collateral from a writer's position to the caller (e.g., AmericanOptions)
+     * @dev Only callable by EXERCISE_ROLE. Used for early exercise assignment.
+     * @param seriesId Option series ID
+     * @param writer Writer whose collateral to deduct
+     * @param amount Amount of collateral to release
+     */
+    function releaseWriterCollateral(uint256 seriesId, address writer, uint256 amount)
+        external
+        nonReentrant
+        onlyRole(EXERCISE_ROLE)
+    {
+        OptionSeries storage series = optionSeries[seriesId];
+        if (!series.exists) revert SeriesNotFound();
+
+        Position storage pos = positions[seriesId][writer];
+        if (pos.collateral < amount) revert InsufficientCollateral();
+
+        pos.collateral -= amount;
+
+        address collateralToken = series.optionType == OptionType.CALL ? series.underlying : series.quote;
+        IERC20(collateralToken).safeTransfer(msg.sender, amount);
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // VIEW FUNCTIONS
     // ═══════════════════════════════════════════════════════════════════════
+
+    /// @notice Get cached decimals for a token (handles 0-decimal tokens correctly)
+    function tokenDecimals(address token) public view returns (uint8) {
+        uint8 cached = _tokenDecimalsPlus1[token];
+        if (cached == 0) return 18; // uncached defaults to 18
+        return cached - 1;
+    }
 
     /// @notice Get series details
     function getSeries(uint256 seriesId) external view returns (OptionSeries memory) {
@@ -401,12 +430,23 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
         return positions[seriesId][writer];
     }
 
-    /// @notice Calculate collateral required for writing
+    /// @notice Calculate collateral required for writing (IOptions interface)
+    function getCollateralRequired(uint256 seriesId, uint256 amount) external view returns (uint256) {
+        return _calculateCollateral(seriesId, amount);
+    }
+
+    /// @notice Calculate collateral required for writing (backward compatible alias)
     function calculateCollateral(uint256 seriesId, uint256 amount) external view returns (uint256) {
         return _calculateCollateral(seriesId, amount);
     }
 
-    /// @notice Calculate exercise payout
+    /// @notice Calculate exercise payout (IOptions interface)
+    function getExercisePayout(uint256 seriesId, uint256 amount) external view returns (uint256) {
+        if (!isSettled[seriesId]) return 0;
+        return _calculatePayout(seriesId, amount);
+    }
+
+    /// @notice Calculate exercise payout (backward compatible alias)
     function calculatePayout(uint256 seriesId, uint256 amount) external view returns (uint256) {
         if (!isSettled[seriesId]) return 0;
         return _calculatePayout(seriesId, amount);
@@ -460,8 +500,7 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
             return (amount * collateralRatio) / BPS;
         } else {
             // For puts: collateral = strike * amount in quote
-            uint8 underlyingDec = tokenDecimals[series.underlying];
-            uint8 quoteDec = tokenDecimals[series.quote];
+            uint8 underlyingDec = tokenDecimals(series.underlying);
 
             uint256 collateral = (amount * series.strikePrice) / (10 ** underlyingDec);
             return (collateral * collateralRatio) / BPS;
@@ -478,22 +517,23 @@ contract Options is ERC1155, ReentrancyGuard, AccessControl, Pausable {
         uint256 price = settlementPrices[seriesId];
 
         if (series.optionType == OptionType.CALL) {
-            // Call payout = max(0, spot - strike)
+            // Call: collateral is in underlying. Payout denominated in underlying.
+            // Payout per unit = (price - strike) / price (fraction of underlying)
+            // Scaled: payoutPerOption = (price - strike) * PRECISION / price
             if (price <= series.strikePrice) return 0;
-            return ((price - series.strikePrice) * PRECISION) / series.strikePrice;
+            return ((price - series.strikePrice) * PRECISION) / price;
         } else {
-            // Put payout = max(0, strike - spot)
+            // Put: collateral is in quote. Payout denominated in quote.
+            // Payout per unit = (strike - price) per underlying unit
+            // Scaled: payoutPerOption = (strike - price) * PRECISION / 10**underlyingDec
             if (price >= series.strikePrice) return 0;
-            return ((series.strikePrice - price) * PRECISION) / series.strikePrice;
+            uint8 underlyingDec = tokenDecimals(series.underlying);
+            return ((series.strikePrice - price) * PRECISION) / (10 ** underlyingDec);
         }
     }
 
     function _getSettlementPrice(address asset) internal view returns (uint256) {
-        // Interface with oracle - simplified for now
-        // In production, use IOracle(oracle).getPrice(asset)
-        (bool success, bytes memory data) = oracle.staticcall(abi.encodeWithSignature("getPrice(address)", asset));
-        require(success, "Oracle call failed");
-        (uint256 price,) = abi.decode(data, (uint256, uint256));
+        (uint256 price,) = IOracle(oracle).getPrice(asset);
         return price;
     }
 
