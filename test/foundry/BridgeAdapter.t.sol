@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
-import { LiquidityAdapter, IMintBurnable } from "../../contracts/integrations/bridges/LiquidityAdapter.sol";
+import { BridgeAdapter, IMintBurnable } from "../../contracts/integrations/bridges/BridgeAdapter.sol";
 import { BridgeParams, BridgeRoute, BridgeStatus } from "../../contracts/interfaces/adapters/IBridgeAdapter.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
@@ -47,8 +47,8 @@ contract MockLockToken is ERC20 {
 // TESTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-contract LiquidityAdapterTest is Test {
-    LiquidityAdapter public adapter;
+contract BridgeAdapterTest is Test {
+    BridgeAdapter public adapter;
     MockBridgeToken public mintToken;
     MockLockToken public lockToken;
 
@@ -57,13 +57,13 @@ contract LiquidityAdapterTest is Test {
     address alice = address(0xC);
     address bob = address(0xD);
 
-    uint256 constant DST_CHAIN = 8675309; // Mainnet
-    uint256 constant DST_CHAIN2 = 8675310; // Testnet
+    uint256 constant DST_CHAIN = 96369; // Mainnet
+    uint256 constant DST_CHAIN2 = 96368; // Testnet
 
     function setUp() public {
         vm.startPrank(admin);
 
-        adapter = new LiquidityAdapter(admin, oracle, 0); // 0 = instant finality
+        adapter = new BridgeAdapter(admin, oracle, 0); // 0 = instant finality
         mintToken = new MockBridgeToken();
         lockToken = new MockLockToken();
 
@@ -76,14 +76,14 @@ contract LiquidityAdapterTest is Test {
             address(mintToken),
             DST_CHAIN,
             address(0xDEAD),
-            LiquidityAdapter.BridgeMode.MintBurn,
+            BridgeAdapter.BridgeMode.MintBurn,
             0 // unlimited
         );
         adapter.configureToken(
             address(lockToken),
             DST_CHAIN,
             address(0xBEEF),
-            LiquidityAdapter.BridgeMode.LockRelease,
+            BridgeAdapter.BridgeMode.LockRelease,
             500_000e18 // 500K daily limit
         );
 
@@ -109,13 +109,13 @@ contract LiquidityAdapterTest is Test {
     }
 
     function test_revert_zeroAdmin() public {
-        vm.expectRevert(LiquidityAdapter.ZeroAddress.selector);
-        new LiquidityAdapter(address(0), oracle, 0);
+        vm.expectRevert(BridgeAdapter.ZeroAddress.selector);
+        new BridgeAdapter(address(0), oracle, 0);
     }
 
     function test_revert_zeroOracle() public {
-        vm.expectRevert(LiquidityAdapter.ZeroAddress.selector);
-        new LiquidityAdapter(admin, address(0), 0);
+        vm.expectRevert(BridgeAdapter.ZeroAddress.selector);
+        new BridgeAdapter(admin, address(0), 0);
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -231,7 +231,7 @@ contract LiquidityAdapterTest is Test {
 
         // Oracle fills on destination (same contract in test, simulates dest chain)
         vm.prank(oracle);
-        adapter.fill(bridgeId, address(mintToken), bob, 100e18, block.chainid, 0, LiquidityAdapter.BridgeMode.MintBurn);
+        adapter.fill(bridgeId, address(mintToken), bob, 100e18, block.chainid, 0, BridgeAdapter.BridgeMode.MintBurn);
 
         assertEq(mintToken.balanceOf(bob), 100e18);
         assertTrue(adapter.filled(bridgeId));
@@ -263,7 +263,7 @@ contract LiquidityAdapterTest is Test {
         // Oracle releases
         vm.prank(oracle);
         adapter.fill(
-            bridgeId, address(lockToken), bob, 100e18, block.chainid, 0, LiquidityAdapter.BridgeMode.LockRelease
+            bridgeId, address(lockToken), bob, 100e18, block.chainid, 0, BridgeAdapter.BridgeMode.LockRelease
         );
 
         assertEq(lockToken.balanceOf(bob), 100e18);
@@ -318,9 +318,9 @@ contract LiquidityAdapterTest is Test {
         uint256[] memory nonces = new uint256[](2);
         nonces[0] = 0;
         nonces[1] = 1;
-        LiquidityAdapter.BridgeMode[] memory modes = new LiquidityAdapter.BridgeMode[](2);
-        modes[0] = LiquidityAdapter.BridgeMode.MintBurn;
-        modes[1] = LiquidityAdapter.BridgeMode.MintBurn;
+        BridgeAdapter.BridgeMode[] memory modes = new BridgeAdapter.BridgeMode[](2);
+        modes[0] = BridgeAdapter.BridgeMode.MintBurn;
+        modes[1] = BridgeAdapter.BridgeMode.MintBurn;
 
         vm.prank(oracle);
         adapter.fillBatch(ids, tokens, recipients, amounts, origins, nonces, modes);
@@ -337,7 +337,7 @@ contract LiquidityAdapterTest is Test {
     function test_revert_unsupportedChain() public {
         vm.startPrank(alice);
         mintToken.approve(address(adapter), 100e18);
-        vm.expectRevert(abi.encodeWithSelector(LiquidityAdapter.UnsupportedChain.selector, uint256(999)));
+        vm.expectRevert(abi.encodeWithSelector(BridgeAdapter.UnsupportedChain.selector, uint256(999)));
         adapter.bridge(
             BridgeParams({
                 dstChainId: 999,
@@ -353,7 +353,7 @@ contract LiquidityAdapterTest is Test {
 
     function test_revert_zeroAmount() public {
         vm.prank(alice);
-        vm.expectRevert(LiquidityAdapter.ZeroAmount.selector);
+        vm.expectRevert(BridgeAdapter.ZeroAmount.selector);
         adapter.bridge(
             BridgeParams({
                 dstChainId: DST_CHAIN,
@@ -382,18 +382,18 @@ contract LiquidityAdapterTest is Test {
         vm.stopPrank();
 
         vm.prank(oracle);
-        adapter.fill(bridgeId, address(mintToken), bob, 100e18, block.chainid, 0, LiquidityAdapter.BridgeMode.MintBurn);
+        adapter.fill(bridgeId, address(mintToken), bob, 100e18, block.chainid, 0, BridgeAdapter.BridgeMode.MintBurn);
 
         vm.prank(oracle);
-        vm.expectRevert(abi.encodeWithSelector(LiquidityAdapter.AlreadyFilled.selector, bridgeId));
-        adapter.fill(bridgeId, address(mintToken), bob, 100e18, block.chainid, 0, LiquidityAdapter.BridgeMode.MintBurn);
+        vm.expectRevert(abi.encodeWithSelector(BridgeAdapter.AlreadyFilled.selector, bridgeId));
+        adapter.fill(bridgeId, address(mintToken), bob, 100e18, block.chainid, 0, BridgeAdapter.BridgeMode.MintBurn);
     }
 
     function test_revert_nonOracleFill() public {
         vm.prank(alice);
         vm.expectRevert();
         adapter.fill(
-            bytes32(0), address(mintToken), bob, 100e18, block.chainid, 0, LiquidityAdapter.BridgeMode.MintBurn
+            bytes32(0), address(mintToken), bob, 100e18, block.chainid, 0, BridgeAdapter.BridgeMode.MintBurn
         );
     }
 
@@ -424,7 +424,7 @@ contract LiquidityAdapterTest is Test {
         // Second bridge: 200K (would exceed 500K daily)
         vm.expectRevert(
             abi.encodeWithSelector(
-                LiquidityAdapter.DailyLimitExceeded.selector, address(lockToken), 200_000e18, 100_000e18
+                BridgeAdapter.DailyLimitExceeded.selector, address(lockToken), 200_000e18, 100_000e18
             )
         );
         adapter.bridge(
@@ -496,7 +496,7 @@ contract LiquidityAdapterTest is Test {
     }
 
     function test_estimateTime_withChallenge() public {
-        LiquidityAdapter challenged = new LiquidityAdapter(admin, oracle, 600);
+        BridgeAdapter challenged = new BridgeAdapter(admin, oracle, 600);
         assertEq(challenged.estimateTime(DST_CHAIN), 600);
     }
 
@@ -513,7 +513,7 @@ contract LiquidityAdapterTest is Test {
     function test_onlyOracleCanFill() public {
         vm.prank(admin);
         vm.expectRevert();
-        adapter.fill(bytes32(0), address(mintToken), bob, 100e18, 1, 0, LiquidityAdapter.BridgeMode.MintBurn);
+        adapter.fill(bytes32(0), address(mintToken), bob, 100e18, 1, 0, BridgeAdapter.BridgeMode.MintBurn);
     }
 
     // ──────────────────────────────────────────────────────────────

@@ -370,6 +370,7 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
     ) internal {
         WriterEntry[] storage queue = _writerQueues[seriesId];
         uint256 remaining = amount;
+        uint256 totalCollateralToRelease;
         uint256 i;
 
         while (remaining > 0 && i < queue.length) {
@@ -379,11 +380,7 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
 
             entry.amount -= assignable;
             remaining -= assignable;
-
-            // Release collateral from Options contract to this contract
-            if (collateralDeducted > 0) {
-                options.releaseWriterCollateral(seriesId, entry.writer, collateralDeducted);
-            }
+            totalCollateralToRelease += collateralDeducted;
 
             emit WriterAssigned(seriesId, entry.writer, assignable, collateralDeducted);
 
@@ -396,6 +393,11 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
         }
 
         if (remaining > 0) revert NoWritersAvailable();
+
+        // Release collateral from Options in one call (position is under this contract's address)
+        if (totalCollateralToRelease > 0) {
+            options.releaseWriterCollateral(seriesId, address(this), totalCollateralToRelease);
+        }
     }
 
     function _assignProRata(
@@ -415,6 +417,7 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
 
         // Assign proportionally
         uint256 assigned;
+        uint256 totalCollateralToRelease;
         for (uint256 i; i < queue.length; ++i) {
             WriterEntry storage entry = queue[i];
 
@@ -425,11 +428,7 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
             uint256 collateralDeducted = (payoutPerOption * share) / PRECISION;
             entry.amount -= share;
             assigned += share;
-
-            // Release collateral from Options contract to this contract
-            if (collateralDeducted > 0) {
-                options.releaseWriterCollateral(seriesId, entry.writer, collateralDeducted);
-            }
+            totalCollateralToRelease += collateralDeducted;
 
             emit WriterAssigned(seriesId, entry.writer, share, collateralDeducted);
         }
@@ -442,11 +441,7 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
                 if (entry.amount >= remainder) {
                     uint256 collateralDeducted = (payoutPerOption * remainder) / PRECISION;
                     entry.amount -= remainder;
-
-                    // Release collateral from Options contract to this contract
-                    if (collateralDeducted > 0) {
-                        options.releaseWriterCollateral(seriesId, entry.writer, collateralDeducted);
-                    }
+                    totalCollateralToRelease += collateralDeducted;
 
                     emit WriterAssigned(seriesId, entry.writer, remainder, collateralDeducted);
                     break;
@@ -459,6 +454,11 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
             if (queue[i - 1].amount == 0) {
                 _removeFromWriterQueue(seriesId, i - 1);
             }
+        }
+
+        // Release collateral from Options in one call (position is under this contract's address)
+        if (totalCollateralToRelease > 0) {
+            options.releaseWriterCollateral(seriesId, address(this), totalCollateralToRelease);
         }
     }
 

@@ -181,7 +181,8 @@ contract ForexTest is Test {
     }
 
     function test_Oracle_StalePrice_Reverts() public {
-        // Make feed stale
+        // Warp forward so we can set a stale timestamp without underflow
+        vm.warp(10 hours);
         eurFeed.setUpdatedAt(block.timestamp - 2 hours);
 
         vm.expectRevert();
@@ -200,14 +201,17 @@ contract ForexTest is Test {
     }
 
     function test_Oracle_FallbackFeed() public {
+        // Warp forward so we can make primary stale
+        vm.warp(10 hours);
+
         // Set up a fallback
         MockFeed fallbackFeed = new MockFeed(int256(EUR_USD_RATE / 1e10), 8);
         oracle.setPriceFeed(address(eur), address(eurFeed), address(fallbackFeed), 1 hours, 8);
 
-        // Make primary stale
+        // Make primary stale (2 hours ago)
         eurFeed.setUpdatedAt(block.timestamp - 2 hours);
 
-        // Should fall back to secondary
+        // Should fall back to secondary (which was just created, so fresh)
         (uint256 price,) = oracle.getPrice(address(eur));
         assertEq(price, EUR_USD_RATE, "Fallback price mismatch");
     }
@@ -462,6 +466,7 @@ contract ForexTest is Test {
         eurFeed.setPrice(int256(1.15e8));
 
         uint256 buyer1UsdBefore = usd.balanceOf(trader1);
+        uint256 buyer1EurBefore = eur.balanceOf(trader1);
 
         // Warp to maturity
         skip(30 days);
@@ -472,9 +477,13 @@ contract ForexTest is Test {
         IForexForward.Forward memory fwd = forexForward.getForward(forwardId);
         assertEq(uint256(fwd.status), uint256(IForexForward.ForwardStatus.SETTLED));
 
-        // Buyer should profit: got collateral back + PnL
+        // Buyer gets full quote collateral back
         uint256 buyer1UsdAfter = usd.balanceOf(trader1);
-        assertTrue(buyer1UsdAfter > buyer1UsdBefore, "Buyer should have profited");
+        assertEq(buyer1UsdAfter, buyer1UsdBefore + 110_000e18, "Buyer should get quote collateral back");
+
+        // Buyer also gets PnL in base (EUR) from seller's collateral
+        uint256 buyer1EurAfter = eur.balanceOf(trader1);
+        assertTrue(buyer1EurAfter > buyer1EurBefore, "Buyer should have received base PnL");
     }
 
     function test_Forward_Settle_SellerProfits() public {
@@ -491,15 +500,20 @@ contract ForexTest is Test {
         eurFeed.setPrice(int256(1.05e8));
 
         uint256 seller2UsdBefore = usd.balanceOf(trader2);
+        uint256 seller2EurBefore = eur.balanceOf(trader2);
 
         skip(30 days);
 
         vm.prank(keeper);
         forexForward.settleForward(forwardId);
 
-        // Seller should profit
+        // Seller gets full base collateral back
+        uint256 seller2EurAfter = eur.balanceOf(trader2);
+        assertEq(seller2EurAfter, seller2EurBefore + 100_000e18, "Seller should get base collateral back");
+
+        // Seller also gets PnL in quote (USD) from buyer's collateral
         uint256 seller2UsdAfter = usd.balanceOf(trader2);
-        assertTrue(seller2UsdAfter > seller2UsdBefore, "Seller should have profited");
+        assertTrue(seller2UsdAfter > seller2UsdBefore, "Seller should have received quote PnL");
     }
 
     function test_Forward_Cancel() public {
