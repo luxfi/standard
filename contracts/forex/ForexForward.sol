@@ -168,82 +168,7 @@ contract ForexForward is IForexForward, ReentrancyGuard, AccessControl, Pausable
             _checkRole(KEEPER_ROLE, msg.sender);
         }
 
-        IForexPair.FXPair memory pair = forexPair.getPair(fwd.pairId);
-
-        // Get current market rate
-        (uint256 currentRate,) = oracle.getRate(pair.base, pair.quote);
-
-        // Cash settlement: compute PnL
-        // If currentRate > fwd.rate: buyer profits (they locked a cheaper rate)
-        // PnL in quote = baseAmount * (currentRate - fwd.rate) / PRECISION
-        uint256 pnlQuote;
-        uint256 pnlBase;
-
-        if (currentRate >= fwd.rate) {
-            // Buyer profits
-            pnlQuote = (fwd.baseAmount * (currentRate - fwd.rate)) / PRECISION;
-
-            // Fee on profit
-            uint256 fee = (pnlQuote * settlementFeeBps) / BPS;
-
-            // Pay buyer from seller's collateral (converted)
-            // Seller's base collateral converted to quote at current rate
-            uint256 sellerCollateralInQuote = (fwd.sellerCollateral * currentRate) / PRECISION;
-
-            uint256 buyerPayout = pnlQuote - fee;
-            if (buyerPayout > sellerCollateralInQuote) {
-                buyerPayout = sellerCollateralInQuote;
-            }
-
-            // Return buyer collateral + profit (in quote)
-            IERC20(pair.quote).safeTransfer(fwd.buyer, fwd.buyerCollateral + buyerPayout);
-
-            // Return remaining seller collateral (in base)
-            uint256 sellerBaseUsed = (buyerPayout * PRECISION) / currentRate;
-            if (fwd.sellerCollateral > sellerBaseUsed) {
-                IERC20(pair.base).safeTransfer(fwd.seller, fwd.sellerCollateral - sellerBaseUsed);
-            }
-
-            // Fee
-            if (fee > 0 && feeReceiver != address(0)) {
-                IERC20(pair.quote).safeTransfer(feeReceiver, fee);
-            }
-
-            pnlBase = 0;
-        } else {
-            // Seller profits
-            pnlQuote = (fwd.baseAmount * (fwd.rate - currentRate)) / PRECISION;
-
-            uint256 fee = (pnlQuote * settlementFeeBps) / BPS;
-
-            uint256 sellerPayout = pnlQuote - fee;
-            if (sellerPayout > fwd.buyerCollateral) {
-                sellerPayout = fwd.buyerCollateral;
-            }
-
-            // Return seller collateral (in base)
-            IERC20(pair.base).safeTransfer(fwd.seller, fwd.sellerCollateral);
-
-            // Pay seller from buyer's collateral + return remainder to buyer (in quote)
-            IERC20(pair.quote).safeTransfer(fwd.seller, sellerPayout);
-            uint256 buyerRemainder = fwd.buyerCollateral - sellerPayout;
-            if (buyerRemainder > 0) {
-                IERC20(pair.quote).safeTransfer(fwd.buyer, buyerRemainder);
-            }
-
-            // Fee
-            if (fee > 0 && feeReceiver != address(0)) {
-                IERC20(pair.quote).safeTransfer(feeReceiver, fee);
-            }
-
-            pnlBase = 0;
-        }
-
-        fwd.status = ForwardStatus.SETTLED;
-        fwd.buyerCollateral = 0;
-        fwd.sellerCollateral = 0;
-
-        emit ForwardSettled(forwardId, currentRate, pnlBase, pnlQuote);
+        _settleInternal(forwardId);
     }
 
     /// @inheritdoc IForexForward
@@ -376,58 +301,89 @@ contract ForexForward is IForexForward, ReentrancyGuard, AccessControl, Pausable
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @dev Internal settlement logic (used by both settleForward and batchSettle)
+    ///
+    /// Contract holds: buyerCollateral in QUOTE, sellerCollateral in BASE.
+    /// Settlement is cash-settled:
+    ///   - Buyer profits when currentRate > forwardRate (locked cheaper).
+    ///     Buyer PnL paid in BASE from seller's collateral.
+    ///   - Seller profits when currentRate < forwardRate.
+    ///     Seller PnL paid in QUOTE from buyer's collateral.
     function _settleInternal(uint256 forwardId) internal {
         Forward storage fwd = forwards[forwardId];
 
         IForexPair.FXPair memory pair = forexPair.getPair(fwd.pairId);
         (uint256 currentRate,) = oracle.getRate(pair.base, pair.quote);
 
+        uint256 buyerQuoteCollateral = fwd.buyerCollateral;
+        uint256 sellerBaseCollateral = fwd.sellerCollateral;
+
         if (currentRate >= fwd.rate) {
-            uint256 pnlQuote = (fwd.baseAmount * (currentRate - fwd.rate)) / PRECISION;
-            uint256 fee = (pnlQuote * settlementFeeBps) / BPS;
+            // Buyer profits: PnL denominated in base
+            // pnlBase = baseAmount * (currentRate - forwardRate) / currentRate
+            // (price went up → buyer needs fewer base to cover same quote value)
+            uint256 pnlBase = (fwd.baseAmount * (currentRate - fwd.rate)) / currentRate;
 
-            uint256 sellerCollateralInQuote = (fwd.sellerCollateral * currentRate) / PRECISION;
-            uint256 buyerPayout = pnlQuote - fee;
-            if (buyerPayout > sellerCollateralInQuote) {
-                buyerPayout = sellerCollateralInQuote;
+            // Cap at seller's collateral
+            if (pnlBase > sellerBaseCollateral) {
+                pnlBase = sellerBaseCollateral;
             }
 
-            IERC20(pair.quote).safeTransfer(fwd.buyer, fwd.buyerCollateral + buyerPayout);
+            // Fee in base
+            uint256 fee = (pnlBase * settlementFeeBps) / BPS;
+            uint256 buyerBasePayout = pnlBase - fee;
 
-            uint256 sellerBaseUsed = (buyerPayout * PRECISION) / currentRate;
-            if (fwd.sellerCollateral > sellerBaseUsed) {
-                IERC20(pair.base).safeTransfer(fwd.seller, fwd.sellerCollateral - sellerBaseUsed);
+            // Return buyer's full quote collateral
+            IERC20(pair.quote).safeTransfer(fwd.buyer, buyerQuoteCollateral);
+            // Pay buyer PnL in base
+            if (buyerBasePayout > 0) {
+                IERC20(pair.base).safeTransfer(fwd.buyer, buyerBasePayout);
             }
-
+            // Return seller's remaining base collateral
+            uint256 sellerBaseRemaining = sellerBaseCollateral - pnlBase;
+            if (sellerBaseRemaining > 0) {
+                IERC20(pair.base).safeTransfer(fwd.seller, sellerBaseRemaining);
+            }
+            // Fee in base
             if (fee > 0 && feeReceiver != address(0)) {
-                IERC20(pair.quote).safeTransfer(feeReceiver, fee);
+                IERC20(pair.base).safeTransfer(feeReceiver, fee);
             }
+
+            emit ForwardSettled(forwardId, currentRate, pnlBase, 0);
         } else {
+            // Seller profits: PnL denominated in quote
+            // pnlQuote = baseAmount * (forwardRate - currentRate) / PRECISION
             uint256 pnlQuote = (fwd.baseAmount * (fwd.rate - currentRate)) / PRECISION;
+
+            // Cap at buyer's collateral
+            if (pnlQuote > buyerQuoteCollateral) {
+                pnlQuote = buyerQuoteCollateral;
+            }
+
+            // Fee in quote
             uint256 fee = (pnlQuote * settlementFeeBps) / BPS;
+            uint256 sellerQuotePayout = pnlQuote - fee;
 
-            uint256 sellerPayout = pnlQuote - fee;
-            if (sellerPayout > fwd.buyerCollateral) {
-                sellerPayout = fwd.buyerCollateral;
+            // Return seller's full base collateral
+            IERC20(pair.base).safeTransfer(fwd.seller, sellerBaseCollateral);
+            // Pay seller PnL in quote
+            if (sellerQuotePayout > 0) {
+                IERC20(pair.quote).safeTransfer(fwd.seller, sellerQuotePayout);
             }
-
-            IERC20(pair.base).safeTransfer(fwd.seller, fwd.sellerCollateral);
-            IERC20(pair.quote).safeTransfer(fwd.seller, sellerPayout);
-
-            uint256 buyerRemainder = fwd.buyerCollateral - sellerPayout;
-            if (buyerRemainder > 0) {
-                IERC20(pair.quote).safeTransfer(fwd.buyer, buyerRemainder);
+            // Return buyer's remaining quote collateral
+            uint256 buyerQuoteRemaining = buyerQuoteCollateral - pnlQuote;
+            if (buyerQuoteRemaining > 0) {
+                IERC20(pair.quote).safeTransfer(fwd.buyer, buyerQuoteRemaining);
             }
-
+            // Fee in quote
             if (fee > 0 && feeReceiver != address(0)) {
                 IERC20(pair.quote).safeTransfer(feeReceiver, fee);
             }
+
+            emit ForwardSettled(forwardId, currentRate, 0, pnlQuote);
         }
 
         fwd.status = ForwardStatus.SETTLED;
         fwd.buyerCollateral = 0;
         fwd.sellerCollateral = 0;
-
-        emit ForwardSettled(forwardId, currentRate, 0, 0);
     }
 }

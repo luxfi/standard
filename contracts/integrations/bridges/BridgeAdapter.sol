@@ -17,7 +17,7 @@ interface IMintBurnable {
 }
 
 /**
- * @title LiquidityAdapter
+ * @title BridgeAdapter
  * @notice Optimistic cross-chain bridge adapter for the ATS settlement network.
  *
  * Architecture:
@@ -33,7 +33,7 @@ interface IMintBurnable {
  * Supports two modes:
  *   1. Mint/Burn — for bridgeable tokens (LRC20B, LWrappedToken, SecurityToken)
  *      Source: burn on chain A → Dest: mint on chain B
- *   2. Lock/Release — for non-mintable tokens (native LQDTY, 3rd party ERC-20)
+ *   2. Lock/Release — for non-mintable tokens (native LUX, 3rd party ERC-20)
  *      Source: lock in adapter → Dest: release from adapter pool
  *
  * The ATS can also fill from its own inventory (optimistic fill) before the burn
@@ -41,7 +41,7 @@ interface IMintBurnable {
  *
  * Standards: Implements IBridgeAdapter for composability with all other adapters.
  */
-contract LiquidityAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
+contract BridgeAdapter is IBridgeAdapter, AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // ──────────────────────────────────────────────────────────────────────────
