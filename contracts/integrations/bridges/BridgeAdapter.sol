@@ -31,7 +31,7 @@ interface IMintBurnable {
  * settlement engine acts as the relayer/oracle.
  *
  * Supports two modes:
- *   1. Mint/Burn — for bridgeable tokens (LRC20B, LWrappedToken, SecurityToken)
+ *   1. Mint/Burn — for bridgeable tokens (LRC20B, LiquidToken, SecurityToken)
  *      Source: burn on chain A → Dest: mint on chain B
  *   2. Lock/Release — for non-mintable tokens (native LUX, 3rd party ERC-20)
  *      Source: lock in adapter → Dest: release from adapter pool
