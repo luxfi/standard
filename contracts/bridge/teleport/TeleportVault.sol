@@ -150,7 +150,7 @@ abstract contract TeleportVault is Ownable, AccessControl, ReentrancyGuard {
         view
         returns (bytes32)
     {
-        return keccak256(abi.encode("RELEASE", recipient, amount, _withdrawNonce, block.chainid));
+        return keccak256(abi.encode(bytes32("RELEASE"), recipient, amount, _withdrawNonce, block.chainid));
     }
 
     // ═══════════════════════════════════════════════════════════════════════

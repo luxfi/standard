@@ -29,14 +29,14 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 /**
  * @title YieldBearingBridgeToken
  * @notice Bridge token that earns yield from source chain strategies
- * @dev Deployed on Lux network, receives yield reports via Warp
+ * @dev Deployed on destination chain, receives yield reports via Warp
  *
  * Example: yLETH
- * - User bridges ETH from Ethereum to Lux
- * - ETH deployed to Lido/Rocket Pool on Ethereum
- * - User receives yLETH on Lux
- * - yLETH value increases as yield accrues
- * - yLETH can be used as collateral in Alchemix/Perps
+ * - User bridges ETH from source chain
+ * - ETH deployed to yield strategies on source chain
+ * - User receives yield-bearing bridge token on destination chain
+ * - Token value increases as yield accrues
+ * - Can be used as collateral across DeFi protocols
  */
 contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -74,8 +74,9 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
     /// @notice Total underlying assets (updated via yield reports)
     uint256 public totalUnderlyingAssets;
 
-    /// @notice Total shares (tokens) in circulation
-    uint256 public totalShares;
+    /// @notice Virtual offset to prevent first-depositor inflation attack (OZ ERC-4626 approach)
+    uint256 private constant VIRTUAL_SHARES = 1e3;
+    uint256 private constant VIRTUAL_ASSETS = 1;
 
     /// @notice Bridge controller
     address public bridge;
@@ -164,7 +165,6 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
         require(shares > 0, "YieldBearingBridgeToken: zero shares");
 
         totalUnderlyingAssets += assets;
-        totalShares += shares;
 
         _mint(receiver, shares);
 
@@ -184,7 +184,6 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
         assets = convertToAssets(shares);
         require(assets > 0, "YieldBearingBridgeToken: zero assets");
 
-        totalShares -= shares;
         totalUnderlyingAssets -= assets;
 
         _burn(msg.sender, shares);
@@ -198,10 +197,8 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
      * @return shares Equivalent shares
      */
     function convertToShares(uint256 assets) public view returns (uint256 shares) {
-        if (totalShares == 0 || totalUnderlyingAssets == 0) {
-            return assets; // 1:1 initially
-        }
-        return (assets * totalShares) / totalUnderlyingAssets;
+        // Virtual offset prevents first-depositor inflation attack (OZ ERC-4626)
+        return (assets * (totalSupply() + VIRTUAL_SHARES)) / (totalUnderlyingAssets + VIRTUAL_ASSETS);
     }
 
     /**
@@ -210,10 +207,7 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
      * @return assets Equivalent underlying assets
      */
     function convertToAssets(uint256 shares) public view returns (uint256 assets) {
-        if (totalShares == 0) {
-            return shares; // 1:1 initially
-        }
-        return (shares * totalUnderlyingAssets) / totalShares;
+        return (shares * (totalUnderlyingAssets + VIRTUAL_ASSETS)) / (totalSupply() + VIRTUAL_SHARES);
     }
 
     /**
@@ -229,8 +223,8 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
      * @return Exchange rate in 18 decimals
      */
     function exchangeRate() external view returns (uint256) {
-        if (totalShares == 0) return 1e18;
-        return (totalUnderlyingAssets * 1e18) / totalShares;
+        // Must use virtual offset for consistency with convertToAssets()
+        return ((totalUnderlyingAssets + VIRTUAL_ASSETS) * 1e18) / (totalSupply() + VIRTUAL_SHARES);
     }
 
     /**
@@ -297,11 +291,10 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
         // Protocol fee
         uint256 feeAmount = (yieldAmount * protocolFee) / BASIS_POINTS;
 
-        // Fee is minted as shares to fee receiver
+        // Fee is minted as shares to fee receiver (dilutes other holders)
         if (feeAmount > 0 && feeReceiver != address(0)) {
             uint256 feeShares = convertToShares(feeAmount);
             _mint(feeReceiver, feeShares);
-            totalShares += feeShares;
         }
 
         emit YieldDistributed(yieldAmount, feeAmount);
@@ -387,8 +380,8 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
      * @return Price per share
      */
     function pricePerShare() external view returns (uint256) {
-        if (totalShares == 0) return 1e18;
-        return (totalUnderlyingAssets * 1e18) / totalShares;
+        // Must use virtual offset for consistency with convertToAssets()
+        return ((totalUnderlyingAssets + VIRTUAL_ASSETS) * 1e18) / (totalSupply() + VIRTUAL_SHARES);
     }
 
     /**
@@ -443,13 +436,13 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * @title yLETH - Yield-Bearing Lux ETH
+ * @title yLETH - Yield-Bearing Bridged ETH
  * @notice ETH bridged from Ethereum, earning staking yield (Lido, Rocket Pool, Aave)
  */
 contract yLETH is YieldBearingBridgeToken {
     constructor(address _bridge, address _feeReceiver)
         YieldBearingBridgeToken(
-            "Yield-Bearing Lux ETH",
+            "Yield-Bearing Bridged ETH",
             "yLETH",
             "ETH",
             1, // Ethereum mainnet
@@ -460,13 +453,13 @@ contract yLETH is YieldBearingBridgeToken {
 }
 
 /**
- * @title yLBTC - Yield-Bearing Lux BTC
+ * @title yLBTC - Yield-Bearing Bridged BTC
  * @notice BTC bridged, earning yield (eventually Babylon staking, or lending)
  */
 contract yLBTC is YieldBearingBridgeToken {
     constructor(address _bridge, address _feeReceiver)
         YieldBearingBridgeToken(
-            "Yield-Bearing Lux BTC",
+            "Yield-Bearing Bridged BTC",
             "yLBTC",
             "BTC",
             1, // Source chain (could be Bitcoin via bridge)
@@ -477,13 +470,13 @@ contract yLBTC is YieldBearingBridgeToken {
 }
 
 /**
- * @title yLUSD - Yield-Bearing Lux USD
+ * @title yLUSD - Yield-Bearing Bridged USD
  * @notice USD stablecoins bridged, earning yield (Curve, Aave, Compound)
  */
 contract yLUSD is YieldBearingBridgeToken {
     constructor(address _bridge, address _feeReceiver)
         YieldBearingBridgeToken(
-            "Yield-Bearing Lux USD",
+            "Yield-Bearing Bridged USD",
             "yLUSD",
             "USD",
             1, // Ethereum mainnet
@@ -494,13 +487,13 @@ contract yLUSD is YieldBearingBridgeToken {
 }
 
 /**
- * @title yLSOL - Yield-Bearing Lux SOL
+ * @title yLSOL - Yield-Bearing Bridged SOL
  * @notice SOL bridged from Solana, earning staking yield (Marinade, Jito)
  */
 contract yLSOL is YieldBearingBridgeToken {
     constructor(address _bridge, address _feeReceiver)
         YieldBearingBridgeToken(
-            "Yield-Bearing Lux SOL",
+            "Yield-Bearing Bridged SOL",
             "yLSOL",
             "SOL",
             101, // Solana (example chain ID)

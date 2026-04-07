@@ -1,0 +1,19 @@
+{
+  "name": "@luxfi/opnet-bridge",
+  "version": "0.1.0",
+  "description": "Lux Bridge contract for OP_NET (Bitcoin L1 smart contracts)",
+  "private": true,
+  "scripts": {
+    "build": "npx opnet-transform compile ./src/index.ts",
+    "test": "npx opnet-unit-test",
+    "deploy": "npx opnet-cli deploy ./build/LuxBridge.wasm"
+  },
+  "dependencies": {
+    "@btc-vision/btc-runtime": "latest",
+    "@btc-vision/as-bignum": "latest"
+  },
+  "devDependencies": {
+    "@btc-vision/opnet-transform": "latest",
+    "@btc-vision/opnet-unit-test": "latest"
+  }
+}

@@ -14,7 +14,7 @@ pragma solidity ^0.8.31;
  *     Architecture:
  *     - Deployed on SOURCE chains (Ethereum, Solana, etc.)
  *     - Receives bridged assets and deploys to yield strategies
- *     - Reports yield back to Lux via Warp messaging
+ *     - Reports yield back via Warp messaging
  *     - Supports multiple strategies per asset for diversification
  */
 
@@ -32,7 +32,7 @@ import { IYieldStrategy } from "./IYieldStrategy.sol";
  * When users bridge ETH to Lux:
  * 1. ETH deposited to this vault on Ethereum
  * 2. Vault deploys ETH to yield strategies (Lido, Rocket Pool, etc.)
- * 3. LETH minted on Lux via bridge
+ * 3. Bridge token minted on destination chain
  * 4. Yield accumulates and is periodically reported to Lux
  * 5. Yield distributed to LETH holders or protocol treasury
  */
@@ -72,13 +72,13 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
     // STATE
     // ═══════════════════════════════════════════════════════════════════════
 
-    /// @notice Lux chain ID for Warp messages
-    uint32 public immutable luxChainId;
+    /// @notice Destination chain ID for cross-chain yield reports
+    uint32 public immutable destChainId;
 
     /// @notice Bridge controller address (MPC or multisig)
     address public bridge;
 
-    /// @notice Yield receiver on Lux chain
+    /// @notice Yield receiver on destination chain
     address public yieldReceiver;
 
     /// @notice Authorized relayer for cross-chain yield reports
@@ -138,8 +138,8 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(uint32 _luxChainId, address _bridge, address _yieldReceiver) Ownable(msg.sender) {
-        luxChainId = _luxChainId;
+    constructor(uint32 _destChainId, address _bridge, address _yieldReceiver) Ownable(msg.sender) {
+        destChainId = _destChainId;
         bridge = _bridge;
         yieldReceiver = _yieldReceiver;
     }
@@ -242,7 +242,7 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Distribute accumulated yield to Lux chain
+     * @notice Distribute accumulated yield to destination chain
      * @dev Sends Warp message with yield report
      * @param asset Asset to distribute yield for
      * @return reportId Unique report identifier
@@ -267,7 +267,7 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
         // Reset accumulated yield
         config.accumulatedYield = 0;
 
-        // Send to Lux via Warp (actual implementation depends on Warp interface)
+        // Send via Warp messaging (actual implementation depends on Warp interface)
         _sendYieldReport(report);
 
         emit YieldDistributed(asset, yieldAmount, reportId);
@@ -337,10 +337,7 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
             StrategyAllocation({ strategy: strategy, targetWeight: targetWeight, depositedAmount: 0, isActive: true })
         );
 
-        // Approve strategy to spend asset
-        if (asset != address(0)) {
-            IERC20(asset).approve(strategy, type(uint256).max);
-        }
+        // Per-operation approvals happen in _depositToStrategy (no infinite approval)
 
         emit StrategyAdded(asset, strategy, targetWeight);
     }
@@ -374,7 +371,7 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
      * @notice Rebalance strategies to match target weights
      * @param asset Asset to rebalance
      */
-    function rebalance(address asset) external onlyOwner assetSupported(asset) {
+    function rebalance(address asset) external onlyOwner assetSupported(asset) nonReentrant {
         uint256 totalAssets = getTotalAssets(asset);
         uint256 reserveAmount = (totalAssets * assetConfigs[asset].reserveRatio) / BASIS_POINTS;
         uint256 deployableAmount = totalAssets - reserveAmount;
@@ -478,10 +475,13 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
 
     function _depositToStrategy(address asset, address strategy, uint256 amount) internal {
         if (asset == address(0)) {
-            // Native ETH - need to wrap or send directly depending on strategy
             IYieldStrategy(strategy).deposit(amount);
         } else {
+            // Per-operation approval: approve exact amount, then deposit
+            IERC20(asset).forceApprove(strategy, amount);
             IYieldStrategy(strategy).deposit(amount);
+            // Reset approval to 0 after deposit
+            IERC20(asset).forceApprove(strategy, 0);
         }
     }
 
@@ -495,7 +495,7 @@ contract YieldBridgeVault is Ownable, ReentrancyGuard {
 
     /// @notice Emit yield report for relayer to deliver cross-chain
     /// @dev Authorized relayer picks up YieldReportSent events and delivers
-    ///      them to Lux C-Chain via Warp messaging (same pattern as treasury Vault.sol).
+    ///      them to the destination chain via Warp messaging (same pattern as treasury Vault.sol).
     function _sendYieldReport(YieldReport memory report) internal {
         emit YieldReportSent(report.reportId, report.asset, report.totalAssets, report.yieldAmount);
     }

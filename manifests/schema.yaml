@@ -1,0 +1,98 @@
+# Lux Teleport Chain Manifest Schema
+# One YAML per chain. Drives: bridge deployment, MPC watcher config,
+# yield strategy routing, UI chain selector, monitoring, and docs.
+#
+# Usage:
+#   manifests/chains/ethereum.yaml
+#   manifests/chains/solana.yaml
+#   manifests/chains/sui.yaml
+#   ...
+
+# Required fields
+chain:
+  # Human-readable name
+  name: string                    # e.g., "Ethereum"
+  # Short symbol
+  symbol: string                  # e.g., "ETH"
+  # Chain ID in ChainIds.sol
+  chainId: uint64                 # e.g., 1 (EVM) or 4294967310 (virtual)
+  # Chain family
+  family: enum                    # evm | solana | ton | move-sui | move-aptos | cosmwasm
+                                  # | opnet | taproot | xrpl | substrate | near | soroban
+                                  # | clarity | plutus | tron
+  # Support tier
+  tier: enum                      # 1-native | 2-adapter | 3-relay | 4-watch-only
+  # Network type
+  network: enum                   # mainnet | testnet | devnet
+
+# RPC configuration (for MPC watchers)
+rpc:
+  http: string                    # e.g., "https://eth-mainnet.g.alchemy.com/v2/..."
+  ws: string                      # WebSocket endpoint (optional for non-EVM)
+  # Block finality
+  confirmations: uint             # Blocks to wait before attesting (6 for BTC, 1 for L2s)
+  blockTime: duration             # Average block time ("12s", "400ms", "2s")
+
+# Bridge contract addresses (deployed on THIS chain)
+bridge:
+  # For EVM chains: Teleporter.sol address
+  teleporter: address             # e.g., "0x..."
+  # For non-EVM: program ID / contract address
+  programId: string               # e.g., "BRDGLux111..." (Solana) or "EQ..." (TON)
+  # Vault/escrow address (for lock/release)
+  vault: address
+  # Fee collector
+  feeCollector: address
+
+# Token configuration
+tokens:
+  # Native token
+  native:
+    symbol: string                # e.g., "ETH"
+    decimals: uint                # e.g., 18
+    # Wrapped version on Lux
+    luxWrapped: string            # e.g., "LETH"
+    # Yield-bearing version on Lux
+    luxYield: string              # e.g., "yLETH"
+
+  # Bridgeable tokens on this chain
+  supported:
+    - symbol: string              # e.g., "USDC"
+      address: string             # Contract address on this chain
+      decimals: uint
+      luxWrapped: string          # Corresponding Lux bridge token
+      dailyMintLimit: uint256     # Daily mint limit (0 = unlimited)
+
+# Yield strategies (what to do with locked assets on this chain)
+yield:
+  strategies:
+    - name: string                # e.g., "Lido stETH"
+      contract: string            # Strategy contract address on this chain
+      protocol: string            # e.g., "lido", "aave", "eigenlayer"
+      allocationBps: uint         # Target allocation (basis points)
+      estimatedAPY: uint          # Estimated APY in bps (500 = 5%)
+      riskTier: enum              # low | medium | high
+      asset: string               # Underlying asset symbol
+
+# MPC configuration
+mpc:
+  # Signature type required for this chain
+  signatureType: enum             # ecdsa-secp256k1 | ed25519 | schnorr-taproot | sr25519 | secp256k1-recovery
+  # Watcher type
+  watcherType: enum               # evm | solana | ton | bitcoin | cosmwasm | substrate | near | stellar | xrpl | opnet
+  # Event format for detecting bridge events
+  eventFormat: enum               # evm-logs | anchor-events | func-extout | cosmos-events
+                                  # | substrate-events | near-receipts | soroban-events
+                                  # | xrpl-tx | opnet-logs | clarity-print | cardano-datum
+
+# Explorer / indexer
+explorer:
+  url: string                     # e.g., "https://etherscan.io"
+  apiUrl: string                  # e.g., "https://api.etherscan.io"
+  txPath: string                  # e.g., "/tx/{hash}"
+
+# Branding
+branding:
+  color: string                   # e.g., "#627EEA"
+  logo: string                    # Path or URL to logo
+  website: string                 # e.g., "https://ethereum.org"

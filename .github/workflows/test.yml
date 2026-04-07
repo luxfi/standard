@@ -1,6 +1,11 @@
 name: test
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 env:
   FOUNDRY_PROFILE: ci
@@ -32,3 +37,22 @@ jobs:
         run: |
           forge test -vvv
         id: test
+
+  conformance:
+    name: Teleport conformance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Teleport conformance tests
+        run: forge test --match-contract TeleportConformance -vvv
+
+      - name: OPNET conformance tests
+        run: forge test --match-contract OPNETConformance -vvv
