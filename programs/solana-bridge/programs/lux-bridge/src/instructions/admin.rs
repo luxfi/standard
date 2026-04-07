@@ -1,4 +1,6 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::sysvar::instructions as ix_sysvar;
+use anchor_lang::solana_program::ed25519_program;
 use crate::state::{BridgeConfig, SIGNER_TIMELOCK_SECONDS};
 use crate::errors::BridgeError;
 
@@ -45,15 +47,29 @@ pub struct ProposeSigners<'info> {
     )]
     pub bridge_config: Account<'info, BridgeConfig>,
     pub admin: Signer<'info>,
+    /// CHECK: Solana instructions sysvar for Ed25519 verification
+    #[account(address = ix_sysvar::ID)]
+    pub instructions_sysvar: UncheckedAccount<'info>,
 }
 
 /// Queue new signers with a 7-day delay before they can take effect.
+/// Requires BOTH admin signature AND MPC Ed25519 signature over the proposal.
 pub fn propose_signers(
     ctx: Context<ProposeSigners>,
     new_signers: [Pubkey; 3],
     threshold: u8,
+    message: Vec<u8>,
 ) -> Result<()> {
     require!(threshold >= 1 && threshold <= 3, BridgeError::UnauthorizedSigner);
+
+    // Verify MPC Ed25519 signature over the proposed signers
+    verify_propose_signers_signature(
+        &ctx.accounts.instructions_sysvar,
+        &ctx.accounts.bridge_config,
+        &new_signers,
+        threshold,
+        &message,
+    )?;
 
     let config = &mut ctx.accounts.bridge_config;
     let clock = Clock::get()?;
@@ -66,6 +82,60 @@ pub fn propose_signers(
         "Signer rotation proposed. Executable after {}",
         config.pending_signers_eta
     );
+    Ok(())
+}
+
+/// Verify that the Ed25519 instruction immediately before this one contains
+/// a valid MPC signature over the proposed signer rotation.
+fn verify_propose_signers_signature(
+    instructions_sysvar: &AccountInfo,
+    config: &BridgeConfig,
+    new_signers: &[Pubkey; 3],
+    threshold: u8,
+    message: &[u8],
+) -> Result<()> {
+    // Reconstruct expected message: "LUX_BRIDGE_PROPOSE" || new_signers || threshold
+    let mut expected = Vec::with_capacity(128);
+    expected.extend_from_slice(b"LUX_BRIDGE_PROPOSE");
+    for signer in new_signers.iter() {
+        expected.extend_from_slice(signer.as_ref());
+    }
+    expected.extend_from_slice(&[threshold]);
+
+    require!(message == expected.as_slice(), BridgeError::Ed25519VerificationFailed);
+
+    // Load the Ed25519 verify instruction immediately before this one
+    let ix = ix_sysvar::get_instruction_relative(
+        -1,
+        instructions_sysvar,
+    ).map_err(|_| BridgeError::Ed25519InstructionMissing)?;
+
+    require!(ix.program_id == ed25519_program::ID, BridgeError::Ed25519InstructionMissing);
+
+    let data = &ix.data;
+    require!(data.len() >= 16 + 64 + 32, BridgeError::Ed25519VerificationFailed);
+
+    let num_sigs = data[0];
+    require!(num_sigs >= 1, BridgeError::Ed25519VerificationFailed);
+
+    // Extract public key
+    let pk_offset = u16::from_le_bytes([data[6], data[7]]) as usize;
+    require!(pk_offset + 32 <= data.len(), BridgeError::Ed25519VerificationFailed);
+    let pubkey_bytes: [u8; 32] = data[pk_offset..pk_offset + 32].try_into().unwrap();
+    let signer_pubkey = Pubkey::from(pubkey_bytes);
+
+    // Verify signer is one of the CURRENT MPC signers
+    let is_authorized = config.mpc_signers.iter().any(|s| *s == signer_pubkey);
+    require!(is_authorized, BridgeError::UnauthorizedSigner);
+
+    // Extract and verify message matches
+    let msg_offset = u16::from_le_bytes([data[10], data[11]]) as usize;
+    let msg_size = u16::from_le_bytes([data[12], data[13]]) as usize;
+    require!(msg_offset + msg_size <= data.len(), BridgeError::Ed25519VerificationFailed);
+    let ix_message = &data[msg_offset..msg_offset + msg_size];
+
+    require!(ix_message == expected.as_slice(), BridgeError::Ed25519VerificationFailed);
+
     Ok(())
 }
 

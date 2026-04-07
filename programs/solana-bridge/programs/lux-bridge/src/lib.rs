@@ -78,12 +78,14 @@ pub mod lux_bridge {
     }
 
     /// Queue new MPC signers with 7-day timelock (H-06 fix)
+    /// Requires admin key AND MPC Ed25519 signature (M-RED-04 fix)
     pub fn propose_signers(
         ctx: Context<ProposeSigners>,
         new_signers: [Pubkey; 3],
         threshold: u8,
+        message: Vec<u8>,
     ) -> Result<()> {
-        instructions::admin::propose_signers(ctx, new_signers, threshold)
+        instructions::admin::propose_signers(ctx, new_signers, threshold, message)
     }
 
     /// Execute queued signer rotation after 7 days
