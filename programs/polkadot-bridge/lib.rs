@@ -311,4 +311,302 @@ mod lux_bridge {
             true // placeholder — real verification via substrate runtime
         }
     }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use ink::env::test;
+
+        fn default_accounts() -> test::DefaultAccounts<ink::env::DefaultEnvironment> {
+            test::default_accounts::<ink::env::DefaultEnvironment>()
+        }
+
+        fn set_caller(caller: AccountId) {
+            test::set_caller::<ink::env::DefaultEnvironment>(caller);
+        }
+
+        fn set_value_transferred(amount: Balance) {
+            test::set_value_transferred::<ink::env::DefaultEnvironment>(amount);
+        }
+
+        fn get_balance(account: AccountId) -> Balance {
+            test::get_account_balance::<ink::env::DefaultEnvironment>(account)
+                .unwrap_or(0)
+        }
+
+        fn set_balance(account: AccountId, amount: Balance) {
+            test::set_account_balance::<ink::env::DefaultEnvironment>(account, amount);
+        }
+
+        fn signer_key() -> [u8; 32] {
+            [1u8; 32]
+        }
+
+        fn other_key() -> [u8; 32] {
+            [2u8; 32]
+        }
+
+        fn dummy_signature() -> [u8; 64] {
+            [0xAA; 64]
+        }
+
+        fn create_bridge() -> LuxBridge {
+            let accounts = default_accounts();
+            set_caller(accounts.alice);
+            LuxBridge::new(vec![signer_key()], 2, 100) // 1% fee, threshold 2
+        }
+
+        // -------------------------------------------------------
+        // Initialize
+        // -------------------------------------------------------
+
+        #[ink::test]
+        fn initialize_sets_admin() {
+            let accounts = default_accounts();
+            let bridge = create_bridge();
+            assert_eq!(bridge.admin, accounts.alice);
+        }
+
+        #[ink::test]
+        fn initialize_not_paused() {
+            let bridge = create_bridge();
+            assert!(!bridge.is_paused());
+        }
+
+        #[ink::test]
+        fn initialize_zero_totals() {
+            let bridge = create_bridge();
+            assert_eq!(bridge.total_locked(), 0);
+            assert_eq!(bridge.total_burned(), 0);
+        }
+
+        #[ink::test]
+        fn initialize_sets_fee() {
+            let bridge = create_bridge();
+            assert_eq!(bridge.fee_bps, 100);
+        }
+
+        #[ink::test]
+        #[should_panic(expected = "Fee too high")]
+        fn initialize_rejects_fee_above_500() {
+            let accounts = default_accounts();
+            set_caller(accounts.alice);
+            LuxBridge::new(vec![signer_key()], 2, 501);
+        }
+
+        // -------------------------------------------------------
+        // Lock
+        // -------------------------------------------------------
+
+        #[ink::test]
+        fn lock_increments_nonce() {
+            let mut bridge = create_bridge();
+            set_value_transferred(1_000);
+            let nonce = bridge.lock_and_bridge(1, [0xBB; 32]).unwrap();
+            assert_eq!(nonce, 1);
+
+            set_value_transferred(1_000);
+            let nonce2 = bridge.lock_and_bridge(1, [0xBB; 32]).unwrap();
+            assert_eq!(nonce2, 2);
+        }
+
+        #[ink::test]
+        fn lock_updates_total_locked() {
+            let mut bridge = create_bridge();
+            let amount: Balance = 10_000;
+            set_value_transferred(amount);
+            bridge.lock_and_bridge(1, [0xBB; 32]).unwrap();
+
+            let fee = amount * 100 / 10_000; // 1%
+            assert_eq!(bridge.total_locked(), amount - fee);
+        }
+
+        #[ink::test]
+        fn lock_rejects_zero_amount() {
+            let mut bridge = create_bridge();
+            set_value_transferred(0);
+            let result = bridge.lock_and_bridge(1, [0xBB; 32]);
+            assert_eq!(result, Err(Error::AmountZero));
+        }
+
+        #[ink::test]
+        fn lock_rejects_when_paused() {
+            let mut bridge = create_bridge();
+            bridge.pause().unwrap();
+            set_value_transferred(1_000);
+            let result = bridge.lock_and_bridge(1, [0xBB; 32]);
+            assert_eq!(result, Err(Error::Paused));
+        }
+
+        // -------------------------------------------------------
+        // Mint
+        // -------------------------------------------------------
+
+        #[ink::test]
+        fn mint_marks_nonce_processed() {
+            let accounts = default_accounts();
+            let mut bridge = create_bridge();
+
+            // Fund the contract so it can transfer
+            let contract_addr = ink::env::account_id::<ink::env::DefaultEnvironment>();
+            set_balance(contract_addr, 1_000_000);
+
+            let result = bridge.mint_bridged(
+                1,     // source_chain_id
+                1,     // nonce
+                accounts.bob,
+                5_000,
+                dummy_signature(),
+                signer_key(),
+            );
+            assert!(result.is_ok());
+
+            // Nonce should be marked
+            assert!(bridge.processed_nonces.get((1u64, 1u64)).unwrap_or(false));
+        }
+
+        #[ink::test]
+        fn mint_rejects_replayed_nonce() {
+            let accounts = default_accounts();
+            let mut bridge = create_bridge();
+            let contract_addr = ink::env::account_id::<ink::env::DefaultEnvironment>();
+            set_balance(contract_addr, 1_000_000);
+
+            bridge.mint_bridged(1, 1, accounts.bob, 5_000, dummy_signature(), signer_key()).unwrap();
+
+            let result = bridge.mint_bridged(1, 1, accounts.bob, 5_000, dummy_signature(), signer_key());
+            assert_eq!(result, Err(Error::NonceProcessed));
+        }
+
+        #[ink::test]
+        fn mint_rejects_unauthorized_signer() {
+            let accounts = default_accounts();
+            let mut bridge = create_bridge();
+
+            let result = bridge.mint_bridged(
+                1, 1, accounts.bob, 5_000, dummy_signature(), other_key(),
+            );
+            assert_eq!(result, Err(Error::UnauthorizedSigner));
+        }
+
+        #[ink::test]
+        fn mint_rejects_zero_amount() {
+            let accounts = default_accounts();
+            let mut bridge = create_bridge();
+
+            let result = bridge.mint_bridged(
+                1, 1, accounts.bob, 0, dummy_signature(), signer_key(),
+            );
+            assert_eq!(result, Err(Error::AmountZero));
+        }
+
+        // -------------------------------------------------------
+        // Burn
+        // -------------------------------------------------------
+
+        #[ink::test]
+        fn burn_increments_nonce() {
+            let mut bridge = create_bridge();
+            set_value_transferred(5_000);
+            let nonce = bridge.burn_bridged(1, [0xCC; 32]).unwrap();
+            assert_eq!(nonce, 1);
+        }
+
+        #[ink::test]
+        fn burn_updates_total_burned() {
+            let mut bridge = create_bridge();
+            set_value_transferred(5_000);
+            bridge.burn_bridged(1, [0xCC; 32]).unwrap();
+            assert_eq!(bridge.total_burned(), 5_000);
+        }
+
+        #[ink::test]
+        fn burn_rejects_zero_amount() {
+            let mut bridge = create_bridge();
+            set_value_transferred(0);
+            let result = bridge.burn_bridged(1, [0xCC; 32]);
+            assert_eq!(result, Err(Error::AmountZero));
+        }
+
+        #[ink::test]
+        fn burn_rejects_when_paused() {
+            let mut bridge = create_bridge();
+            bridge.pause().unwrap();
+            set_value_transferred(5_000);
+            let result = bridge.burn_bridged(1, [0xCC; 32]);
+            assert_eq!(result, Err(Error::Paused));
+        }
+
+        // -------------------------------------------------------
+        // Pause
+        // -------------------------------------------------------
+
+        #[ink::test]
+        fn pause_sets_paused() {
+            let mut bridge = create_bridge();
+            bridge.pause().unwrap();
+            assert!(bridge.is_paused());
+        }
+
+        #[ink::test]
+        fn unpause_clears_paused() {
+            let mut bridge = create_bridge();
+            bridge.pause().unwrap();
+            bridge.unpause().unwrap();
+            assert!(!bridge.is_paused());
+        }
+
+        #[ink::test]
+        fn pause_rejects_non_admin() {
+            let accounts = default_accounts();
+            let mut bridge = create_bridge();
+            set_caller(accounts.bob);
+            let result = bridge.pause();
+            assert_eq!(result, Err(Error::NotAdmin));
+        }
+
+        // -------------------------------------------------------
+        // Unauthorized admin functions
+        // -------------------------------------------------------
+
+        #[ink::test]
+        fn set_fee_rejects_non_admin() {
+            let accounts = default_accounts();
+            let mut bridge = create_bridge();
+            set_caller(accounts.bob);
+            let result = bridge.set_fee(200);
+            assert_eq!(result, Err(Error::NotAdmin));
+        }
+
+        #[ink::test]
+        fn set_fee_rejects_above_max() {
+            let mut bridge = create_bridge();
+            let result = bridge.set_fee(501);
+            assert_eq!(result, Err(Error::FeeTooHigh));
+        }
+
+        #[ink::test]
+        fn set_fee_updates_value() {
+            let mut bridge = create_bridge();
+            bridge.set_fee(250).unwrap();
+            assert_eq!(bridge.fee_bps, 250);
+        }
+
+        #[ink::test]
+        fn set_signers_rejects_non_admin() {
+            let accounts = default_accounts();
+            let mut bridge = create_bridge();
+            set_caller(accounts.bob);
+            let result = bridge.set_signers(vec![other_key()], 1);
+            assert_eq!(result, Err(Error::NotAdmin));
+        }
+
+        #[ink::test]
+        fn set_signers_updates_keys() {
+            let mut bridge = create_bridge();
+            bridge.set_signers(vec![other_key()], 1).unwrap();
+            assert_eq!(bridge.mpc_signers, vec![other_key()]);
+            assert_eq!(bridge.threshold, 1);
+        }
+    }
 }
