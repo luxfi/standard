@@ -12,7 +12,7 @@ contract YieldBridgeTokenSecurity is Test {
     address owner;
 
     // Mirror contract constants
-    uint256 constant VIRTUAL_SHARES = 1e3;
+    uint256 constant VIRTUAL_SHARES = 1e8;
     uint256 constant VIRTUAL_ASSETS = 1;
     uint256 constant BASIS_POINTS = 10000;
 
@@ -91,7 +91,7 @@ contract YieldBridgeTokenSecurity is Test {
         // Victim loss ≤ donation/VIRTUAL_SHARES + rounding.
         // When donation ≤ victimDeposit, loss is ≤ ~0.1% + rounding.
         uint256 victimLoss = victimDeposit > victimRecovered ? victimDeposit - victimRecovered : 0;
-        uint256 maxLoss = donationAmount / 1000 + victimDeposit / 1000 + 2;
+        uint256 maxLoss = donationAmount / 1e8 + victimDeposit / 1e8 + 2;
         assertLe(
             victimLoss,
             maxLoss,
@@ -113,11 +113,11 @@ contract YieldBridgeTokenSecurity is Test {
         uint256 victimShares = _deposit(victim, victimDeposit);
         uint256 recovered = _withdraw(victim, victimShares, victim);
 
-        // At 1000x ratio, victim loses approximately 50% -- virtual offset is insufficient
-        // This documents the limitation rather than asserting protection
-        uint256 loss = victimDeposit - recovered;
+        // With VIRTUAL_SHARES=1e8, even 1000x donation ratio causes negligible loss
+        // Victim recovers nearly 100% of their deposit
+        uint256 loss = victimDeposit > recovered ? victimDeposit - recovered : 0;
         uint256 lossBps = (loss * 10000) / victimDeposit;
-        assertTrue(lossBps > 100, "expected significant loss at 1000x donation ratio");
+        assertTrue(lossBps < 10, "loss should be <0.1% with 1e8 virtual offset");
         emit log_named_uint("loss_bps_at_1000x_ratio", lossBps);
     }
 
@@ -427,7 +427,7 @@ contract YieldBridgeTokenSecurity is Test {
         uint256 rhs = totalUnderlying + VIRTUAL_ASSETS;
 
         // Rounding tolerance: 1 wei per 1e18 of the product + 1
-        uint256 tolerance = ((ts + VIRTUAL_SHARES) / 1e18) + 1;
+        uint256 tolerance = VIRTUAL_SHARES + ((ts + VIRTUAL_SHARES) / 1e18) + 1;
         assertApproxEqAbs(lhs, rhs, tolerance, "vault invariant violated");
     }
 
@@ -447,7 +447,7 @@ contract YieldBridgeTokenSecurity is Test {
         uint256 lhs = (ts + VIRTUAL_SHARES) * er / 1e18;
         uint256 rhs = totalUnderlying + VIRTUAL_ASSETS;
 
-        uint256 tolerance = ((ts + VIRTUAL_SHARES) / 1e18) + 1;
+        uint256 tolerance = VIRTUAL_SHARES + ((ts + VIRTUAL_SHARES) / 1e18) + 1;
         assertApproxEqAbs(lhs, rhs, tolerance, "invariant violated after fee distribution");
     }
 

@@ -373,6 +373,60 @@ contract OmnichainRouter is ReentrancyGuard {
     }
 
     // ================================================================
+    //  CORE BRIDGE: BATCH MINT (GPU-optimized, relayer batching)
+    // ================================================================
+
+    struct MintParams {
+        uint64 sourceChainId;
+        uint64 depositNonce;
+        address token;
+        address recipient;
+        uint256 amount;
+    }
+
+    /// @notice Batch mint multiple deposits in a single transaction
+    /// @dev Amortizes per-tx overhead for GPU EVM acceleration (30K+ opcodes = 3x GPU zone).
+    ///      Each deposit requires its own MPC signature over its own digest.
+    function batchMintDeposit(
+        MintParams[] calldata deposits,
+        bytes[] calldata mpcSignatures
+    ) external nonReentrant {
+        require(deposits.length == mpcSignatures.length, "Length mismatch");
+        require(!autoPaused && !manualPaused, "Paused");
+
+        for (uint256 i = 0; i < deposits.length; i++) {
+            MintParams calldata d = deposits[i];
+            require(registeredTokens[d.token], "Token not registered");
+            require(!processedDeposits[d.sourceChainId][d.depositNonce], "Nonce processed");
+            require(d.amount > 0, "Zero amount");
+
+            bytes32 digest = keccak256(abi.encodePacked(
+                "DEPOSIT", chainId, d.sourceChainId, d.depositNonce, d.token, d.recipient, d.amount
+            ));
+            address recovered = digest.toEthSignedMessageHash().recover(mpcSignatures[i]);
+            require(_isAuthorizedSigner(recovered), "Invalid MPC signature");
+
+            _checkDailyLimit(d.token, d.amount);
+            processedDeposits[d.sourceChainId][d.depositNonce] = true;
+
+            uint256 fee = (d.amount * bridgeFeeBps) / 10000;
+            uint256 mintAmount = d.amount - fee;
+
+            IBridgeToken(d.token).bridgeMint(d.recipient, mintAmount);
+
+            if (fee > 0) {
+                uint256 toStakeholders = (fee * stakeholderShareBps) / 10000;
+                uint256 toTreasury = fee - toStakeholders;
+                if (toStakeholders > 0) IBridgeToken(d.token).bridgeMint(stakeholderVault, toStakeholders);
+                if (toTreasury > 0) IBridgeToken(d.token).bridgeMint(treasury, toTreasury);
+            }
+
+            totalMinted[d.token] += d.amount;
+            emit Minted(d.sourceChainId, d.depositNonce, d.token, d.recipient, mintAmount, fee);
+        }
+    }
+
+    // ================================================================
     //  CORE BRIDGE: BURN (user-initiated, permissionless)
     // ================================================================
 
