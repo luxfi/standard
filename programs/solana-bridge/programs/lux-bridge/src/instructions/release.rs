@@ -131,8 +131,8 @@ fn verify_release_signature(
 
     // Delegate to shared verification logic
     // (inline here for clarity, but could factor into a shared function)
-    let ix = anchor_lang::solana_program::sysvar::instructions::load_instruction_at_checked(
-        0,
+    let ix = anchor_lang::solana_program::sysvar::instructions::get_instruction_relative(
+        -1,
         instructions_sysvar,
     ).map_err(|_| BridgeError::Ed25519InstructionMissing)?;
 

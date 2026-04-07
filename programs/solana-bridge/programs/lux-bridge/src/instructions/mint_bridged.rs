@@ -135,9 +135,9 @@ pub fn verify_ed25519_signature(
     message.extend_from_slice(mint.as_ref());
     message.extend_from_slice(&amount.to_le_bytes());
 
-    // Load previous instruction (must be Ed25519Program)
-    let ix = ix_sysvar::load_instruction_at_checked(
-        0, // Ed25519 verify instruction should be at index 0
+    // Load the instruction immediately before this one (must be Ed25519Program)
+    let ix = ix_sysvar::get_instruction_relative(
+        -1,
         instructions_sysvar,
     ).map_err(|_| BridgeError::Ed25519InstructionMissing)?;
 
