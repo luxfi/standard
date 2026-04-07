@@ -118,6 +118,14 @@ fn verify_propose_signers_signature(
     let num_sigs = data[0];
     require!(num_sigs >= 1, BridgeError::Ed25519VerificationFailed);
 
+    // CRITICAL: All instruction_index fields must be 0xFFFF (self-contained verification)
+    let sig_ix_index = u16::from_le_bytes([data[4], data[5]]);
+    let pk_ix_index = u16::from_le_bytes([data[8], data[9]]);
+    let msg_ix_index = u16::from_le_bytes([data[14], data[15]]);
+    require!(sig_ix_index == 0xFFFF, BridgeError::Ed25519VerificationFailed);
+    require!(pk_ix_index == 0xFFFF, BridgeError::Ed25519VerificationFailed);
+    require!(msg_ix_index == 0xFFFF, BridgeError::Ed25519VerificationFailed);
+
     // Extract public key
     let pk_offset = u16::from_le_bytes([data[6], data[7]]) as usize;
     require!(pk_offset + 32 <= data.len(), BridgeError::Ed25519VerificationFailed);

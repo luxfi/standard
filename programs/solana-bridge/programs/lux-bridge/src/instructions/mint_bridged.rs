@@ -162,6 +162,16 @@ pub fn verify_ed25519_signature(
     let num_sigs = data[0];
     require!(num_sigs >= 1, BridgeError::Ed25519VerificationFailed);
 
+    // CRITICAL: Verify all instruction_index fields are 0xFFFF (data is in THIS instruction).
+    // If instruction_index != 0xFFFF, Ed25519 program reads data from another instruction,
+    // but we read from this one — enabling pubkey substitution attacks.
+    let sig_ix_index = u16::from_le_bytes([data[4], data[5]]);
+    let pk_ix_index = u16::from_le_bytes([data[8], data[9]]);
+    let msg_ix_index = u16::from_le_bytes([data[14], data[15]]);
+    require!(sig_ix_index == 0xFFFF, BridgeError::Ed25519VerificationFailed);
+    require!(pk_ix_index == 0xFFFF, BridgeError::Ed25519VerificationFailed);
+    require!(msg_ix_index == 0xFFFF, BridgeError::Ed25519VerificationFailed);
+
     // Extract public key from instruction data
     let pk_offset = u16::from_le_bytes([data[6], data[7]]) as usize;
     require!(pk_offset + 32 <= data.len(), BridgeError::Ed25519VerificationFailed);

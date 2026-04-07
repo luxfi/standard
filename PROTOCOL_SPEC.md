@@ -32,7 +32,7 @@ against vault-backed base assets, subject to a hard loan-to-value (LTV) cap.
 |----------|-----------|
 | Issuance | Minted only when MPC attests to recognized backing on a source chain |
 | Redemption | Redeemable 1:1 in kind (burn LETH, receive ETH on source chain) |
-| LTV cap | `totalMinted[token] <= issuanceLtvCap * totalBacking[token]` enforced on every mint |
+| LTV cap | Off-chain enforcement by MPC nodes: signers MUST NOT sign mint proofs when `totalMinted > LTV_CAP * totalBacking`. On-chain enforcement via daily mint limits and auto-pause at 98.5% backing ratio. |
 | Yield | Credit holders have NO claim on strategy yield; yield accrues to protocol surplus (xLUX) |
 | Rights | No governance rights, no profit-share, no equity characteristics |
 | Daily limit | Per-token daily mint cap enforced via rolling 24-hour window |
@@ -177,9 +177,9 @@ INV-1: totalMinted[t] == sum of all bridgeMint calls - sum of all bridgeBurn cal
 ```
 
 ```
-INV-2: At the time of any mintDeposit call:
-       totalMinted[t] + mintAmount <= issuanceLtvCap * totalBacking[t]
-       (default issuanceLtvCap = 0.9 for 90% LTV)
+INV-2: MPC nodes enforce off-chain: totalMinted[t] + mintAmount <= LTV_CAP * totalBacking[t]
+       On-chain: autoPause triggers when backing ratio < 9850 bps (98.5%)
+       On-chain: daily mint limits cap issuance rate per token
 ```
 
 ```
@@ -538,7 +538,10 @@ require(_isAuthorizedSigner(recovered), "Invalid MPC signature");
 ```
 
 `_isAuthorizedSigner` checks against `signers.mpcGroupAddress` (the aggregate
-threshold key) and the three individual signer addresses.
+threshold key) only. Individual signer addresses in the `SignerSet` struct are
+stored for accountability and display purposes only — they are never used in
+signature verification. This is by design: the MPC threshold protocol produces
+a single aggregate signature that can only exist if t-of-n signers cooperated.
 
 ### 9.6 Exit Guarantee
 
