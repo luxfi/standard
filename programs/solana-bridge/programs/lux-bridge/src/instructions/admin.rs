@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::instructions as ix_sysvar;
 use anchor_lang::solana_program::ed25519_program;
-use crate::state::{BridgeConfig, SIGNER_TIMELOCK_SECONDS};
+use crate::state::{BridgeConfig, MAX_ROTATION_DELAY};
 use crate::errors::BridgeError;
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -76,7 +76,7 @@ pub fn propose_signers(
 
     config.pending_signers = new_signers;
     config.pending_threshold = threshold;
-    config.pending_signers_eta = clock.unix_timestamp + SIGNER_TIMELOCK_SECONDS;
+    config.pending_signers_eta = clock.unix_timestamp + config.rotation_delay;
 
     msg!(
         "Signer rotation proposed. Executable after {}",
@@ -219,5 +219,13 @@ pub struct UpdateFee<'info> {
 pub fn update_fee(ctx: Context<UpdateFee>, fee_bps: u16) -> Result<()> {
     require!(fee_bps <= 500, BridgeError::FeeRateExceedsMax);
     ctx.accounts.bridge_config.fee_bps = fee_bps;
+    Ok(())
+}
+
+/// Set operational delay for signer rotation (0 = instant, max 7 days).
+/// This is NOT a security parameter — it's for cross-chain coordination.
+pub fn set_rotation_delay(ctx: Context<UpdateFee>, delay_seconds: i64) -> Result<()> {
+    require!(delay_seconds >= 0 && delay_seconds <= MAX_ROTATION_DELAY, BridgeError::FeeRateExceedsMax);
+    ctx.accounts.bridge_config.rotation_delay = delay_seconds;
     Ok(())
 }

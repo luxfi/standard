@@ -101,4 +101,9 @@ pub mod lux_bridge {
     pub fn update_fee(ctx: Context<UpdateFee>, fee_bps: u16) -> Result<()> {
         instructions::admin::update_fee(ctx, fee_bps)
     }
+
+    /// Set operational delay for signer rotation (0 = instant, max 7 days)
+    pub fn set_rotation_delay(ctx: Context<UpdateFee>, delay_seconds: i64) -> Result<()> {
+        instructions::admin::set_rotation_delay(ctx, delay_seconds)
+    }
 }

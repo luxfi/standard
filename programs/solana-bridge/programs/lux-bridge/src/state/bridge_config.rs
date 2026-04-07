@@ -1,7 +1,9 @@
 use anchor_lang::prelude::*;
 
-/// 7-day timelock for signer rotation (matches EVM OmnichainRouter)
-pub const SIGNER_TIMELOCK_SECONDS: i64 = 7 * 24 * 60 * 60;
+/// Default operational delay for signer rotation (cross-chain coordination, NOT security).
+/// Configurable by admin. Default 24h gives relayers time to update all chains atomically.
+pub const DEFAULT_ROTATION_DELAY: i64 = 24 * 60 * 60; // 24 hours
+pub const MAX_ROTATION_DELAY: i64 = 7 * 24 * 60 * 60; // 7 days max
 
 /// Global bridge configuration — one per program deployment.
 /// PDA seeds: ["bridge_config"]
@@ -25,7 +27,9 @@ pub struct BridgeConfig {
     pub chain_id: u64,
     /// Bump seed for PDA derivation
     pub bump: u8,
-    // ── Signer rotation timelock (H-06 fix) ──
+    // ── Signer rotation (operational delay for cross-chain coordination) ──
+    /// Operational delay in seconds (default 24h, max 7d, 0 = instant)
+    pub rotation_delay: i64,
     /// Pending new signers (zeroed = no pending rotation)
     pub pending_signers: [Pubkey; 3],
     /// Pending new threshold
@@ -45,6 +49,7 @@ impl BridgeConfig {
         + 8                    // outbound_nonce
         + 8                    // chain_id
         + 1                    // bump
+        + 8                    // rotation_delay
         + 32 * 3               // pending_signers
         + 1                    // pending_threshold
         + 8;                   // pending_signers_eta

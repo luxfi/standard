@@ -129,7 +129,9 @@ contract OmnichainRouter is ReentrancyGuard {
     uint256 public pendingSignersActivateAt; // 0 = no pending change
     uint256 public rotationNonce;            // prevents rotation/cancel replay
 
-    uint256 public constant SIGNER_TIMELOCK = 7 days;
+    /// @notice Operational delay for signer rotation (NOT security — allows cross-chain coordination)
+    /// Governor-configurable. Default 24h gives relayers time to update all 18+ chains atomically.
+    uint256 public signerRotationDelay = 24 hours;
 
     // ================================================================
     //  BRIDGE STATE
@@ -297,6 +299,14 @@ contract OmnichainRouter is ReentrancyGuard {
     function setShariahMode(bool enabled, address _shariaFilter) external onlyGovernor {
         shariahMode = enabled;
         shariaFilter = _shariaFilter;
+    }
+
+    /// @notice Set operational delay for signer rotation (governor only)
+    /// @dev This is NOT a security parameter — it's for cross-chain coordination.
+    ///      Set to 0 for instant rotation. Max 7 days to prevent governance abuse.
+    function setSignerRotationDelay(uint256 delay) external onlyGovernor {
+        require(delay <= 7 days, "Max 7 days");
+        signerRotationDelay = delay;
     }
 
     /// @notice Update daily mint limit for a token (governor only)
@@ -518,7 +528,7 @@ contract OmnichainRouter is ReentrancyGuard {
         require(_isAuthorizedSigner(recovered), "Invalid MPC signature");
 
         pendingSigners = newSigners;
-        pendingSignersActivateAt = block.timestamp + SIGNER_TIMELOCK;
+        pendingSignersActivateAt = block.timestamp + signerRotationDelay;
         rotationNonce++;
 
         emit SignerRotationProposed(newSigners, pendingSignersActivateAt);
