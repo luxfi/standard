@@ -1,0 +1,88 @@
+;; Lux Bridge — Storage layout
+;;
+;; Storage cell:
+;;   admin_address:    MsgAddress (267 bits)
+;;   mpc_pubkey_1:     uint256 (Ed25519 public key)
+;;   mpc_pubkey_2:     uint256
+;;   mpc_pubkey_3:     uint256
+;;   threshold:        uint8
+;;   fee_bps:          uint16
+;;   paused:           uint1
+;;   outbound_nonce:   uint64
+;;   chain_id:         uint64
+;;   fee_collector:    MsgAddress
+;;   ^ref: nonce_dict  HashmapE(320, uint1)  ;; (src_chain_id:64 + nonce:256) -> processed
+;;   ^ref: token_dict  HashmapE(256, Cell)   ;; token_hash -> {jetton_master, vault, daily_limit, daily_minted, period_start}
+
+global slice g_admin;
+global int g_mpc_pk1;
+global int g_mpc_pk2;
+global int g_mpc_pk3;
+global int g_threshold;
+global int g_fee_bps;
+global int g_paused;
+global int g_outbound_nonce;
+global int g_chain_id;
+global slice g_fee_collector;
+global cell g_nonce_dict;
+global cell g_token_dict;
+
+() load_storage() impure inline {
+    slice ds = get_data().begin_parse();
+    g_admin = ds~load_msg_addr();
+    g_mpc_pk1 = ds~load_uint(256);
+    g_mpc_pk2 = ds~load_uint(256);
+    g_mpc_pk3 = ds~load_uint(256);
+    g_threshold = ds~load_uint(8);
+    g_fee_bps = ds~load_uint(16);
+    g_paused = ds~load_uint(1);
+    g_outbound_nonce = ds~load_uint(64);
+    g_chain_id = ds~load_uint(64);
+    g_fee_collector = ds~load_msg_addr();
+
+    cell refs = ds~load_ref();
+    slice rs = refs.begin_parse();
+    g_nonce_dict = rs~load_dict();
+    g_token_dict = rs~load_dict();
+}
+
+() save_storage() impure inline {
+    cell refs = begin_cell()
+        .store_dict(g_nonce_dict)
+        .store_dict(g_token_dict)
+        .end_cell();
+
+    set_data(begin_cell()
+        .store_slice(g_admin)
+        .store_uint(g_mpc_pk1, 256)
+        .store_uint(g_mpc_pk2, 256)
+        .store_uint(g_mpc_pk3, 256)
+        .store_uint(g_threshold, 8)
+        .store_uint(g_fee_bps, 16)
+        .store_uint(g_paused, 1)
+        .store_uint(g_outbound_nonce, 64)
+        .store_uint(g_chain_id, 64)
+        .store_slice(g_fee_collector)
+        .store_ref(refs)
+        .end_cell()
+    );
+}
+
+int next_nonce() impure inline {
+    int n = g_outbound_nonce;
+    g_outbound_nonce += 1;
+    return n;
+}
+
+;; Check if nonce is already processed for a source chain
+int is_nonce_processed(int src_chain_id, int nonce) inline {
+    int key = (src_chain_id << 256) | nonce;
+    (slice val, int found) = g_nonce_dict.udict_get?(320, key);
+    return found;
+}
+
+;; Mark nonce as processed
+() mark_nonce_processed(int src_chain_id, int nonce) impure inline {
+    int key = (src_chain_id << 256) | nonce;
+    g_nonce_dict~udict_set(320, key, begin_cell().store_uint(1, 1).end_cell().begin_parse());
+}

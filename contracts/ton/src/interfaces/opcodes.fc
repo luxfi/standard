@@ -1,0 +1,31 @@
+;; Lux Bridge operation codes
+;; These match the MPC watcher event types
+
+const int op::lock_and_bridge   = 0x4c4f434b; ;; "LOCK"
+const int op::mint_bridged      = 0x4d494e54; ;; "MINT"
+const int op::burn_bridged      = 0x4255524e; ;; "BURN"
+const int op::release           = 0x52454c53; ;; "RELS"
+
+;; Admin operations
+const int op::register_token    = 0x52454754; ;; "REGT"
+const int op::pause             = 0x50415553; ;; "PAUS"
+const int op::unpause           = 0x554e5053; ;; "UNPS"
+const int op::update_signers    = 0x55504453; ;; "UPDS"
+const int op::update_fee        = 0x55504446; ;; "UPDF"
+
+;; Jetton operations (TEP-74)
+const int op::transfer_notification = 0x7362d09c;
+const int op::internal_transfer     = 0x178d4519;
+const int op::excesses              = 0xd53276db;
+
+;; Error codes
+const int err::paused               = 100;
+const int err::invalid_signature    = 101;
+const int err::nonce_processed      = 102;
+const int err::daily_limit          = 103;
+const int err::unauthorized         = 104;
+const int err::invalid_chain        = 105;
+const int err::amount_too_small     = 106;
+const int err::fee_too_high         = 107;
+const int err::token_not_registered = 108;
+const int err::insufficient_balance = 109;

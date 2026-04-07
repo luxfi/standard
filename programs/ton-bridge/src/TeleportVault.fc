@@ -1,0 +1,292 @@
+;; Copyright (C) 2025, Lux Industries Inc. All rights reserved.
+;; See the file LICENSE for licensing terms.
+;;
+;; TeleportVault — TON bridge contract for cross-chain teleportation to Lux.
+;;
+;; Accepts TON deposits, emits deposit events for MPC watcher relay,
+;; and releases TON on MPC-signed proofs from Lux C-Chain burns.
+;;
+;; Wire format matches Teleporter.sol: DEPOSIT / RELEASE / BACKING proofs.
+;; Chain ID: 1414483791 (0x544F4E4F = "TONO")
+;;
+;; Security:
+;;   - Ed25519 MPC signature verification (native on TON)
+;;   - Per-nonce replay prevention via dictionary
+;;   - Admin-only signer rotation and pause
+;;   - Fail-secure: unknown ops are rejected
+
+;; ════════════════════════════════════════════════════════════════════
+;; STORAGE LAYOUT
+;; ════════════════════════════════════════════════════════════════════
+;; cell storage:
+;;   admin:          MsgAddress    ;; contract admin
+;;   mpc_pubkey:     uint256       ;; Ed25519 MPC aggregate public key (32 bytes)
+;;   deposit_nonce:  uint64        ;; monotonic deposit counter
+;;   total_locked:   coins         ;; total TON locked in vault
+;;   paused:         uint1         ;; emergency pause flag
+;;   chain_id:       uint64        ;; source chain ID (1414483791)
+;;   fee_bps:        uint16        ;; bridge fee in basis points
+;;   processed:      ^Cell         ;; dict: uint64 -> true (processed release nonces)
+
+;; ════════════════════════════════════════════════════════════════════
+;; CONSTANTS
+;; ════════════════════════════════════════════════════════════════════
+
+const int TON_CHAIN_ID = 1414483791;  ;; "TONO" in ASCII
+
+const int op::deposit         = 0x44455031;  ;; "DEP1"
+const int op::release         = 0x52454c31;  ;; "REL1"
+const int op::update_backing  = 0x42414331;  ;; "BAC1"
+const int op::pause           = 0x50415553;  ;; "PAUS"
+const int op::unpause         = 0x554e5041;  ;; "UNPA"
+const int op::update_signer   = 0x55504453;  ;; "UPDS"
+
+const int err::paused              = 100;
+const int err::unauthorized        = 101;
+const int err::zero_amount         = 102;
+const int err::invalid_signature   = 103;
+const int err::nonce_replay        = 104;
+const int err::insufficient_funds  = 105;
+
+;; ════════════════════════════════════════════════════════════════════
+;; STORAGE ACCESS
+;; ════════════════════════════════════════════════════════════════════
+
+(slice, int, int, int, int, int, int, cell) load_data() inline {
+    slice ds = get_data().begin_parse();
+    slice admin        = ds~load_msg_addr();
+    int mpc_pubkey     = ds~load_uint(256);
+    int deposit_nonce  = ds~load_uint(64);
+    int total_locked   = ds~load_coins();
+    int paused         = ds~load_uint(1);
+    int chain_id       = ds~load_uint(64);
+    int fee_bps        = ds~load_uint(16);
+    cell processed     = ds~load_dict();
+    return (admin, mpc_pubkey, deposit_nonce, total_locked, paused, chain_id, fee_bps, processed);
+}
+
+() save_data(slice admin, int mpc_pubkey, int deposit_nonce, int total_locked,
+             int paused, int chain_id, int fee_bps, cell processed) impure inline {
+    set_data(begin_cell()
+        .store_slice(admin)
+        .store_uint(mpc_pubkey, 256)
+        .store_uint(deposit_nonce, 64)
+        .store_coins(total_locked)
+        .store_uint(paused, 1)
+        .store_uint(chain_id, 64)
+        .store_uint(fee_bps, 16)
+        .store_dict(processed)
+    .end_cell());
+}
+
+;; ════════════════════════════════════════════════════════════════════
+;; SIGNATURE VERIFICATION
+;; ════════════════════════════════════════════════════════════════════
+
+;; Verify Ed25519 signature over a message hash.
+;; TON has native check_signature() — no precompile needed.
+() verify_mpc_sig(int mpc_pubkey, int hash, slice sig_slice) impure inline {
+    ;; FunC check_signature(hash, signature_slice, public_key) takes 3 args:
+    ;; hash: int256, signature_slice: 512-bit slice, public_key: int256.
+    throw_unless(err::invalid_signature,
+        check_signature(hash, sig_slice, mpc_pubkey));
+}
+
+;; Build the message hash for a release proof.
+;; Matches Teleporter: keccak256("RELEASE" || chain_id || nonce || recipient || amount)
+;; We use SHA256 on TON (Ed25519 signs SHA256 natively).
+int build_release_hash(int chain_id, int nonce, slice recipient, int amount) inline {
+    return cell_hash(begin_cell()
+        .store_uint(0x52454c45415345, 56)  ;; "RELEASE" (7 bytes)
+        .store_uint(chain_id, 64)
+        .store_uint(nonce, 64)
+        .store_slice(recipient)
+        .store_coins(amount)
+    .end_cell());
+}
+
+;; Build the message hash for a backing attestation.
+int build_backing_hash(int chain_id, int total_locked, int timestamp) inline {
+    return cell_hash(begin_cell()
+        .store_uint(0x4241434b494e47, 56)  ;; "BACKING" (7 bytes)
+        .store_uint(chain_id, 64)
+        .store_coins(total_locked)
+        .store_uint(timestamp, 64)
+    .end_cell());
+}
+
+;; ════════════════════════════════════════════════════════════════════
+;; INTERNAL MESSAGE HANDLER
+;; ════════════════════════════════════════════════════════════════════
+
+() recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+    if (in_msg_body.slice_empty?()) { return (); }  ;; simple TON transfer, ignore
+
+    slice cs = in_msg_full.begin_parse();
+    int flags = cs~load_uint(4);
+    if (flags & 1) { return (); }  ;; bounced message, ignore
+
+    slice sender = cs~load_msg_addr();
+    int op = in_msg_body~load_uint(32);
+    int query_id = in_msg_body~load_uint(64);
+
+    var (admin, mpc_pubkey, deposit_nonce, total_locked, paused, chain_id, fee_bps, processed) = load_data();
+
+    ;; ── DEPOSIT ─────────────────────────────────────────────────────
+    ;; User sends TON with op::deposit. msg_value is the deposit amount.
+    ;; Body: op(32) query_id(64) lux_recipient(256)
+    if (op == op::deposit) {
+        throw_if(err::paused, paused);
+        throw_unless(err::zero_amount, msg_value > 0);
+
+        int lux_recipient = in_msg_body~load_uint(256);
+
+        ;; Calculate fee
+        int fee = muldiv(msg_value, fee_bps, 10000);
+        int bridge_amount = msg_value - fee;
+
+        ;; Increment nonce
+        deposit_nonce += 1;
+
+        ;; Track total locked
+        total_locked += bridge_amount;
+
+        save_data(admin, mpc_pubkey, deposit_nonce, total_locked, paused, chain_id, fee_bps, processed);
+
+        ;; Emit deposit event as external message (for watcher indexing)
+        var msg = begin_cell()
+            .store_uint(0x44455031, 32)   ;; op::deposit tag
+            .store_uint(chain_id, 64)     ;; srcChainId
+            .store_uint(deposit_nonce, 64);; nonce
+            .store_uint(lux_recipient, 256)  ;; recipient on Lux (EVM address, zero-padded)
+            .store_coins(bridge_amount)   ;; amount after fee
+            .store_uint(now(), 32)        ;; timestamp
+        .end_cell();
+        send_raw_message(begin_cell()
+            .store_uint(0xc4, 9)          ;; ext_out_msg_info$11 + addr_none
+            .store_uint(0, 64 + 32)       ;; created_lt, created_at (filled by validator)
+            .store_uint(1, 1)             ;; init:no body:yes
+            .store_ref(msg)
+        .end_cell(), 0);
+
+        return ();
+    }
+
+    ;; ── RELEASE ─────────────────────────────────────────────────────
+    ;; MPC-signed release of locked TON back to a recipient.
+    ;; Body: op(32) query_id(64) nonce(64) recipient(addr) amount(coins) sig(512)
+    if (op == op::release) {
+        throw_if(err::paused, paused);
+
+        int release_nonce = in_msg_body~load_uint(64);
+        slice recipient = in_msg_body~load_msg_addr();
+        int amount = in_msg_body~load_coins();
+        slice sig = in_msg_body;  ;; remaining 512 bits = Ed25519 signature
+
+        ;; Check nonce not already processed (replay prevention)
+        (_, int found?) = processed.udict_get?(64, release_nonce);
+        throw_if(err::nonce_replay, found?);
+
+        ;; Verify MPC signature
+        int msg_hash = build_release_hash(chain_id, release_nonce, recipient, amount);
+        verify_mpc_sig(mpc_pubkey, msg_hash, sig);
+
+        ;; Check sufficient balance
+        throw_unless(err::insufficient_funds, total_locked >= amount);
+
+        ;; Mark nonce processed
+        processed~udict_set(64, release_nonce, begin_cell().store_uint(1, 1).end_cell().begin_parse());
+
+        ;; Update accounting
+        total_locked -= amount;
+
+        save_data(admin, mpc_pubkey, deposit_nonce, total_locked, paused, chain_id, fee_bps, processed);
+
+        ;; Send TON to recipient
+        var msg = begin_cell()
+            .store_uint(0x10, 6)          ;; nobounce
+            .store_slice(recipient)
+            .store_coins(amount)
+            .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+        .end_cell();
+        send_raw_message(msg, 1);  ;; mode=1: pay fees separately
+
+        return ();
+    }
+
+    ;; ── UPDATE BACKING ──────────────────────────────────────────────
+    ;; MPC attests current total_locked for cross-chain verification.
+    ;; Body: op(32) query_id(64) total(coins) timestamp(64) sig(512)
+    if (op == op::update_backing) {
+        int attested_total = in_msg_body~load_coins();
+        int timestamp = in_msg_body~load_uint(64);
+        slice sig = in_msg_body;
+
+        int msg_hash = build_backing_hash(chain_id, attested_total, timestamp);
+        verify_mpc_sig(mpc_pubkey, msg_hash, sig);
+
+        ;; Auto-pause if attested backing diverges from our tracked total
+        ;; (indicates potential exploit on another chain)
+        if (attested_total < total_locked) {
+            paused = -1;  ;; true
+        }
+
+        save_data(admin, mpc_pubkey, deposit_nonce, total_locked, paused, chain_id, fee_bps, processed);
+        return ();
+    }
+
+    ;; ── ADMIN: PAUSE ────────────────────────────────────────────────
+    if (op == op::pause) {
+        throw_unless(err::unauthorized, equal_slices(sender, admin));
+        save_data(admin, mpc_pubkey, deposit_nonce, total_locked, -1, chain_id, fee_bps, processed);
+        return ();
+    }
+
+    ;; ── ADMIN: UNPAUSE ──────────────────────────────────────────────
+    if (op == op::unpause) {
+        throw_unless(err::unauthorized, equal_slices(sender, admin));
+        save_data(admin, mpc_pubkey, deposit_nonce, total_locked, 0, chain_id, fee_bps, processed);
+        return ();
+    }
+
+    ;; ── ADMIN: UPDATE SIGNER ────────────────────────────────────────
+    if (op == op::update_signer) {
+        throw_unless(err::unauthorized, equal_slices(sender, admin));
+        int new_pubkey = in_msg_body~load_uint(256);
+        save_data(admin, new_pubkey, deposit_nonce, total_locked, paused, chain_id, fee_bps, processed);
+        return ();
+    }
+
+    ;; Unknown op — reject
+    throw(0xffff);
+}
+
+;; ════════════════════════════════════════════════════════════════════
+;; GET METHODS (on-chain queries)
+;; ════════════════════════════════════════════════════════════════════
+
+int get_total_locked() method_id {
+    var (_, _, _, total_locked, _, _, _, _) = load_data();
+    return total_locked;
+}
+
+int get_deposit_nonce() method_id {
+    var (_, _, deposit_nonce, _, _, _, _, _) = load_data();
+    return deposit_nonce;
+}
+
+int get_chain_id() method_id {
+    var (_, _, _, _, _, chain_id, _, _) = load_data();
+    return chain_id;
+}
+
+int is_paused() method_id {
+    var (_, _, _, _, paused, _, _, _) = load_data();
+    return paused;
+}
+
+int is_nonce_processed(int nonce) method_id {
+    var (_, _, _, _, _, _, _, processed) = load_data();
+    (_, int found?) = processed.udict_get?(64, nonce);
+    return found?;
+}

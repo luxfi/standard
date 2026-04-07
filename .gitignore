@@ -73,3 +73,6 @@ out-seaport/
 slither-report.json
 semgrep-results.sarif
 aderyn-report.md
+programs/solana-bridge/target/
+programs/solana-bridge/target/
+programs/solana-bridge/Cargo.lock

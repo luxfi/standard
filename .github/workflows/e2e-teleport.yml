@@ -1,0 +1,64 @@
+name: E2E Teleport
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'contracts/bridge/**'
+      - 'test/teleport/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'contracts/bridge/**'
+      - 'test/teleport/**'
+  workflow_dispatch:
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  e2e-fork-tests:
+    name: Teleport fork tests (testnet)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Run E2E fork tests
+        env:
+          LUX_TESTNET_RPC: https://api.lux-test.network/ext/bc/C/rpc
+        run: forge test --match-contract E2ETeleport -vvv
+
+      - name: Run conformance tests
+        run: |
+          forge test --match-contract TeleportConformance -vvv
+          forge test --match-contract OPNETConformance -vvv
+
+      - name: Post results to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { execSync } = require('child_process');
+            let output;
+            try {
+              output = execSync(
+                'forge test --match-path "test/teleport/*.sol" --summary 2>&1',
+                { encoding: 'utf-8', timeout: 300000 }
+              );
+            } catch (e) {
+              output = e.stdout || e.message;
+            }
+            const body = `## Teleport E2E Results\n\n\`\`\`\n${output.slice(-3000)}\n\`\`\``;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });

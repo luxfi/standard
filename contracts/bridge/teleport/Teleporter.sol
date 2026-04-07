@@ -2,7 +2,6 @@
 // Copyright (c) 2025 Lux Industries Inc.
 pragma solidity ^0.8.31;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -30,13 +29,14 @@ import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/Mes
  * - Only MPC can mint (via signed proofs)
  * - Burn requires token balance
  */
-contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
+contract Teleporter is AccessControl, ReentrancyGuard {
     // ═══════════════════════════════════════════════════════════════════════
     // ROLES
     // ═══════════════════════════════════════════════════════════════════════
 
     bytes32 public constant MPC_ROLE = keccak256("MPC_ROLE");
     bytes32 public constant LIQUID_YIELD_ROLE = keccak256("LIQUID_YIELD_ROLE");
+    bytes32 public constant PEG_ORACLE_ROLE = keccak256("PEG_ORACLE_ROLE");
 
     // ═══════════════════════════════════════════════════════════════════════
     // TYPES
@@ -75,6 +75,15 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
     /// @notice Peg pause threshold (98.5% = 9850 bps)
     uint256 public constant PEG_PAUSE_THRESHOLD = 9850;
 
+    /// @notice Minimum backing staleness window (30 minutes)
+    uint256 public constant MIN_STALENESS_WINDOW = 30 minutes;
+
+    /// @notice Maximum backing staleness window (24 hours)
+    uint256 public constant MAX_STALENESS_WINDOW = 24 hours;
+
+    /// @notice Maximum backing attestation age (1 hour)
+    uint256 public constant MAX_BACKING_AGE = 1 hours;
+
     // ═══════════════════════════════════════════════════════════════════════
     // STATE
     // ═══════════════════════════════════════════════════════════════════════
@@ -112,6 +121,15 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
     /// @notice MPC Oracle addresses
     mapping(address => bool) public mpcOracles;
 
+    /// @notice Sequential withdraw counter (HIGH-01: replaces hash-based nonce)
+    uint256 public withdrawCounter;
+
+    /// @notice Configurable backing staleness window (HIGH-02: default 2 hours, was 24)
+    uint256 public backingStalenessWindow = 2 hours;
+
+    /// @notice Current peg in basis points (HIGH-05: oracle-settable, default 10000 = 1:1)
+    uint256 public currentPegBps = BASIS_POINTS;
+
     /// @notice Paused state
     bool public paused;
 
@@ -145,6 +163,7 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
 
     error ZeroAmount();
     error ZeroAddress();
+    error Unauthorized();
     error InvalidSignature();
     error NonceAlreadyProcessed();
     error InsufficientBalance();
@@ -152,6 +171,11 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
     error PegDegraded();
     error BackingInsufficient();
     error StaleAttestation();
+    error TimestampTooOld();
+    error TimestampInFuture();
+    error InvalidStalenessWindow();
+    error InvalidPegValue();
+    error StaleTimestamp();
 
     // ═══════════════════════════════════════════════════════════════════════
     // MODIFIERS
@@ -172,7 +196,7 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════
 
-    constructor(address _leth, address _mpcOracle) Ownable(msg.sender) {
+    constructor(address _leth, address _mpcOracle) {
         if (_leth == address(0) || _mpcOracle == address(0)) revert ZeroAddress();
 
         token = IBridgedToken(_leth);
@@ -207,8 +231,8 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
         if (recipient == address(0)) revert ZeroAddress();
         if (processedDeposits[srcChainId][depositNonce]) revert NonceAlreadyProcessed();
 
-        // Verify MPC signature
-        bytes32 messageHash = keccak256(abi.encodePacked("DEPOSIT", srcChainId, depositNonce, recipient, amount));
+        // NEW-01: bytes32 tag for deterministic fixed-size encoding (trivial to match in Go)
+        bytes32 messageHash = keccak256(abi.encode(bytes32("DEPOSIT"), srcChainId, depositNonce, recipient, amount));
         bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
         address signer = ECDSA.recover(ethSignedHash, signature);
 
@@ -243,8 +267,8 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
         if (liquidYield == address(0)) revert ZeroAddress();
         if (processedYields[srcChainId][yieldNonce]) revert NonceAlreadyProcessed();
 
-        // Verify MPC signature
-        bytes32 messageHash = keccak256(abi.encodePacked("YIELD", srcChainId, yieldNonce, amount));
+        // NEW-01: bytes32 tag for deterministic fixed-size encoding
+        bytes32 messageHash = keccak256(abi.encode(bytes32("YIELD"), srcChainId, yieldNonce, amount));
         bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
         address signer = ECDSA.recover(ethSignedHash, signature);
 
@@ -286,9 +310,8 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
         // Burn tokens from user
         token.burnFrom(msg.sender, amount);
 
-        // Generate withdraw nonce
-        withdrawNonce =
-            uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, amount, srcChainId, block.number)));
+        // HIGH-01: Sequential counter — no collisions, no lost burns
+        withdrawNonce = ++withdrawCounter;
 
         pendingWithdraws[withdrawNonce] = true;
         totalBurned += amount;
@@ -306,20 +329,30 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
      * @notice Update backing attestation for a source chain
      * @param srcChainId Source chain ID
      * @param totalBacking Total ETH backing on source chain
-     * @param signature MPC signature
+     * @param timestamp MPC-signed timestamp (must be recent)
+     * @param signature MPC signature over (srcChainId, totalBacking, timestamp)
      */
-    function updateBacking(uint256 srcChainId, uint256 totalBacking, bytes calldata signature) external {
-        // Verify MPC signature
-        bytes32 messageHash = keccak256(abi.encodePacked("BACKING", srcChainId, totalBacking, block.timestamp));
+    function updateBacking(uint256 srcChainId, uint256 totalBacking, uint256 timestamp, bytes calldata signature)
+        external
+    {
+        // Future check first to prevent underflow in age check
+        if (timestamp > block.timestamp) revert TimestampInFuture();
+        if (block.timestamp - timestamp > MAX_BACKING_AGE) revert TimestampTooOld();
+
+        // NEW-07: Monotonicity — prevent replaying older attestations
+        if (timestamp <= backingAttestations[srcChainId].timestamp) revert StaleTimestamp();
+
+        // NEW-01: bytes32 tag for deterministic fixed-size encoding
+        bytes32 messageHash = keccak256(abi.encode(bytes32("BACKING"), srcChainId, totalBacking, timestamp));
         bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
         address signer = ECDSA.recover(ethSignedHash, signature);
 
         if (!mpcOracles[signer]) revert InvalidSignature();
 
         backingAttestations[srcChainId] =
-            BackingAttestation({ totalBacking: totalBacking, timestamp: block.timestamp, signature: signature });
+            BackingAttestation({ totalBacking: totalBacking, timestamp: timestamp, signature: signature });
 
-        emit BackingUpdated(srcChainId, totalBacking, block.timestamp);
+        emit BackingUpdated(srcChainId, totalBacking, timestamp);
 
         // Auto-pause if backing insufficient
         if (totalBacking < totalMinted()) {
@@ -379,6 +412,27 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
         emit PausedStateChanged(_paused);
     }
 
+    /**
+     * @notice HIGH-02: Set backing staleness window
+     * @param window New staleness window in seconds (min 30m, max 24h)
+     */
+    function setBackingStalenessWindow(uint256 window) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (window < MIN_STALENESS_WINDOW || window > MAX_STALENESS_WINDOW) revert InvalidStalenessWindow();
+        backingStalenessWindow = window;
+    }
+
+    /**
+     * @notice HIGH-05: Set current peg value (admin or oracle)
+     * @param pegBps Peg value in basis points (e.g. 10000 = 1:1)
+     */
+    function setCurrentPeg(uint256 pegBps) external {
+        if (!hasRole(DEFAULT_ADMIN_ROLE, msg.sender) && !hasRole(PEG_ORACLE_ROLE, msg.sender)) {
+            revert Unauthorized();
+        }
+        if (pegBps < PEG_PAUSE_THRESHOLD || pegBps > 2 * BASIS_POINTS) revert InvalidPegValue();
+        currentPegBps = pegBps;
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // VIEW FUNCTIONS
     // ═══════════════════════════════════════════════════════════════════════
@@ -394,17 +448,17 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
      * @notice Get net LETH in circulation
      */
     function netCirculation() external view returns (uint256) {
-        return totalMinted() - totalBurned;
+        uint256 minted = totalMinted();
+        if (totalBurned > minted) return 0;
+        return minted - totalBurned;
     }
 
     /**
      * @notice Get current peg ratio (in basis points)
-     * @dev 10000 = 1:1, 9950 = 99.5%
+     * @dev 10000 = 1:1, 9950 = 99.5%. Updated by PEG_ORACLE_ROLE or admin.
      */
     function getCurrentPeg() public view returns (uint256) {
-        // In a real implementation, this would query a DEX oracle
-        // For now, we assume 1:1 peg
-        return BASIS_POINTS;
+        return currentPegBps;
     }
 
     /**
@@ -440,8 +494,8 @@ contract Teleporter is Ownable, AccessControl, ReentrancyGuard {
     function _checkBackingRatio(uint256 srcChainId, uint256 additionalMint) internal view {
         BackingAttestation memory attestation = backingAttestations[srcChainId];
 
-        // C-02 fix: Require attestation within last 24 hours, revert if stale
-        if (block.timestamp - attestation.timestamp > 24 hours) {
+        // HIGH-02: Configurable staleness window (default 2h, was 24h)
+        if (block.timestamp - attestation.timestamp > backingStalenessWindow) {
             revert StaleAttestation();
         }
 

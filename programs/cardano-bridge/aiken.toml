@@ -1,0 +1,15 @@
+[package]
+name = "luxfi/lux-bridge"
+version = "0.1.0"
+license = "MIT"
+description = "Lux Bridge for Cardano (Aiken/Plutus)"
+
+[repository]
+user = "luxfi"
+project = "standard"
+platform = "github"
+
+[[dependencies]]
+name = "aiken-lang/stdlib"
+version = "v2"
+source = "github"
