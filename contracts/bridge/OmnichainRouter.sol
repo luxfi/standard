@@ -337,7 +337,8 @@ contract OmnichainRouter is ReentrancyGuard {
         require(amount > 0, "Zero amount");
 
         // Verify MPC signature (includes destination chainId to prevent cross-chain replay)
-        bytes32 digest = keccak256(abi.encodePacked(
+        // C-07 fix: abi.encode prevents hash collision between variable-length values
+        bytes32 digest = keccak256(abi.encode(
             "DEPOSIT",
             chainId,        // destination chain (prevents replay on other chains)
             sourceChainId,
@@ -410,7 +411,8 @@ contract OmnichainRouter is ReentrancyGuard {
             require(!processedDeposits[d.sourceChainId][d.depositNonce], "Nonce processed");
             require(d.amount > 0, "Zero amount");
 
-            bytes32 digest = keccak256(abi.encodePacked(
+            // C-07 fix: abi.encode prevents hash collision
+            bytes32 digest = keccak256(abi.encode(
                 "DEPOSIT", chainId, d.sourceChainId, d.depositNonce, d.token, d.recipient, d.amount
             ));
             address recovered = digest.toEthSignedMessageHash().recover(mpcSignatures[i]);
@@ -476,7 +478,8 @@ contract OmnichainRouter is ReentrancyGuard {
         uint256 timestamp,
         bytes calldata mpcSignature
     ) external {
-        bytes32 digest = keccak256(abi.encodePacked(
+        // C-07 fix: abi.encode prevents hash collision
+        bytes32 digest = keccak256(abi.encode(
             "BACKING",
             chainId,
             token,
@@ -514,7 +517,8 @@ contract OmnichainRouter is ReentrancyGuard {
         SignerSet calldata newSigners,
         bytes calldata mpcSignature
     ) external {
-        bytes32 digest = keccak256(abi.encodePacked(
+        // C-07 fix: abi.encode prevents hash collision
+        bytes32 digest = keccak256(abi.encode(
             "ROTATE_SIGNERS",
             chainId,
             rotationNonce,
@@ -548,7 +552,8 @@ contract OmnichainRouter is ReentrancyGuard {
     /// @notice Cancel pending rotation (requires current MPC signature)
     function cancelSignerRotation(bytes calldata mpcSignature) external {
         require(pendingSignersActivateAt > 0, "No pending rotation");
-        bytes32 digest = keccak256(abi.encodePacked(
+        // C-07 fix: abi.encode prevents hash collision
+        bytes32 digest = keccak256(abi.encode(
             "CANCEL_ROTATION",
             chainId,
             rotationNonce,
@@ -567,7 +572,7 @@ contract OmnichainRouter is ReentrancyGuard {
 
     /// @notice Manual pause (MPC only, uses nonce to prevent replay)
     function pause(bytes calldata mpcSignature) external {
-        bytes32 digest = keccak256(abi.encodePacked("PAUSE", chainId, pauseNonce));
+        bytes32 digest = keccak256(abi.encode("PAUSE", chainId, pauseNonce));
         address recovered = digest.toEthSignedMessageHash().recover(mpcSignature);
         require(_isAuthorizedSigner(recovered), "Invalid");
         manualPaused = true;
@@ -577,7 +582,7 @@ contract OmnichainRouter is ReentrancyGuard {
     /// @notice Manual unpause (MPC only). Does NOT clear autoPaused.
     /// autoPaused is only clearable when backing ratio is restored via updateBacking.
     function unpause(bytes calldata mpcSignature) external {
-        bytes32 digest = keccak256(abi.encodePacked("UNPAUSE", chainId, pauseNonce));
+        bytes32 digest = keccak256(abi.encode("UNPAUSE", chainId, pauseNonce));
         address recovered = digest.toEthSignedMessageHash().recover(mpcSignature);
         require(_isAuthorizedSigner(recovered), "Invalid");
         manualPaused = false;
@@ -593,7 +598,7 @@ contract OmnichainRouter is ReentrancyGuard {
         uint256 _dailyMintLimit,
         bytes calldata mpcSignature
     ) external {
-        bytes32 digest = keccak256(abi.encodePacked("REGISTER", chainId, token, _dailyMintLimit));
+        bytes32 digest = keccak256(abi.encode("REGISTER", chainId, token, _dailyMintLimit));
         address recovered = digest.toEthSignedMessageHash().recover(mpcSignature);
         require(_isAuthorizedSigner(recovered), "Invalid");
         require(!registeredTokens[token], "Already registered");

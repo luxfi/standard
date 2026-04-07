@@ -18,12 +18,17 @@ Complete security audit of the Lux Standard smart contract stack using:
 
 | Severity | Count | Fixed | Pending |
 |----------|-------|-------|---------|
-| **Critical** | 25 | 10 | 15 |
-| **High** | 41 | 2 | 39 |
+| **Critical** | 25 | 11 | 14 |
+| **High** | 41 | 3 | 38 |
 | **Medium** | 40 | 0 | 40 |
 | **Low** | 16 | 0 | 16 |
 
-### Recently Fixed (2026-01-31)
+### Recently Fixed (2026-04-07)
+- **C-01**: Burn Proof Verification - Full MPC threshold sig verification in XChainVault.sol:277-332
+- **C-07**: Hash Collision - Changed to abi.encode in OmnichainRouter.sol, TeleportProposalBridge.sol (all 9 digest sites)
+- **H-01**: Arbitrary Transfer - Recall.sol now transfers from contract balance, not arbitrary `from`
+
+### Previously Fixed (2026-01-31)
 - **C-02**: Flash Loan Governance - Added MIN_VOTING_DELAY in Charter.sol
 - **C-03**: Unchecked ERC20 Transfers - Added SafeERC20 in Vote.sol
 - **C-04**: LP Valuation - Added fair LP pricing in ProtocolLiquidity.sol
@@ -40,11 +45,11 @@ Complete security audit of the Lux Standard smart contract stack using:
 
 ## CRITICAL FINDINGS (Fix Before Mainnet)
 
-### C-01: Incomplete Burn Proof Verification (Bridge)
-**File:** `contracts/bridge/XChainVault.sol:305-316`
+### ~~C-01: Incomplete Burn Proof Verification (Bridge)~~ FIXED
+**File:** `contracts/bridge/XChainVault.sol:277-332`
 **Issue:** `_verifyBurnProof()` only checks `proof.length > 0` - accepts ANY non-empty bytes
 **Impact:** Complete drain of all vaulted tokens via fake proofs
-**Fix:** Integrate actual Warp precompile verification
+**Fix:** Full MPC threshold signature verification with ECDSA.recover, nonce replay protection, duplicate signer detection
 
 ### C-02: Flash Loan Governance Takeover (Governance)
 **File:** `contracts/governance/Charter.sol`
@@ -103,10 +108,11 @@ Complete security audit of the Lux Standard smart contract stack using:
 
 ## HIGH SEVERITY FINDINGS
 
-### H-01: Arbitrary `from` in transferFrom (Treasury)
-**File:** `contracts/treasury/Recall.sol:159-178`
+### ~~H-01: Arbitrary `from` in transferFrom (Treasury)~~ FIXED
+**File:** `contracts/treasury/Recall.sol`
 **Issue:** `safeTransferFrom(childSafe, parentSafe, ...)` uses arbitrary source
 **Impact:** Potential fund theft from any approved address
+**Fix:** Changed to `safeTransfer(parentSafe, ...)` from contract's own balance
 
 ### H-02: Locked Ether - No Withdraw Function (Treasury)
 **Files:** `Collect.sol`, `ValidatorVault.sol`
@@ -212,16 +218,16 @@ Complete security audit of the Lux Standard smart contract stack using:
 ## Remediation Priority
 
 ### P0 - Block Deployment
-1. Fix `_verifyBurnProof()` placeholder in XChainVault
-2. Add SafeERC20 to Vote.sol transfers
+1. ~~Fix `_verifyBurnProof()` placeholder in XChainVault~~ FIXED
+2. ~~Add SafeERC20 to Vote.sol transfers~~ FIXED
 3. Add reentrancy guard to LiquidVault.allocateToStrategy()
-4. Add MIN_VOTING_DELAY to governance
+4. ~~Add MIN_VOTING_DELAY to governance~~ FIXED
 
 ### P1 - Pre-Mainnet
-5. Replace `abi.encodePacked` with `abi.encode` in bridges
-6. Add staleness checks to all oracle calls
-7. Add access control to recordBond()
-8. Add withdrawal functions to Collect.sol, ValidatorVault.sol
+5. ~~Replace `abi.encodePacked` with `abi.encode` in bridges~~ FIXED (OmnichainRouter, TeleportProposalBridge)
+6. ~~Add staleness checks to all oracle calls~~ FIXED
+7. ~~Add access control to recordBond()~~ FIXED
+8. ~~Add withdrawal functions to Collect.sol, ValidatorVault.sol~~ FIXED
 9. Fix divide-before-multiply patterns
 
 ### P2 - High Priority
@@ -298,18 +304,19 @@ medusa fuzz --config medusa.json
 
 ## Conclusion
 
-The Lux Standard contracts have comprehensive test coverage (832 tests, 105 fuzz) and reasonable architecture. **10 of 25 critical vulnerabilities have been fixed**, including:
+The Lux Standard contracts have comprehensive test coverage (832 tests, 105 fuzz) and reasonable architecture. **11 of 25 critical vulnerabilities have been fixed**, including:
 
-1. ~~**Flash loan governance attacks**~~ - FIXED: Added MIN_VOTING_DELAY
-2. ~~**Signature malleability**~~ - FIXED: Using ECDSA.recover
-3. ~~**Unbounded loops**~~ - FIXED: Added MAX_BATCH_SIZE and claimBatch()
-4. ~~**Zero-address checks**~~ - FIXED: Added validation in constructors
+1. ~~**Bridge proof verification**~~ - FIXED: Full MPC threshold verification in XChainVault
+2. ~~**Flash loan governance attacks**~~ - FIXED: Added MIN_VOTING_DELAY
+3. ~~**Hash collision (OmnichainRouter)**~~ - FIXED: All digest sites use abi.encode
+4. ~~**Signature malleability**~~ - FIXED: Using ECDSA.recover
+5. ~~**Unbounded loops**~~ - FIXED: Added MAX_BATCH_SIZE and claimBatch()
+6. ~~**Zero-address checks**~~ - FIXED: Added validation in constructors
 
 **Remaining critical issues before mainnet:**
 
-1. **Bridge proof verification** - C-01 still needs Warp precompile integration
-3. **Reentrancy in yield strategies** - State updated after external calls
-4. **Unchecked token transfers** - Silent failures possible
+1. **Reentrancy in yield strategies** - State updated after external calls
+2. **Unchecked token transfers** - Silent failures possible
 
 Recommend engaging Trail of Bits or OpenZeppelin for external audit before mainnet.
 

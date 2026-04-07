@@ -117,21 +117,21 @@ contract OmnichainRouterSecurity is Test {
     }
 
     function _registerToken(address tkn, uint256 dailyLimit) internal {
-        bytes32 digest = keccak256(abi.encodePacked("REGISTER", CHAIN_ID, tkn, dailyLimit));
+        bytes32 digest = keccak256(abi.encode("REGISTER", CHAIN_ID, tkn, dailyLimit));
         bytes memory sig = _signWithMpc(digest);
         router.registerToken(tkn, dailyLimit, sig);
     }
 
     function _mintDeposit(uint64 sourceChain, uint64 nonce, uint256 amount) internal {
         bytes32 digest = keccak256(
-            abi.encodePacked("DEPOSIT", CHAIN_ID, sourceChain, nonce, address(token), recipient, amount)
+            abi.encode("DEPOSIT", CHAIN_ID, sourceChain, nonce, address(token), recipient, amount)
         );
         bytes memory sig = _signWithMpc(digest);
         router.mintDeposit(sourceChain, nonce, address(token), recipient, amount, sig);
     }
 
     function _updateBacking(uint256 backing, uint256 ts) internal {
-        bytes32 digest = keccak256(abi.encodePacked("BACKING", CHAIN_ID, address(token), backing, ts));
+        bytes32 digest = keccak256(abi.encode("BACKING", CHAIN_ID, address(token), backing, ts));
         bytes memory sig = _signWithMpc(digest);
         router.updateBacking(address(token), backing, ts, sig);
     }
@@ -145,7 +145,7 @@ contract OmnichainRouterSecurity is Test {
         nonce = uint64(bound(nonce, 1, type(uint64).max));
 
         bytes32 digest = keccak256(
-            abi.encodePacked("DEPOSIT", CHAIN_ID, uint64(1), nonce, address(token), recipient, amount)
+            abi.encode("DEPOSIT", CHAIN_ID, uint64(1), nonce, address(token), recipient, amount)
         );
         bytes memory sig = _signWithMpc(digest);
 
@@ -166,7 +166,7 @@ contract OmnichainRouterSecurity is Test {
 
         uint256 amount = 100 ether;
         bytes32 digest = keccak256(
-            abi.encodePacked("DEPOSIT", CHAIN_ID, uint64(1), uint64(999), address(token), recipient, amount)
+            abi.encode("DEPOSIT", CHAIN_ID, uint64(1), uint64(999), address(token), recipient, amount)
         );
         bytes memory sig = _signWithKey(key, digest);
 
@@ -187,7 +187,7 @@ contract OmnichainRouterSecurity is Test {
 
         // Sign for a DIFFERENT chain
         bytes32 digest = keccak256(
-            abi.encodePacked("DEPOSIT", otherChainId, uint64(1), nonce, address(token), recipient, amount)
+            abi.encode("DEPOSIT", otherChainId, uint64(1), nonce, address(token), recipient, amount)
         );
         bytes memory sig = _signWithMpc(digest);
 
@@ -211,7 +211,7 @@ contract OmnichainRouterSecurity is Test {
             OmnichainRouter.SignerSet(signer1, signer2, signer3, newMpc, 2);
 
         bytes32 digest = keccak256(
-            abi.encodePacked(
+            abi.encode(
                 "ROTATE_SIGNERS",
                 CHAIN_ID,
                 currentNonce,
@@ -242,7 +242,7 @@ contract OmnichainRouterSecurity is Test {
         // First rotation succeeds
         uint256 nonce0 = router.rotationNonce();
         bytes32 digest0 = keccak256(
-            abi.encodePacked(
+            abi.encode(
                 "ROTATE_SIGNERS", CHAIN_ID, nonce0,
                 newSet.signer1, newSet.signer2, newSet.signer3,
                 newSet.mpcGroupAddress, newSet.threshold
@@ -266,7 +266,7 @@ contract OmnichainRouterSecurity is Test {
 
     function test_cancelRotation_noPendingReverts() public {
         bytes32 digest = keccak256(
-            abi.encodePacked("CANCEL_ROTATION", CHAIN_ID, router.rotationNonce(), uint256(0))
+            abi.encode("CANCEL_ROTATION", CHAIN_ID, router.rotationNonce(), uint256(0))
         );
         bytes memory sig = _signWithMpc(digest);
 
@@ -281,7 +281,7 @@ contract OmnichainRouterSecurity is Test {
 
         uint256 nonce = router.rotationNonce();
         bytes32 digest = keccak256(
-            abi.encodePacked(
+            abi.encode(
                 "ROTATE_SIGNERS", CHAIN_ID, nonce,
                 newSet.signer1, newSet.signer2, newSet.signer3,
                 newSet.mpcGroupAddress, newSet.threshold
@@ -293,7 +293,7 @@ contract OmnichainRouterSecurity is Test {
         uint256 cancelNonce = router.rotationNonce();
 
         bytes32 cancelDigest = keccak256(
-            abi.encodePacked("CANCEL_ROTATION", CHAIN_ID, cancelNonce, activateAt)
+            abi.encode("CANCEL_ROTATION", CHAIN_ID, cancelNonce, activateAt)
         );
         bytes memory cancelSig = _signWithMpc(cancelDigest);
 
@@ -353,7 +353,7 @@ contract OmnichainRouterSecurity is Test {
         assertTrue(router.autoPaused(), "Should be auto-paused");
 
         // Manual pause too
-        bytes32 pauseDigest = keccak256(abi.encodePacked("PAUSE", CHAIN_ID, router.pauseNonce()));
+        bytes32 pauseDigest = keccak256(abi.encode("PAUSE", CHAIN_ID, router.pauseNonce()));
         router.pause(_signWithMpc(pauseDigest));
         assertTrue(router.manualPaused(), "Should be manual-paused");
 
@@ -376,7 +376,7 @@ contract OmnichainRouterSecurity is Test {
         _updateBacking(980 ether, 1);
 
         bytes32 digest = keccak256(
-            abi.encodePacked("DEPOSIT", CHAIN_ID, uint64(1), uint64(2), address(token), recipient, uint256(100 ether))
+            abi.encode("DEPOSIT", CHAIN_ID, uint64(1), uint64(2), address(token), recipient, uint256(100 ether))
         );
         vm.expectRevert("Paused");
         router.mintDeposit(1, 2, address(token), recipient, 100 ether, _signWithMpc(digest));
@@ -400,7 +400,7 @@ contract OmnichainRouterSecurity is Test {
         if (amount1 + amount2 > limit) {
             // Second mint should fail
             bytes32 digest = keccak256(
-                abi.encodePacked("DEPOSIT", CHAIN_ID, uint64(1), uint64(2), address(token), recipient, amount2)
+                abi.encode("DEPOSIT", CHAIN_ID, uint64(1), uint64(2), address(token), recipient, amount2)
             );
             vm.expectRevert("Daily mint limit exceeded");
             router.mintDeposit(1, 2, address(token), recipient, amount2, _signWithMpc(digest));
@@ -464,7 +464,7 @@ contract OmnichainRouterSecurity is Test {
 
         // Sign with wrong chainId
         bytes32 digest = keccak256(
-            abi.encodePacked("REGISTER", wrongChain, address(token2), uint256(1_000_000 ether))
+            abi.encode("REGISTER", wrongChain, address(token2), uint256(1_000_000 ether))
         );
         bytes memory sig = _signWithMpc(digest);
 
@@ -476,7 +476,7 @@ contract OmnichainRouterSecurity is Test {
         MockBridgeToken token2 = new MockBridgeToken("Test", "TST", address(router));
 
         bytes32 digest = keccak256(
-            abi.encodePacked("REGISTER", CHAIN_ID, address(token2), uint256(500 ether))
+            abi.encode("REGISTER", CHAIN_ID, address(token2), uint256(500 ether))
         );
         router.registerToken(address(token2), 500 ether, _signWithMpc(digest));
 
@@ -487,7 +487,7 @@ contract OmnichainRouterSecurity is Test {
     function test_registerToken_duplicateReverts() public {
         // token is already registered in setUp
         bytes32 digest = keccak256(
-            abi.encodePacked("REGISTER", CHAIN_ID, address(token), uint256(1_000_000 ether))
+            abi.encode("REGISTER", CHAIN_ID, address(token), uint256(1_000_000 ether))
         );
         vm.expectRevert("Already registered");
         router.registerToken(address(token), 1_000_000 ether, _signWithMpc(digest));
@@ -502,7 +502,7 @@ contract OmnichainRouterSecurity is Test {
 
         // Replay same nonce
         bytes32 digest = keccak256(
-            abi.encodePacked("DEPOSIT", CHAIN_ID, uint64(1), uint64(1), address(token), recipient, uint256(100 ether))
+            abi.encode("DEPOSIT", CHAIN_ID, uint64(1), uint64(1), address(token), recipient, uint256(100 ether))
         );
         vm.expectRevert("Nonce processed");
         router.mintDeposit(1, 1, address(token), recipient, 100 ether, _signWithMpc(digest));
@@ -515,7 +515,7 @@ contract OmnichainRouterSecurity is Test {
     function test_pauseNonceIncrementsAndPreventsReplay() public {
         uint256 nonce0 = router.pauseNonce();
 
-        bytes32 digest0 = keccak256(abi.encodePacked("PAUSE", CHAIN_ID, nonce0));
+        bytes32 digest0 = keccak256(abi.encode("PAUSE", CHAIN_ID, nonce0));
         bytes memory sig0 = _signWithMpc(digest0);
         router.pause(sig0);
         assertTrue(router.manualPaused());
@@ -526,7 +526,7 @@ contract OmnichainRouterSecurity is Test {
 
         // Unpause with new nonce
         uint256 nonce1 = router.pauseNonce();
-        bytes32 digest1 = keccak256(abi.encodePacked("UNPAUSE", CHAIN_ID, nonce1));
+        bytes32 digest1 = keccak256(abi.encode("UNPAUSE", CHAIN_ID, nonce1));
         router.unpause(_signWithMpc(digest1));
         assertFalse(router.manualPaused());
     }
@@ -567,7 +567,7 @@ contract OmnichainRouterInvariant is Test {
 
         // Register token
         bytes32 digest = keccak256(
-            abi.encodePacked("REGISTER", CHAIN_ID, address(token), uint256(0))
+            abi.encode("REGISTER", CHAIN_ID, address(token), uint256(0))
         );
         bytes32 ethHash = digest.toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(MPC_KEY, ethHash);
@@ -631,7 +631,7 @@ contract OmnichainRouterHandler is Test {
         amount = bound(amount, 1, 10_000 ether);
 
         bytes32 digest = keccak256(
-            abi.encodePacked("DEPOSIT", chainId, uint64(1), nextNonce, address(token), recipient, amount)
+            abi.encode("DEPOSIT", chainId, uint64(1), nextNonce, address(token), recipient, amount)
         );
         router.mintDeposit(uint64(1), nextNonce, address(token), recipient, amount, _signMpc(digest));
 

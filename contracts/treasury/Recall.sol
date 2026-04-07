@@ -62,17 +62,12 @@ contract Recall is Ownable {
     /// @notice Next recall ID
     uint256 public nextRecallId;
 
-    /// @notice Approved controllers that can execute transfers on behalf of an address
-    /// @dev Maps controller => source => approved
-    mapping(address => mapping(address => bool)) public isApprovedController;
-
     /// @notice Events
     event FundingReceived(address indexed token, uint256 amount, FundSource source);
     event RecallInitiated(uint256 indexed recallId, address token, uint256 amount);
     event RecallExecuted(uint256 indexed recallId, address token, uint256 amount);
     event RecallCancelled(uint256 indexed recallId);
     event GracePeriodUpdated(uint256 newPeriod);
-    event ControllerApprovalSet(address indexed controller, bool approved);
 
     /// @notice Errors
     error OnlyParent();
@@ -81,7 +76,6 @@ contract Recall is Ownable {
     error RecallAlreadyExecuted();
     error RecallAlreadyCancelled();
     error InvalidAmount();
-    error UnauthorizedSource();
 
     modifier onlyParent() {
         if (msg.sender != parentSafe) revert OnlyParent();
@@ -157,16 +151,12 @@ contract Recall is Ownable {
     /**
      * @notice Execute a recall after grace period
      * @param recallId Recall request ID
-     * @dev C-05 fix: This function requires the childSafe to have pre-approved
-     *      this Recall contract for the token being recalled.
+     * @dev H-01 fix: Transfer only from this contract's own balance, not arbitrary `from`.
+     *      Funds must be deposited into this contract first (via recordFunding flow).
+     *      This eliminates the arbitrary safeTransferFrom(childSafe, ...) pattern
+     *      that could drain any address that approved this contract.
      *
-     *      IMPORTANT: For this to work, the childSafe MUST either:
-     *      1. Pre-approve this Recall contract for sufficient allowance, OR
-     *      2. This contract must be installed as a Safe module with execution rights
-     *
-     *      Recommended setup: childSafe.approve(recallContract, type(uint256).max)
-     *      for each token that may be recalled. This approval should be part of
-     *      the initial setup when creating the parent-child DAO relationship.
+     *      Flow: childSafe deposits recallable funds here -> parent recalls from contract balance.
      */
     function executeRecall(uint256 recallId) external onlyParent {
         RecallRequest storage request = recallRequests[recallId];
@@ -177,19 +167,13 @@ contract Recall is Ownable {
             revert GracePeriodNotElapsed();
         }
 
-        // Verify caller has authority over the source address
-        // Either the childSafe itself is calling, or the caller is an approved controller
-        if (childSafe != msg.sender && !isApprovedController[msg.sender][childSafe]) {
-            revert UnauthorizedSource();
-        }
-
         // Update balances
         allocatedBalance[request.token] -= request.amount;
         request.executed = true;
 
-        // C-05: Transfer requires prior approval from childSafe to this contract
-        // The childSafe must have called: token.approve(address(this), amount)
-        IERC20(request.token).safeTransferFrom(childSafe, parentSafe, request.amount);
+        // H-01 fix: Transfer from this contract's own balance, not from an arbitrary address.
+        // The contract holds the allocated funds directly.
+        IERC20(request.token).safeTransfer(parentSafe, request.amount);
 
         emit RecallExecuted(recallId, request.token, request.amount);
     }
@@ -217,19 +201,6 @@ contract Recall is Ownable {
     function setGracePeriod(uint256 newPeriod) external onlyOwner {
         recallGracePeriod = newPeriod;
         emit GracePeriodUpdated(newPeriod);
-    }
-
-    /**
-     * @notice Set approved controller status for the childSafe
-     * @dev Only the childSafe itself can approve controllers for its funds
-     * @param controller Address to approve/revoke as controller
-     * @param approved Whether the controller is approved
-     */
-    function setApprovedController(address controller, bool approved) external {
-        // Only the childSafe can approve controllers for itself
-        require(msg.sender == childSafe, "Recall: only childSafe can approve");
-        isApprovedController[controller][childSafe] = approved;
-        emit ControllerApprovalSet(controller, approved);
     }
 
     // ═══════════════════════════════════════════════════════════════════════

@@ -329,8 +329,9 @@ contract TeleportProposalBridge is AccessControl, ReentrancyGuard {
     {
         uint256 nonce = ++locales[destChainId].messageNonce;
 
+        // C-07 fix: abi.encode prevents hash collision (payload is dynamic bytes)
         messageId =
-            keccak256(abi.encodePacked(currentChainId, destChainId, messageType, payload, nonce, block.timestamp));
+            keccak256(abi.encode(currentChainId, destChainId, messageType, payload, nonce, block.timestamp));
 
         messages[messageId] = CrossChainMessage({
             messageId: messageId,
