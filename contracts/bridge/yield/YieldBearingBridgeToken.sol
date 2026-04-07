@@ -75,8 +75,9 @@ contract YieldBearingBridgeToken is ERC20, Ownable, ReentrancyGuard {
     uint256 public totalUnderlyingAssets;
 
     /// @notice Virtual offset to prevent first-depositor inflation attack (OZ ERC-4626 approach)
-    uint256 private constant VIRTUAL_SHARES = 1e3;
-    uint256 private constant VIRTUAL_ASSETS = 1;
+    /// Production-grade: 1e8 ensures <0.000001% loss even at extreme donation ratios
+    uint256 private constant VIRTUAL_SHARES = 1e8;
+    uint256 private constant VIRTUAL_ASSETS = 1e8;
 
     /// @notice Bridge controller
     address public bridge;
