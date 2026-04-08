@@ -16,3 +16,4 @@ hex = "0.4"
 
 [dev-dependencies]
 cosmwasm-vm = "2.0"
+ed25519-zebra = "4.0"

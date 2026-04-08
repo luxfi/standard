@@ -455,4 +455,13 @@ module lux_bridge::bridge {
         assert!(new_total <= vault.daily_mint_limit, E_DAILY_LIMIT);
         vault.daily_minted = new_total;
     }
+
+    // ========================================
+    // Test-only helpers
+    // ========================================
+
+    #[test_only]
+    public fun init_for_testing(ctx: &mut TxContext) {
+        init(ctx);
+    }
 }
