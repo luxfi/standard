@@ -91,8 +91,8 @@ abstract contract SolvencyStateMachine {
             next = SolvencyState.Healthy;
         } else if (backing < liabilities) {
             next = SolvencyState.Emergency;
-        } else if (backing * 9 < liabilities * 10) {
-            // B < L * 10/9  =>  B * 9 < L * 10
+        } else if (_isUndercollateralized(backing, liabilities)) {
+            // B < L * 10/9, overflow-safe
             next = SolvencyState.RestrictedMint;
         } else {
             next = SolvencyState.Healthy;
@@ -102,6 +102,20 @@ abstract contract SolvencyStateMachine {
             solvencyState = next;
             emit SolvencyStateChanged(previous, next);
         }
+    }
+
+    /// @notice Overflow-safe check: backing * 9 < liabilities * 10
+    function _isUndercollateralized(uint256 backing, uint256 liabilities) internal pure returns (bool) {
+        // backing < liabilities * 10 / 9, but overflow-safe
+        // Equivalent: backing * 9 < liabilities * 10
+        // Safe if we check for overflow first
+        if (liabilities > type(uint256).max / 10) {
+            return true; // liabilities so large that system is certainly undercollateralized
+        }
+        if (backing > type(uint256).max / 9) {
+            return false; // backing so large that system is certainly overcollateralized
+        }
+        return backing * 9 < liabilities * 10;
     }
 
     /// @notice Enter Recovery mode (MPC quorum required)
@@ -121,8 +135,8 @@ abstract contract SolvencyStateMachine {
 
         SolvencyState previous = solvencyState;
 
-        // Determine correct state based on current ratios
-        if (backing * 9 >= liabilities * 10) {
+        // Determine correct state based on current ratios (overflow-safe)
+        if (!_isUndercollateralized(backing, liabilities)) {
             solvencyState = SolvencyState.Healthy;
         } else {
             solvencyState = SolvencyState.RestrictedMint;

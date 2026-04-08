@@ -422,6 +422,8 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
 
         // Calculate fee and adjust amount
         uint256 _toTokenDecimals = teleport.token.decimals();
+        require(_toTokenDecimals <= 18, "decimals too high");
+        require(fromTokenDecimals_ <= 18, "decimals too high");
         uint256 _amount = (tokenAmount_ * 10 ** _toTokenDecimals) / (10 ** fromTokenDecimals_);
         teleport.token.bridgeMint(teleport.receiverAddress, _amount);
         // Add new transaction ID mapping
@@ -480,12 +482,15 @@ contract Bridge is Ownable, AccessControl, ReentrancyGuard {
         // Check if signer is MPCOracle and corresponds to the correct LRC20B
         require(MPCOracleAddrMap[signer].exists, "Unauthorized Signature");
 
+        require(fromTokenDecimals_ <= 18, "decimals too high");
         uint256 _amount = 0;
 
         if (toTokenAddress_ == address(0)) {
             _amount = (tokenAmount_ * 10 ** 18) / (10 ** fromTokenDecimals_);
         } else {
-            _amount = (tokenAmount_ * 10 ** teleport.token.decimals()) / (10 ** fromTokenDecimals_);
+            uint256 _toDecimals = teleport.token.decimals();
+            require(_toDecimals <= 18, "decimals too high");
+            _amount = (tokenAmount_ * 10 ** _toDecimals) / (10 ** fromTokenDecimals_);
         }
         uint256 _bridgeFee = (_amount * feeRate) / 10 ** 4;
         uint256 _adjustedAmount = _amount - _bridgeFee; // Use a local variable
