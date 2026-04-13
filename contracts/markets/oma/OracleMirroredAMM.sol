@@ -128,6 +128,19 @@ contract OracleMirroredAMM is IOracleMirroredAMM, ReentrancyGuard, AccessControl
     // SWAP
     // ═══════════════════════════════════════════════════════════════════════
 
+    /// @notice Authorized callers that may invoke swap (ATS contracts, routers).
+    ///         If empty, swap is open to any caller. Governance adds entries.
+    mapping(address => bool) public authorizedCaller;
+    bool public callerWhitelistEnabled;
+
+    function setAuthorizedCaller(address caller, bool allowed) external onlyRole(ADMIN_ROLE) {
+        authorizedCaller[caller] = allowed;
+    }
+
+    function setCallerWhitelistEnabled(bool enabled) external onlyRole(ADMIN_ROLE) {
+        callerWhitelistEnabled = enabled;
+    }
+
     /// @inheritdoc IOracleMirroredAMM
     function swap(string calldata symbol, bool isBuy, uint256 amountIn, uint256 minAmountOut)
         external
@@ -136,6 +149,11 @@ contract OracleMirroredAMM is IOracleMirroredAMM, ReentrancyGuard, AccessControl
         whenNotPaused
         returns (uint256 amountOut)
     {
+        // P1-1 fix: when whitelist is enabled, only authorized callers (ATS, routers) may swap.
+        // This prevents bypassing the BD compliance gate by calling OMA directly.
+        if (callerWhitelistEnabled) {
+            require(authorizedCaller[msg.sender], "OMA: unauthorized caller");
+        }
         if (amountIn == 0) revert ZeroAmount();
 
         bytes32 symHash = keccak256(bytes(symbol));
@@ -180,6 +198,12 @@ contract OracleMirroredAMM is IOracleMirroredAMM, ReentrancyGuard, AccessControl
             if (amountOut < minAmountOut) revert SlippageExceeded(amountOut, minAmountOut);
 
             ISecurityToken(token).burnFrom(msg.sender, amountIn);
+            // P0-1 fix: verify settlement can pay before executing the transfer.
+            // Reverts with a clear message instead of a generic ERC20 failure.
+            require(
+                baseToken.balanceOf(settlementAccount) >= amountOut,
+                "OMA: settlement insufficient"
+            );
             baseToken.safeTransferFrom(settlementAccount, msg.sender, amountOut);
         }
 
@@ -223,6 +247,13 @@ contract OracleMirroredAMM is IOracleMirroredAMM, ReentrancyGuard, AccessControl
         if (tokens[symHash] != address(0)) revert SymbolAlreadyRegistered(symHash);
 
         tokens[symHash] = token;
+
+        // P2-1 fix: seed lastPrice from oracle so the circuit breaker is
+        // active from the first trade, not bypassed on first-ever fill.
+        try oracle.getPrice(symbol) returns (uint256 p, uint256) {
+            if (p > 0) lastPrice[symHash] = p;
+        } catch {}
+
         emit SymbolRegistered(symHash, symbol, token);
     }
 
