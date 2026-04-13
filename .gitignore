@@ -76,3 +76,5 @@ aderyn-report.md
 programs/solana-bridge/target/
 programs/solana-bridge/target/
 programs/solana-bridge/Cargo.lock
+# Rust build artifacts
+**/target/
