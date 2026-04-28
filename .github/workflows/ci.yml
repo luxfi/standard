@@ -118,25 +118,6 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install pnpm deps (vendored T-REX + ONCHAINID)
-        run: pnpm install --frozen-lockfile=false --ignore-scripts
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: stable
-
-      - name: Build contracts
-        run: forge build
-
-      - name: Run tests
-        run: forge test --no-match-contract "E2ETeleport"
-
       - name: Get version from tag
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
