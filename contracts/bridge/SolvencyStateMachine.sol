@@ -58,10 +58,7 @@ abstract contract SolvencyStateMachine {
 
     /// @notice Releases blocked in Emergency and Recovery (queued instead)
     modifier releaseAllowed() {
-        require(
-            solvencyState != SolvencyState.Emergency && solvencyState != SolvencyState.Recovery,
-            "releases queued"
-        );
+        require(solvencyState != SolvencyState.Emergency && solvencyState != SolvencyState.Recovery, "releases queued");
         _;
     }
 
@@ -147,10 +144,7 @@ abstract contract SolvencyStateMachine {
 
     /// @notice Internal: enter Recovery from Emergency
     function _enterRecovery() internal {
-        require(
-            solvencyState == SolvencyState.Emergency,
-            "recovery only from emergency"
-        );
+        require(solvencyState == SolvencyState.Emergency, "recovery only from emergency");
         SolvencyState previous = solvencyState;
         solvencyState = SolvencyState.Recovery;
         emit SolvencyStateChanged(previous, SolvencyState.Recovery);

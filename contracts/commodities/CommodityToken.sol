@@ -288,10 +288,7 @@ contract CommodityToken is ICommodityToken, ERC20, ERC20Burnable, ERC20Pausable,
     /**
      * @dev Hook called before every transfer. Enforces compliance restrictions.
      */
-    function _update(address from, address to, uint256 value)
-        internal
-        override(ERC20, ERC20Pausable)
-    {
+    function _update(address from, address to, uint256 value) internal override(ERC20, ERC20Pausable) {
         // Compliance checks (skip on mint/burn)
         if (from != address(0) && to != address(0)) {
             if (blocked[from] || blocked[to]) revert TransferRestricted();

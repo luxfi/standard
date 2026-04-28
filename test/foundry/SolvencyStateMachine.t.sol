@@ -2,10 +2,7 @@
 pragma solidity ^0.8.28;
 
 import "forge-std/Test.sol";
-import {
-    SolvencyStateMachine,
-    SolvencyState
-} from "../../contracts/bridge/SolvencyStateMachine.sol";
+import { SolvencyStateMachine, SolvencyState } from "../../contracts/bridge/SolvencyStateMachine.sol";
 
 /// @title ConcreteSolvencyMachine
 /// @notice Concrete implementation for testing
@@ -298,8 +295,7 @@ contract SolvencyStateMachineTest is Test {
 
         SolvencyState s = machine.solvencyState();
         assertTrue(
-            s == SolvencyState.Healthy || s == SolvencyState.RestrictedMint,
-            "exit recovery landed in wrong state"
+            s == SolvencyState.Healthy || s == SolvencyState.RestrictedMint, "exit recovery landed in wrong state"
         );
     }
 

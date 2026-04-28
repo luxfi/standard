@@ -17,7 +17,10 @@ contract SecurityBridge is AccessControl, TrustedSourceWarpReceiver {
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    enum Action { LOCK, BURN }
+    enum Action {
+        LOCK,
+        BURN
+    }
 
     IToken public immutable TOKEN;
 
@@ -56,10 +59,7 @@ contract SecurityBridge is AccessControl, TrustedSourceWarpReceiver {
     // ── Source chain ────────────────────────────────────────────────────────
 
     /// @notice Lock tokens on this (canonical) chain and emit a Warp message.
-    function lock(uint256 amount, bytes32 destinationChainID, address recipient)
-        external
-        returns (bytes32 messageID)
-    {
+    function lock(uint256 amount, bytes32 destinationChainID, address recipient) external returns (bytes32 messageID) {
         if (amount == 0) revert ZeroAmount();
         if (recipient == address(0)) revert ZeroAddress();
 
@@ -99,10 +99,21 @@ contract SecurityBridge is AccessControl, TrustedSourceWarpReceiver {
 
     // ── Admin: trusted-chain registry ───────────────────────────────────────
 
-    function addTrustedChain(bytes32 chainID) external onlyRole(ADMIN_ROLE) { _addTrustedChain(chainID); }
-    function removeTrustedChain(bytes32 chainID) external onlyRole(ADMIN_ROLE) { _removeTrustedChain(chainID); }
-    function addTrustedSender(bytes32 chainID, address sender) external onlyRole(ADMIN_ROLE) { _addTrustedSender(chainID, sender); }
-    function removeTrustedSender(bytes32 chainID, address sender) external onlyRole(ADMIN_ROLE) { _removeTrustedSender(chainID, sender); }
+    function addTrustedChain(bytes32 chainID) external onlyRole(ADMIN_ROLE) {
+        _addTrustedChain(chainID);
+    }
+
+    function removeTrustedChain(bytes32 chainID) external onlyRole(ADMIN_ROLE) {
+        _removeTrustedChain(chainID);
+    }
+
+    function addTrustedSender(bytes32 chainID, address sender) external onlyRole(ADMIN_ROLE) {
+        _addTrustedSender(chainID, sender);
+    }
+
+    function removeTrustedSender(bytes32 chainID, address sender) external onlyRole(ADMIN_ROLE) {
+        _removeTrustedSender(chainID, sender);
+    }
 
     // ── Internals ───────────────────────────────────────────────────────────
 

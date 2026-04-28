@@ -9,8 +9,7 @@ pragma solidity >=0.8.19 <0.9.0;
 abstract contract FHEVMConfig {
     // LuxFHE native chain doesn't need external configuration
     // FHE operations are handled natively by the VM
-
-    }
+}
 
 // Network-specific configs
 abstract contract LuxFHEVMConfig is FHEVMConfig { }

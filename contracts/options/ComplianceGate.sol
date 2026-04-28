@@ -71,9 +71,7 @@ contract ComplianceGate is IComplianceGate, ReentrancyGuard, AccessControl, Paus
         Options.OptionSeries memory series = options.getSeries(seriesId);
         if (!series.exists) revert SeriesNotFound(seriesId);
 
-        address collateralToken = series.optionType == Options.OptionType.CALL
-            ? series.underlying
-            : series.quote;
+        address collateralToken = series.optionType == Options.OptionType.CALL ? series.underlying : series.quote;
 
         uint256 calcCollateral = options.calculateCollateral(seriesId, amount);
         uint256 fee = (calcCollateral * options.writeFeeBps()) / options.BPS();
@@ -155,14 +153,23 @@ contract ComplianceGate is IComplianceGate, ReentrancyGuard, AccessControl, Paus
         emit AccreditationTopicSet(topic);
     }
 
-    function pause() external onlyRole(ADMIN_ROLE) { _pause(); }
-    function unpause() external onlyRole(ADMIN_ROLE) { _unpause(); }
+    function pause() external onlyRole(ADMIN_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(ADMIN_ROLE) {
+        _unpause();
+    }
 
     function onERC1155Received(address, address, uint256, uint256, bytes calldata) external pure returns (bytes4) {
         return this.onERC1155Received.selector;
     }
 
-    function onERC1155BatchReceived(address, address, uint256[] calldata, uint256[] calldata, bytes calldata) external pure returns (bytes4) {
+    function onERC1155BatchReceived(address, address, uint256[] calldata, uint256[] calldata, bytes calldata)
+        external
+        pure
+        returns (bytes4)
+    {
         return this.onERC1155BatchReceived.selector;
     }
 }

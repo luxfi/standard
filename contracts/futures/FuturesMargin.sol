@@ -293,11 +293,7 @@ contract FuturesMargin is IFuturesMargin, ReentrancyGuard, AccessControl {
     }
 
     /// @inheritdoc IFuturesMargin
-    function getCrossMarginGroup(address trader, address underlying)
-        external
-        view
-        returns (CrossMarginGroup memory)
-    {
+    function getCrossMarginGroup(address trader, address underlying) external view returns (CrossMarginGroup memory) {
         return _crossMarginGroups[trader][underlying];
     }
 

@@ -99,7 +99,7 @@ contract ForexTest is Test {
     uint256 constant PRECISION = 1e18;
     uint256 constant EUR_USD_RATE = 1.08e18; // EUR/USD = 1.08
     uint256 constant GBP_USD_RATE = 1.27e18; // GBP/USD = 1.27
-    uint256 constant USD_USD_RATE = 1e18;    // USD/USD = 1.00
+    uint256 constant USD_USD_RATE = 1e18; // USD/USD = 1.00
 
     // ═══════════════════════════════════════════════════════════════════════
     // SETUP
@@ -221,7 +221,7 @@ contract ForexTest is Test {
         oracle.observe(address(eur));
 
         skip(1 hours);
-        eurFeed.setPrice(int256(1.10e8));
+        eurFeed.setPrice(int256(1.1e8));
         oracle.observe(address(eur));
 
         skip(1 hours);
@@ -413,13 +413,12 @@ contract ForexTest is Test {
     function test_Forward_Create() public {
         uint256 pairId = _createEurUsdPair();
 
-        uint256 forwardRate = 1.10e18; // Agreed rate: 1 EUR = 1.10 USD
+        uint256 forwardRate = 1.1e18; // Agreed rate: 1 EUR = 1.10 USD
         uint256 baseAmount = 100_000e18; // 100,000 EUR notional
         uint256 maturity = block.timestamp + 30 days;
 
         vm.prank(trader1);
-        uint256 forwardId =
-            forexForward.createForward(pairId, forwardRate, baseAmount, maturity);
+        uint256 forwardId = forexForward.createForward(pairId, forwardRate, baseAmount, maturity);
 
         IForexForward.Forward memory fwd = forexForward.getForward(forwardId);
         assertEq(fwd.pairId, pairId);
@@ -438,8 +437,7 @@ contract ForexTest is Test {
         uint256 pairId = _createEurUsdPair();
 
         vm.prank(trader1);
-        uint256 forwardId =
-            forexForward.createForward(pairId, 1.10e18, 100_000e18, block.timestamp + 30 days);
+        uint256 forwardId = forexForward.createForward(pairId, 1.1e18, 100_000e18, block.timestamp + 30 days);
 
         vm.prank(trader2);
         forexForward.acceptForward(forwardId);
@@ -456,8 +454,7 @@ contract ForexTest is Test {
 
         // Lock rate at 1.10 EUR/USD
         vm.prank(trader1);
-        uint256 forwardId =
-            forexForward.createForward(pairId, 1.10e18, 100_000e18, block.timestamp + 30 days);
+        uint256 forwardId = forexForward.createForward(pairId, 1.1e18, 100_000e18, block.timestamp + 30 days);
 
         vm.prank(trader2);
         forexForward.acceptForward(forwardId);
@@ -490,8 +487,7 @@ contract ForexTest is Test {
         uint256 pairId = _createEurUsdPair();
 
         vm.prank(trader1);
-        uint256 forwardId =
-            forexForward.createForward(pairId, 1.10e18, 100_000e18, block.timestamp + 30 days);
+        uint256 forwardId = forexForward.createForward(pairId, 1.1e18, 100_000e18, block.timestamp + 30 days);
 
         vm.prank(trader2);
         forexForward.acceptForward(forwardId);
@@ -522,8 +518,7 @@ contract ForexTest is Test {
         uint256 buyerBefore = usd.balanceOf(trader1);
 
         vm.prank(trader1);
-        uint256 forwardId =
-            forexForward.createForward(pairId, 1.10e18, 100_000e18, block.timestamp + 30 days);
+        uint256 forwardId = forexForward.createForward(pairId, 1.1e18, 100_000e18, block.timestamp + 30 days);
 
         uint256 buyerAfterCreate = usd.balanceOf(trader1);
         assertTrue(buyerAfterCreate < buyerBefore, "Collateral should be deducted");
@@ -542,8 +537,7 @@ contract ForexTest is Test {
         uint256 pairId = _createEurUsdPair();
 
         vm.prank(trader1);
-        uint256 forwardId =
-            forexForward.createForward(pairId, 1.10e18, 100_000e18, block.timestamp + 30 days);
+        uint256 forwardId = forexForward.createForward(pairId, 1.1e18, 100_000e18, block.timestamp + 30 days);
 
         vm.prank(trader2);
         vm.expectRevert(IForexForward.NotParty.selector);
@@ -554,8 +548,7 @@ contract ForexTest is Test {
         uint256 pairId = _createEurUsdPair();
 
         vm.prank(trader1);
-        uint256 forwardId =
-            forexForward.createForward(pairId, 1.10e18, 100_000e18, block.timestamp + 30 days);
+        uint256 forwardId = forexForward.createForward(pairId, 1.1e18, 100_000e18, block.timestamp + 30 days);
 
         vm.prank(trader2);
         forexForward.acceptForward(forwardId);
@@ -572,15 +565,14 @@ contract ForexTest is Test {
         // Maturity too soon
         vm.prank(trader1);
         vm.expectRevert(IForexForward.InvalidMaturityDate.selector);
-        forexForward.createForward(pairId, 1.10e18, 100_000e18, block.timestamp + 30 minutes);
+        forexForward.createForward(pairId, 1.1e18, 100_000e18, block.timestamp + 30 minutes);
     }
 
     function test_Forward_TopUpCollateral() public {
         uint256 pairId = _createEurUsdPair();
 
         vm.prank(trader1);
-        uint256 forwardId =
-            forexForward.createForward(pairId, 1.10e18, 100_000e18, block.timestamp + 30 days);
+        uint256 forwardId = forexForward.createForward(pairId, 1.1e18, 100_000e18, block.timestamp + 30 days);
 
         vm.prank(trader2);
         forexForward.acceptForward(forwardId);
@@ -598,8 +590,7 @@ contract ForexTest is Test {
         uint256 pairId = _createEurUsdPair();
 
         vm.prank(trader1);
-        uint256 forwardId =
-            forexForward.createForward(pairId, 1.10e18, 100_000e18, block.timestamp + 30 days);
+        uint256 forwardId = forexForward.createForward(pairId, 1.1e18, 100_000e18, block.timestamp + 30 days);
 
         vm.prank(trader2);
         forexForward.acceptForward(forwardId);
@@ -618,7 +609,7 @@ contract ForexTest is Test {
 
         // Create and activate two forwards
         vm.prank(trader1);
-        uint256 fwd1 = forexForward.createForward(pairId, 1.10e18, 10_000e18, block.timestamp + 30 days);
+        uint256 fwd1 = forexForward.createForward(pairId, 1.1e18, 10_000e18, block.timestamp + 30 days);
         vm.prank(trader2);
         forexForward.acceptForward(fwd1);
 

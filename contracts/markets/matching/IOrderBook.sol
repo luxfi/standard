@@ -8,9 +8,14 @@ pragma solidity ^0.8.20;
 ///         domain-specific wrappers (ATS, darkpool, prediction-market
 ///         resolver) but the core surface stays uniform.
 interface IOrderBook {
-    enum Side { Buy, Sell }
+    enum Side {
+        Buy,
+        Sell
+    }
 
-    event OrderPlaced(bytes32 indexed orderId, address indexed trader, string symbol, Side side, uint256 price, uint256 qty);
+    event OrderPlaced(
+        bytes32 indexed orderId, address indexed trader, string symbol, Side side, uint256 price, uint256 qty
+    );
     event OrderFilled(bytes32 indexed makerId, bytes32 indexed takerId, uint256 price, uint256 qty);
     event OrderCancelled(bytes32 indexed orderId);
 

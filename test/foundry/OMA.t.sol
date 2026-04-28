@@ -20,7 +20,7 @@ import { MockERC20 } from "./TestMocks.sol";
 contract MockSecurityToken is ERC20 {
     mapping(address => bool) public minters;
 
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) { }
 
     function grantMinter(address minter) external {
         minters[minter] = true;
@@ -57,11 +57,11 @@ contract OMATest is Test {
     address public bob = address(0x2);
     address public settlement = address(0x5);
 
-    uint256 constant AAPL_PRICE = 175e18;     // $175
-    uint256 constant BTC_PRICE = 65_000e18;   // $65,000
-    uint256 constant MARGIN_BPS = 100;        // 1%
-    uint256 constant MAX_STALENESS = 30;      // 30 seconds
-    uint256 constant MAX_DEVIATION = 1000;    // 10%
+    uint256 constant AAPL_PRICE = 175e18; // $175
+    uint256 constant BTC_PRICE = 65_000e18; // $65,000
+    uint256 constant MARGIN_BPS = 100; // 1%
+    uint256 constant MAX_STALENESS = 30; // 30 seconds
+    uint256 constant MAX_DEVIATION = 1000; // 10%
 
     function setUp() public {
         vm.startPrank(admin);
@@ -74,13 +74,7 @@ contract OMATest is Test {
 
         // Deploy AMM
         amm = new OracleMirroredAMM(
-            address(oracle),
-            settlement,
-            address(usdl),
-            MARGIN_BPS,
-            MAX_STALENESS,
-            MAX_DEVIATION,
-            admin
+            address(oracle), settlement, address(usdl), MARGIN_BPS, MAX_STALENESS, MAX_DEVIATION, admin
         );
 
         // Deploy security tokens
@@ -351,9 +345,13 @@ contract OMATest is Test {
         vm.prank(admin);
         vm.expectRevert();
         new OracleMirroredAMM(
-            address(oracle), settlement, address(usdl),
+            address(oracle),
+            settlement,
+            address(usdl),
             600, // > MAX_MARGIN_BPS
-            MAX_STALENESS, MAX_DEVIATION, admin
+            MAX_STALENESS,
+            MAX_DEVIATION,
+            admin
         );
     }
 
@@ -472,9 +470,12 @@ contract LiquidityOracleTest is Test {
     function test_BatchUpdate() public {
         string[] memory symbols = new string[](3);
         uint256[] memory prices = new uint256[](3);
-        symbols[0] = "BTC";  prices[0] = 65_000e18;
-        symbols[1] = "ETH";  prices[1] = 3_500e18;
-        symbols[2] = "AAPL"; prices[2] = 175e18;
+        symbols[0] = "BTC";
+        prices[0] = 65_000e18;
+        symbols[1] = "ETH";
+        prices[1] = 3_500e18;
+        symbols[2] = "AAPL";
+        prices[2] = 175e18;
 
         vm.prank(admin);
         oracle.updatePriceBatch(symbols, prices);
@@ -605,16 +606,10 @@ contract OMARouterTest is Test {
         aapl = new MockSecurityToken("Apple Inc.", "AAPL");
 
         // AMM1: 1% margin
-        amm1 = new OracleMirroredAMM(
-            address(oracle1), settlement1, address(usdl),
-            100, 30, 1000, admin
-        );
+        amm1 = new OracleMirroredAMM(address(oracle1), settlement1, address(usdl), 100, 30, 1000, admin);
 
         // AMM2: 2% margin (worse for buyers, better for sellers)
-        amm2 = new OracleMirroredAMM(
-            address(oracle2), settlement2, address(usdl),
-            200, 30, 1000, admin
-        );
+        amm2 = new OracleMirroredAMM(address(oracle2), settlement2, address(usdl), 200, 30, 1000, admin);
 
         // Grant minter roles
         aapl.grantMinter(address(amm1));
@@ -696,7 +691,7 @@ contract OMARouterTest is Test {
         // Neither pool has DOGE registered
         try router.getBestPrice("DOGE", true) {
             revert("should have reverted");
-        } catch {}
+        } catch { }
     }
 }
 
@@ -719,10 +714,7 @@ contract OMAGasBenchmark is Test {
 
         oracle = new LiquidityOracle(admin, 1);
         usdl = new MockERC20("USD Liquid", "USDL", 18);
-        amm = new OracleMirroredAMM(
-            address(oracle), settlement, address(usdl),
-            100, 30, 1000, admin
-        );
+        amm = new OracleMirroredAMM(address(oracle), settlement, address(usdl), 100, 30, 1000, admin);
 
         aapl = new MockSecurityToken("Apple Inc.", "AAPL");
         aapl.grantMinter(address(amm));

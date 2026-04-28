@@ -23,7 +23,9 @@ import "../IYieldStrategy.sol";
  */
 
 interface ISymbioticVault {
-    function deposit(address onBehalfOf, uint256 amount) external returns (uint256 depositedAmount, uint256 mintedShares);
+    function deposit(address onBehalfOf, uint256 amount)
+        external
+        returns (uint256 depositedAmount, uint256 mintedShares);
     function withdraw(address claimer, uint256 amount) external returns (uint256 burnedShares, uint256 mintedShares);
     function activeBalanceOf(address account) external view returns (uint256);
     function totalStake() external view returns (uint256);
@@ -73,7 +75,7 @@ contract SymbioticStrategy is IYieldStrategy {
     }
 
     function withdraw(uint256 shares) external override returns (uint256 assets) {
-        (uint256 burned, ) = vault.withdraw(msg.sender, shares);
+        (uint256 burned,) = vault.withdraw(msg.sender, shares);
         collateral.withdraw(msg.sender, burned);
         return burned;
     }
@@ -86,11 +88,25 @@ contract SymbioticStrategy is IYieldStrategy {
         return 400; // ~4% (Lido base + Symbiotic rewards, variable)
     }
 
-    function asset() external view override returns (address) { return underlying; }
-    function harvest() external override returns (uint256) { return 0; } // auto-compounds
-    function isActive() external view override returns (bool) { return active; }
-    function name() external pure override returns (string memory) { return "Symbiotic Restaking"; }
-    function totalDeposited() external view override returns (uint256) { return _totalDeposited; }
+    function asset() external view override returns (address) {
+        return underlying;
+    }
+
+    function harvest() external override returns (uint256) {
+        return 0; // auto-compounds
+    }
+
+    function isActive() external view override returns (bool) {
+        return active;
+    }
+
+    function name() external pure override returns (string memory) {
+        return "Symbiotic Restaking";
+    }
+
+    function totalDeposited() external view override returns (uint256) {
+        return _totalDeposited;
+    }
 }
 
 interface IERC20 {

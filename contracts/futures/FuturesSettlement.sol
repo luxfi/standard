@@ -174,7 +174,11 @@ contract FuturesSettlement is ReentrancyGuard, AccessControl {
      * @param contractId Futures contract ID
      * @param traders Array of trader addresses to settle
      */
-    function settleCashBatch(uint256 contractId, address[] calldata traders) external onlyRole(KEEPER_ROLE) nonReentrant {
+    function settleCashBatch(uint256 contractId, address[] calldata traders)
+        external
+        onlyRole(KEEPER_ROLE)
+        nonReentrant
+    {
         if (!isSettled[contractId]) revert NotSettled();
         if (traders.length == 0) revert NothingToSettle();
 

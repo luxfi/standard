@@ -44,24 +44,23 @@ import "./IYieldStrategy.sol";
  */
 
 contract ShariaFilter {
-
     // ================================================================
     //  Compliance classification
     // ================================================================
 
     enum ComplianceStatus {
-        HALAL,          // Approved by Shariah board
-        HARAM,          // Prohibited — interest-based
-        UNDER_REVIEW,   // Pending Shariah board review
-        CONDITIONAL     // Halal with specific conditions
+        HALAL, // Approved by Shariah board
+        HARAM, // Prohibited — interest-based
+        UNDER_REVIEW, // Pending Shariah board review
+        CONDITIONAL // Halal with specific conditions
     }
 
     struct StrategyCompliance {
         ComplianceStatus status;
-        string rationale;        // Why this classification
-        address reviewer;        // Shariah board member who reviewed
-        uint256 reviewedAt;      // Timestamp of last review
-        string conditions;       // For CONDITIONAL: what conditions apply
+        string rationale; // Why this classification
+        address reviewer; // Shariah board member who reviewed
+        uint256 reviewedAt; // Timestamp of last review
+        string conditions; // For CONDITIONAL: what conditions apply
     }
 
     // ================================================================
@@ -119,10 +118,10 @@ contract ShariaFilter {
         protocolCompliance["karak"] = ComplianceStatus.CONDITIONAL;
         protocolCompliance["pendle"] = ComplianceStatus.CONDITIONAL;
         protocolCompliance["ethena"] = ComplianceStatus.HARAM; // Delta-neutral with lending
-        protocolCompliance["frax"] = ComplianceStatus.HARAM;   // Interest-based
+        protocolCompliance["frax"] = ComplianceStatus.HARAM; // Interest-based
         protocolCompliance["yearn"] = ComplianceStatus.CONDITIONAL; // Depends on vault strategy
         protocolCompliance["convex"] = ComplianceStatus.CONDITIONAL;
-        protocolCompliance["curve"] = ComplianceStatus.HALAL;  // LP fees only
+        protocolCompliance["curve"] = ComplianceStatus.HALAL; // LP fees only
 
         // Bitcoin-native
         protocolCompliance["lombard"] = ComplianceStatus.CONDITIONAL;
@@ -187,11 +186,7 @@ contract ShariaFilter {
     }
 
     /// @notice Classify a protocol category (Shariah board only)
-    function classifyProtocol(
-        string calldata protocol,
-        ComplianceStatus status,
-        string calldata rationale
-    ) external {
+    function classifyProtocol(string calldata protocol, ComplianceStatus status, string calldata rationale) external {
         require(msg.sender == shariahBoard, "Only Shariah board");
         protocolCompliance[protocol] = status;
         emit ProtocolClassified(protocol, status, rationale);

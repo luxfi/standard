@@ -42,7 +42,9 @@ abstract contract OperatorRegistry {
         if (licenseOf[operator] != bytes32(0)) revert OperatorExists(operator);
         require(license != bytes32(0), "OperatorRegistry: zero license");
         licenseOf[operator] = license;
-        unchecked { operatorCount++; }
+        unchecked {
+            operatorCount++;
+        }
         emit OperatorRegistered(operator, license);
         return operatorCount;
     }
@@ -51,7 +53,9 @@ abstract contract OperatorRegistry {
     function _deactivateOperator(address operator) internal onlyAdmin {
         if (licenseOf[operator] == bytes32(0)) revert OperatorNotFound(operator);
         licenseOf[operator] = bytes32(0);
-        unchecked { operatorCount--; }
+        unchecked {
+            operatorCount--;
+        }
         emit OperatorDeactivated(operator);
     }
 

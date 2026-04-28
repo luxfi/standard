@@ -271,7 +271,9 @@ contract MockE2EToken is IBridgedToken {
         totalSupply -= amount;
     }
 
-    function balanceOf(address a) external view override returns (uint256) { return _bal[a]; }
+    function balanceOf(address a) external view override returns (uint256) {
+        return _bal[a];
+    }
 
     function approve(address spender, uint256 amount) external returns (bool) {
         _allow[msg.sender][spender] = amount;

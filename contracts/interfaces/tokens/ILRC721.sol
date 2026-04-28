@@ -30,8 +30,7 @@ interface ILRC721 is IERC721 {
     // - setApprovalForAll(address operator, bool approved)
     // - getApproved(uint256 tokenId) external view returns (address)
     // - isApprovedForAll(address owner, address operator) external view returns (bool)
-
-    }
+}
 
 /**
  * @title ILRC721Metadata
@@ -42,8 +41,7 @@ interface ILRC721Metadata is ILRC721, IERC721Metadata {
     // - name() external view returns (string memory)
     // - symbol() external view returns (string memory)
     // - tokenURI(uint256 tokenId) external view returns (string memory)
-
-    }
+}
 
 /**
  * @title ILRC721Enumerable
@@ -54,5 +52,4 @@ interface ILRC721Enumerable is ILRC721, IERC721Enumerable {
     // - totalSupply() external view returns (uint256)
     // - tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256)
     // - tokenByIndex(uint256 index) external view returns (uint256)
-
-    }
+}

@@ -87,14 +87,20 @@ abstract contract OrderBook is IOrderBook {
         return bids.length == 0 ? 0 : bids[0].price;
     }
 
-    function _id(uint64 v) private pure returns (bytes32) { return bytes32(uint256(v)); }
+    function _id(uint64 v) private pure returns (bytes32) {
+        return bytes32(uint256(v));
+    }
 
     function _insertDesc(Order[] storage s, Order memory o) private {
         s.push(o);
         for (uint256 i = s.length - 1; i > 0; i--) {
             if (s[i].price > s[i - 1].price) {
-                Order memory t = s[i]; s[i] = s[i - 1]; s[i - 1] = t;
-            } else break;
+                Order memory t = s[i];
+                s[i] = s[i - 1];
+                s[i - 1] = t;
+            } else {
+                break;
+            }
         }
     }
 
@@ -102,13 +108,19 @@ abstract contract OrderBook is IOrderBook {
         s.push(o);
         for (uint256 i = s.length - 1; i > 0; i--) {
             if (s[i].price < s[i - 1].price) {
-                Order memory t = s[i]; s[i] = s[i - 1]; s[i - 1] = t;
-            } else break;
+                Order memory t = s[i];
+                s[i] = s[i - 1];
+                s[i - 1] = t;
+            } else {
+                break;
+            }
         }
     }
 
     function _shiftLeft(Order[] storage s, uint256 idx) private {
-        for (uint256 i = idx; i + 1 < s.length; i++) s[i] = s[i + 1];
+        for (uint256 i = idx; i + 1 < s.length; i++) {
+            s[i] = s[i + 1];
+        }
         s.pop();
     }
 

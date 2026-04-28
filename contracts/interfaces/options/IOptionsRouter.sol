@@ -110,11 +110,9 @@ interface IOptionsRouter {
      * @param netPremiumLimit Maximum net premium the caller is willing to pay (0 for credit strategies)
      * @return positionId Unique position identifier
      */
-    function executeStrategy(
-        StrategyType strategyType,
-        Leg[] calldata legs,
-        uint256 netPremiumLimit
-    ) external returns (uint256 positionId);
+    function executeStrategy(StrategyType strategyType, Leg[] calldata legs, uint256 netPremiumLimit)
+        external
+        returns (uint256 positionId);
 
     /**
      * @notice Close a strategy position (burn/exercise all legs)
@@ -133,10 +131,10 @@ interface IOptionsRouter {
      * @return valid True if the legs form a valid strategy
      * @return reason Human-readable reason if invalid
      */
-    function validateStrategy(
-        StrategyType strategyType,
-        Leg[] calldata legs
-    ) external view returns (bool valid, string memory reason);
+    function validateStrategy(StrategyType strategyType, Leg[] calldata legs)
+        external
+        view
+        returns (bool valid, string memory reason);
 
     /**
      * @notice Compute the maximum possible loss of a strategy
@@ -161,10 +159,10 @@ interface IOptionsRouter {
      * @return breakevenLow Lower breakeven price (0 if none)
      * @return breakevenHigh Upper breakeven price (0 if none)
      */
-    function computeBreakeven(
-        StrategyType strategyType,
-        Leg[] calldata legs
-    ) external view returns (uint256 breakevenLow, uint256 breakevenHigh);
+    function computeBreakeven(StrategyType strategyType, Leg[] calldata legs)
+        external
+        view
+        returns (uint256 breakevenLow, uint256 breakevenHigh);
 
     /**
      * @notice Get a strategy position

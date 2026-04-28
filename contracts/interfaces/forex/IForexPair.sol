@@ -10,12 +10,12 @@ interface IForexPair {
     // ═══════════════════════════════════════════════════════════════════════
 
     struct FXPair {
-        address base;       // Base currency token (e.g., EUR)
-        address quote;      // Quote currency token (e.g., USD)
-        uint256 tickSize;   // Minimum price increment (18 decimals)
-        uint256 minSize;    // Minimum trade size in base (18 decimals)
-        uint256 maxSize;    // Maximum trade size in base (18 decimals)
-        bool active;        // Whether pair is tradeable
+        address base; // Base currency token (e.g., EUR)
+        address quote; // Quote currency token (e.g., USD)
+        uint256 tickSize; // Minimum price increment (18 decimals)
+        uint256 minSize; // Minimum trade size in base (18 decimals)
+        uint256 maxSize; // Maximum trade size in base (18 decimals)
+        bool active; // Whether pair is tradeable
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -57,18 +57,14 @@ interface IForexPair {
     /// @param baseAmount Amount of base currency to sell
     /// @param minQuoteAmount Minimum quote to receive (slippage protection)
     /// @return quoteAmount Amount of quote currency received
-    function sellBase(uint256 pairId, uint256 baseAmount, uint256 minQuoteAmount)
-        external
-        returns (uint256 quoteAmount);
+    function sellBase(uint256 pairId, uint256 baseAmount, uint256 minQuoteAmount) external returns (uint256 quoteAmount);
 
     /// @notice Swap quote for base at current oracle rate
     /// @param pairId The FX pair ID
     /// @param quoteAmount Amount of quote currency to sell
     /// @param minBaseAmount Minimum base to receive (slippage protection)
     /// @return baseAmount Amount of base currency received
-    function buyBase(uint256 pairId, uint256 quoteAmount, uint256 minBaseAmount)
-        external
-        returns (uint256 baseAmount);
+    function buyBase(uint256 pairId, uint256 quoteAmount, uint256 minBaseAmount) external returns (uint256 baseAmount);
 
     // ═══════════════════════════════════════════════════════════════════════
     // VIEW

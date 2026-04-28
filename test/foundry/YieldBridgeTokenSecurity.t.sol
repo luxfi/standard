@@ -18,14 +18,7 @@ contract YieldBridgeTokenSecurity is Test {
 
     function setUp() public {
         owner = address(this);
-        token = new YieldBearingBridgeToken(
-            "Yield Test Token",
-            "yTEST",
-            "TEST",
-            1,
-            bridge,
-            feeReceiver
-        );
+        token = new YieldBearingBridgeToken("Yield Test Token", "yTEST", "TEST", 1, bridge, feeReceiver);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -92,11 +85,7 @@ contract YieldBridgeTokenSecurity is Test {
         // When donation ≤ victimDeposit, loss is ≤ ~0.1% + rounding.
         uint256 victimLoss = victimDeposit > victimRecovered ? victimDeposit - victimRecovered : 0;
         uint256 maxLoss = donationAmount / 1e8 + victimDeposit / 1e8 + 2;
-        assertLe(
-            victimLoss,
-            maxLoss,
-            "victim lost more than virtual offset bound"
-        );
+        assertLe(victimLoss, maxLoss, "victim lost more than virtual offset bound");
     }
 
     /// @notice Demonstrate that virtual offset breaks down when donation >> victim deposit.
@@ -173,7 +162,9 @@ contract YieldBridgeTokenSecurity is Test {
     }
 
     /// @notice Same check after yield accrual
-    function testFuzz_conversionNoInflationAfterYield(uint256 seedDeposit, uint256 yieldAmt, uint256 testAmount) public {
+    function testFuzz_conversionNoInflationAfterYield(uint256 seedDeposit, uint256 yieldAmt, uint256 testAmount)
+        public
+    {
         seedDeposit = bound(seedDeposit, 1e6, 1e30);
         yieldAmt = bound(yieldAmt, 1, seedDeposit);
         testAmount = bound(testAmount, 0, 1e36);
@@ -246,13 +237,7 @@ contract YieldBridgeTokenSecurity is Test {
 
     /// @notice 5 users deposit random amounts. Each user's share of underlying
     ///         should be proportional to their share of totalSupply.
-    function testFuzz_multiUserProportionalShares(
-        uint256 a0,
-        uint256 a1,
-        uint256 a2,
-        uint256 a3,
-        uint256 a4
-    ) public {
+    function testFuzz_multiUserProportionalShares(uint256 a0, uint256 a1, uint256 a2, uint256 a3, uint256 a4) public {
         uint256[5] memory amounts;
         amounts[0] = bound(a0, 1e6, 1e27);
         amounts[1] = bound(a1, 1e6, 1e27);
@@ -394,11 +379,9 @@ contract YieldBridgeTokenSecurity is Test {
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice The core vault invariant must hold after deposits + yield
-    function testFuzz_invariantTotalValueMatchesUnderlying(
-        uint256 deposit1,
-        uint256 deposit2,
-        uint256 yieldAmt
-    ) public {
+    function testFuzz_invariantTotalValueMatchesUnderlying(uint256 deposit1, uint256 deposit2, uint256 yieldAmt)
+        public
+    {
         deposit1 = bound(deposit1, 1e6, 1e30);
         deposit2 = bound(deposit2, 1e6, 1e30);
         yieldAmt = bound(yieldAmt, 0, 1e30);
