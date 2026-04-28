@@ -8,8 +8,8 @@
 // Copyright (c) 2019 Arca Labs Inc — https://arca.digital
 pragma solidity ^0.8.24;
 
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
-import { SecurityToken } from "../token/SecurityToken.sol";
+import { AccessControl } from "@luxfi/oz/access/AccessControl.sol";
+import { IToken } from "@luxfi/erc-3643/contracts/token/IToken.sol";
 
 /**
  * @title CorporateActions
@@ -21,7 +21,7 @@ import { SecurityToken } from "../token/SecurityToken.sol";
 contract CorporateActions is AccessControl {
     bytes32 public constant CORPORATE_ACTION_ROLE = keccak256("CORPORATE_ACTION_ROLE");
 
-    SecurityToken public immutable TOKEN;
+    IToken public immutable TOKEN;
 
     // ──────────────────────────────────────────────────────────────────────────
     // Events
@@ -42,7 +42,7 @@ contract CorporateActions is AccessControl {
     // Constructor
     // ──────────────────────────────────────────────────────────────────────────
 
-    constructor(address admin, SecurityToken _token) {
+    constructor(address admin, IToken _token) {
         if (admin == address(0)) revert ZeroAddress();
         if (address(_token) == address(0)) revert ZeroAddress();
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
@@ -67,7 +67,7 @@ contract CorporateActions is AccessControl {
         if (amount == 0) revert ZeroAmount();
 
         // Burn from source, mint to destination (bypasses compliance for forced actions)
-        TOKEN.burnFrom(from, amount);
+        TOKEN.burn(from, amount);
         TOKEN.mint(to, amount);
 
         emit ForcedTransfer(from, to, amount, reason);
@@ -80,7 +80,7 @@ contract CorporateActions is AccessControl {
         if (from == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAmount();
 
-        TOKEN.burnFrom(from, amount);
+        TOKEN.burn(from, amount);
 
         emit TokensSeized(from, amount, reason);
     }
