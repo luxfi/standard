@@ -21,6 +21,19 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install pnpm deps (vendored T-REX + ONCHAINID)
+        run: pnpm install --frozen-lockfile=false
+
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
@@ -104,6 +117,14 @@ jobs:
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install pnpm deps (vendored T-REX + ONCHAINID)
+        run: pnpm install --frozen-lockfile=false
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
