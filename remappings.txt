@@ -2,6 +2,8 @@
 @luxfi/contracts/=contracts/
 @luxfi/contracts/lib/=lib/openzeppelin-contracts/contracts/
 @luxfi/contracts/lib-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
+@luxfi/oz/=lib/openzeppelin-contracts/contracts/
+@luxfi/oz-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 @openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
 @account-abstraction/=lib/account-abstraction/contracts/
@@ -27,3 +29,7 @@ forge-std/=lib/forge-std/src/
 @layerzerolabs/oapp-evm/=lib/layerzero-v2/packages/layerzero-v2/evm/oapp/
 @layerzerolabs/lz-evm-protocol-v2/=lib/layerzero-v2/packages/layerzero-v2/evm/protocol/
 @layerzerolabs/lz-evm-messagelib-v2/=lib/layerzero-v2/packages/layerzero-v2/evm/messagelib/
+@luxfi/onchain-id/=node_modules/@luxfi/onchain-id/
+@luxfi/erc-3643/=node_modules/@luxfi/erc-3643/
+@onchain-id/solidity/=node_modules/@luxfi/onchain-id/
+@tokenysolutions/t-rex/=node_modules/@luxfi/erc-3643/

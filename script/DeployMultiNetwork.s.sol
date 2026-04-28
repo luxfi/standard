@@ -118,7 +118,7 @@ contract DeployMultiNetwork is Script {
     Perp public perp;
 
     // Constants
-    uint256 constant INITIAL_LUX = 10_000 ether;
+    uint256 constant INITIAL_LUX = 100 ether;   // was 10_000 — low-fund safe (Pars mainnet)
     uint256 constant INITIAL_ETH = 100 ether;
     uint256 constant INITIAL_BTC = 10e8;
     uint256 constant INITIAL_USDC = 1_000_000e6;
@@ -186,9 +186,17 @@ contract DeployMultiNetwork is Script {
         wlux = new WLUX();
         console.log("WLUX:", address(wlux));
 
-        // Wrap some LUX
-        wlux.deposit{value: INITIAL_LUX}();
-        console.log("Wrapped", INITIAL_LUX / 1e18, "LUX");
+        // Wrap up to INITIAL_LUX, capped at balance/2 so low-funded deploys
+        // (e.g. Pars mainnet with stale genesis) still complete. LP bootstrap
+        // liquidity is nice-to-have, not deploy-blocking.
+        uint256 bal = address(this).balance;
+        uint256 wrap = bal / 2 < INITIAL_LUX ? bal / 2 : INITIAL_LUX;
+        if (wrap > 0) {
+            wlux.deposit{value: wrap}();
+            console.log("Wrapped", wrap / 1e18, "LUX");
+        } else {
+            console.log("Skipping WLUX deposit (insufficient balance)");
+        }
 
         leth = new BridgedETH();
         console.log("LETH:", address(leth));
