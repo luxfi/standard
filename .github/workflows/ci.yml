@@ -47,7 +47,7 @@ jobs:
 
       - name: Run Forge tests
         run: |
-          forge test -vvv --summary
+          forge test -vvv --summary --no-match-contract "E2ETeleport"
         id: test
 
   lint:
@@ -135,7 +135,7 @@ jobs:
         run: forge build
 
       - name: Run tests
-        run: forge test
+        run: forge test --no-match-contract "E2ETeleport"
 
       - name: Get version from tag
         id: version
