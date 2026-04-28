@@ -32,7 +32,7 @@ jobs:
           version: 10
 
       - name: Install pnpm deps (vendored T-REX + ONCHAINID)
-        run: pnpm install --frozen-lockfile=false
+        run: pnpm install --frozen-lockfile=false --ignore-scripts
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -124,7 +124,7 @@ jobs:
           version: 10
 
       - name: Install pnpm deps (vendored T-REX + ONCHAINID)
-        run: pnpm install --frozen-lockfile=false
+        run: pnpm install --frozen-lockfile=false --ignore-scripts
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
