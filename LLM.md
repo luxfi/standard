@@ -3902,3 +3902,83 @@ import {IFHE} from "@luxfi/contracts/precompile/interfaces/IFHE.sol";
 *DeFi Suite: ✅ 6 new protocols (StableSwap, Options, Streams, IntentRouter, Cover, Prediction)*
 *Privacy Layer: ✅ Z-Chain UTXO with post-quantum Poseidon2/STARK*
 *Directory Contract: ✅ Specification complete, migration pending*
+
+---
+
+## Securities Module — Stock T-REX (2026-04-28)
+
+The securities module is **stock Tokeny T-REX (ERC-3643)** over **stock ONCHAINID
+(ERC-734/735)** — no parallel `ComplianceRegistry`, no custom whitelist /
+jurisdiction / lockup modules. ONE canonical way.
+
+### Layout
+
+```
+contracts/securities/
+├── constants/
+│   ├── Topics.sol              // 6 ERC-735 claim topics (KYC..AFFILIATE)
+│   └── Offerings.sol           // 5 offering types + per-offering required topic sets
+├── modules/
+│   ├── ClaimValidityModule.sol      // decodes Claim.data.validUntil, rejects stale
+│   ├── Rule144LockupModule.sol      // holding period + 1% / 4-week affiliate cap
+│   └── TeleportComplianceModule.sol // destination-side gate for cross-chain mints
+├── factory/
+│   └── SecurityTokenFactory.sol     // wires Token + DocumentRegistry over pre-
+│                                    //   deployed T-REX components
+├── token/
+│   └── SecurityToken.sol            // extends T-REX IToken (was at securities/)
+├── registry/
+│   └── DocumentRegistry.sol         // ERC-1643
+├── bridge/
+│   └── SecurityBridge.sol           // lock-and-mirror via Lux Teleporter (Warp + MPC)
+└── corporate/                        // CorporateActions, DividendDistributor (ERC-1400)
+```
+
+### Six claim topics (Topics.sol)
+
+| ID | Constant            | Issuer | Stale after |
+|----|---------------------|--------|-------------|
+| 1  | KYC                 | BD     | 365d        |
+| 2  | AML                 | BD     | 7d          |
+| 3  | ACCREDITED_VERIFIED | BD     | 90d         |
+| 4  | ACCREDITED_SELF     | BD     | 365d        |
+| 5  | QIB                 | BD     | 365d        |
+| 6  | AFFILIATE           | TA     | persists    |
+
+Country is NOT a claim topic — it lives in
+`IdentityRegistryStorage.investorCountry()` as a uint16 ISO 3166-1 numeric.
+
+### Five offering types (Offerings.sol)
+
+| Offering        | Required topics  | Country gate (T-REX module) |
+|-----------------|------------------|-----------------------------|
+| RETAIL_PUBLIC   | {1,2}            | CountryRestrict (sanctioned + state-MTL) |
+| REG_D_506B      | {1,2,4}          | CountryAllow [840] (US-only)             |
+| REG_D_506C      | {1,2,3}          | CountryAllow [840] (US-only)             |
+| REG_S           | {1,2}            | CountryRestrict [840] (block US)         |
+| RULE_144A       | {1,2,5}          | CountryAllow [840] (US QIB)              |
+
+### Claim shape (ERC-735)
+
+`Claim.data` is always `abi.encode(uint64 issuedAt, uint64 validUntil, bytes proof)`.
+`ClaimValidityModule` decodes `validUntil` on every transfer. `validUntil == 0`
+means "never expires" (only valid for topic 6 AFFILIATE).
+
+### ERC-1404 revert codes (canonical)
+
+Codes 0-11 only — no custom code space. Decoder lives at
+`@liquidityio/ui/compliance` (see `compliance/flows/erc1404-revert.md`).
+
+### Why "factory wires pre-deployed components"
+
+Stock T-REX ships against OpenZeppelin v4 (`__Ownable_init()`). Lux/Liquidity
+ship OpenZeppelin v5. To stay on **stock** T-REX without rewriting the registries
+the factory accepts the implementation contracts as input — a per-chain
+bootstrap deploys them once, every per-token deploy reuses them. The factory
+owns no storage, no auth, no state; it is a thin assembler.
+
+### Deploy script
+
+`script/DeploySecurityTokenStack.s.sol` — env-driven, `forge script` only
+(never `--broadcast` from a code review task).
+

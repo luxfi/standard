@@ -119,7 +119,11 @@ contract WarpRegulatedProvider is IRegulatedProvider {
         uint256,
         /*minOut*/
         string calldata symbol
-    ) external override returns (uint256 amountOut) {
+    )
+        external
+        override
+        returns (uint256 amountOut)
+    {
         require(handledSymbol[keccak256(bytes(symbol))], "Warp: unhandled");
         // Encode inner match call: side(1) | symLen(1) | symbol | price(32) | qty(32)
         // Origin does not know bestAsk; it sends qty = amountIn and the
