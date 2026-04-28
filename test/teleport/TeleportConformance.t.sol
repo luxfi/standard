@@ -231,7 +231,8 @@ contract TeleportConformance is Test {
     function testDepositMint_RevertInvalidSignature() public {
         // Sign with wrong key
         uint256 wrongKey = 0xDEAD;
-        bytes32 messageHash = keccak256(abi.encode(bytes32("DEPOSIT"), srcChainId, uint256(1), recipient, depositAmount));
+        bytes32 messageHash =
+            keccak256(abi.encode(bytes32("DEPOSIT"), srcChainId, uint256(1), recipient, depositAmount));
         bytes32 ethSignedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wrongKey, ethSignedHash);
         bytes memory badSig = abi.encodePacked(r, s, v);
@@ -404,8 +405,7 @@ contract TeleportConformance is Test {
         // Advance past the setUp attestation timestamp to satisfy monotonicity check
         vm.warp(block.timestamp + 2);
         uint256 wrongKey = 0xBAD;
-        bytes32 messageHash =
-            keccak256(abi.encode(bytes32("BACKING"), srcChainId, uint256(100 ether), block.timestamp));
+        bytes32 messageHash = keccak256(abi.encode(bytes32("BACKING"), srcChainId, uint256(100 ether), block.timestamp));
         bytes32 ethSignedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wrongKey, ethSignedHash);
         bytes memory badSig = abi.encodePacked(r, s, v);

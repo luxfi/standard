@@ -123,14 +123,8 @@ contract ForexPair is IForexPair, ReentrancyGuard, AccessControl, Pausable {
 
         pairId = nextPairId++;
 
-        pairs[pairId] = FXPair({
-            base: base,
-            quote: quote,
-            tickSize: tickSize,
-            minSize: minSize,
-            maxSize: maxSize,
-            active: true
-        });
+        pairs[pairId] =
+            FXPair({ base: base, quote: quote, tickSize: tickSize, minSize: minSize, maxSize: maxSize, active: true });
 
         pairIndex[key] = pairId;
 
@@ -274,10 +268,7 @@ contract ForexPair is IForexPair, ReentrancyGuard, AccessControl, Pausable {
     /// @param pairId Pair ID
     /// @param jurisdiction Jurisdiction code hash (keccak256 of ISO country code)
     /// @param blocked True to block, false to allow
-    function setJurisdiction(uint256 pairId, bytes32 jurisdiction, bool blocked)
-        external
-        onlyRole(COMPLIANCE_ROLE)
-    {
+    function setJurisdiction(uint256 pairId, bytes32 jurisdiction, bool blocked) external onlyRole(COMPLIANCE_ROLE) {
         FXPair storage pair = pairs[pairId];
         if (pair.base == address(0)) revert PairNotFound();
 

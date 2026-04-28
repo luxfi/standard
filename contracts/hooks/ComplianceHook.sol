@@ -22,20 +22,29 @@ contract ComplianceHook is IHooksV4 {
     }
 
     function beforeSwap(address sender, PoolKey calldata, SwapParams calldata, bytes calldata)
-        external view override returns (bytes4, int128, uint24)
+        external
+        view
+        override
+        returns (bytes4, int128, uint24)
     {
         _requireCompliant(sender);
         return (IHooksV4.beforeSwap.selector, int128(0), uint24(0));
     }
 
     function afterSwap(address, PoolKey calldata, SwapParams calldata, int256, int256, bytes calldata)
-        external pure override returns (bytes4, int128)
+        external
+        pure
+        override
+        returns (bytes4, int128)
     {
         return (IHooksV4.afterSwap.selector, int128(0));
     }
 
     function beforeAddLiquidity(address sender, PoolKey calldata, ModifyLiquidityParams calldata, bytes calldata)
-        external view override returns (bytes4)
+        external
+        view
+        override
+        returns (bytes4)
     {
         if (gateLiquidity) _requireCompliant(sender);
         return IHooksV4.beforeAddLiquidity.selector;
@@ -44,7 +53,10 @@ contract ComplianceHook is IHooksV4 {
     /// @notice Withdraw is ALWAYS allowed. Never strand an LP who is
     ///         mid-position when compliance state changes.
     function beforeRemoveLiquidity(address, PoolKey calldata, ModifyLiquidityParams calldata, bytes calldata)
-        external pure override returns (bytes4)
+        external
+        pure
+        override
+        returns (bytes4)
     {
         return IHooksV4.beforeRemoveLiquidity.selector;
     }

@@ -10,5 +10,4 @@ import { BlendedConfidentialStrategy } from "../../governance/BlendedConfidentia
 contract TestBlendedConfidentialStrategy is BlendedConfidentialStrategy {
     // Inherits all functionality from BlendedConfidentialStrategy
     // Can add test-specific functions here
-
-    }
+}

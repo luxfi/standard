@@ -138,8 +138,13 @@ contract FuturesTest is Test {
         vm.prank(admin);
         vm.expectRevert(IFutures.ZeroAddress.selector);
         futures.createContract(
-            address(0), address(usdl), block.timestamp + 30 days,
-            CONTRACT_SIZE, TICK_SIZE, INITIAL_MARGIN_BPS, MAINTENANCE_MARGIN_BPS,
+            address(0),
+            address(usdl),
+            block.timestamp + 30 days,
+            CONTRACT_SIZE,
+            TICK_SIZE,
+            INITIAL_MARGIN_BPS,
+            MAINTENANCE_MARGIN_BPS,
             IFutures.SettlementType.CASH
         );
     }
@@ -148,8 +153,13 @@ contract FuturesTest is Test {
         vm.prank(admin);
         vm.expectRevert(IFutures.InvalidExpiry.selector);
         futures.createContract(
-            address(wbtc), address(usdl), block.timestamp, // too soon
-            CONTRACT_SIZE, TICK_SIZE, INITIAL_MARGIN_BPS, MAINTENANCE_MARGIN_BPS,
+            address(wbtc),
+            address(usdl),
+            block.timestamp, // too soon
+            CONTRACT_SIZE,
+            TICK_SIZE,
+            INITIAL_MARGIN_BPS,
+            MAINTENANCE_MARGIN_BPS,
             IFutures.SettlementType.CASH
         );
     }
@@ -158,9 +168,13 @@ contract FuturesTest is Test {
         vm.prank(admin);
         vm.expectRevert(IFutures.InvalidMarginParams.selector);
         futures.createContract(
-            address(wbtc), address(usdl), block.timestamp + 30 days,
-            CONTRACT_SIZE, TICK_SIZE,
-            500, 500, // maintenance >= initial
+            address(wbtc),
+            address(usdl),
+            block.timestamp + 30 days,
+            CONTRACT_SIZE,
+            TICK_SIZE,
+            500,
+            500, // maintenance >= initial
             IFutures.SettlementType.CASH
         );
     }
@@ -169,8 +183,13 @@ contract FuturesTest is Test {
         vm.prank(alice);
         vm.expectRevert();
         futures.createContract(
-            address(wbtc), address(usdl), block.timestamp + 30 days,
-            CONTRACT_SIZE, TICK_SIZE, INITIAL_MARGIN_BPS, MAINTENANCE_MARGIN_BPS,
+            address(wbtc),
+            address(usdl),
+            block.timestamp + 30 days,
+            CONTRACT_SIZE,
+            TICK_SIZE,
+            INITIAL_MARGIN_BPS,
+            MAINTENANCE_MARGIN_BPS,
             IFutures.SettlementType.CASH
         );
     }
@@ -661,8 +680,13 @@ contract FuturesTest is Test {
         uint256 cid;
         // Create while paused should work (admin operation)
         cid = futures.createContract(
-            address(wbtc), address(usdl), block.timestamp + 30 days,
-            CONTRACT_SIZE, TICK_SIZE, INITIAL_MARGIN_BPS, MAINTENANCE_MARGIN_BPS,
+            address(wbtc),
+            address(usdl),
+            block.timestamp + 30 days,
+            CONTRACT_SIZE,
+            TICK_SIZE,
+            INITIAL_MARGIN_BPS,
+            MAINTENANCE_MARGIN_BPS,
             IFutures.SettlementType.CASH
         );
 

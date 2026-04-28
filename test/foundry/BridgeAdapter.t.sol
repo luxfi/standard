@@ -262,9 +262,7 @@ contract BridgeAdapterTest is Test {
 
         // Oracle releases
         vm.prank(oracle);
-        adapter.fill(
-            bridgeId, address(lockToken), bob, 100e18, block.chainid, 0, BridgeAdapter.BridgeMode.LockRelease
-        );
+        adapter.fill(bridgeId, address(lockToken), bob, 100e18, block.chainid, 0, BridgeAdapter.BridgeMode.LockRelease);
 
         assertEq(lockToken.balanceOf(bob), 100e18);
         assertEq(adapter.lockedBalance(address(lockToken)), 0);
@@ -392,9 +390,7 @@ contract BridgeAdapterTest is Test {
     function test_revert_nonOracleFill() public {
         vm.prank(alice);
         vm.expectRevert();
-        adapter.fill(
-            bytes32(0), address(mintToken), bob, 100e18, block.chainid, 0, BridgeAdapter.BridgeMode.MintBurn
-        );
+        adapter.fill(bytes32(0), address(mintToken), bob, 100e18, block.chainid, 0, BridgeAdapter.BridgeMode.MintBurn);
     }
 
     // ──────────────────────────────────────────────────────────────

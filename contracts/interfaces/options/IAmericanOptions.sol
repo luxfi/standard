@@ -45,21 +45,10 @@ interface IAmericanOptions {
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @notice Emitted when options are exercised early (before expiry)
-    event EarlyExercise(
-        uint256 indexed seriesId,
-        address indexed holder,
-        uint256 amount,
-        uint256 payout,
-        uint256 fee
-    );
+    event EarlyExercise(uint256 indexed seriesId, address indexed holder, uint256 amount, uint256 payout, uint256 fee);
 
     /// @notice Emitted when a writer is assigned due to early exercise
-    event WriterAssigned(
-        uint256 indexed seriesId,
-        address indexed writer,
-        uint256 amount,
-        uint256 collateralDeducted
-    );
+    event WriterAssigned(uint256 indexed seriesId, address indexed writer, uint256 amount, uint256 collateralDeducted);
 
     /// @notice Emitted when the assignment mode is changed
     event AssignmentModeChanged(uint256 indexed seriesId, AssignmentMode mode);

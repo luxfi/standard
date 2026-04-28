@@ -172,12 +172,7 @@ interface IFutures {
      * @param margin Margin deposited
      */
     event PositionOpened(
-        uint256 indexed contractId,
-        address indexed trader,
-        Side side,
-        uint256 size,
-        uint256 price,
-        uint256 margin
+        uint256 indexed contractId, address indexed trader, Side side, uint256 size, uint256 price, uint256 margin
     );
 
     /**
@@ -189,11 +184,7 @@ interface IFutures {
      * @param addedMargin Additional margin deposited
      */
     event PositionIncreased(
-        uint256 indexed contractId,
-        address indexed trader,
-        uint256 addedSize,
-        uint256 newAvgPrice,
-        uint256 addedMargin
+        uint256 indexed contractId, address indexed trader, uint256 addedSize, uint256 newAvgPrice, uint256 addedMargin
     );
 
     /**
@@ -205,11 +196,7 @@ interface IFutures {
      * @param pnl Realised PnL from this close
      */
     event PositionClosed(
-        uint256 indexed contractId,
-        address indexed trader,
-        uint256 closedSize,
-        uint256 closePrice,
-        int256 pnl
+        uint256 indexed contractId, address indexed trader, uint256 closedSize, uint256 closePrice, int256 pnl
     );
 
     /**
@@ -229,11 +216,7 @@ interface IFutures {
      * @param price Liquidation price
      */
     event PositionLiquidated(
-        uint256 indexed contractId,
-        address indexed trader,
-        address indexed liquidator,
-        uint256 size,
-        uint256 price
+        uint256 indexed contractId, address indexed trader, address indexed liquidator, uint256 size, uint256 price
     );
 
     /**

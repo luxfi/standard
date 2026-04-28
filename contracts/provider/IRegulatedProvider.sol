@@ -16,7 +16,10 @@ pragma solidity ^0.8.20;
 /// transfer agents, ATS operators). They live outside this repo. The Lux
 /// exchange never links to any specific provider.
 interface IRegulatedProvider {
-    enum Side { Buy, Sell }
+    enum Side {
+        Buy,
+        Sell
+    }
 
     // ─────────────────────────── eligibility ──────────────────────────
 
@@ -24,10 +27,7 @@ interface IRegulatedProvider {
     ///         Called read-only by the router before a regulated swap.
     /// @return ok true if the trade is allowed
     /// @return reasonCode 0 if ok, otherwise an ERC-1404-style code
-    function isEligible(address trader, string calldata symbol)
-        external
-        view
-        returns (bool ok, uint8 reasonCode);
+    function isEligible(address trader, string calldata symbol) external view returns (bool ok, uint8 reasonCode);
 
     /// @notice Does this provider handle `symbol`? Used to decide whether
     ///         a pair should be routed through the provider or executed

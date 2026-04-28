@@ -91,12 +91,7 @@ contract OptionsVault is IOptionsVault, ReentrancyGuard, AccessControl, Pausable
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @inheritdoc IOptionsVault
-    function deposit(address token, uint256 amount)
-        external
-        nonReentrant
-        whenNotPaused
-        onlySupportedToken(token)
-    {
+    function deposit(address token, uint256 amount) external nonReentrant whenNotPaused onlySupportedToken(token) {
         if (amount == 0) revert ZeroAmount();
 
         _accounts[msg.sender][token].deposited += amount;
@@ -106,11 +101,7 @@ contract OptionsVault is IOptionsVault, ReentrancyGuard, AccessControl, Pausable
     }
 
     /// @inheritdoc IOptionsVault
-    function withdraw(address token, uint256 amount)
-        external
-        nonReentrant
-        onlySupportedToken(token)
-    {
+    function withdraw(address token, uint256 amount) external nonReentrant onlySupportedToken(token) {
         if (amount == 0) revert ZeroAmount();
 
         Account storage acct = _accounts[msg.sender][token];
@@ -159,11 +150,7 @@ contract OptionsVault is IOptionsVault, ReentrancyGuard, AccessControl, Pausable
      * @dev Caller receives liquidation penalty as reward. Only callable when
      *      user's deposited collateral falls below maintenance margin.
      */
-    function liquidate(address user, address token)
-        external
-        nonReentrant
-        onlySupportedToken(token)
-    {
+    function liquidate(address user, address token) external nonReentrant onlySupportedToken(token) {
         Account storage acct = _accounts[user][token];
         uint256 maintenance = getMaintenanceRequirement(user, token);
 
@@ -206,12 +193,11 @@ contract OptionsVault is IOptionsVault, ReentrancyGuard, AccessControl, Pausable
     }
 
     /// @inheritdoc IOptionsVault
-    function calculateSpreadMargin(
-        address user,
-        uint256 shortSeriesId,
-        uint256 longSeriesId,
-        uint256 quantity
-    ) external view returns (uint256 reduction) {
+    function calculateSpreadMargin(address user, uint256 shortSeriesId, uint256 longSeriesId, uint256 quantity)
+        external
+        view
+        returns (uint256 reduction)
+    {
         Options.OptionSeries memory shortSeries = options.getSeries(shortSeriesId);
         Options.OptionSeries memory longSeries = options.getSeries(longSeriesId);
 

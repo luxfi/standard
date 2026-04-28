@@ -38,13 +38,7 @@ contract CRDTAnchor {
     uint64 public immutable maxOpCountJump;
 
     /// Emitted on every successful checkpoint.
-    event CheckpointEvent(
-        address indexed owner,
-        bytes32 indexed docId,
-        bytes32 root,
-        uint64 opCount,
-        uint64 timestamp
-    );
+    event CheckpointEvent(address indexed owner, bytes32 indexed docId, bytes32 root, uint64 opCount, uint64 timestamp);
 
     error OpCountNotMonotonic(uint64 current, uint64 attempted);
     error ZeroOpCount();
@@ -85,10 +79,11 @@ contract CRDTAnchor {
     /// @return root      State root hash.
     /// @return opCount   Operation count at checkpoint.
     /// @return timestamp Block timestamp of the checkpoint.
-    function latest(
-        address owner,
-        bytes32 docId
-    ) external view returns (bytes32 root, uint64 opCount, uint64 timestamp) {
+    function latest(address owner, bytes32 docId)
+        external
+        view
+        returns (bytes32 root, uint64 opCount, uint64 timestamp)
+    {
         Checkpoint storage cp = _checkpoints[_key(owner, docId)];
         return (cp.root, cp.opCount, cp.timestamp);
     }

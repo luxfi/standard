@@ -17,7 +17,7 @@ contract LiquidityOracle is ILiquidityOracle, AccessControl {
     // ═══════════════════════════════════════════════════════════════════════
 
     struct PriceFeed {
-        uint256 price;     // 18 decimals, USD
+        uint256 price; // 18 decimals, USD
         uint256 timestamp; // block.timestamp when updated
     }
 
@@ -107,10 +107,7 @@ contract LiquidityOracle is ILiquidityOracle, AccessControl {
     /// @notice Batch update prices (gas efficient)
     /// @param symbols Array of asset symbols
     /// @param newPrices Array of prices (18 decimals USD)
-    function updatePriceBatch(string[] calldata symbols, uint256[] calldata newPrices)
-        external
-        onlyRole(UPDATER_ROLE)
-    {
+    function updatePriceBatch(string[] calldata symbols, uint256[] calldata newPrices) external onlyRole(UPDATER_ROLE) {
         if (symbols.length != newPrices.length) revert ArrayLengthMismatch();
         if (symbols.length == 0) revert EmptyArray();
 

@@ -7,7 +7,13 @@ import "./ILedger.sol";
 /// @notice Base implementation; domain wrappers add access control
 ///         (e.g. Transfer Agent only, DAO-multisig only).
 abstract contract Ledger is ILedger {
-    struct Rec { uint64 id; address from; address to; address asset; uint256 amount; }
+    struct Rec {
+        uint64 id;
+        address from;
+        address to;
+        address asset;
+        uint256 amount;
+    }
 
     Rec[] private _records;
     mapping(bytes32 => uint256) private _balances;
@@ -38,12 +44,7 @@ abstract contract Ledger is ILedger {
         emit Recorded(recordId, from, to, asset, amount);
     }
 
-    function reverse(uint64 recordId, uint8 reasonCode)
-        public
-        virtual
-        override
-        returns (bool)
-    {
+    function reverse(uint64 recordId, uint8 reasonCode) public virtual override returns (bool) {
         if (recordId == 0 || recordId > _records.length || _reversed[recordId]) return false;
         Rec memory r = _records[recordId - 1];
         if (r.to != address(0)) {

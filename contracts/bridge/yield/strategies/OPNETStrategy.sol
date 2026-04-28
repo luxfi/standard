@@ -126,12 +126,7 @@ contract OPNETStrategy is IYieldStrategy, Ownable {
      * @param _btcToken LBTC token address (bridged from OP_NET)
      * @param _lockPeriod Default Babylon lock period
      */
-    constructor(
-        address _vault,
-        address _babylonStaking,
-        address _btcToken,
-        uint64 _lockPeriod
-    ) Ownable(msg.sender) {
+    constructor(address _vault, address _babylonStaking, address _btcToken, uint64 _lockPeriod) Ownable(msg.sender) {
         if (_lockPeriod < MIN_LOCK || _lockPeriod > MAX_LOCK) revert InvalidLockPeriod();
 
         vault = _vault;

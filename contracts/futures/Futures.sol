@@ -155,13 +155,11 @@ contract Futures is IFutures, ReentrancyGuard, AccessControl, Pausable {
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @inheritdoc IFutures
-    function openPosition(
-        uint256 contractId,
-        Side side,
-        uint256 size,
-        uint256 price,
-        uint256 marginAmount
-    ) external nonReentrant whenNotPaused {
+    function openPosition(uint256 contractId, Side side, uint256 size, uint256 price, uint256 marginAmount)
+        external
+        nonReentrant
+        whenNotPaused
+    {
         if (size == 0) revert ZeroAmount();
 
         ContractSpec storage spec = _contracts[contractId];
@@ -367,9 +365,7 @@ contract Futures is IFutures, ReentrancyGuard, AccessControl, Pausable {
             if (pos.status != PositionStatus.OPEN || pos.size == 0) continue;
 
             // PnL since last settlement
-            int256 pnlDelta = _calculatePnl(
-                pos.side, pos.lastSettlementPrice, markPrice, spec.contractSize, pos.size
-            );
+            int256 pnlDelta = _calculatePnl(pos.side, pos.lastSettlementPrice, markPrice, spec.contractSize, pos.size);
 
             pos.lastSettlementPrice = markPrice;
             pos.realisedPnl += pnlDelta;
@@ -482,8 +478,7 @@ contract Futures is IFutures, ReentrancyGuard, AccessControl, Pausable {
 
             if (pos.status != PositionStatus.OPEN || pos.size == 0) continue;
 
-            int256 pnl =
-                _calculatePnl(pos.side, pos.lastSettlementPrice, finalPrice, spec.contractSize, pos.size);
+            int256 pnl = _calculatePnl(pos.side, pos.lastSettlementPrice, finalPrice, spec.contractSize, pos.size);
 
             pos.realisedPnl += pnl;
 
@@ -560,8 +555,7 @@ contract Futures is IFutures, ReentrancyGuard, AccessControl, Pausable {
         uint256 notional = _notionalValue(spec, pos.size, markPrice);
         uint256 maintenanceReq = (notional * spec.maintenanceMarginBps) / BPS;
 
-        int256 unrealised =
-            _calculatePnl(pos.side, pos.lastSettlementPrice, markPrice, spec.contractSize, pos.size);
+        int256 unrealised = _calculatePnl(pos.side, pos.lastSettlementPrice, markPrice, spec.contractSize, pos.size);
         int256 effectiveMargin = int256(pos.margin) + unrealised;
 
         return effectiveMargin < int256(maintenanceReq);
@@ -637,13 +631,11 @@ contract Futures is IFutures, ReentrancyGuard, AccessControl, Pausable {
      * @param size Number of contracts
      * @return pnl Signed PnL (positive = profit)
      */
-    function _calculatePnl(
-        Side side,
-        uint256 fromPrice,
-        uint256 toPrice,
-        uint256 contractSize,
-        uint256 size
-    ) internal pure returns (int256 pnl) {
+    function _calculatePnl(Side side, uint256 fromPrice, uint256 toPrice, uint256 contractSize, uint256 size)
+        internal
+        pure
+        returns (int256 pnl)
+    {
         if (fromPrice == toPrice) return 0;
 
         int256 priceDelta = int256(toPrice) - int256(fromPrice);
@@ -662,8 +654,7 @@ contract Futures is IFutures, ReentrancyGuard, AccessControl, Pausable {
      * @return price Current price (PRECISION-scaled)
      */
     function _getOraclePrice(address asset) internal view returns (uint256) {
-        (bool success, bytes memory data) =
-            oracle.staticcall(abi.encodeWithSignature("getPrice(address)", asset));
+        (bool success, bytes memory data) = oracle.staticcall(abi.encodeWithSignature("getPrice(address)", asset));
         require(success, "Oracle call failed");
         (uint256 price,) = abi.decode(data, (uint256, uint256));
         return price;

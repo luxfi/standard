@@ -115,11 +115,11 @@ contract OmnichainRouter is ReentrancyGuard {
     // ================================================================
 
     struct SignerSet {
-        address signer1;          // individual signer (for accountability/display)
-        address signer2;          // individual signer
-        address signer3;          // individual signer
-        address mpcGroupAddress;  // CGGMP21/FROST threshold aggregate key address
-        uint8 threshold;          // required signers (e.g., 2-of-3)
+        address signer1; // individual signer (for accountability/display)
+        address signer2; // individual signer
+        address signer3; // individual signer
+        address mpcGroupAddress; // CGGMP21/FROST threshold aggregate key address
+        uint8 threshold; // required signers (e.g., 2-of-3)
     }
 
     SignerSet public signers;
@@ -127,7 +127,7 @@ contract OmnichainRouter is ReentrancyGuard {
     /// @notice Pending signer rotation (7-day timelock)
     SignerSet public pendingSigners;
     uint256 public pendingSignersActivateAt; // 0 = no pending change
-    uint256 public rotationNonce;            // prevents rotation/cancel replay
+    uint256 public rotationNonce; // prevents rotation/cancel replay
 
     /// @notice Operational delay for signer rotation (NOT security — allows cross-chain coordination)
     /// Governor-configurable. Default 24h gives relayers time to update all 18+ chains atomically.
@@ -338,15 +338,17 @@ contract OmnichainRouter is ReentrancyGuard {
 
         // Verify MPC signature (includes destination chainId to prevent cross-chain replay)
         // C-07 fix: abi.encode prevents hash collision between variable-length values
-        bytes32 digest = keccak256(abi.encode(
-            "DEPOSIT",
-            chainId,        // destination chain (prevents replay on other chains)
-            sourceChainId,
-            depositNonce,
-            token,
-            recipient,
-            amount
-        ));
+        bytes32 digest = keccak256(
+            abi.encode(
+                "DEPOSIT",
+                chainId, // destination chain (prevents replay on other chains)
+                sourceChainId,
+                depositNonce,
+                token,
+                recipient,
+                amount
+            )
+        );
         address recovered = digest.toEthSignedMessageHash().recover(mpcSignature);
         require(_isAuthorizedSigner(recovered), "Invalid MPC signature");
 
@@ -398,10 +400,7 @@ contract OmnichainRouter is ReentrancyGuard {
     /// @notice Batch mint multiple deposits in a single transaction
     /// @dev Amortizes per-tx overhead for GPU EVM acceleration (30K+ opcodes = 3x GPU zone).
     ///      Each deposit requires its own MPC signature over its own digest.
-    function batchMintDeposit(
-        MintParams[] calldata deposits,
-        bytes[] calldata mpcSignatures
-    ) external nonReentrant {
+    function batchMintDeposit(MintParams[] calldata deposits, bytes[] calldata mpcSignatures) external nonReentrant {
         require(deposits.length == mpcSignatures.length, "Length mismatch");
         require(!autoPaused && !manualPaused, "Paused");
 
@@ -412,9 +411,9 @@ contract OmnichainRouter is ReentrancyGuard {
             require(d.amount > 0, "Zero amount");
 
             // C-07 fix: abi.encode prevents hash collision
-            bytes32 digest = keccak256(abi.encode(
-                "DEPOSIT", chainId, d.sourceChainId, d.depositNonce, d.token, d.recipient, d.amount
-            ));
+            bytes32 digest = keccak256(
+                abi.encode("DEPOSIT", chainId, d.sourceChainId, d.depositNonce, d.token, d.recipient, d.amount)
+            );
             address recovered = digest.toEthSignedMessageHash().recover(mpcSignatures[i]);
             require(_isAuthorizedSigner(recovered), "Invalid MPC signature");
 
@@ -446,12 +445,10 @@ contract OmnichainRouter is ReentrancyGuard {
     /// @dev Fully permissionless. ALWAYS allowed even when paused.
     ///      Burns reduce systemic risk (decrease totalMinted), so blocking
     ///      them during a pause would trap users. Exit guarantee.
-    function burnForWithdrawal(
-        address token,
-        uint256 amount,
-        uint64 destChainId,
-        bytes32 destRecipient
-    ) external nonReentrant {
+    function burnForWithdrawal(address token, uint256 amount, uint64 destChainId, bytes32 destRecipient)
+        external
+        nonReentrant
+    {
         // NOTE: No pause check. Burns are always allowed (exit guarantee).
         require(registeredTokens[token], "Token not registered");
         require(amount > 0, "Zero amount");
@@ -472,20 +469,11 @@ contract OmnichainRouter is ReentrancyGuard {
 
     /// @notice MPC attests to total backing on source chains
     /// @dev Called every ~12 hours. If backing < minted, auto-pause.
-    function updateBacking(
-        address token,
-        uint256 _totalBacking,
-        uint256 timestamp,
-        bytes calldata mpcSignature
-    ) external {
+    function updateBacking(address token, uint256 _totalBacking, uint256 timestamp, bytes calldata mpcSignature)
+        external
+    {
         // C-07 fix: abi.encode prevents hash collision
-        bytes32 digest = keccak256(abi.encode(
-            "BACKING",
-            chainId,
-            token,
-            _totalBacking,
-            timestamp
-        ));
+        bytes32 digest = keccak256(abi.encode("BACKING", chainId, token, _totalBacking, timestamp));
         address recovered = digest.toEthSignedMessageHash().recover(mpcSignature);
         require(_isAuthorizedSigner(recovered), "Invalid MPC signature");
         require(timestamp > lastBackingUpdate[token], "Stale attestation");
@@ -513,21 +501,20 @@ contract OmnichainRouter is ReentrancyGuard {
     // ================================================================
 
     /// @notice Propose new signer set (requires current MPC threshold signature)
-    function proposeSignerRotation(
-        SignerSet calldata newSigners,
-        bytes calldata mpcSignature
-    ) external {
+    function proposeSignerRotation(SignerSet calldata newSigners, bytes calldata mpcSignature) external {
         // C-07 fix: abi.encode prevents hash collision
-        bytes32 digest = keccak256(abi.encode(
-            "ROTATE_SIGNERS",
-            chainId,
-            rotationNonce,
-            newSigners.signer1,
-            newSigners.signer2,
-            newSigners.signer3,
-            newSigners.mpcGroupAddress,
-            newSigners.threshold
-        ));
+        bytes32 digest = keccak256(
+            abi.encode(
+                "ROTATE_SIGNERS",
+                chainId,
+                rotationNonce,
+                newSigners.signer1,
+                newSigners.signer2,
+                newSigners.signer3,
+                newSigners.mpcGroupAddress,
+                newSigners.threshold
+            )
+        );
         address recovered = digest.toEthSignedMessageHash().recover(mpcSignature);
         require(_isAuthorizedSigner(recovered), "Invalid MPC signature");
 
@@ -553,12 +540,7 @@ contract OmnichainRouter is ReentrancyGuard {
     function cancelSignerRotation(bytes calldata mpcSignature) external {
         require(pendingSignersActivateAt > 0, "No pending rotation");
         // C-07 fix: abi.encode prevents hash collision
-        bytes32 digest = keccak256(abi.encode(
-            "CANCEL_ROTATION",
-            chainId,
-            rotationNonce,
-            pendingSignersActivateAt
-        ));
+        bytes32 digest = keccak256(abi.encode("CANCEL_ROTATION", chainId, rotationNonce, pendingSignersActivateAt));
         address recovered = digest.toEthSignedMessageHash().recover(mpcSignature);
         require(_isAuthorizedSigner(recovered), "Invalid MPC signature");
 
@@ -593,11 +575,7 @@ contract OmnichainRouter is ReentrancyGuard {
     //  TOKEN REGISTRATION (MPC only, one-time per token)
     // ================================================================
 
-    function registerToken(
-        address token,
-        uint256 _dailyMintLimit,
-        bytes calldata mpcSignature
-    ) external {
+    function registerToken(address token, uint256 _dailyMintLimit, bytes calldata mpcSignature) external {
         bytes32 digest = keccak256(abi.encode("REGISTER", chainId, token, _dailyMintLimit));
         address recovered = digest.toEthSignedMessageHash().recover(mpcSignature);
         require(_isAuthorizedSigner(recovered), "Invalid");

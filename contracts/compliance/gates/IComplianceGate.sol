@@ -11,10 +11,7 @@ interface IComplianceGate {
     /// @notice Is the trader permitted to trade this symbol right now?
     /// @return ok true if allowed
     /// @return reasonCode 0 if ok, otherwise an ERC-1404-style code
-    function isEligible(address trader, string calldata symbol)
-        external
-        view
-        returns (bool ok, uint8 reasonCode);
+    function isEligible(address trader, string calldata symbol) external view returns (bool ok, uint8 reasonCode);
 
     /// @notice Cheaper check for transfer-level gating (no symbol).
     function checkJurisdiction(address trader) external view returns (bool);

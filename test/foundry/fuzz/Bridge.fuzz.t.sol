@@ -58,8 +58,8 @@ contract BridgeFuzzTest is Test {
             governor,
             stakeholderVault,
             treasury,
-            50,    // 0.5% fee
-            9000,  // 90% to stakeholders
+            50, // 0.5% fee
+            9000, // 90% to stakeholders
             makeAddr("signer1"),
             makeAddr("signer2"),
             makeAddr("signer3"),
@@ -91,49 +91,29 @@ contract BridgeFuzzTest is Test {
         uint256 amountB
     ) public pure {
         // Skip if inputs are identical
-        vm.assume(
-            sourceA != sourceB || nonceA != nonceB || recipientA != recipientB || amountA != amountB
-        );
+        vm.assume(sourceA != sourceB || nonceA != nonceB || recipientA != recipientB || amountA != amountB);
 
-        bytes32 digestA = keccak256(abi.encode(
-            "DEPOSIT", CHAIN_ID, sourceA, nonceA, address(1), recipientA, amountA
-        ));
-        bytes32 digestB = keccak256(abi.encode(
-            "DEPOSIT", CHAIN_ID, sourceB, nonceB, address(1), recipientB, amountB
-        ));
+        bytes32 digestA = keccak256(abi.encode("DEPOSIT", CHAIN_ID, sourceA, nonceA, address(1), recipientA, amountA));
+        bytes32 digestB = keccak256(abi.encode("DEPOSIT", CHAIN_ID, sourceB, nonceB, address(1), recipientB, amountB));
 
         assertNotEq(digestA, digestB, "digest collision");
     }
 
     /// @notice abi.encode digest differs from abi.encodePacked (C-07 fix verification)
-    function testFuzz_digestEncodeVsPacked(
-        uint64 source,
-        uint64 nonce,
-        address recipient,
-        uint256 amount
-    ) public pure {
-        bytes32 safeDigest = keccak256(abi.encode(
-            "DEPOSIT", CHAIN_ID, source, nonce, address(1), recipient, amount
-        ));
-        bytes32 packedDigest = keccak256(abi.encodePacked(
-            "DEPOSIT", CHAIN_ID, source, nonce, address(1), recipient, amount
-        ));
+    function testFuzz_digestEncodeVsPacked(uint64 source, uint64 nonce, address recipient, uint256 amount) public pure {
+        bytes32 safeDigest = keccak256(abi.encode("DEPOSIT", CHAIN_ID, source, nonce, address(1), recipient, amount));
+        bytes32 packedDigest =
+            keccak256(abi.encodePacked("DEPOSIT", CHAIN_ID, source, nonce, address(1), recipient, amount));
         // abi.encode always pads to 32 bytes, so these should differ
         assertNotEq(safeDigest, packedDigest, "encode and encodePacked should differ");
     }
 
     /// @notice Chain ID is included in digest -- same params on different chains produce different digests
-    function testFuzz_digestChainIdSeparation(
-        uint64 source,
-        uint64 nonce,
-        uint256 amount
-    ) public pure {
-        bytes32 digestChain1 = keccak256(abi.encode(
-            "DEPOSIT", uint64(1), source, nonce, address(1), address(2), amount
-        ));
-        bytes32 digestChain2 = keccak256(abi.encode(
-            "DEPOSIT", uint64(2), source, nonce, address(1), address(2), amount
-        ));
+    function testFuzz_digestChainIdSeparation(uint64 source, uint64 nonce, uint256 amount) public pure {
+        bytes32 digestChain1 =
+            keccak256(abi.encode("DEPOSIT", uint64(1), source, nonce, address(1), address(2), amount));
+        bytes32 digestChain2 =
+            keccak256(abi.encode("DEPOSIT", uint64(2), source, nonce, address(1), address(2), amount));
         assertNotEq(digestChain1, digestChain2, "cross-chain replay possible");
     }
 
@@ -142,11 +122,7 @@ contract BridgeFuzzTest is Test {
     // =========================================================================
 
     /// @notice Random bytes should never pass as a valid MPC signature
-    function testFuzz_xchainVault_rejectRandomSignature(
-        bytes32 vaultId,
-        uint256 amount,
-        uint256 randomSeed
-    ) public {
+    function testFuzz_xchainVault_rejectRandomSignature(bytes32 vaultId, uint256 amount, uint256 randomSeed) public {
         XChainVault vault = new XChainVault(address(this));
 
         // Setup MPC oracles
@@ -181,9 +157,8 @@ contract BridgeFuzzTest is Test {
         vault.setMpcOracle(oracle, true);
         vault.setMpcThreshold(2); // Require 2 but only provide 1
 
-        bytes32 messageHash = keccak256(abi.encode(
-            bytes4(0x4255524e), uint32(2), bytes32(uint256(1)), amount, uint256(1)
-        ));
+        bytes32 messageHash =
+            keccak256(abi.encode(bytes4(0x4255524e), uint32(2), bytes32(uint256(1)), amount, uint256(1)));
         bytes32 ethHash = messageHash.toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(oraclePk, ethHash);
 
@@ -220,9 +195,8 @@ contract BridgeFuzzTest is Test {
         uint64 nonce = 1;
         address recipient = makeAddr("recipient");
 
-        bytes32 digest = keccak256(abi.encode(
-            "DEPOSIT", CHAIN_ID, sourceChain, nonce, address(token), recipient, amount
-        ));
+        bytes32 digest =
+            keccak256(abi.encode("DEPOSIT", CHAIN_ID, sourceChain, nonce, address(token), recipient, amount));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(mpcPrivateKey, digest.toEthSignedMessageHash());
 
         uint256 supplyBefore = token.totalSupply();
@@ -249,9 +223,8 @@ contract BridgeFuzzTest is Test {
         address recipient = makeAddr("burner");
 
         // Mint first
-        bytes32 digest = keccak256(abi.encode(
-            "DEPOSIT", CHAIN_ID, sourceChain, nonce, address(token), recipient, mintAmt
-        ));
+        bytes32 digest =
+            keccak256(abi.encode("DEPOSIT", CHAIN_ID, sourceChain, nonce, address(token), recipient, mintAmt));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(mpcPrivateKey, digest.toEthSignedMessageHash());
         router.mintDeposit(sourceChain, nonce, address(token), recipient, mintAmt, abi.encodePacked(r, s, v));
 
@@ -282,9 +255,8 @@ contract BridgeFuzzTest is Test {
         amount = bound(amount, 100, type(uint64).max);
         address recipient = makeAddr("recipient");
 
-        bytes32 digest = keccak256(abi.encode(
-            "DEPOSIT", CHAIN_ID, sourceChain, nonce, address(token), recipient, amount
-        ));
+        bytes32 digest =
+            keccak256(abi.encode("DEPOSIT", CHAIN_ID, sourceChain, nonce, address(token), recipient, amount));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(mpcPrivateKey, digest.toEthSignedMessageHash());
         bytes memory sig = abi.encodePacked(r, s, v);
 
@@ -312,9 +284,8 @@ contract BridgeFuzzTest is Test {
             // Skip if this nonce was already seen (collision from random generation)
             if (router.processedDeposits(sourceChain, nonces[i])) continue;
 
-            bytes32 digest = keccak256(abi.encode(
-                "DEPOSIT", CHAIN_ID, sourceChain, nonces[i], address(token), recipient, amount
-            ));
+            bytes32 digest =
+                keccak256(abi.encode("DEPOSIT", CHAIN_ID, sourceChain, nonces[i], address(token), recipient, amount));
             (uint8 v, bytes32 r, bytes32 s) = vm.sign(mpcPrivateKey, digest.toEthSignedMessageHash());
             router.mintDeposit(sourceChain, nonces[i], address(token), recipient, amount, abi.encodePacked(r, s, v));
 
@@ -331,16 +302,12 @@ contract BridgeFuzzTest is Test {
         uint64 chainB = 20;
 
         // Process on chain A
-        bytes32 digestA = keccak256(abi.encode(
-            "DEPOSIT", CHAIN_ID, chainA, nonce, address(token), recipient, amount
-        ));
+        bytes32 digestA = keccak256(abi.encode("DEPOSIT", CHAIN_ID, chainA, nonce, address(token), recipient, amount));
         (uint8 vA, bytes32 rA, bytes32 sA) = vm.sign(mpcPrivateKey, digestA.toEthSignedMessageHash());
         router.mintDeposit(chainA, nonce, address(token), recipient, amount, abi.encodePacked(rA, sA, vA));
 
         // Same nonce on chain B should still work
-        bytes32 digestB = keccak256(abi.encode(
-            "DEPOSIT", CHAIN_ID, chainB, nonce, address(token), recipient, amount
-        ));
+        bytes32 digestB = keccak256(abi.encode("DEPOSIT", CHAIN_ID, chainB, nonce, address(token), recipient, amount));
         (uint8 vB, bytes32 rB, bytes32 sB) = vm.sign(mpcPrivateKey, digestB.toEthSignedMessageHash());
         router.mintDeposit(chainB, nonce, address(token), recipient, amount, abi.encodePacked(rB, sB, vB));
 
@@ -404,9 +371,8 @@ contract BridgeFuzzTest is Test {
         uint64 nonce = 100;
         address recipient = makeAddr("recipient");
 
-        bytes32 digest = keccak256(abi.encode(
-            "DEPOSIT", CHAIN_ID, sourceChain, nonce, address(token), recipient, amount
-        ));
+        bytes32 digest =
+            keccak256(abi.encode("DEPOSIT", CHAIN_ID, sourceChain, nonce, address(token), recipient, amount));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wrongPk, digest.toEthSignedMessageHash());
 
         vm.expectRevert("Invalid MPC signature");
@@ -429,9 +395,7 @@ contract BridgeFuzzTest is Test {
 
         // Update backing
         uint256 timestamp = block.timestamp + 1;
-        bytes32 digest = keccak256(abi.encode(
-            "BACKING", CHAIN_ID, address(token), backing, timestamp
-        ));
+        bytes32 digest = keccak256(abi.encode("BACKING", CHAIN_ID, address(token), backing, timestamp));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(mpcPrivateKey, digest.toEthSignedMessageHash());
         router.updateBacking(address(token), backing, timestamp, abi.encodePacked(r, s, v));
 
@@ -447,9 +411,8 @@ contract BridgeFuzzTest is Test {
         uint64 nonce = uint64(uint256(keccak256(abi.encode(amount, block.timestamp))));
         address recipient = makeAddr("helper_recipient");
 
-        bytes32 digest = keccak256(abi.encode(
-            "DEPOSIT", CHAIN_ID, sourceChain, nonce, address(token), recipient, amount
-        ));
+        bytes32 digest =
+            keccak256(abi.encode("DEPOSIT", CHAIN_ID, sourceChain, nonce, address(token), recipient, amount));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(mpcPrivateKey, digest.toEthSignedMessageHash());
         router.mintDeposit(sourceChain, nonce, address(token), recipient, amount, abi.encodePacked(r, s, v));
     }

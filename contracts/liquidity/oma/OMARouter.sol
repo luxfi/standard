@@ -37,12 +37,7 @@ contract OMARouter is ReentrancyGuard, AccessControl {
     event PoolAdded(address indexed pool, uint256 index);
     event PoolRemoved(address indexed pool);
     event RouterSwap(
-        address indexed user,
-        string symbol,
-        bool isBuy,
-        uint256 amountIn,
-        uint256 amountOut,
-        uint256 poolUsed
+        address indexed user, string symbol, bool isBuy, uint256 amountIn, uint256 amountOut, uint256 poolUsed
     );
 
     // ═══════════════════════════════════════════════════════════════════════

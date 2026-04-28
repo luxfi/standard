@@ -34,8 +34,8 @@ contract OracleMirroredAMM is IOracleMirroredAMM, ReentrancyGuard, AccessControl
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     uint256 public constant BPS = 10_000;
-    uint256 public constant MAX_MARGIN_BPS = 500;        // 5% cap
-    uint256 public constant MAX_DEVIATION_CAP = 5000;    // 50% cap on circuit breaker
+    uint256 public constant MAX_MARGIN_BPS = 500; // 5% cap
+    uint256 public constant MAX_DEVIATION_CAP = 5000; // 50% cap on circuit breaker
     uint256 public constant MAX_STALENESS_CAP = 1 hours; // staleness cap
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -111,7 +111,9 @@ contract OracleMirroredAMM is IOracleMirroredAMM, ReentrancyGuard, AccessControl
         if (admin == address(0)) revert ZeroAddress();
         if (_marginBps > MAX_MARGIN_BPS) revert MarginTooHigh(_marginBps, MAX_MARGIN_BPS);
         if (_maxDeviationBps > MAX_DEVIATION_CAP) revert DeviationTooHigh(_maxDeviationBps, MAX_DEVIATION_CAP);
-        if (_maxStalenessSeconds > MAX_STALENESS_CAP) revert StalenessOutOfRange(_maxStalenessSeconds, MAX_STALENESS_CAP);
+        if (_maxStalenessSeconds > MAX_STALENESS_CAP) {
+            revert StalenessOutOfRange(_maxStalenessSeconds, MAX_STALENESS_CAP);
+        }
 
         oracle = ILiquidityOracle(_oracle);
         settlementAccount = _settlementAccount;
@@ -150,9 +152,8 @@ contract OracleMirroredAMM is IOracleMirroredAMM, ReentrancyGuard, AccessControl
         // Circuit breaker
         uint256 prev = lastPrice[symHash];
         if (prev > 0) {
-            uint256 deviation = oraclePrice > prev
-                ? ((oraclePrice - prev) * BPS / prev)
-                : ((prev - oraclePrice) * BPS / prev);
+            uint256 deviation =
+                oraclePrice > prev ? ((oraclePrice - prev) * BPS / prev) : ((prev - oraclePrice) * BPS / prev);
             if (deviation > maxDeviationBps) revert PriceDeviationTooLarge(deviation, maxDeviationBps);
         }
         lastPrice[symHash] = oraclePrice;

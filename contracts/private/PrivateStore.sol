@@ -35,12 +35,7 @@ contract PrivateStore {
 
     /// Emitted on every write. tagHash is NOT the raw tag — it's a
     /// client-side hash so observers can't correlate labels across users.
-    event Put(
-        address indexed owner,
-        bytes32 indexed tagHash,
-        uint256 size,
-        uint64 timestamp
-    );
+    event Put(address indexed owner, bytes32 indexed tagHash, uint256 size, uint64 timestamp);
 
     /// Emitted on explicit deletion.
     event Deleted(address indexed owner, bytes32 indexed tagHash);

@@ -35,14 +35,14 @@ contract OptionsTest is Test {
     OptionsVault public vault;
     OptionsRouter public router;
     MockOracle public oracle;
-    MockERC20 public wbtc;  // underlying (8 decimals)
-    MockERC20 public usdl;  // quote (18 decimals)
-    MockERC20 public zero;  // 0 decimals token
+    MockERC20 public wbtc; // underlying (8 decimals)
+    MockERC20 public usdl; // quote (18 decimals)
+    MockERC20 public zero; // 0 decimals token
 
     address admin = address(0xA);
     address alice = address(0xB);
-    address bob   = address(0xC);
-    address fees  = address(0xF);
+    address bob = address(0xC);
+    address fees = address(0xF);
 
     uint256 constant STRIKE = 50000e18; // $50,000 in 18-dec quote
     uint256 constant WBTC_AMOUNT = 1e8; // 1 BTC in 8-dec underlying
@@ -234,12 +234,7 @@ contract OptionsTest is Test {
             quantity: 1e8,
             maxPremium: 0
         });
-        legs[1] = IOptionsRouter.Leg({
-            seriesId: seriesId,
-            isBuy: false,
-            quantity: 1e8,
-            maxPremium: 0
-        });
+        legs[1] = IOptionsRouter.Leg({ seriesId: seriesId, isBuy: false, quantity: 1e8, maxPremium: 0 });
 
         vm.expectRevert("seriesId exceeds uint16");
         router.executeStrategy(IOptionsRouter.StrategyType.CUSTOM, legs, 0);
@@ -258,7 +253,7 @@ contract OptionsTest is Test {
         legs[0] = IOptionsRouter.Leg({
             seriesId: seriesId,
             isBuy: true,
-            quantity: uint256(2)**47, // exactly 2^47, exceeds max of 2^47 - 1
+            quantity: uint256(2) ** 47, // exactly 2^47, exceeds max of 2^47 - 1
             maxPremium: 0
         });
 

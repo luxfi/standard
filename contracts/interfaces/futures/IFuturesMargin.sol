@@ -267,8 +267,5 @@ interface IFuturesMargin {
      * @param underlying Underlying asset
      * @return Cross-margin group data
      */
-    function getCrossMarginGroup(address trader, address underlying)
-        external
-        view
-        returns (CrossMarginGroup memory);
+    function getCrossMarginGroup(address trader, address underlying) external view returns (CrossMarginGroup memory);
 }

@@ -519,15 +519,15 @@ contract UtilityRolesManagementV1 is IUtilityRolesManagementV1, DeploymentBlockN
             ISablierV2LockupLinear(sablierStreamParams.sablier)
                 .createWithTimestamps(
                     LockupLinear.CreateWithTimestamps({
-                        sender: sablierStreamParams.sender,
-                        recipient: streamRecipient_,
-                        totalAmount: sablierStreamParams.totalAmount,
-                        asset: IERC20(sablierStreamParams.asset),
-                        cancelable: sablierStreamParams.cancelable,
-                        transferable: sablierStreamParams.transferable,
-                        timestamps: sablierStreamParams.timestamps,
-                        broker: sablierStreamParams.broker
-                    })
+                    sender: sablierStreamParams.sender,
+                    recipient: streamRecipient_,
+                    totalAmount: sablierStreamParams.totalAmount,
+                    asset: IERC20(sablierStreamParams.asset),
+                    cancelable: sablierStreamParams.cancelable,
+                    transferable: sablierStreamParams.transferable,
+                    timestamps: sablierStreamParams.timestamps,
+                    broker: sablierStreamParams.broker
+                })
                 );
 
             // Step 3: Emit metadata linking Hat ID to stream ID

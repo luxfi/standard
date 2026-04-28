@@ -55,11 +55,7 @@ contract Disclosure {
     /// @notice Register a per-viewer wrapped decryption key. The wrappedKey
     ///         is the document's symmetric key encrypted under the viewer's
     ///         public key. The viewer fetches it and decrypts locally.
-    function registerViewingKey(
-        bytes32 docId,
-        address viewer,
-        bytes calldata wrappedKey
-    ) external {
+    function registerViewingKey(bytes32 docId, address viewer, bytes calldata wrappedKey) external {
         if (wrappedKey.length == 0) revert EmptyWrappedKey();
         _viewingKeys[_vkKey(msg.sender, docId, viewer)] = wrappedKey;
         emit ViewingKeyRegistered(msg.sender, docId, viewer);
@@ -68,11 +64,7 @@ contract Disclosure {
     /// @notice Fetch the wrapped decryption key for a viewer. Anyone may
     ///         call this (the wrappedKey is encrypted under the viewer's
     ///         public key, so only the viewer can unwrap it).
-    function getViewingKey(
-        address owner,
-        bytes32 docId,
-        address viewer
-    ) external view returns (bytes memory) {
+    function getViewingKey(address owner, bytes32 docId, address viewer) external view returns (bytes memory) {
         bytes memory wk = _viewingKeys[_vkKey(owner, docId, viewer)];
         if (wk.length == 0) revert ViewingKeyNotFound();
         return wk;
@@ -100,7 +92,7 @@ contract Disclosure {
     struct ThresholdPolicy {
         address owner;
         uint256 threshold;
-        bytes policyCiphertext;  // encrypted decryption key (shares distributed off-chain via LSSS)
+        bytes policyCiphertext; // encrypted decryption key (shares distributed off-chain via LSSS)
         uint256 partyCount;
     }
 
@@ -124,7 +116,9 @@ contract Disclosure {
     uint256 private _requestNonce;
 
     event ThresholdPolicyCreated(address indexed owner, bytes32 indexed docId, uint256 threshold, uint256 partyCount);
-    event DisclosureRequested(bytes32 indexed requestId, address indexed owner, bytes32 indexed docId, bytes32 reasonHash, address requester);
+    event DisclosureRequested(
+        bytes32 indexed requestId, address indexed owner, bytes32 indexed docId, bytes32 reasonHash, address requester
+    );
     event ShareSubmitted(bytes32 indexed requestId, address indexed party, uint256 shareIndex);
     event PartyRevoked(address indexed owner, bytes32 indexed docId, address indexed party);
 
@@ -151,10 +145,7 @@ contract Disclosure {
         if (_policies[pk].owner != address(0)) revert PolicyAlreadyExists();
 
         _policies[pk] = ThresholdPolicy({
-            owner: msg.sender,
-            threshold: threshold,
-            policyCiphertext: policyCiphertext,
-            partyCount: parties.length
+            owner: msg.sender, threshold: threshold, policyCiphertext: policyCiphertext, partyCount: parties.length
         });
 
         for (uint256 i = 0; i < parties.length; i++) {
@@ -167,11 +158,7 @@ contract Disclosure {
     /// @notice Request disclosure of a document. Any authorized party may
     ///         request. Emits an event for off-chain parties to observe and
     ///         submit their shares.
-    function requestDisclosure(
-        address owner,
-        bytes32 docId,
-        bytes32 reasonHash
-    ) external returns (bytes32 requestId) {
+    function requestDisclosure(address owner, bytes32 docId, bytes32 reasonHash) external returns (bytes32 requestId) {
         bytes32 pk = _policyKey(owner, docId);
         if (_policies[pk].owner == address(0)) revert PolicyNotFound();
         if (!_parties[pk][msg.sender]) revert NotAuthorizedParty();
@@ -180,11 +167,7 @@ contract Disclosure {
         requestId = keccak256(abi.encode(owner, docId, _requestNonce));
 
         _requests[requestId] = DisclosureRequest({
-            docId: docId,
-            owner: owner,
-            reasonHash: reasonHash,
-            requester: msg.sender,
-            shareCount: 0
+            docId: docId, owner: owner, reasonHash: reasonHash, requester: msg.sender, shareCount: 0
         });
 
         emit DisclosureRequested(requestId, owner, docId, reasonHash, msg.sender);
@@ -223,10 +206,11 @@ contract Disclosure {
     }
 
     /// @notice Read the policy ciphertext (for off-chain share distribution).
-    function getPolicy(
-        address owner,
-        bytes32 docId
-    ) external view returns (uint256 threshold, uint256 partyCount, bytes memory policyCiphertext) {
+    function getPolicy(address owner, bytes32 docId)
+        external
+        view
+        returns (uint256 threshold, uint256 partyCount, bytes memory policyCiphertext)
+    {
         ThresholdPolicy storage p = _policies[_policyKey(owner, docId)];
         if (p.owner == address(0)) revert PolicyNotFound();
         return (p.threshold, p.partyCount, p.policyCiphertext);
@@ -243,9 +227,11 @@ contract Disclosure {
     }
 
     /// @notice Read disclosure request metadata.
-    function getRequest(bytes32 requestId) external view returns (
-        bytes32 docId, address owner, bytes32 reasonHash, address requester, uint256 shareCount
-    ) {
+    function getRequest(bytes32 requestId)
+        external
+        view
+        returns (bytes32 docId, address owner, bytes32 reasonHash, address requester, uint256 shareCount)
+    {
         DisclosureRequest storage r = _requests[requestId];
         return (r.docId, r.owner, r.reasonHash, r.requester, r.shareCount);
     }
@@ -261,12 +247,7 @@ contract Disclosure {
     /// @dev Optional verifier registry: claimType -> verifier contract.
     mapping(bytes4 => address) private _verifiers;
 
-    event Attestation(
-        address indexed owner,
-        bytes32 indexed docId,
-        bytes32 indexed claimHash,
-        bytes4 claimType
-    );
+    event Attestation(address indexed owner, bytes32 indexed docId, bytes32 indexed claimHash, bytes4 claimType);
     event VerifierRegistered(bytes4 indexed claimType, address verifier);
 
     error EmptyProof();
@@ -284,12 +265,7 @@ contract Disclosure {
     /// @param claimType 4-byte type selector (e.g. 0x00000001 for "KYC",
     ///                  0x00000002 for "accreditation").
     /// @param proof     Opaque proof bytes (Groth16, PlonK, etc).
-    function attest(
-        bytes32 docId,
-        bytes32 claimHash,
-        bytes4 claimType,
-        bytes calldata proof
-    ) external {
+    function attest(bytes32 docId, bytes32 claimHash, bytes4 claimType, bytes calldata proof) external {
         if (proof.length == 0) revert EmptyProof();
         // proof is emitted in the event log only — not stored.
         // Verifiers index events by (owner, docId, claimType).

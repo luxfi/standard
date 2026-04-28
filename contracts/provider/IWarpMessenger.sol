@@ -9,19 +9,20 @@ interface IWarpMessenger {
     /// @notice Emit a cross-chain message to `destinationChainID`, addressed
     ///         to `destinationAddress` with `payload` as the message body.
     /// @return messageID 32-byte unique id for the message.
-    function sendWarpMessage(
-        bytes32 destinationChainID,
-        address destinationAddress,
-        bytes calldata payload
-    ) external returns (bytes32 messageID);
+    function sendWarpMessage(bytes32 destinationChainID, address destinationAddress, bytes calldata payload)
+        external
+        returns (bytes32 messageID);
 
     /// @notice Read an inbound message by index, verifying the aggregated
     ///         BLS signature from the origin chain's validator set.
-    function getVerifiedWarpMessage(uint32 index) external view returns (
-        bytes32 sourceChainID,
-        address originSenderAddress,
-        address destinationAddress,
-        bytes memory payload,
-        bool valid
-    );
+    function getVerifiedWarpMessage(uint32 index)
+        external
+        view
+        returns (
+            bytes32 sourceChainID,
+            address originSenderAddress,
+            address destinationAddress,
+            bytes memory payload,
+            bool valid
+        );
 }

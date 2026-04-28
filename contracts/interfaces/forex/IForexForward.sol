@@ -10,21 +10,21 @@ interface IForexForward {
     // ═══════════════════════════════════════════════════════════════════════
 
     enum ForwardStatus {
-        OPEN,       // Created, awaiting counterparty
-        ACTIVE,     // Both parties deposited collateral
-        SETTLED,    // Exchanged at maturity
-        CANCELLED,  // Cancelled before activation
-        DEFAULTED   // Collateral liquidated due to insufficient margin
+        OPEN, // Created, awaiting counterparty
+        ACTIVE, // Both parties deposited collateral
+        SETTLED, // Exchanged at maturity
+        CANCELLED, // Cancelled before activation
+        DEFAULTED // Collateral liquidated due to insufficient margin
     }
 
     struct Forward {
-        uint256 pairId;         // FX pair ID
-        address buyer;          // Buys base at agreed rate
-        address seller;         // Sells base at agreed rate
-        uint256 rate;           // Agreed forward rate (18 decimals)
-        uint256 baseAmount;     // Amount of base currency
-        uint256 maturityDate;   // Settlement timestamp
-        uint256 buyerCollateral;  // Buyer's deposited collateral (in quote)
+        uint256 pairId; // FX pair ID
+        address buyer; // Buys base at agreed rate
+        address seller; // Sells base at agreed rate
+        uint256 rate; // Agreed forward rate (18 decimals)
+        uint256 baseAmount; // Amount of base currency
+        uint256 maturityDate; // Settlement timestamp
+        uint256 buyerCollateral; // Buyer's deposited collateral (in quote)
         uint256 sellerCollateral; // Seller's deposited collateral (in base)
         ForwardStatus status;
     }

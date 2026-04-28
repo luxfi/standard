@@ -32,9 +32,9 @@ contract OPNETConformance is TeleportConformance {
     uint256 internal constant DECIMAL_SCALE = 10 ** (LBTC_DECIMALS - BTC_DECIMALS); // 1e10
 
     // BTC amounts in 8-decimal native precision
-    uint256 internal constant ONE_BTC = 1e8;           // 1.00000000 BTC
-    uint256 internal constant ONE_SAT = 1;             // 0.00000001 BTC
-    uint256 internal constant DUST_THRESHOLD = 546;    // 546 sats — Bitcoin dust limit
+    uint256 internal constant ONE_BTC = 1e8; // 1.00000000 BTC
+    uint256 internal constant ONE_SAT = 1; // 0.00000001 BTC
+    uint256 internal constant DUST_THRESHOLD = 546; // 546 sats — Bitcoin dust limit
 
     // ═══════════════════════════════════════════════════════════════════════
     // SETUP — override parent with OP_NET parameters
@@ -73,15 +73,11 @@ contract OPNETConformance is TeleportConformance {
         teleporter.mintDeposit(OPNET_CHAIN_ID, 1, recipient, depositAmount, sig);
 
         assertTrue(
-            teleporter.isDepositProcessed(OPNET_CHAIN_ID, 1),
-            "deposit should be processed under OP_NET chain ID"
+            teleporter.isDepositProcessed(OPNET_CHAIN_ID, 1), "deposit should be processed under OP_NET chain ID"
         );
 
         // Not processed under a different chain ID
-        assertFalse(
-            teleporter.isDepositProcessed(1, 1),
-            "should not be processed under Ethereum chain ID"
-        );
+        assertFalse(teleporter.isDepositProcessed(1, 1), "should not be processed under Ethereum chain ID");
     }
 
     // ═══════════════════════════════════════════════════════════════════════

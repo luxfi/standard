@@ -2,13 +2,13 @@
 // Copyright (c) 2026 Lux Partners Limited
 pragma solidity ^0.8.24;
 
-import {ERC20} from "@luxfi/oz/token/ERC20/ERC20.sol";
-import {IERC20} from "@luxfi/oz/token/ERC20/IERC20.sol";
-import {AccessControl} from "@luxfi/oz/access/AccessControl.sol";
-import {IToken} from "@luxfi/erc-3643/contracts/token/IToken.sol";
-import {IIdentityRegistry} from "@luxfi/erc-3643/contracts/registry/interface/IIdentityRegistry.sol";
-import {IModularCompliance} from "@luxfi/erc-3643/contracts/compliance/modular/IModularCompliance.sol";
-import {IIdentity} from "@luxfi/onchain-id/contracts/interface/IIdentity.sol";
+import { ERC20 } from "@luxfi/oz/token/ERC20/ERC20.sol";
+import { IERC20 } from "@luxfi/oz/token/ERC20/IERC20.sol";
+import { AccessControl } from "@luxfi/oz/access/AccessControl.sol";
+import { IToken } from "@luxfi/erc-3643/contracts/token/IToken.sol";
+import { IIdentityRegistry } from "@luxfi/erc-3643/contracts/registry/interface/IIdentityRegistry.sol";
+import { IModularCompliance } from "@luxfi/erc-3643/contracts/compliance/modular/IModularCompliance.sol";
+import { IIdentity } from "@luxfi/onchain-id/contracts/interface/IIdentity.sol";
 
 /// @title SecurityToken
 /// @notice Lux's canonical ERC-3643 security token. Implements the T-REX `IToken`
@@ -97,9 +97,17 @@ contract SecurityToken is IToken, ERC20, AccessControl {
 
     // ── ERC20 metadata ──────────────────────────────────────────────────────
 
-    function name() public view override(ERC20, IToken) returns (string memory) { return _tokenName; }
-    function symbol() public view override(ERC20, IToken) returns (string memory) { return _tokenSymbol; }
-    function decimals() public view override(ERC20, IToken) returns (uint8) { return _tokenDecimals; }
+    function name() public view override(ERC20, IToken) returns (string memory) {
+        return _tokenName;
+    }
+
+    function symbol() public view override(ERC20, IToken) returns (string memory) {
+        return _tokenSymbol;
+    }
+
+    function decimals() public view override(ERC20, IToken) returns (uint8) {
+        return _tokenDecimals;
+    }
 
     // ── ERC20 transfers (compliance-gated) ──────────────────────────────────
 
@@ -123,7 +131,9 @@ contract SecurityToken is IToken, ERC20, AccessControl {
     }
 
     function batchTransfer(address[] calldata toList, uint256[] calldata amounts) external override {
-        for (uint256 i = 0; i < toList.length; ++i) transfer(toList[i], amounts[i]);
+        for (uint256 i = 0; i < toList.length; ++i) {
+            transfer(toList[i], amounts[i]);
+        }
     }
 
     // ── IToken: governance ──────────────────────────────────────────────────
@@ -159,10 +169,21 @@ contract SecurityToken is IToken, ERC20, AccessControl {
         emit ComplianceAdded(compliance_);
     }
 
-    function onchainID() external view override returns (address) { return _tokenOnchainID; }
-    function version() external pure override returns (string memory) { return _VERSION; }
-    function identityRegistry() external view override returns (IIdentityRegistry) { return _idRegistry; }
-    function compliance() external view override returns (IModularCompliance) { return _compliance; }
+    function onchainID() external view override returns (address) {
+        return _tokenOnchainID;
+    }
+
+    function version() external pure override returns (string memory) {
+        return _VERSION;
+    }
+
+    function identityRegistry() external view override returns (IIdentityRegistry) {
+        return _idRegistry;
+    }
+
+    function compliance() external view override returns (IModularCompliance) {
+        return _compliance;
+    }
 
     // ── IToken: pause ───────────────────────────────────────────────────────
 
@@ -178,7 +199,9 @@ contract SecurityToken is IToken, ERC20, AccessControl {
         emit Unpaused(_msgSender());
     }
 
-    function paused() external view override returns (bool) { return _tokenPaused; }
+    function paused() external view override returns (bool) {
+        return _tokenPaused;
+    }
 
     // ── IToken: mint / burn / forced transfer ───────────────────────────────
 
@@ -214,19 +237,24 @@ contract SecurityToken is IToken, ERC20, AccessControl {
     }
 
     function batchMint(address[] calldata toList, uint256[] calldata amounts) external override {
-        for (uint256 i = 0; i < toList.length; ++i) mint(toList[i], amounts[i]);
+        for (uint256 i = 0; i < toList.length; ++i) {
+            mint(toList[i], amounts[i]);
+        }
     }
 
     function batchBurn(address[] calldata fromList, uint256[] calldata amounts) external override {
-        for (uint256 i = 0; i < fromList.length; ++i) burn(fromList[i], amounts[i]);
+        for (uint256 i = 0; i < fromList.length; ++i) {
+            burn(fromList[i], amounts[i]);
+        }
     }
 
-    function batchForcedTransfer(
-        address[] calldata fromList,
-        address[] calldata toList,
-        uint256[] calldata amounts
-    ) external override {
-        for (uint256 i = 0; i < fromList.length; ++i) forcedTransfer(fromList[i], toList[i], amounts[i]);
+    function batchForcedTransfer(address[] calldata fromList, address[] calldata toList, uint256[] calldata amounts)
+        external
+        override
+    {
+        for (uint256 i = 0; i < fromList.length; ++i) {
+            forcedTransfer(fromList[i], toList[i], amounts[i]);
+        }
     }
 
     // ── IToken: freezing ────────────────────────────────────────────────────
@@ -249,19 +277,30 @@ contract SecurityToken is IToken, ERC20, AccessControl {
     }
 
     function batchSetAddressFrozen(address[] calldata users, bool[] calldata freezes) external override {
-        for (uint256 i = 0; i < users.length; ++i) setAddressFrozen(users[i], freezes[i]);
+        for (uint256 i = 0; i < users.length; ++i) {
+            setAddressFrozen(users[i], freezes[i]);
+        }
     }
 
     function batchFreezePartialTokens(address[] calldata users, uint256[] calldata amounts) external override {
-        for (uint256 i = 0; i < users.length; ++i) freezePartialTokens(users[i], amounts[i]);
+        for (uint256 i = 0; i < users.length; ++i) {
+            freezePartialTokens(users[i], amounts[i]);
+        }
     }
 
     function batchUnfreezePartialTokens(address[] calldata users, uint256[] calldata amounts) external override {
-        for (uint256 i = 0; i < users.length; ++i) unfreezePartialTokens(users[i], amounts[i]);
+        for (uint256 i = 0; i < users.length; ++i) {
+            unfreezePartialTokens(users[i], amounts[i]);
+        }
     }
 
-    function isFrozen(address user) external view override returns (bool) { return _frozen[user]; }
-    function getFrozenTokens(address user) external view override returns (uint256) { return _frozenTokens[user]; }
+    function isFrozen(address user) external view override returns (bool) {
+        return _frozen[user];
+    }
+
+    function getFrozenTokens(address user) external view override returns (uint256) {
+        return _frozenTokens[user];
+    }
 
     // ── IToken: recovery (lost wallet → new wallet) ─────────────────────────
 

@@ -34,13 +34,13 @@ contract WarpRegulatedProvider is IRegulatedProvider {
 
     /// @notice Opcode prefix for the destination precompile's ATS matching.
     ///         0x01 = OpMatch per precompile/ats/types.go.
-    uint8 public constant DEST_OP_MATCH         = 0x01;
-    uint8 public constant DEST_OP_BEST_PRICE    = 0x03;
-    uint8 public constant DEST_OP_CHECK_ACCRED  = 0x13; // BD checkAccredited
-    uint8 public constant DEST_OP_CHECK_JURISD  = 0x15; // BD checkJurisdiction
+    uint8 public constant DEST_OP_MATCH = 0x01;
+    uint8 public constant DEST_OP_BEST_PRICE = 0x03;
+    uint8 public constant DEST_OP_CHECK_ACCRED = 0x13; // BD checkAccredited
+    uint8 public constant DEST_OP_CHECK_JURISD = 0x15; // BD checkJurisdiction
 
     uint8 public constant OP_WARP_INBOUND = 0xF0;
-    uint8 public constant WARP_VERSION    = 0x01;
+    uint8 public constant WARP_VERSION = 0x01;
 
     /// @notice Set of symbols this warp bridge handles. Operators (typically
     ///         chain governance) populate this by observing the dest
@@ -80,12 +80,7 @@ contract WarpRegulatedProvider is IRegulatedProvider {
     ///         source of truth. We return `true` if the symbol is handled;
     ///         the real compliance check happens when `routedSwap` lands
     ///         on the destination chain.
-    function isEligible(address, string calldata symbol)
-        external
-        view
-        override
-        returns (bool ok, uint8 reasonCode)
-    {
+    function isEligible(address, string calldata symbol) external view override returns (bool ok, uint8 reasonCode) {
         if (!handledSymbol[keccak256(bytes(symbol))]) return (false, 255);
         return (true, 0);
     }
@@ -116,10 +111,13 @@ contract WarpRegulatedProvider is IRegulatedProvider {
     ///         provider or a same-L1 deployment.
     function routedSwap(
         address trader,
-        address /*tokenIn*/,
-        address /*tokenOut*/,
+        address,
+        /*tokenIn*/
+        address,
+        /*tokenOut*/
         uint256 amountIn,
-        uint256 /*minOut*/,
+        uint256,
+        /*minOut*/
         string calldata symbol
     ) external override returns (uint256 amountOut) {
         require(handledSymbol[keccak256(bytes(symbol))], "Warp: unhandled");
@@ -144,11 +142,7 @@ contract WarpRegulatedProvider is IRegulatedProvider {
 
     // ─────────────────────────── helpers ──────────────────────────────
 
-    function _envelope(address origin, uint8 innerOp, bytes memory innerData)
-        private
-        view
-        returns (bytes memory)
-    {
+    function _envelope(address origin, uint8 innerOp, bytes memory innerData) private view returns (bytes memory) {
         bytes memory out = new bytes(54 + innerData.length);
         out[0] = bytes1(OP_WARP_INBOUND);
         out[1] = bytes1(WARP_VERSION);
@@ -156,11 +150,17 @@ contract WarpRegulatedProvider is IRegulatedProvider {
         // which the destination reads. The calling chain's ID is known to
         // the destination via the warp verification layer; we fill zeros
         // here as a placeholder and let the verifier bind the real id.
-        for (uint256 i = 0; i < 32; i++) out[2 + i] = 0;
+        for (uint256 i = 0; i < 32; i++) {
+            out[2 + i] = 0;
+        }
         bytes20 o = bytes20(origin);
-        for (uint256 i = 0; i < 20; i++) out[34 + i] = o[i];
+        for (uint256 i = 0; i < 20; i++) {
+            out[34 + i] = o[i];
+        }
         out[54 - 1] = bytes1(innerOp);
-        for (uint256 i = 0; i < innerData.length; i++) out[54 + i] = innerData[i];
+        for (uint256 i = 0; i < innerData.length; i++) {
+            out[54 + i] = innerData[i];
+        }
         return out;
     }
 

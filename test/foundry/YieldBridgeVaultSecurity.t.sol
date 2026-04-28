@@ -13,7 +13,7 @@ import { IYieldStrategy } from "../../contracts/bridge/yield/IYieldStrategy.sol"
 // ═══════════════════════════════════════════════════════════════════════════════
 
 contract MockToken is ERC20 {
-    constructor() ERC20("Mock", "MCK") {}
+    constructor() ERC20("Mock", "MCK") { }
 
     function mint(address to, uint256 amount) external {
         _mint(to, amount);
@@ -66,307 +66,309 @@ contract MockYieldStrategy is IYieldStrategy {
     }
 }
 
-/// @notice Strategy that attempts reentrancy on the vault during deposit.
-contract ReentrantStrategy is IYieldStrategy {
-    address public override asset;
-    uint256 public override totalAssets;
-    uint256 public override totalDeposited;
-    bool public override isActive = true;
-    address public vault;
-    bool public reentered;
+    /// @notice Strategy that attempts reentrancy on the vault during deposit.
+    contract ReentrantStrategy is IYieldStrategy {
+        address public override asset;
+        uint256 public override totalAssets;
+        uint256 public override totalDeposited;
+        bool public override isActive = true;
+        address public vault;
+        bool public reentered;
 
-    constructor(address _asset, address _vault) {
-        asset = _asset;
-        vault = _vault;
-    }
-
-    function deposit(uint256 amount) external payable override returns (uint256) {
-        IERC20(asset).transferFrom(msg.sender, address(this), amount);
-        totalAssets += amount;
-        totalDeposited += amount;
-
-        // Try to reenter vault.rebalance
-        if (!reentered) {
-            reentered = true;
-            // This should revert with ReentrancyGuardReentrantCall
-            try YieldBridgeVault(payable(vault)).rebalance(asset) {} catch {}
+        constructor(address _asset, address _vault) {
+            asset = _asset;
+            vault = _vault;
         }
-        return amount;
+
+        function deposit(uint256 amount) external payable override returns (uint256) {
+            IERC20(asset).transferFrom(msg.sender, address(this), amount);
+            totalAssets += amount;
+            totalDeposited += amount;
+
+            // Try to reenter vault.rebalance
+            if (!reentered) {
+                reentered = true;
+                // This should revert with ReentrancyGuardReentrantCall
+                try YieldBridgeVault(payable(vault)).rebalance(asset) { } catch { }
+            }
+            return amount;
+        }
+
+        function withdraw(uint256 amount) external override returns (uint256) {
+            totalAssets -= amount;
+            IERC20(asset).transfer(msg.sender, amount);
+            return amount;
+        }
+
+        function harvest() external override returns (uint256) {
+            return 0;
+        }
+
+        function currentAPY() external pure override returns (uint256) {
+            return 500;
+        }
+
+        function name() external pure override returns (string memory) {
+            return "ReentrantStrategy";
+        }
     }
 
-    function withdraw(uint256 amount) external override returns (uint256) {
-        totalAssets -= amount;
-        IERC20(asset).transfer(msg.sender, amount);
-        return amount;
-    }
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // TESTS
+        // ═══════════════════════════════════════════════════════════════════════════════
 
-    function harvest() external override returns (uint256) {
-        return 0;
-    }
+        contract YieldBridgeVaultSecurityTest is Test {
+            ShariaFilter filter;
+            YieldBridgeVault vault;
+            MockToken token;
 
-    function currentAPY() external pure override returns (uint256) {
-        return 500;
-    }
+            address shariahBoard = makeAddr("shariahBoard");
+            address admin = makeAddr("admin");
+            address bridge = makeAddr("bridge");
+            address random = makeAddr("random");
 
-    function name() external pure override returns (string memory) {
-        return "ReentrantStrategy";
-    }
-}
+            function setUp() public {
+                filter = new ShariaFilter(shariahBoard);
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// TESTS
-// ═══════════════════════════════════════════════════════════════════════════════
+                vm.prank(admin);
+                vault = new YieldBridgeVault(1, bridge, makeAddr("yieldReceiver"));
 
-contract YieldBridgeVaultSecurityTest is Test {
-    ShariaFilter filter;
-    YieldBridgeVault vault;
-    MockToken token;
+                token = new MockToken();
 
-    address shariahBoard = makeAddr("shariahBoard");
-    address admin = makeAddr("admin");
-    address bridge = makeAddr("bridge");
-    address random = makeAddr("random");
+                // Add token as supported asset
+                vm.prank(admin);
+                vault.addSupportedAsset(address(token), 1000); // 10% reserve
+            }
 
-    function setUp() public {
-        filter = new ShariaFilter(shariahBoard);
+            // ═══════════════════════════════════════════════════════════════════════
+            // ShariaFilter tests
+            // ═══════════════════════════════════════════════════════════════════════
 
-        vm.prank(admin);
-        vault = new YieldBridgeVault(1, bridge, makeAddr("yieldReceiver"));
+            /// @notice 1. classifyStrategy only by shariahBoard
+            function test_classifyStrategy_onlyShariahBoard() public {
+                address strat = makeAddr("strategy");
 
-        token = new MockToken();
+                // Admin cannot classify
+                vm.prank(admin);
+                vm.expectRevert("Only Shariah board");
+                filter.classifyStrategy(strat, ShariaFilter.ComplianceStatus.HALAL, "test", "");
 
-        // Add token as supported asset
-        vm.prank(admin);
-        vault.addSupportedAsset(address(token), 1000); // 10% reserve
-    }
+                // Random cannot classify
+                vm.prank(random);
+                vm.expectRevert("Only Shariah board");
+                filter.classifyStrategy(strat, ShariaFilter.ComplianceStatus.HALAL, "test", "");
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // ShariaFilter tests
-    // ═══════════════════════════════════════════════════════════════════════
+                // ShariahBoard can classify
+                vm.prank(shariahBoard);
+                filter.classifyStrategy(strat, ShariaFilter.ComplianceStatus.HALAL, "fee-based", "");
+                assertTrue(filter.isCompliant(strat));
+            }
 
-    /// @notice 1. classifyStrategy only by shariahBoard
-    function test_classifyStrategy_onlyShariahBoard() public {
-        address strat = makeAddr("strategy");
+            /// @notice 2. classifyProtocol only by shariahBoard
+            function test_classifyProtocol_onlyShariahBoard() public {
+                vm.prank(admin);
+                vm.expectRevert("Only Shariah board");
+                filter.classifyProtocol("newproto", ShariaFilter.ComplianceStatus.HALAL, "test");
 
-        // Admin cannot classify
-        vm.prank(admin);
-        vm.expectRevert("Only Shariah board");
-        filter.classifyStrategy(strat, ShariaFilter.ComplianceStatus.HALAL, "test", "");
+                vm.prank(shariahBoard);
+                filter.classifyProtocol("newproto", ShariaFilter.ComplianceStatus.HALAL, "fee-based");
+                assertTrue(filter.isProtocolCompliant("newproto"));
+            }
 
-        // Random cannot classify
-        vm.prank(random);
-        vm.expectRevert("Only Shariah board");
-        filter.classifyStrategy(strat, ShariaFilter.ComplianceStatus.HALAL, "test", "");
+            /// @notice 3. setShariahBoard only by current shariahBoard, rejects zero address
+            function test_setShariahBoard_access() public {
+                address newBoard = makeAddr("newBoard");
 
-        // ShariahBoard can classify
-        vm.prank(shariahBoard);
-        filter.classifyStrategy(strat, ShariaFilter.ComplianceStatus.HALAL, "fee-based", "");
-        assertTrue(filter.isCompliant(strat));
-    }
+                // Only current board can set
+                vm.prank(shariahBoard);
+                filter.setShariahBoard(newBoard);
+                assertEq(filter.shariahBoard(), newBoard);
 
-    /// @notice 2. classifyProtocol only by shariahBoard
-    function test_classifyProtocol_onlyShariahBoard() public {
-        vm.prank(admin);
-        vm.expectRevert("Only Shariah board");
-        filter.classifyProtocol("newproto", ShariaFilter.ComplianceStatus.HALAL, "test");
+                // Zero address rejected
+                vm.prank(newBoard);
+                vm.expectRevert("Zero address");
+                filter.setShariahBoard(address(0));
+            }
 
-        vm.prank(shariahBoard);
-        filter.classifyProtocol("newproto", ShariaFilter.ComplianceStatus.HALAL, "fee-based");
-        assertTrue(filter.isProtocolCompliant("newproto"));
-    }
+            /// @notice 4. setShariahBoard rejects non-shariahBoard caller
+            function test_setShariahBoard_rejectsNonBoard() public {
+                vm.prank(admin);
+                vm.expectRevert("Only Shariah board");
+                filter.setShariahBoard(makeAddr("newBoard"));
 
-    /// @notice 3. setShariahBoard only by current shariahBoard, rejects zero address
-    function test_setShariahBoard_access() public {
-        address newBoard = makeAddr("newBoard");
+                vm.prank(random);
+                vm.expectRevert("Only Shariah board");
+                filter.setShariahBoard(makeAddr("newBoard"));
+            }
 
-        // Only current board can set
-        vm.prank(shariahBoard);
-        filter.setShariahBoard(newBoard);
-        assertEq(filter.shariahBoard(), newBoard);
+            /// @notice 5. filterCompliant returns only HALAL strategies
+            function test_filterCompliant_onlyHalal() public {
+                address s1 = makeAddr("s1");
+                address s2 = makeAddr("s2");
+                address s3 = makeAddr("s3");
 
-        // Zero address rejected
-        vm.prank(newBoard);
-        vm.expectRevert("Zero address");
-        filter.setShariahBoard(address(0));
-    }
+                vm.startPrank(shariahBoard);
+                filter.classifyStrategy(s1, ShariaFilter.ComplianceStatus.HALAL, "halal", "");
+                filter.classifyStrategy(s2, ShariaFilter.ComplianceStatus.HARAM, "interest", "");
+                filter.classifyStrategy(s3, ShariaFilter.ComplianceStatus.HALAL, "halal", "");
+                vm.stopPrank();
 
-    /// @notice 4. setShariahBoard rejects non-shariahBoard caller
-    function test_setShariahBoard_rejectsNonBoard() public {
-        vm.prank(admin);
-        vm.expectRevert("Only Shariah board");
-        filter.setShariahBoard(makeAddr("newBoard"));
+                address[] memory input = new address[](3);
+                input[0] = s1;
+                input[1] = s2;
+                input[2] = s3;
 
-        vm.prank(random);
-        vm.expectRevert("Only Shariah board");
-        filter.setShariahBoard(makeAddr("newBoard"));
-    }
+                address[] memory result = filter.filterCompliant(input);
+                assertEq(result.length, 2);
+                assertEq(result[0], s1);
+                assertEq(result[1], s3);
+            }
 
-    /// @notice 5. filterCompliant returns only HALAL strategies
-    function test_filterCompliant_onlyHalal() public {
-        address s1 = makeAddr("s1");
-        address s2 = makeAddr("s2");
-        address s3 = makeAddr("s3");
+            /// @notice 6. Default protocol classifications correct
+            function test_defaultProtocolClassifications() public view {
+                // HALAL
+                assertTrue(filter.isProtocolCompliant("dex_fees"));
+                assertTrue(filter.isProtocolCompliant("bridge_fees"));
+                assertTrue(filter.isProtocolCompliant("validator_staking"));
 
-        vm.startPrank(shariahBoard);
-        filter.classifyStrategy(s1, ShariaFilter.ComplianceStatus.HALAL, "halal", "");
-        filter.classifyStrategy(s2, ShariaFilter.ComplianceStatus.HARAM, "interest", "");
-        filter.classifyStrategy(s3, ShariaFilter.ComplianceStatus.HALAL, "halal", "");
-        vm.stopPrank();
+                // HARAM (status 1)
+                assertEq(uint256(filter.protocolCompliance("aave")), uint256(ShariaFilter.ComplianceStatus.HARAM));
+                assertEq(uint256(filter.protocolCompliance("compound")), uint256(ShariaFilter.ComplianceStatus.HARAM));
 
-        address[] memory input = new address[](3);
-        input[0] = s1;
-        input[1] = s2;
-        input[2] = s3;
+                // CONDITIONAL (status 3)
+                assertEq(uint256(filter.protocolCompliance("lido")), uint256(ShariaFilter.ComplianceStatus.CONDITIONAL));
+                assertEq(
+                    uint256(filter.protocolCompliance("eigenlayer")), uint256(ShariaFilter.ComplianceStatus.CONDITIONAL)
+                );
+            }
 
-        address[] memory result = filter.filterCompliant(input);
-        assertEq(result.length, 2);
-        assertEq(result[0], s1);
-        assertEq(result[1], s3);
-    }
+            // ═══════════════════════════════════════════════════════════════════════
+            // YieldBridgeVault tests
+            // ═══════════════════════════════════════════════════════════════════════
 
-    /// @notice 6. Default protocol classifications correct
-    function test_defaultProtocolClassifications() public view {
-        // HALAL
-        assertTrue(filter.isProtocolCompliant("dex_fees"));
-        assertTrue(filter.isProtocolCompliant("bridge_fees"));
-        assertTrue(filter.isProtocolCompliant("validator_staking"));
+            /// @notice 7. addStrategy does NOT set infinite approval
+            function test_addStrategy_noInfiniteApproval() public {
+                MockYieldStrategy strat = new MockYieldStrategy(address(token));
 
-        // HARAM (status 1)
-        assertEq(uint256(filter.protocolCompliance("aave")), uint256(ShariaFilter.ComplianceStatus.HARAM));
-        assertEq(uint256(filter.protocolCompliance("compound")), uint256(ShariaFilter.ComplianceStatus.HARAM));
+                vm.prank(admin);
+                vault.addStrategy(address(token), address(strat), 5000);
 
-        // CONDITIONAL (status 3)
-        assertEq(uint256(filter.protocolCompliance("lido")), uint256(ShariaFilter.ComplianceStatus.CONDITIONAL));
-        assertEq(uint256(filter.protocolCompliance("eigenlayer")), uint256(ShariaFilter.ComplianceStatus.CONDITIONAL));
-    }
+                // Allowance from vault to strategy should be 0 after add
+                uint256 allowance = token.allowance(address(vault), address(strat));
+                assertEq(allowance, 0, "addStrategy must not set infinite approval");
+            }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // YieldBridgeVault tests
-    // ═══════════════════════════════════════════════════════════════════════
+            /// @notice 8. _depositToStrategy sets exact approval then resets to 0
+            function test_depositToStrategy_exactApprovalThenReset() public {
+                MockYieldStrategy strat = new MockYieldStrategy(address(token));
 
-    /// @notice 7. addStrategy does NOT set infinite approval
-    function test_addStrategy_noInfiniteApproval() public {
-        MockYieldStrategy strat = new MockYieldStrategy(address(token));
+                vm.prank(admin);
+                vault.addStrategy(address(token), address(strat), 10000); // 100% weight
 
-        vm.prank(admin);
-        vault.addStrategy(address(token), address(strat), 5000);
+                // Fund vault via bridge deposit
+                uint256 depositAmt = 1000 ether;
+                token.mint(bridge, depositAmt);
 
-        // Allowance from vault to strategy should be 0 after add
-        uint256 allowance = token.allowance(address(vault), address(strat));
-        assertEq(allowance, 0, "addStrategy must not set infinite approval");
-    }
+                vm.startPrank(bridge);
+                token.approve(address(vault), depositAmt);
+                vault.depositFromBridge(address(token), depositAmt);
+                vm.stopPrank();
 
-    /// @notice 8. _depositToStrategy sets exact approval then resets to 0
-    function test_depositToStrategy_exactApprovalThenReset() public {
-        MockYieldStrategy strat = new MockYieldStrategy(address(token));
+                // Strategy should have received tokens (90% of deposit after 10% reserve)
+                assertTrue(strat.depositCount() > 0, "Strategy should have been called");
+                // The allowance recorded at deposit time should equal the exact deposit amount
+                assertEq(strat.allowanceAtDeposit(), 900 ether, "Approval should be exact amount");
+                // After deposit, allowance should be reset to 0
+                uint256 allowanceAfter = token.allowance(address(vault), address(strat));
+                assertEq(allowanceAfter, 0, "Approval must be reset to 0 after deposit");
+            }
 
-        vm.prank(admin);
-        vault.addStrategy(address(token), address(strat), 10000); // 100% weight
+            /// @notice 9. rebalance has nonReentrant
+            function test_rebalance_nonReentrant() public {
+                ReentrantStrategy strat = new ReentrantStrategy(address(token), address(vault));
 
-        // Fund vault via bridge deposit
-        uint256 depositAmt = 1000 ether;
-        token.mint(bridge, depositAmt);
+                vm.prank(admin);
+                vault.addStrategy(address(token), address(strat), 10000);
 
-        vm.startPrank(bridge);
-        token.approve(address(vault), depositAmt);
-        vault.depositFromBridge(address(token), depositAmt);
-        vm.stopPrank();
+                // Seed vault with tokens so rebalance has something to do
+                token.mint(address(vault), 100 ether);
 
-        // Strategy should have received tokens (90% of deposit after 10% reserve)
-        assertTrue(strat.depositCount() > 0, "Strategy should have been called");
-        // The allowance recorded at deposit time should equal the exact deposit amount
-        assertEq(strat.allowanceAtDeposit(), 900 ether, "Approval should be exact amount");
-        // After deposit, allowance should be reset to 0
-        uint256 allowanceAfter = token.allowance(address(vault), address(strat));
-        assertEq(allowanceAfter, 0, "Approval must be reset to 0 after deposit");
-    }
+                // First rebalance call triggers deposit on strategy, which tries to reenter
+                // The reentered flag tells us the strategy attempted reentry
+                vm.prank(admin);
+                vault.rebalance(address(token));
 
-    /// @notice 9. rebalance has nonReentrant
-    function test_rebalance_nonReentrant() public {
-        ReentrantStrategy strat = new ReentrantStrategy(address(token), address(vault));
+                // The strategy attempted reentry but rebalance is nonReentrant, so it failed silently (try/catch)
+                assertTrue(strat.reentered(), "Strategy should have attempted reentry");
+                // The outer rebalance should still complete (deposited tokens)
+                assertTrue(strat.totalAssets() > 0, "Outer rebalance should complete despite reentry attempt");
+            }
 
-        vm.prank(admin);
-        vault.addStrategy(address(token), address(strat), 10000);
+            /// @notice 10. harvestYield respects interval
+            function test_harvestYield_respectsInterval() public {
+                MockYieldStrategy strat = new MockYieldStrategy(address(token));
 
-        // Seed vault with tokens so rebalance has something to do
-        token.mint(address(vault), 100 ether);
+                vm.prank(admin);
+                vault.addStrategy(address(token), address(strat), 10000);
 
-        // First rebalance call triggers deposit on strategy, which tries to reenter
-        // The reentered flag tells us the strategy attempted reentry
-        vm.prank(admin);
-        vault.rebalance(address(token));
+                // Warp well past the harvest interval from setUp's lastHarvestTime
+                uint256 t1 = block.timestamp + 2 days;
+                vm.warp(t1);
+                vault.harvestYield(address(token));
 
-        // The strategy attempted reentry but rebalance is nonReentrant, so it failed silently (try/catch)
-        assertTrue(strat.reentered(), "Strategy should have attempted reentry");
-        // The outer rebalance should still complete (deposited tokens)
-        assertTrue(strat.totalAssets() > 0, "Outer rebalance should complete despite reentry attempt");
-    }
+                // Immediate second harvest should fail
+                vm.expectRevert("YieldBridgeVault: harvest too soon");
+                vault.harvestYield(address(token));
 
-    /// @notice 10. harvestYield respects interval
-    function test_harvestYield_respectsInterval() public {
-        MockYieldStrategy strat = new MockYieldStrategy(address(token));
+                // After another full interval, should work again
+                uint256 t2 = t1 + 2 days;
+                vm.warp(t2);
+                vault.harvestYield(address(token));
+            }
 
-        vm.prank(admin);
-        vault.addStrategy(address(token), address(strat), 10000);
+            /// @notice 11. depositFromBridge only bridge can call
+            function test_depositFromBridge_onlyBridge() public {
+                token.mint(admin, 100 ether);
 
-        // Warp well past the harvest interval from setUp's lastHarvestTime
-        uint256 t1 = block.timestamp + 2 days;
-        vm.warp(t1);
-        vault.harvestYield(address(token));
+                vm.startPrank(admin);
+                token.approve(address(vault), 100 ether);
+                vm.expectRevert("YieldBridgeVault: only bridge");
+                vault.depositFromBridge(address(token), 100 ether);
+                vm.stopPrank();
 
-        // Immediate second harvest should fail
-        vm.expectRevert("YieldBridgeVault: harvest too soon");
-        vault.harvestYield(address(token));
+                vm.startPrank(random);
+                vm.expectRevert("YieldBridgeVault: only bridge");
+                vault.depositFromBridge(address(token), 100 ether);
+                vm.stopPrank();
+            }
 
-        // After another full interval, should work again
-        uint256 t2 = t1 + 2 days;
-        vm.warp(t2);
-        vault.harvestYield(address(token));
-    }
+            /// @notice 12. withdrawToBridge pulls from strategies when liquid balance insufficient
+            function test_withdrawToBridge_pullsFromStrategies() public {
+                MockYieldStrategy strat = new MockYieldStrategy(address(token));
 
-    /// @notice 11. depositFromBridge only bridge can call
-    function test_depositFromBridge_onlyBridge() public {
-        token.mint(admin, 100 ether);
+                vm.prank(admin);
+                vault.addStrategy(address(token), address(strat), 10000);
 
-        vm.startPrank(admin);
-        token.approve(address(vault), 100 ether);
-        vm.expectRevert("YieldBridgeVault: only bridge");
-        vault.depositFromBridge(address(token), 100 ether);
-        vm.stopPrank();
+                // Bridge deposits 1000 tokens -> 900 go to strategy, 100 stay liquid
+                uint256 depositAmt = 1000 ether;
+                token.mint(bridge, depositAmt);
 
-        vm.startPrank(random);
-        vm.expectRevert("YieldBridgeVault: only bridge");
-        vault.depositFromBridge(address(token), 100 ether);
-        vm.stopPrank();
-    }
+                vm.startPrank(bridge);
+                token.approve(address(vault), depositAmt);
+                vault.depositFromBridge(address(token), depositAmt);
+                vm.stopPrank();
 
-    /// @notice 12. withdrawToBridge pulls from strategies when liquid balance insufficient
-    function test_withdrawToBridge_pullsFromStrategies() public {
-        MockYieldStrategy strat = new MockYieldStrategy(address(token));
+                uint256 stratBefore = strat.totalAssets();
 
-        vm.prank(admin);
-        vault.addStrategy(address(token), address(strat), 10000);
+                // Withdraw more than liquid balance
+                uint256 withdrawAmt = 500 ether;
+                vm.prank(bridge);
+                vault.withdrawToBridge(address(token), random, withdrawAmt);
 
-        // Bridge deposits 1000 tokens -> 900 go to strategy, 100 stay liquid
-        uint256 depositAmt = 1000 ether;
-        token.mint(bridge, depositAmt);
-
-        vm.startPrank(bridge);
-        token.approve(address(vault), depositAmt);
-        vault.depositFromBridge(address(token), depositAmt);
-        vm.stopPrank();
-
-        uint256 stratBefore = strat.totalAssets();
-
-        // Withdraw more than liquid balance
-        uint256 withdrawAmt = 500 ether;
-        vm.prank(bridge);
-        vault.withdrawToBridge(address(token), random, withdrawAmt);
-
-        // Recipient got their tokens
-        assertEq(token.balanceOf(random), withdrawAmt, "Recipient should receive full amount");
-        // Strategy was drawn down
-        assertTrue(strat.withdrawCount() > 0, "Strategy withdraw should have been called");
-        assertTrue(strat.totalAssets() < stratBefore, "Strategy balance should decrease");
-    }
-}
+                // Recipient got their tokens
+                assertEq(token.balanceOf(random), withdrawAmt, "Recipient should receive full amount");
+                // Strategy was drawn down
+                assertTrue(strat.withdrawCount() > 0, "Strategy withdraw should have been called");
+                assertTrue(strat.totalAssets() < stratBefore, "Strategy balance should decrease");
+            }
+        }

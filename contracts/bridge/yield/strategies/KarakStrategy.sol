@@ -74,11 +74,25 @@ contract KarakStrategy is IYieldStrategy {
         return 350; // ~3.5% (base + DSS rewards, variable)
     }
 
-    function asset() external view override returns (address) { return underlying; }
-    function harvest() external override returns (uint256) { return 0; }
-    function isActive() external view override returns (bool) { return active; }
-    function name() external pure override returns (string memory) { return "Karak Restaking"; }
-    function totalDeposited() external view override returns (uint256) { return 0; }
+    function asset() external view override returns (address) {
+        return underlying;
+    }
+
+    function harvest() external override returns (uint256) {
+        return 0;
+    }
+
+    function isActive() external view override returns (bool) {
+        return active;
+    }
+
+    function name() external pure override returns (string memory) {
+        return "Karak Restaking";
+    }
+
+    function totalDeposited() external view override returns (uint256) {
+        return 0;
+    }
 }
 
 interface IERC20 {

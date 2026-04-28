@@ -136,10 +136,8 @@ interface IOptionsVault {
      * @param quantity Position size
      * @return reduction Amount of collateral reduction from spread
      */
-    function calculateSpreadMargin(
-        address user,
-        uint256 shortSeriesId,
-        uint256 longSeriesId,
-        uint256 quantity
-    ) external view returns (uint256 reduction);
+    function calculateSpreadMargin(address user, uint256 shortSeriesId, uint256 longSeriesId, uint256 quantity)
+        external
+        view
+        returns (uint256 reduction);
 }

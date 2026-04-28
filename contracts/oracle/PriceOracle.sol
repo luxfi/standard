@@ -26,10 +26,10 @@ contract PriceOracle is IPriceOracle, AccessControl, Pausable {
 
     /// @dev AggregatorV3-compatible feed interface (Chainlink, Pyth adapters)
     struct FeedConfig {
-        address primary;    // Primary price feed address
-        address fallback_;  // Fallback price feed address (0 = none)
-        uint256 maxAge;     // Max staleness in seconds (0 = use default)
-        uint8 decimals;     // Feed decimals (for normalization to 18)
+        address primary; // Primary price feed address
+        address fallback_; // Fallback price feed address (0 = none)
+        uint256 maxAge; // Max staleness in seconds (0 = use default)
+        uint8 decimals; // Feed decimals (for normalization to 18)
     }
 
     /// @dev TWAP observation stored per asset
@@ -256,10 +256,7 @@ contract PriceOracle is IPriceOracle, AccessControl, Pausable {
         if (primary == address(0)) revert InvalidFeed();
 
         feeds[asset] = FeedConfig({
-            primary: primary,
-            fallback_: fallback_,
-            maxAge: maxAge == 0 ? DEFAULT_MAX_AGE : maxAge,
-            decimals: decimals
+            primary: primary, fallback_: fallback_, maxAge: maxAge == 0 ? DEFAULT_MAX_AGE : maxAge, decimals: decimals
         });
 
         emit FeedSet(asset, primary, fallback_, maxAge, decimals);
@@ -340,8 +337,7 @@ contract PriceOracle is IPriceOracle, AccessControl, Pausable {
         returns (bool ok, uint256 price, uint256 timestamp)
     {
         // AggregatorV3Interface.latestRoundData() → (roundId, answer, startedAt, updatedAt, answeredInRound)
-        (bool success, bytes memory data) =
-            feed.staticcall(abi.encodeWithSignature("latestRoundData()"));
+        (bool success, bytes memory data) = feed.staticcall(abi.encodeWithSignature("latestRoundData()"));
 
         if (!success || data.length < 160) return (false, 0, 0);
 

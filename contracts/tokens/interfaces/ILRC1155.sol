@@ -26,8 +26,7 @@ interface ILRC1155 is IERC1155 {
     // - isApprovedForAll(address account, address operator) external view returns (bool)
     // - safeTransferFrom(address from, address to, uint256 id, uint256 value, bytes calldata data) external
     // - safeBatchTransferFrom(address from, address to, uint256[] calldata ids, uint256[] calldata values, bytes calldata data) external
-
-    }
+}
 
 /**
  * @title ILRC1155MetadataURI
@@ -36,5 +35,4 @@ interface ILRC1155 is IERC1155 {
 interface ILRC1155MetadataURI is ILRC1155, IERC1155MetadataURI {
     // Inherits metadata function:
     // - uri(uint256 id) external view returns (string memory)
-
-    }
+}

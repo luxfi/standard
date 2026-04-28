@@ -84,12 +84,7 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
     // EVENTS (ADDITIONAL)
     // ═══════════════════════════════════════════════════════════════════════
 
-    event AmericanOptionsWritten(
-        uint256 indexed seriesId,
-        address indexed writer,
-        uint256 amount,
-        uint256 collateral
-    );
+    event AmericanOptionsWritten(uint256 indexed seriesId, address indexed writer, uint256 amount, uint256 collateral);
 
     // ═══════════════════════════════════════════════════════════════════════
     // CONSTRUCTOR
@@ -134,9 +129,7 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
         if (block.timestamp >= series.expiry) revert SeriesExpired();
 
         // Determine collateral token and required amount
-        address collateralToken = series.optionType == Options.OptionType.CALL
-            ? series.underlying
-            : series.quote;
+        address collateralToken = series.optionType == Options.OptionType.CALL ? series.underlying : series.quote;
 
         uint256 calcCollateral = options.calculateCollateral(seriesId, amount);
 
@@ -172,12 +165,7 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @inheritdoc IAmericanOptions
-    function exerciseEarly(uint256 seriesId, uint256 amount)
-        external
-        override
-        nonReentrant
-        returns (uint256 payout)
-    {
+    function exerciseEarly(uint256 seriesId, uint256 amount) external override nonReentrant returns (uint256 payout) {
         if (amount == 0) revert ZeroAmount();
 
         Options.OptionSeries memory series = options.getSeries(seriesId);
@@ -205,9 +193,7 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
         payout -= fee;
 
         // Payout token is always the collateral token (underlying for calls, quote for puts)
-        address payoutToken = series.optionType == Options.OptionType.CALL
-            ? series.underlying
-            : series.quote;
+        address payoutToken = series.optionType == Options.OptionType.CALL ? series.underlying : series.quote;
 
         // Assign writers — this deducts from writer collateral in the Options contract
         // The assigned collateral is already held by the Options contract
@@ -282,11 +268,7 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
     }
 
     /// @inheritdoc IAmericanOptions
-    function getWriterEntry(uint256 seriesId, uint256 index)
-        external
-        view
-        returns (WriterEntry memory)
-    {
+    function getWriterEntry(uint256 seriesId, uint256 index) external view returns (WriterEntry memory) {
         return _writerQueues[seriesId][index];
     }
 
@@ -294,11 +276,7 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
     // ERC1155 RECEIVER
     // ═══════════════════════════════════════════════════════════════════════
 
-    function onERC1155Received(address, address, uint256, uint256, bytes calldata)
-        external
-        pure
-        returns (bytes4)
-    {
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata) external pure returns (bytes4) {
         return this.onERC1155Received.selector;
     }
 
@@ -347,12 +325,7 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
     // INTERNAL: ASSIGNMENT ENGINE
     // ═══════════════════════════════════════════════════════════════════════
 
-    function _assignWriters(
-        uint256 seriesId,
-        uint256 amount,
-        uint256 payoutPerOption,
-        address payoutToken
-    ) internal {
+    function _assignWriters(uint256 seriesId, uint256 amount, uint256 payoutPerOption, address payoutToken) internal {
         AssignmentMode mode = _assignmentModes[seriesId];
 
         if (mode == AssignmentMode.FIFO) {
@@ -362,12 +335,7 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
         }
     }
 
-    function _assignFIFO(
-        uint256 seriesId,
-        uint256 amount,
-        uint256 payoutPerOption,
-        address payoutToken
-    ) internal {
+    function _assignFIFO(uint256 seriesId, uint256 amount, uint256 payoutPerOption, address payoutToken) internal {
         WriterEntry[] storage queue = _writerQueues[seriesId];
         uint256 remaining = amount;
         uint256 totalCollateralToRelease;
@@ -400,12 +368,7 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
         }
     }
 
-    function _assignProRata(
-        uint256 seriesId,
-        uint256 amount,
-        uint256 payoutPerOption,
-        address payoutToken
-    ) internal {
+    function _assignProRata(uint256 seriesId, uint256 amount, uint256 payoutPerOption, address payoutToken) internal {
         WriterEntry[] storage queue = _writerQueues[seriesId];
 
         // Calculate total written in queue
@@ -471,10 +434,11 @@ contract AmericanOptions is IAmericanOptions, ReentrancyGuard, AccessControl, Pa
         return price;
     }
 
-    function _calculateEarlyPayout(
-        Options.OptionSeries memory series,
-        uint256 currentPrice
-    ) internal view returns (uint256) {
+    function _calculateEarlyPayout(Options.OptionSeries memory series, uint256 currentPrice)
+        internal
+        view
+        returns (uint256)
+    {
         if (series.optionType == Options.OptionType.CALL) {
             // Call: collateral is in underlying. Payout in underlying fraction.
             if (currentPrice <= series.strikePrice) return 0;

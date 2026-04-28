@@ -59,11 +59,10 @@ interface IBabylonStaking {
         uint64 stakingAmount
     ) external returns (bytes32 txHash);
 
-    function getStakerDelegation(bytes calldata stakerPk) external view returns (
-        uint64 totalSatoshis,
-        uint64 activeSatoshis,
-        uint64 pendingRewards
-    );
+    function getStakerDelegation(bytes calldata stakerPk)
+        external
+        view
+        returns (uint64 totalSatoshis, uint64 activeSatoshis, uint64 pendingRewards);
 }
 
 // Lombard LBTC interface
@@ -90,14 +89,13 @@ interface ICoreStaking {
 }
 
 contract BitcoinNativeYield is IYieldStrategy {
-
     // Strategy allocations (basis points, total = 10000)
     struct StrategyAllocation {
-        uint256 babylonBps;    // Babylon staking
-        uint256 lombardBps;    // Lombard LBTC
-        uint256 solvBps;       // SolvBTC
-        uint256 coreBps;       // CoreDAO
-        uint256 reserveBps;    // Liquid reserve (unallocated)
+        uint256 babylonBps; // Babylon staking
+        uint256 lombardBps; // Lombard LBTC
+        uint256 solvBps; // SolvBTC
+        uint256 coreBps; // CoreDAO
+        uint256 reserveBps; // Liquid reserve (unallocated)
     }
 
     address public immutable wbtc; // WBTC or wrapped BTC
@@ -120,11 +118,11 @@ contract BitcoinNativeYield is IYieldStrategy {
         active = true;
         // Default: diversified across all BTC yield sources
         allocation = StrategyAllocation({
-            babylonBps: 3000,  // 30% Babylon
-            lombardBps: 2500,  // 25% Lombard
-            solvBps: 2000,     // 20% SolvBTC
-            coreBps: 1500,     // 15% CoreDAO
-            reserveBps: 1000   // 10% liquid reserve
+            babylonBps: 3000, // 30% Babylon
+            lombardBps: 2500, // 25% Lombard
+            solvBps: 2000, // 20% SolvBTC
+            coreBps: 1500, // 15% CoreDAO
+            reserveBps: 1000 // 10% liquid reserve
         });
         _lastHarvestTimestamp = block.timestamp;
     }
@@ -185,7 +183,9 @@ contract BitcoinNativeYield is IYieldStrategy {
         return 483;
     }
 
-    function asset() external view override returns (address) { return wbtc; }
+    function asset() external view override returns (address) {
+        return wbtc;
+    }
 
     function harvest() external override returns (uint256 harvested) {
         // Claim rewards from each protocol
@@ -198,27 +198,29 @@ contract BitcoinNativeYield is IYieldStrategy {
         return harvested;
     }
 
-    function isActive() external view override returns (bool) { return active; }
-    function name() external pure override returns (string memory) { return "Bitcoin Native Yield (Babylon+Lombard+Solv+Core)"; }
-    function totalDeposited() external view override returns (uint256) { return _totalDeposited; }
+    function isActive() external view override returns (bool) {
+        return active;
+    }
+
+    function name() external pure override returns (string memory) {
+        return "Bitcoin Native Yield (Babylon+Lombard+Solv+Core)";
+    }
+
+    function totalDeposited() external view override returns (uint256) {
+        return _totalDeposited;
+    }
 
     // Admin
     function setAllocation(StrategyAllocation calldata _alloc) external {
         require(msg.sender == admin, "Not admin");
         require(
-            _alloc.babylonBps + _alloc.lombardBps + _alloc.solvBps +
-            _alloc.coreBps + _alloc.reserveBps == 10000,
+            _alloc.babylonBps + _alloc.lombardBps + _alloc.solvBps + _alloc.coreBps + _alloc.reserveBps == 10000,
             "Must total 100%"
         );
         allocation = _alloc;
     }
 
-    function setStrategyAddresses(
-        address _babylon,
-        address _lombard,
-        address _solv,
-        address _core
-    ) external {
+    function setStrategyAddresses(address _babylon, address _lombard, address _solv, address _core) external {
         require(msg.sender == admin, "Not admin");
         babylonStaking = _babylon;
         lombard = _lombard;

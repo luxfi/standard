@@ -81,11 +81,12 @@ contract OptionsRouter is IOptionsRouter, ReentrancyGuard, AccessControl, Pausab
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @inheritdoc IOptionsRouter
-    function executeStrategy(
-        StrategyType strategyType,
-        Leg[] calldata legs,
-        uint256 netPremiumLimit
-    ) external nonReentrant whenNotPaused returns (uint256 positionId) {
+    function executeStrategy(StrategyType strategyType, Leg[] calldata legs, uint256 netPremiumLimit)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (uint256 positionId)
+    {
         // Validate structure
         if (legs.length == 0) revert NoLegs();
         if (legs.length > 4) revert TooManyLegs();
@@ -133,9 +134,8 @@ contract OptionsRouter is IOptionsRouter, ReentrancyGuard, AccessControl, Pausab
                 uint256 collateral = options.calculateCollateral(leg.seriesId, leg.quantity);
 
                 Options.OptionSeries memory series = options.getSeries(leg.seriesId);
-                address collateralToken = series.optionType == Options.OptionType.CALL
-                    ? series.underlying
-                    : series.quote;
+                address collateralToken =
+                    series.optionType == Options.OptionType.CALL ? series.underlying : series.quote;
 
                 // Apply spread margin reduction: only require (collateral - reduction) from caller
                 uint256 effectiveCollateral = collateral;
@@ -217,18 +217,16 @@ contract OptionsRouter is IOptionsRouter, ReentrancyGuard, AccessControl, Pausab
     // ═══════════════════════════════════════════════════════════════════════
 
     /// @inheritdoc IOptionsRouter
-    function validateStrategy(
-        StrategyType strategyType,
-        Leg[] calldata legs
-    ) external view returns (bool valid, string memory reason) {
+    function validateStrategy(StrategyType strategyType, Leg[] calldata legs)
+        external
+        view
+        returns (bool valid, string memory reason)
+    {
         return _validateStrategy(strategyType, legs);
     }
 
     /// @inheritdoc IOptionsRouter
-    function computeMaxLoss(
-        StrategyType strategyType,
-        Leg[] calldata legs
-    ) external view returns (uint256 maxLoss) {
+    function computeMaxLoss(StrategyType strategyType, Leg[] calldata legs) external view returns (uint256 maxLoss) {
         if (legs.length == 0) return 0;
 
         Options.OptionSeries memory s0 = options.getSeries(legs[0].seriesId);
@@ -264,18 +262,14 @@ contract OptionsRouter is IOptionsRouter, ReentrancyGuard, AccessControl, Pausab
     }
 
     /// @inheritdoc IOptionsRouter
-    function computeMaxGain(
-        StrategyType strategyType,
-        Leg[] calldata legs
-    ) external view returns (uint256 maxGain) {
+    function computeMaxGain(StrategyType strategyType, Leg[] calldata legs) external view returns (uint256 maxGain) {
         if (legs.length == 0) return 0;
 
         if (strategyType == StrategyType.VERTICAL_SPREAD && legs.length == 2) {
             Options.OptionSeries memory s0 = options.getSeries(legs[0].seriesId);
             Options.OptionSeries memory s1 = options.getSeries(legs[1].seriesId);
-            uint256 strikeDiff = s0.strikePrice > s1.strikePrice
-                ? s0.strikePrice - s1.strikePrice
-                : s1.strikePrice - s0.strikePrice;
+            uint256 strikeDiff =
+                s0.strikePrice > s1.strikePrice ? s0.strikePrice - s1.strikePrice : s1.strikePrice - s0.strikePrice;
             uint8 dec = options.tokenDecimals(s0.underlying);
             return (legs[0].quantity * strikeDiff) / (10 ** dec);
         }
@@ -297,10 +291,11 @@ contract OptionsRouter is IOptionsRouter, ReentrancyGuard, AccessControl, Pausab
     }
 
     /// @inheritdoc IOptionsRouter
-    function computeBreakeven(
-        StrategyType strategyType,
-        Leg[] calldata legs
-    ) external view returns (uint256 breakevenLow, uint256 breakevenHigh) {
+    function computeBreakeven(StrategyType strategyType, Leg[] calldata legs)
+        external
+        view
+        returns (uint256 breakevenLow, uint256 breakevenHigh)
+    {
         if (legs.length < 2) return (0, 0);
 
         Options.OptionSeries memory s0 = options.getSeries(legs[0].seriesId);
@@ -359,11 +354,7 @@ contract OptionsRouter is IOptionsRouter, ReentrancyGuard, AccessControl, Pausab
     // ERC1155 RECEIVER
     // ═══════════════════════════════════════════════════════════════════════
 
-    function onERC1155Received(address, address, uint256, uint256, bytes calldata)
-        external
-        pure
-        returns (bytes4)
-    {
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata) external pure returns (bytes4) {
         return this.onERC1155Received.selector;
     }
 
@@ -403,8 +394,7 @@ contract OptionsRouter is IOptionsRouter, ReentrancyGuard, AccessControl, Pausab
     function _isSpreadStrategy(StrategyType t, Leg[] calldata legs) internal pure returns (bool) {
         if (legs.length != 2) return false;
         // Vertical spread or collar: one buy, one sell
-        return (t == StrategyType.VERTICAL_SPREAD || t == StrategyType.COLLAR)
-            && (legs[0].isBuy != legs[1].isBuy);
+        return (t == StrategyType.VERTICAL_SPREAD || t == StrategyType.COLLAR) && (legs[0].isBuy != legs[1].isBuy);
     }
 
     /// @dev Compute spread margin reduction via vault.calculateSpreadMargin
@@ -414,10 +404,7 @@ contract OptionsRouter is IOptionsRouter, ReentrancyGuard, AccessControl, Pausab
         uint256 longIdx = legs[0].isBuy ? 0 : 1;
 
         return vault.calculateSpreadMargin(
-            msg.sender,
-            legs[shortIdx].seriesId,
-            legs[longIdx].seriesId,
-            legs[shortIdx].quantity
+            msg.sender, legs[shortIdx].seriesId, legs[longIdx].seriesId, legs[shortIdx].quantity
         );
     }
 
@@ -425,10 +412,11 @@ contract OptionsRouter is IOptionsRouter, ReentrancyGuard, AccessControl, Pausab
     // INTERNAL VALIDATION
     // ═══════════════════════════════════════════════════════════════════════
 
-    function _validateStrategy(
-        StrategyType strategyType,
-        Leg[] calldata legs
-    ) internal view returns (bool, string memory) {
+    function _validateStrategy(StrategyType strategyType, Leg[] calldata legs)
+        internal
+        view
+        returns (bool, string memory)
+    {
         if (legs.length == 0) return (false, "No legs");
         if (legs.length > 4) return (false, "Too many legs");
 
@@ -614,15 +602,15 @@ contract OptionsRouter is IOptionsRouter, ReentrancyGuard, AccessControl, Pausab
     // INTERNAL MAX-LOSS COMPUTATION
     // ═══════════════════════════════════════════════════════════════════════
 
-    function _computeVerticalMaxLoss(
-        Leg[] calldata legs,
-        Options.OptionSeries memory s0
-    ) internal view returns (uint256) {
+    function _computeVerticalMaxLoss(Leg[] calldata legs, Options.OptionSeries memory s0)
+        internal
+        view
+        returns (uint256)
+    {
         Options.OptionSeries memory s1 = options.getSeries(legs[1].seriesId);
 
-        uint256 strikeDiff = s0.strikePrice > s1.strikePrice
-            ? s0.strikePrice - s1.strikePrice
-            : s1.strikePrice - s0.strikePrice;
+        uint256 strikeDiff =
+            s0.strikePrice > s1.strikePrice ? s0.strikePrice - s1.strikePrice : s1.strikePrice - s0.strikePrice;
 
         uint8 dec = options.tokenDecimals(s0.underlying);
         return (legs[0].quantity * strikeDiff) / (10 ** dec);

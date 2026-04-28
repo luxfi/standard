@@ -12,11 +12,13 @@ interface IHooksV4 {
         int24 tickSpacing;
         address hooks;
     }
+
     struct SwapParams {
         bool zeroForOne;
         int256 amountSpecified;
         uint160 sqrtPriceLimitX96;
     }
+
     struct ModifyLiquidityParams {
         int24 tickLower;
         int24 tickUpper;
@@ -25,11 +27,26 @@ interface IHooksV4 {
     }
 
     function beforeSwap(address sender, PoolKey calldata key, SwapParams calldata params, bytes calldata hookData)
-        external returns (bytes4 selector, int128 deltaUnspecified, uint24 feeOverride);
-    function afterSwap(address sender, PoolKey calldata key, SwapParams calldata params, int256 delta0, int256 delta1, bytes calldata hookData)
-        external returns (bytes4 selector, int128 hookDelta);
-    function beforeAddLiquidity(address sender, PoolKey calldata key, ModifyLiquidityParams calldata params, bytes calldata hookData)
-        external returns (bytes4 selector);
-    function beforeRemoveLiquidity(address sender, PoolKey calldata key, ModifyLiquidityParams calldata params, bytes calldata hookData)
-        external returns (bytes4 selector);
+        external
+        returns (bytes4 selector, int128 deltaUnspecified, uint24 feeOverride);
+    function afterSwap(
+        address sender,
+        PoolKey calldata key,
+        SwapParams calldata params,
+        int256 delta0,
+        int256 delta1,
+        bytes calldata hookData
+    ) external returns (bytes4 selector, int128 hookDelta);
+    function beforeAddLiquidity(
+        address sender,
+        PoolKey calldata key,
+        ModifyLiquidityParams calldata params,
+        bytes calldata hookData
+    ) external returns (bytes4 selector);
+    function beforeRemoveLiquidity(
+        address sender,
+        PoolKey calldata key,
+        ModifyLiquidityParams calldata params,
+        bytes calldata hookData
+    ) external returns (bytes4 selector);
 }
