@@ -8,7 +8,7 @@
 // Copyright (c) 2019 Arca Labs Inc — https://arca.digital
 pragma solidity ^0.8.24;
 
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { AccessControl } from "@luxfi/oz/access/AccessControl.sol";
 
 /**
  * @title DocumentRegistry

@@ -44,7 +44,9 @@
   "dependencies": {
     "@openzeppelin/contracts": "^5.4.0",
     "@openzeppelin/contracts-upgradeable": "^5.4.0",
-    "viem": "^2.46.3"
+    "viem": "^2.46.3",
+    "@luxfi/onchain-id": "github:luxfi/onchain-id",
+    "@luxfi/erc-3643": "github:luxfi/erc-3643"
   },
   "scripts": {
     "build": "forge build",
@@ -69,7 +71,8 @@
     "publish:standard": "npm publish ./contracts --access public",
     "publish:contracts": "npm publish ./packages/contracts --access public",
     "publish:all": "npm run publish:standard && npm run publish:contracts",
-    "prepublish:all": "echo 'Publishing @luxfi/standard and @luxfi/contracts...'"
+    "prepublish:all": "echo 'Publishing @luxfi/standard and @luxfi/contracts...'",
+    "postinstall": "find node_modules/.pnpm \\( -path '*@luxfi*/contracts/*' \\) -name '*.sol' -not -path '*/artifacts/*' -exec perl -pi -e 's/pragma solidity (=?)0\\.8\\.17;/pragma solidity ^0.8.17;/g' {} +"
   },
   "engines": {
     "node": ">=18.0.0"
