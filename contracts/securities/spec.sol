@@ -27,9 +27,20 @@ pragma solidity ^0.8.17;
 // file successfully there. Once the v5 patches land in upstream
 // `@luxfi/erc-3643` main, the skip can be removed.
 
-// --- ERC-3643 token logic + interface ----------------------------------
+// --- Security token logic + interface ----------------------------------
+//
+// `SecurityTokenStandard` is the ERC-3643 reference implementation —
+// proxy-backed, init()-pattern, registered at `SecurityTokenAuthority`
+// and cloned by `SecurityTokenSuiteFactory.deployTREXSuite()`. It is a
+// **security** token, not an ERC-20 / utility token / stablecoin —
+// alias drops the misleading bare `Token` name.
+//
+// Distinct from Lux's own `SecurityToken`
+// (`securities/token/SecurityToken.sol`), which is the constructor-based,
+// AccessControl-driven security token Liquidity uses for production
+// per-issuance deploys via `SecurityTokenFactory.deploy(...)`.
 
-import {Token} from "@luxfi/erc-3643/contracts/token/Token.sol";
+import {Token as SecurityTokenStandard} from "@luxfi/erc-3643/contracts/token/Token.sol";
 import {IToken} from "@luxfi/erc-3643/contracts/token/IToken.sol";
 
 // --- Registry implementations + interfaces -----------------------------
