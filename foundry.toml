@@ -11,12 +11,13 @@ evm_version = "cancun"
 # Point test and script to empty dirs during migration
 test = "test"
 script = "contracts/script"
-# `securities/spec.sol` is a re-export barrel for downstream consumers
+# `securities/erc3643.sol` is a re-export barrel for downstream consumers
 # (liquidityio/contracts). It pulls stock `@luxfi/erc-3643` implementation
 # files that target OpenZeppelin v4 init signatures, while lux/standard
 # ships v5. Until upstream lands the v5 init patches, skip the barrel
 # here — consumers compile it against their own v5-patched fork.
-skip = ["**/securities/spec.sol"]
+# `securities/onchainid.sol` is fine on v5 already and not skipped.
+skip = ["**/securities/erc3643.sol"]
 
 # Remappings - comprehensive library support
 remappings = [
