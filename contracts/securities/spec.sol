@@ -62,7 +62,12 @@ import {
 import {
     ITREXImplementationAuthority as ISecurityTokenAuthority
 } from "@luxfi/erc-3643/contracts/proxy/authority/ITREXImplementationAuthority.sol";
-import {TREXFactory} from "@luxfi/erc-3643/contracts/factory/TREXFactory.sol";
+// Aliased: distinguishes the upstream "deploys a full SecurityToken suite
+// (token + 5 registries + ClaimIssuer wiring) in one tx" factory from
+// Lux's own per-token `SecurityTokenFactory` (`securities/factory/`).
+import {
+    TREXFactory as SecurityTokenSuiteFactory
+} from "@luxfi/erc-3643/contracts/factory/TREXFactory.sol";
 
 // --- ERC-734/735 Identity ----------------------------------------------
 //
