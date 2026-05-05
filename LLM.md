@@ -1,6 +1,5 @@
 # AI Assistant Knowledge Base
 
-**Last Updated**: 2026-01-24
 **Project**: Lux Standard (Solidity Contracts & Precompiles)
 **Organization**: Lux Industries
 **Solidity Version**: 0.8.31
@@ -1438,7 +1437,7 @@ Uniswap v4 is **intentionally excluded** from the Lux Standard Library in favor 
 Created comprehensive LP-326 documenting blockchain regenesis process with **critical scope clarifications**:
 
 **Mainnet Regenesis Scope** (applies ONLY to P, C, X chains):
-- ⚠️ **ONLY P, C, X chains undergo regenesis** (original Avalanche-based chains)
+- ⚠️ **ONLY P, C, X chains undergo regenesis** (original primary network chains)
 - ⚠️ **ALL THREE chains migrate FULL state** (comprehensive preservation)
 - ✅ **P-Chain**: Full genesis state (100 validators × 1B LUX, 100-year vesting)
 - ✅ **C-Chain**: Full EVM state (accounts, contracts, storage)
@@ -2830,7 +2829,7 @@ Private Key: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 
 ### Zoo EVM (200200/200201)
 
-Zoo uses Z* prefix for bridge tokens: ZUSD, ZETH, ZBNB, ZPOL, ZAVAX, ZTON (ERC20B standard with mint/burn)
+Zoo uses Z* prefix for bridge tokens: ZUSD, ZETH, ZBNB, ZPOL, ZTON (ERC20B standard with mint/burn)
 
 **Bridge tokens source**: `~/work/lux/bridge/contracts/contracts/zoo/`
 
