@@ -403,7 +403,7 @@ The restriction that `px < N` is documented and enforced in `isValidPublicKey()`
 
 **File:** `safe/SafeThresholdLamportModule.sol`
 
-Implements one-time Lamport signatures for post-quantum security with T-Chain MPC threshold control.
+Implements one-time Lamport signatures for post-quantum security with M-Chain MPC threshold control (LP-134; "T-Chain MPC" was the pre-LP-134 name for today's M-Chain bridge-custody chain).
 
 ### 10.2 Findings
 
