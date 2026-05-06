@@ -25,13 +25,6 @@ library ChainIds {
     uint64 constant LUX_PARS_DEVNET = 494951;
 
     // ================================================================
-    //  LIQUIDITY.IO (Satschel private L1)
-    // ================================================================
-    uint64 constant LIQUID_MAINNET = 8675309;
-    uint64 constant LIQUID_TESTNET = 8675310;
-    uint64 constant LIQUID_DEVNET = 8675311;
-
-    // ================================================================
     //  ETHEREUM ECOSYSTEM
     // ================================================================
 
