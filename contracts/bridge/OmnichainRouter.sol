@@ -57,7 +57,7 @@ import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/Mes
  *
  *      PERMISSIONLESS RELAY:
  *        Anyone can call bridge functions with valid MPC signatures.
- *        Liquidity.io / Lux / any operator pays gas but CANNOT steal funds.
+ *        Any operator pays gas but CANNOT steal funds.
  *        Users can self-relay if operator goes offline.
  */
 contract OmnichainRouter is ReentrancyGuard {
@@ -321,7 +321,7 @@ contract OmnichainRouter is ReentrancyGuard {
 
     /// @notice Mint bridge tokens with MPC attestation
     /// @dev ANYONE can call this with a valid MPC signature.
-    ///      Liquidity.io typically relays, but users can self-relay.
+    ///      Operators typically relay, but users can self-relay.
     ///      The MPC signature proves the deposit happened on the source chain.
     function mintDeposit(
         uint64 sourceChainId,

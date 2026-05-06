@@ -8,8 +8,7 @@ import "../compliance/gates/IComplianceGate.sol";
 ///        generic IComplianceGate.
 /// @notice Attach to any Uniswap v4 pool that holds a SecurityToken or
 ///         regulated asset. Works with any provider implementing
-///         IComplianceGate (Liquidity.io, any other regulated venue,
-///         pure-Solidity test gates).
+///         IComplianceGate (any regulated venue, pure-Solidity test gates).
 contract ComplianceHook is IHooksV4 {
     IComplianceGate public immutable gate;
     bool public immutable gateLiquidity;
