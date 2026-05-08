@@ -2,12 +2,12 @@
 // Copyright (c) 2026 Lux Partners Limited
 pragma solidity ^0.8.24;
 
-import { AccessControl } from "@luxfi/oz/access/AccessControl.sol";
-import { ReentrancyGuard } from "@luxfi/oz/utils/ReentrancyGuard.sol";
-import { ECDSA } from "@luxfi/oz/utils/cryptography/ECDSA.sol";
-import { MessageHashUtils } from "@luxfi/oz/utils/cryptography/MessageHashUtils.sol";
-import { IToken } from "@luxfi/erc-3643/contracts/token/IToken.sol";
-import { IIdentityRegistry } from "@luxfi/erc-3643/contracts/registry/interface/IIdentityRegistry.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { IToken } from "@luxfi/standard/securities/erc3643/token/IToken.sol";
+import { IIdentityRegistry } from "@luxfi/standard/securities/erc3643/registry/interface/IIdentityRegistry.sol";
 
 /// @title SecuritiesGateway
 /// @notice Compliance-aware cross-chain bridge for ERC-3643 SecurityTokens.

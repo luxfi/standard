@@ -2,10 +2,10 @@
 // Copyright (c) 2026 Lux Partners Limited
 pragma solidity ^0.8.24;
 
-import { AbstractModule } from "@luxfi/erc-3643/contracts/compliance/modular/modules/AbstractModule.sol";
-import { IModularCompliance } from "@luxfi/erc-3643/contracts/compliance/modular/IModularCompliance.sol";
-import { IToken } from "@luxfi/erc-3643/contracts/token/IToken.sol";
-import { IIdentityRegistry } from "@luxfi/erc-3643/contracts/registry/interface/IIdentityRegistry.sol";
+import { AbstractModule } from "@luxfi/standard/securities/erc3643/compliance/modular/modules/AbstractModule.sol";
+import { IModularCompliance } from "@luxfi/standard/securities/erc3643/compliance/modular/IModularCompliance.sol";
+import { IToken } from "@luxfi/standard/securities/erc3643/token/IToken.sol";
+import { IIdentityRegistry } from "@luxfi/standard/securities/erc3643/registry/interface/IIdentityRegistry.sol";
 
 /// @title TeleportComplianceModule
 /// @notice Destination-side gate for cross-chain mints (lock-and-mirror).

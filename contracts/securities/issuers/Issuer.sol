@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Lux Partners Limited
 pragma solidity ^0.8.17;
 
-import { ClaimIssuer } from "@luxfi/onchain-id/contracts/ClaimIssuer.sol";
+import { ClaimIssuer } from "@luxfi/standard/securities/onchainid/ClaimIssuer.sol";
 
 /// @title Issuer
 /// @notice Generic, brand-neutral ERC-735 ClaimIssuer template. Any party

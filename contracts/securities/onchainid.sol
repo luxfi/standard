@@ -2,27 +2,26 @@
 // Copyright (c) 2026 Lux Partners Limited
 pragma solidity ^0.8.17;
 
-// One-stop import of the ERC-734/735 Identity stack (OnchainID) Lux and
-// Liquidity use. Consumers import from
-// `@luxfi/standard/contracts/securities/onchainid.sol` rather than
-// `@luxfi/onchain-id/...` directly so:
+// Single import barrel for the ERC-734/735 Identity stack (OnchainID).
+// Consumers import only from `@luxfi/standard` — no separate
+// `@luxfi/onchain-id` / `@onchain-id/solidity` package dependency.
 //
-//   1. There is exactly one path per concept.
-//   2. Upstream package layout changes are absorbed at this seam.
-//   3. The brand "ONCHAINID" / "Impl" never appears in consumer code.
+// Implementation files live under `securities/onchainid/` (vendored from
+// upstream Tokeny ONCHAINID 2.2.1 with OZ v5 patches; upstream is OZ-v4-
+// locked).
 //
 // `Identity` is the per-investor claim-bearing contract.
 // `IdentityAuthority` is its proxy authority (held by `IdentityFactory`).
 // `IdentityFactory` deploys per-investor / per-token `Identity` proxies.
 
-import {Identity} from "@luxfi/onchain-id/contracts/Identity.sol";
-import {IIdentity} from "@luxfi/onchain-id/contracts/interface/IIdentity.sol";
-import {IClaimIssuer} from "@luxfi/onchain-id/contracts/interface/IClaimIssuer.sol";
+import {Identity} from "@luxfi/standard/securities/onchainid/Identity.sol";
+import {IIdentity} from "@luxfi/standard/securities/onchainid/interface/IIdentity.sol";
+import {IClaimIssuer} from "@luxfi/standard/securities/onchainid/interface/IClaimIssuer.sol";
 
 import {
     ImplementationAuthority as IdentityAuthority
-} from "@luxfi/onchain-id/contracts/proxy/ImplementationAuthority.sol";
+} from "@luxfi/standard/securities/onchainid/proxy/ImplementationAuthority.sol";
 
 import {
     IdFactory as IdentityFactory
-} from "@luxfi/onchain-id/contracts/factory/IdFactory.sol";
+} from "@luxfi/standard/securities/onchainid/factory/IdFactory.sol";
