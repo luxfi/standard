@@ -3,7 +3,6 @@ pragma solidity ^0.8.17;
 
 import "./interface/IIdentity.sol";
 import "./interface/IClaimIssuer.sol";
-import "./version/Version.sol";
 import "./storage/Storage.sol";
 
 /**
@@ -12,7 +11,11 @@ import "./storage/Storage.sol";
  * This implementation has a separate contract were it declares all storage,
  * allowing for it to be used as an upgradable logic contract.
  */
-contract Identity is Storage, IIdentity, Version {
+contract Identity is Storage, IIdentity {
+
+    function version() external pure returns (string memory) {
+        return "2.2.1";
+    }
 
     /**
      * @notice Prevent any direct calls to the implementation contract (marked by _canInteract = false).

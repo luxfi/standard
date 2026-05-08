@@ -63,7 +63,7 @@
 
 pragma solidity ^0.8.17;
 
-import "@onchain-id/solidity/contracts/interface/IClaimIssuer.sol";
+import "@luxfi/standard/securities/onchainid/interface/IClaimIssuer.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../interface/ITrustedIssuersRegistry.sol";
 import "../storage/TIRStorage.sol";

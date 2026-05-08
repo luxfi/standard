@@ -63,7 +63,7 @@
 
 pragma solidity ^0.8.17;
 
-import "@onchain-id/solidity/contracts/interface/IClaimIssuer.sol";
+import "@luxfi/standard/securities/onchainid/interface/IClaimIssuer.sol";
 
 contract TIRStorage {
     /// @dev Array containing all TrustedIssuers identity contract address.

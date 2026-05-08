@@ -5,12 +5,12 @@ pragma solidity ^0.8.24;
 import { SecurityToken } from "../token/SecurityToken.sol";
 import { DocumentRegistry } from "../registry/DocumentRegistry.sol";
 
-import { IIdentityRegistry } from "@luxfi/erc-3643/contracts/registry/interface/IIdentityRegistry.sol";
-import { IIdentityRegistryStorage } from "@luxfi/erc-3643/contracts/registry/interface/IIdentityRegistryStorage.sol";
-import { IClaimTopicsRegistry } from "@luxfi/erc-3643/contracts/registry/interface/IClaimTopicsRegistry.sol";
-import { ITrustedIssuersRegistry } from "@luxfi/erc-3643/contracts/registry/interface/ITrustedIssuersRegistry.sol";
-import { IModularCompliance } from "@luxfi/erc-3643/contracts/compliance/modular/IModularCompliance.sol";
-import { IClaimIssuer } from "@luxfi/onchain-id/contracts/interface/IClaimIssuer.sol";
+import { IIdentityRegistry } from "@luxfi/standard/securities/erc3643/registry/interface/IIdentityRegistry.sol";
+import { IIdentityRegistryStorage } from "@luxfi/standard/securities/erc3643/registry/interface/IIdentityRegistryStorage.sol";
+import { IClaimTopicsRegistry } from "@luxfi/standard/securities/erc3643/registry/interface/IClaimTopicsRegistry.sol";
+import { ITrustedIssuersRegistry } from "@luxfi/standard/securities/erc3643/registry/interface/ITrustedIssuersRegistry.sol";
+import { IModularCompliance } from "@luxfi/standard/securities/erc3643/compliance/modular/IModularCompliance.sol";
+import { IClaimIssuer } from "@luxfi/standard/securities/onchainid/interface/IClaimIssuer.sol";
 
 import { Topics } from "../constants/Topics.sol";
 import { Offerings } from "../constants/Offerings.sol";

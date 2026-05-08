@@ -8,8 +8,8 @@
 // Copyright (c) 2019 Arca Labs Inc — https://arca.digital
 pragma solidity ^0.8.24;
 
-import { AccessControl } from "@luxfi/oz/access/AccessControl.sol";
-import { IToken } from "@luxfi/erc-3643/contracts/token/IToken.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IToken } from "@luxfi/standard/securities/erc3643/token/IToken.sol";
 
 /**
  * @title CorporateActions

@@ -2,13 +2,13 @@
 // Copyright (c) 2026 Lux Partners Limited
 pragma solidity ^0.8.24;
 
-import { ERC20 } from "@luxfi/oz/token/ERC20/ERC20.sol";
-import { IERC20 } from "@luxfi/oz/token/ERC20/IERC20.sol";
-import { AccessControl } from "@luxfi/oz/access/AccessControl.sol";
-import { IToken } from "@luxfi/erc-3643/contracts/token/IToken.sol";
-import { IIdentityRegistry } from "@luxfi/erc-3643/contracts/registry/interface/IIdentityRegistry.sol";
-import { IModularCompliance } from "@luxfi/erc-3643/contracts/compliance/modular/IModularCompliance.sol";
-import { IIdentity } from "@luxfi/onchain-id/contracts/interface/IIdentity.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IToken } from "@luxfi/standard/securities/erc3643/token/IToken.sol";
+import { IIdentityRegistry } from "@luxfi/standard/securities/erc3643/registry/interface/IIdentityRegistry.sol";
+import { IModularCompliance } from "@luxfi/standard/securities/erc3643/compliance/modular/IModularCompliance.sol";
+import { IIdentity } from "@luxfi/standard/securities/onchainid/interface/IIdentity.sol";
 
 /// @title SecurityToken
 /// @notice Lux's canonical ERC-3643 security token. Implements the T-REX `IToken`
