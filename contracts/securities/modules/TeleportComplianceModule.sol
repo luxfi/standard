@@ -64,8 +64,8 @@ contract TeleportComplianceModule is AbstractModule {
     {
         if (_from != address(0)) return CODE_OK; // not a mint — out of scope
         // Mint path — destination-side gate.
-        IToken token = IToken(IModularCompliance(_compliance).getTokenBound());
-        IIdentityRegistry idReg = token.identityRegistry();
+        IToken securityToken = IToken(IModularCompliance(_compliance).getTokenBound());
+        IIdentityRegistry idReg = securityToken.identityRegistry();
         if (!idReg.isVerified(_to)) return CODE_RECIPIENT_NOT_REGISTERED;
 
         address exclusive = exclusiveBridge[_compliance];

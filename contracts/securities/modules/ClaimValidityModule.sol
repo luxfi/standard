@@ -51,8 +51,8 @@ contract ClaimValidityModule is AbstractModule {
         override
         returns (uint8)
     {
-        IToken token = IToken(IModularCompliance(_compliance).getTokenBound());
-        IIdentityRegistry idReg = token.identityRegistry();
+        IToken securityToken = IToken(IModularCompliance(_compliance).getTokenBound());
+        IIdentityRegistry idReg = securityToken.identityRegistry();
 
         // Recipient first (mint path: _from == 0 → only validate destination).
         if (_to != address(0)) {

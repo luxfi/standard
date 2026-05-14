@@ -102,8 +102,8 @@ contract Rule144LockupModule is AbstractModule {
 
         // Affiliate volume cap.
         if (_isAffiliate(_compliance, _from) && cfg.affiliateCapBps > 0) {
-            IToken token = IToken(IModularCompliance(_compliance).getTokenBound());
-            uint256 cap = (token.totalSupply() * cfg.affiliateCapBps) / 10000;
+            IToken securityToken = IToken(IModularCompliance(_compliance).getTokenBound());
+            uint256 cap = (securityToken.totalSupply() * cfg.affiliateCapBps) / 10000;
             uint256 sold = _windowSold(_compliance, _from);
             if (sold + _value > cap) return CODE_LIMIT_REACHED;
         }
@@ -145,8 +145,8 @@ contract Rule144LockupModule is AbstractModule {
     }
 
     function _isAffiliate(address compliance, address user) internal view returns (bool) {
-        IToken token = IToken(IModularCompliance(compliance).getTokenBound());
-        IIdentityRegistry idReg = token.identityRegistry();
+        IToken securityToken = IToken(IModularCompliance(compliance).getTokenBound());
+        IIdentityRegistry idReg = securityToken.identityRegistry();
         IIdentity id = idReg.identity(user);
         if (address(id) == address(0)) return false;
         bytes32[] memory ids = id.getClaimIdsByTopic(Topics.AFFILIATE);
