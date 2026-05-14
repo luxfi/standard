@@ -9,6 +9,7 @@ import { IToken } from "@luxfi/standard/securities/erc3643/token/IToken.sol";
 import { IIdentityRegistry } from "@luxfi/standard/securities/erc3643/registry/interface/IIdentityRegistry.sol";
 import { IModularCompliance } from "@luxfi/standard/securities/erc3643/compliance/modular/IModularCompliance.sol";
 import { IIdentity } from "@luxfi/standard/securities/onchainid/interface/IIdentity.sol";
+import { IERC1404, IERC1404Extended } from "@luxfi/standard/securities/erc1404/IERC1404.sol";
 
 /// @title SecurityToken
 /// @notice Lux's canonical ERC-3643 security token. Implements the T-REX `IToken`
@@ -24,9 +25,18 @@ import { IIdentity } from "@luxfi/standard/securities/onchainid/interface/IIdent
 ///                               transfer, pause/unpause, recoveryAddress.
 ///         The deployer (`admin`) gets both roles. Add agents via
 ///         `grantRole(AGENT_ROLE, agent)` (the T-REX `addAgent` equivalent).
-contract SecurityToken is IToken, ERC20, AccessControl {
+contract SecurityToken is IToken, IERC1404Extended, ERC20, AccessControl {
     bytes32 public constant AGENT_ROLE = keccak256("AGENT_ROLE");
     string private constant _VERSION = "lux-1.0.0";
+
+    /// ERC-1404 canonical codes — single source of truth for token-level
+    /// restrictions. Module-level codes (1/2/3/5/6/7/9/10/11) come from
+    /// `_compliance.firstTransferReason`; token-level conditions (paused,
+    /// frozen wallet, insufficient free balance) map to code 8 (Locked), and
+    /// recipient-not-registered maps to code 4.
+    uint8 internal constant _CODE_OK = 0;
+    uint8 internal constant _CODE_RECIPIENT_NOT_VERIFIED = 4;
+    uint8 internal constant _CODE_LOCKED = 8;
 
     string private _tokenName;
     string private _tokenSymbol;
@@ -52,6 +62,11 @@ contract SecurityToken is IToken, ERC20, AccessControl {
     error FrozenAmountExceedsBalance();
     error UnfreezeAmountExceedsFrozen();
     error RecoveryFailed();
+    /// @notice ERC-1404 structured revert. `code` is a canonical 0..11 code,
+    ///         `reason` is the matching on-chain message. Decoded on the
+    ///         off-chain side by the shared compliance package — never
+    ///         re-derived per app.
+    error TransferRestricted(uint8 code, string reason);
 
     modifier onlyAgent() {
         _checkRole(AGENT_ROLE);
@@ -332,17 +347,100 @@ contract SecurityToken is IToken, ERC20, AccessControl {
     // ── ERC-165 ─────────────────────────────────────────────────────────────
 
     function supportsInterface(bytes4 id) public view override(AccessControl) returns (bool) {
-        return id == type(IToken).interfaceId || super.supportsInterface(id);
+        return id == type(IToken).interfaceId
+            || id == type(IERC1404).interfaceId
+            || id == type(IERC1404Extended).interfaceId
+            || super.supportsInterface(id);
+    }
+
+    // ── ERC-1404: detect + message ──────────────────────────────────────────
+
+    /// @notice See {IERC1404-detectTransferRestriction}. Single canonical
+    ///         entry point for off-chain pre-trade checks AND the on-chain
+    ///         revert path. Token-level conditions are evaluated first
+    ///         (cheapest checks, most common failures), then the compliance
+    ///         stack supplies module codes 1..11.
+    function detectTransferRestriction(address from, address to, uint256 amount)
+        public
+        view
+        override
+        returns (uint8)
+    {
+        if (_tokenPaused) return _CODE_LOCKED;
+        if (_frozen[from]) return _CODE_LOCKED;
+        if (_frozen[to]) return _CODE_LOCKED;
+        uint256 free = balanceOf(from) - _frozenTokens[from];
+        if (amount > free) return _CODE_LOCKED;
+        if (!_idRegistry.isVerified(to)) return _CODE_RECIPIENT_NOT_VERIFIED;
+        return _compliance.firstTransferReason(from, to, amount);
+    }
+
+    /// @notice See {IERC1404Extended-detectAllTransferRestrictions}. Returns
+    ///         every failing code (token-level first, then every failing
+    ///         module). Empty array = approved.
+    function detectAllTransferRestrictions(address from, address to, uint256 amount)
+        external
+        view
+        override
+        returns (uint8[] memory)
+    {
+        // Pass 1 — count failing checks (token-level + module-level).
+        uint8 tokenCode = _tokenLevelCode(from, to, amount);
+        uint8 recipientCode = _idRegistry.isVerified(to) ? _CODE_OK : _CODE_RECIPIENT_NOT_VERIFIED;
+        (, uint8[] memory moduleCodes) = _compliance.canTransferReasons(from, to, amount);
+
+        uint256 n = 0;
+        if (tokenCode != _CODE_OK) n++;
+        if (recipientCode != _CODE_OK) n++;
+        n += moduleCodes.length;
+
+        uint8[] memory out = new uint8[](n);
+        uint256 i = 0;
+        if (tokenCode != _CODE_OK) { out[i++] = tokenCode; }
+        if (recipientCode != _CODE_OK) { out[i++] = recipientCode; }
+        for (uint256 j = 0; j < moduleCodes.length; j++) { out[i++] = moduleCodes[j]; }
+        return out;
+    }
+
+    /// @notice See {IERC1404-messageForTransferRestriction}. Canonical
+    ///         human-readable messages keyed off the 0..11 table. Strings live
+    ///         on chain so every front-end (and every external integrator)
+    ///         renders identical text.
+    function messageForTransferRestriction(uint8 code)
+        public
+        pure
+        override
+        returns (string memory)
+    {
+        if (code == 0) return "Approved";
+        if (code == 1) return "Verification required";
+        if (code == 2) return "Additional verification required";
+        if (code == 3) return "Identity verification expired";
+        if (code == 4) return "Recipient not verified";
+        if (code == 5) return "Recipient missing required topic";
+        if (code == 6) return "Recipient verification expired";
+        if (code == 7) return "Region restricted";
+        if (code == 8) return "Locked";
+        if (code == 9) return "Holder cap reached";
+        if (code == 10) return "Limit reached";
+        if (code == 11) return "Cross-chain destination not allow-listed";
+        return "Unknown restriction";
     }
 
     // ── Internal: enforce ERC-3643 transfer rules ───────────────────────────
 
     function _enforceTransfer(address from, address to, uint256 amount) internal view {
-        if (_frozen[from]) revert WalletFrozen(from);
-        if (_frozen[to]) revert WalletFrozen(to);
+        uint8 code = detectTransferRestriction(from, to, amount);
+        if (code != _CODE_OK) revert TransferRestricted(code, messageForTransferRestriction(code));
+    }
+
+    /// @dev Token-level restriction code, isolated for `detectAllTransferRestrictions`.
+    function _tokenLevelCode(address from, address to, uint256 amount) internal view returns (uint8) {
+        if (_tokenPaused) return _CODE_LOCKED;
+        if (_frozen[from]) return _CODE_LOCKED;
+        if (_frozen[to]) return _CODE_LOCKED;
         uint256 free = balanceOf(from) - _frozenTokens[from];
-        if (amount > free) revert InsufficientFreeBalance(from, amount, free);
-        if (!_idRegistry.isVerified(to)) revert NotVerified(to);
-        if (!_compliance.canTransfer(from, to, amount)) revert NotCompliant();
+        if (amount > free) return _CODE_LOCKED;
+        return _CODE_OK;
     }
 }

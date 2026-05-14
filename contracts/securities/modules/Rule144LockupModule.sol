@@ -58,6 +58,11 @@ contract Rule144LockupModule is AbstractModule {
         });
     }
 
+    /// ERC-1404 codes returned by {moduleReason}.
+    uint8 internal constant CODE_OK = 0;
+    uint8 internal constant CODE_LOCKED = 8;
+    uint8 internal constant CODE_LIMIT_REACHED = 10;
+
     /// @notice See {IModule-moduleCheck}.
     function moduleCheck(address _from, address _to, uint256 _value, address _compliance)
         external
@@ -65,20 +70,34 @@ contract Rule144LockupModule is AbstractModule {
         override
         returns (bool)
     {
+        return this.moduleReason(_from, _to, _value, _compliance) == CODE_OK;
+    }
+
+    /// @notice See {IModule-moduleReason}. Returns code 8 (Locked) when the
+    ///         sender's per-receipt holding period has not elapsed or the
+    ///         global pre-IPO unlock timestamp is in the future. Returns code
+    ///         10 (Limit reached) when the affiliate would exceed its rolling
+    ///         4-week 1%-of-supply sale cap.
+    function moduleReason(address _from, address _to, uint256 _value, address _compliance)
+        external
+        view
+        override
+        returns (uint8)
+    {
         Config memory cfg = config[_compliance];
-        if (!cfg.initialised) return true;
+        if (!cfg.initialised) return CODE_OK;
         // Mint or burn always allowed by this module.
-        if (_from == address(0) || _to == address(0)) return true;
+        if (_from == address(0) || _to == address(0)) return CODE_OK;
 
         // Holding-period gate.
         uint64 received = firstReceived[_compliance][_from];
         if (received != 0) {
             uint64 unlock = received + cfg.holdingPeriod;
-            if (block.timestamp < unlock) return false;
+            if (block.timestamp < unlock) return CODE_LOCKED;
         }
         if (cfg.unlockTimestamp != 0 && block.timestamp < cfg.unlockTimestamp) {
             // Pre-IPO global lockup.
-            return false;
+            return CODE_LOCKED;
         }
 
         // Affiliate volume cap.
@@ -86,9 +105,9 @@ contract Rule144LockupModule is AbstractModule {
             IToken token = IToken(IModularCompliance(_compliance).getTokenBound());
             uint256 cap = (token.totalSupply() * cfg.affiliateCapBps) / 10000;
             uint256 sold = _windowSold(_compliance, _from);
-            if (sold + _value > cap) return false;
+            if (sold + _value > cap) return CODE_LIMIT_REACHED;
         }
-        return true;
+        return CODE_OK;
     }
 
     function moduleMintAction(address _to, uint256) external override onlyComplianceCall {
