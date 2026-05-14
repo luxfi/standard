@@ -7,7 +7,7 @@ import { IModularCompliance } from "@luxfi/standard/securities/erc3643/complianc
 import { IToken } from "@luxfi/standard/securities/erc3643/token/IToken.sol";
 import { IAcePolicy, IAcePolicyEngine } from "@luxfi/standard/integrations/ace/IAcePolicy.sol";
 
-/// @title AcePolicyAdapterModule
+/// @title PolicyAdapterModule
 /// @notice ERC-3643 compliance module that delegates evaluation to a
 ///         Chainlink ACE `IPolicy` contract. Lets an ERC-3643 SecurityToken
 ///         enforce an ACE policy (volume limits, allow-lists, jurisdiction
@@ -24,8 +24,8 @@ import { IAcePolicy, IAcePolicyEngine } from "@luxfi/standard/integrations/ace/I
 ///         `IPolicyProtected` surface that Chainlink ACE expects. Not in
 ///         this file (and not strictly required by aggregators that route
 ///         on raw ERC-3643 + ERC-1404 surface).
-contract AcePolicyAdapterModule is AbstractModule {
-    string private constant _NAME = "AcePolicyAdapterModule";
+contract PolicyAdapterModule is AbstractModule {
+    string private constant _NAME = "PolicyAdapterModule";
 
     /// ERC-1404 codes returned by {moduleReason}.
     uint8 internal constant CODE_OK = 0;
