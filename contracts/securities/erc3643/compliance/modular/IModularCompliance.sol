@@ -211,6 +211,33 @@ interface IModularCompliance {
     ) external view returns (bool);
 
     /**
+     *  @dev structured single-code reason aligned with ERC-1404.
+     *  Returns the FIRST non-zero canonical 0..11 code reported by any bound
+     *  module, or 0 if every module approves. This is what SecurityToken's
+     *  ERC-1404 `detectTransferRestriction` consumes — single-fail semantics,
+     *  cheap to call (short-circuits on the first failing module).
+     */
+    function firstTransferReason(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) external view returns (uint8 code);
+
+    /**
+     *  @dev structured multi-reason aggregate.
+     *  Returns every (module, code) pair where the module reports a non-zero
+     *  canonical 0..11 code. Empty array means the transfer is approved by
+     *  every bound module. Used by BD's pre-trade endpoint to surface the
+     *  full restriction set (not just the first failing one) so the UI can
+     *  show every remediation step the user needs to take.
+     */
+    function canTransferReasons(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) external view returns (address[] memory modules, uint8[] memory codes);
+
+    /**
      *  @dev getter for the modules bound to the compliance contract
      *  returns address array of module contracts bound to the compliance
      */

@@ -252,6 +252,58 @@ contract ModularCompliance is IModularCompliance, OwnableUpgradeable, MCStorage 
         return true;
     }
 
+    /**
+     *  @dev See {IModularCompliance-firstTransferReason}.
+     *  Single-code, short-circuiting variant for ERC-1404 detection. Returns
+     *  the first non-zero module reason or 0 if every module approves.
+     */
+    function firstTransferReason(address _from, address _to, uint256 _value)
+        external
+        view
+        override
+        returns (uint8)
+    {
+        uint256 length = _modules.length;
+        for (uint256 i = 0; i < length; i++) {
+            uint8 code = IModule(_modules[i]).moduleReason(_from, _to, _value, address(this));
+            if (code != 0) return code;
+        }
+        return 0;
+    }
+
+    /**
+     *  @dev See {IModularCompliance-canTransferReasons}.
+     *  Walks every module, collects non-zero reasons. Two-pass to size the
+     *  return arrays exactly (no oversized allocation, no in-place pop).
+     */
+    function canTransferReasons(address _from, address _to, uint256 _value)
+        external
+        view
+        override
+        returns (address[] memory modules, uint8[] memory codes)
+    {
+        uint256 length = _modules.length;
+        uint256 failing = 0;
+        uint8[] memory scratch = new uint8[](length);
+        for (uint256 i = 0; i < length; i++) {
+            uint8 code = IModule(_modules[i]).moduleReason(_from, _to, _value, address(this));
+            scratch[i] = code;
+            if (code != 0) {
+                unchecked { failing++; }
+            }
+        }
+        modules = new address[](failing);
+        codes = new uint8[](failing);
+        uint256 j = 0;
+        for (uint256 i = 0; i < length; i++) {
+            if (scratch[i] != 0) {
+                modules[j] = _modules[i];
+                codes[j] = scratch[i];
+                unchecked { j++; }
+            }
+        }
+    }
+
     /// @dev Extracts the Solidity ABI selector for the specified interaction.
     /// @param callData Interaction data.
     /// @return result The 4 byte function selector of the call encoded in

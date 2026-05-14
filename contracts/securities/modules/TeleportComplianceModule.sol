@@ -38,18 +38,35 @@ contract TeleportComplianceModule is AbstractModule {
         exclusiveBridge[compliance] = bridge;
     }
 
+    /// ERC-1404 codes returned by {moduleReason}.
+    uint8 internal constant CODE_OK = 0;
+    uint8 internal constant CODE_RECIPIENT_NOT_REGISTERED = 4;
+    uint8 internal constant CODE_BRIDGE_NOT_ALLOWED = 11;
+
     /// @notice See {IModule-moduleCheck}.
-    function moduleCheck(address _from, address _to, uint256, address _compliance)
+    function moduleCheck(address _from, address _to, uint256 _value, address _compliance)
         external
         view
         override
         returns (bool)
     {
-        if (_from != address(0)) return true; // not a mint — out of scope
+        return this.moduleReason(_from, _to, _value, _compliance) == CODE_OK;
+    }
+
+    /// @notice See {IModule-moduleReason}. Returns code 4 if the cross-chain
+    ///         mint recipient is not in the destination IdentityRegistry, or
+    ///         code 11 if the originating bridge is not allow-listed.
+    function moduleReason(address _from, address _to, uint256, address _compliance)
+        external
+        view
+        override
+        returns (uint8)
+    {
+        if (_from != address(0)) return CODE_OK; // not a mint — out of scope
         // Mint path — destination-side gate.
         IToken token = IToken(IModularCompliance(_compliance).getTokenBound());
         IIdentityRegistry idReg = token.identityRegistry();
-        if (!idReg.isVerified(_to)) return false;
+        if (!idReg.isVerified(_to)) return CODE_RECIPIENT_NOT_REGISTERED;
 
         address exclusive = exclusiveBridge[_compliance];
         if (exclusive != address(0) && tx.origin != exclusive && msg.sender != exclusive) {
@@ -59,7 +76,7 @@ contract TeleportComplianceModule is AbstractModule {
             // token and the token's mint is restricted to AGENT_ROLE; the
             // bridge is the agent. tx.origin is acceptable here because this
             // is a defense-in-depth gate, not the primary auth.
-            return false;
+            return CODE_BRIDGE_NOT_ALLOWED;
         }
         if (
             exclusive == address(0) && !bridgeAllowed[_compliance][tx.origin] && !bridgeAllowed[_compliance][msg.sender]
@@ -68,9 +85,9 @@ contract TeleportComplianceModule is AbstractModule {
             // entry exists. If the allow-list is empty, the module is a no-op
             // and we accept (so Mainnet-issued tokens that never teleport are
             // unaffected).
-            if (_anyAllowed(_compliance)) return false;
+            if (_anyAllowed(_compliance)) return CODE_BRIDGE_NOT_ALLOWED;
         }
-        return true;
+        return CODE_OK;
     }
 
     function moduleTransferAction(address, address, uint256) external override onlyComplianceCall { }

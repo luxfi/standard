@@ -126,6 +126,19 @@ abstract contract AbstractModuleUpgradeable is IModule, Initializable, OwnableUp
         return s.complianceBound[_compliance];
     }
 
+    /**
+     *  @dev Default {IModule-moduleReason}: derives a binary code from
+     *  `moduleCheck`. Upgradeable modules that want a granular ERC-1404 code
+     *  override this directly. Code 0 = approved, code 2 (additional
+     *  verification required) is the safe fallback for un-overridden modules
+     *  that reject a transfer with `moduleCheck == false`.
+     */
+    function moduleReason(address _from, address _to, uint256 _value, address _compliance)
+        external view virtual override returns (uint8)
+    {
+        return IModule(address(this)).moduleCheck(_from, _to, _value, _compliance) ? 0 : 2;
+    }
+
     // solhint-disable-next-line func-name-mixedcase
     function __AbstractModule_init() internal onlyInitializing {
         __Ownable_init(_msgSender());

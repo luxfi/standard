@@ -113,4 +113,16 @@ abstract contract AbstractModule is IModule {
         return _complianceBound[_compliance];
     }
 
+    /**
+     *  @dev Default {IModule-moduleReason}: derives a binary code from
+     *  `moduleCheck`. Modules that want a granular ERC-1404 code (1..11)
+     *  override this directly. Code 0 = approved, code 2 (additional
+     *  verification required) is the safe fallback for un-overridden modules
+     *  that reject a transfer with `moduleCheck == false`.
+     */
+    function moduleReason(address _from, address _to, uint256 _value, address _compliance)
+        external view virtual override returns (uint8)
+    {
+        return IModule(address(this)).moduleCheck(_from, _to, _value, _compliance) ? 0 : 2;
+    }
 }

@@ -149,6 +149,23 @@ interface IModule {
     function moduleCheck(address _from, address _to, uint256 _value, address _compliance) external view returns (bool);
 
     /**
+     *  @dev structured reason for a compliance check.
+     *  Returns a canonical ERC-1404 restriction code (0..11). Code 0 means the
+     *  module approves the transfer; any non-zero code identifies the specific
+     *  module-side restriction. Modules MUST keep `moduleReason` and
+     *  `moduleCheck` consistent:
+     *      moduleCheck(...) == true   iff   moduleReason(...) == 0
+     *  This is the on-chain source of truth for the ERC-1404 detection surface
+     *  exposed by SecurityToken.detectTransferRestriction.
+     *  @param _from address of the transfer sender
+     *  @param _to address of the transfer receiver
+     *  @param _value amount of tokens sent
+     *  @param _compliance address of the compliance contract concerned by the transfer
+     */
+    function moduleReason(address _from, address _to, uint256 _value, address _compliance)
+        external view returns (uint8 code);
+
+    /**
      *  @dev getter for compliance binding status on module
      *  @param _compliance address of the compliance contract
      */
