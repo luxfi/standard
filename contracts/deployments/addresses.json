@@ -97,23 +97,23 @@
       "explorer": "https://explore.lux-test.network",
       "contracts": {
         "core": {
-          "WLUX": "0xc65ea8882020af7cda7854d590c6fcd34bf364ec",
+          "WLUX": "0xc65ea8882020Af7CDa7854d590C6Fcd34BF364ec",
           "Multicall3": "0xd25F88CBdAe3c2CCA3Bb75FC4E723b44C0Ea362F"
         },
         "bridge": {
-          "LETH": "0x413e4a820635702ec199bc5b62dcbca1749851bf",
-          "LBTC": "0x9378b62fc172d2a4f715d7ecf49de0362f1bb702",
-          "LUSDC": "0x7fc4f8a926e47fa3587c0d7658c00e7489e67916",
+          "LETH": "0x9378b62fC172d2A4f715d7ecF49DE0362f1BB702",
+          "LBTC": "0x7fC4f8a926E47Fa3587C0d7658C00E7489e67916",
+          "LUSDC": "0x51c3408B9A6a0B2446CCB78c72C846CEB76201FA",
           "LUSDT": "0x51c3408b9a6a0b2446ccb78c72c846ceb76201fa",
           "LDAI": "0xc64bd67b39765127ae5dbdd750fb6a9f62c3269f"
         },
         "staking": {
-          "StakedLUX": "0x191067f88d61f9506555e88ceab9cf71deed61a9",
+          "StakedLUX": "0x977afeE2D1043ecdBc27ff530329837286457988",
           "LiquidVault": "0x3153c91b6b7f29cc6bce51fff639da658bd75363"
         },
         "amm": {
-          "V2Factory": "0x0570b2c59976e87d37d3a9915750bff131d295d6",
-          "V2Router": "0xa24318f24739d92a2e1c2997c18f5103d0fd708e",
+          "V2Factory": "0xDc384E006BAec602b0b2B2fe6f2712646EFb1e9D",
+          "V2Router": "0x191067f88d61f9506555E88CEab9CF71deeD61A9",
           "V3Factory": "0x80bBc7C4C7a59C899D1B37BC14539A22D5830a84",
           "V3SwapRouter": "0xE8fb25086C8652c92f5AF90D730Bac7C63Fc9A58",
           "V3SwapRouter02": "0x939bC0Bca6F9B9c52E6e3AD8A3C590b5d9B9D10E",
@@ -125,38 +125,38 @@
         },
         "governance": {
           "VotesToken": "0xe77e1cb5e303ed0ecb10d0d13914aaa2ed9b3b8c",
-          "Timelock": "0x80f3bd0bdf7861487ddda61bc651243ecb8b5072",
-          "vLUX": "0x91954cf6866d557c5ca1d2f384d204bce9dffd5a",
-          "GaugeController": "0x26328ac03d07bd9a7caaafbde39f9b56b5449240",
-          "Karma": "0x97c265001eb088e1de2f77a13a62b708014c9e68",
+          "Timelock": "0xC63287d85BAe3628f1b824F6D9C2cfADc22F987F",
+          "vLUX": "0xDd30113b484671A35Ca236ec5A97C1c5327d72FA",
+          "GaugeController": "0xa1a2cE4377fee42b09Da6376d4887156FeE54c8b",
+          "Karma": "0x58604f58fC8b6Bf9E8719BA5BA03F2EA586161bB",
           "KarmaMinter": "0x1fe145582c7d5683c7c69c0a2bce0e3ffe901160",
-          "DLUX": "0x316520ca05eac5d2418f562a116091f1b22bf6e0",
+          "DLUX": "0x48214d4B54432c1037C210bEE96e840F697Bd3ed",
           "DLUXMinter": "0xcd7ee976df9c8a2709a14bda8463af43e6097a56",
           "VotingLUX": "0xac604fd2f423ea738de9c0d6eb03eba6f90b63fb",
           "Governor": "0xd9e69a0a38bf48898456170cb3b4451cbaf5f597"
         },
         "treasury": {
-          "FeeGov": "0x92d057f8b4132ca8aa237fbd4c41f9c57079582e",
+          "FeeGov": "0x7d0A0401284aC2081721B873187958f55C241059",
           "Vault": "0x180ed4f186a463a2f56c7aeca7375ec39fcc0833",
           "Router": "0xf9aec94ed6f098509ebcd5690ae2cb126cd8a3ee",
-          "ValidatorVault": "0x5ed08c64fbf027966c04e6fc87e6b58a91de4db2",
+          "ValidatorVault": "0xf3a126C12EE4f413573B8a32a36953Bd43719E30",
           "Safe": "0x43222597839515180e7ad564c94a3b5c16eb987c",
           "SafeProxyFactory": "0x4ec24da7d598cac1540f2e8078d05869e36a4ef1"
         },
         "lssvm": {
-          "LinearCurve": "0x13e43ae4dddfbc1f20f03782f142ae67fe52abfe",
-          "ExponentialCurve": "0x176615d944a0becf5f9ad4658b185a3aecc5d6e3",
-          "Factory": "0xc8e5c5cba86df6307f1c167bd3958979ad178a7b",
+          "LinearCurve": "0x9607F59f2377Dff9A56D0A76F0313040070c08CD",
+          "ExponentialCurve": "0xdE5280a9306da7829A4Ba1fBf87B58e1bB4F4A53",
+          "Factory": "0x38E71f39f3f46907E03C48983F6578F9a8c2e72e",
           "Router": "0x4870621ea8be7a383efcfda225249d35888bd9f2"
         },
         "markets": {
-          "Markets": "0x6fc44509a32e513be1aa00d27bb298e63830c6a8"
+          "Markets": "0x9BC44B0De1aBe2e436C8fA5Cd5cA519026b9D8fD"
         },
         "perps": {
-          "Perp": "0xb2ee1ce7b84853b83aa08702ad0ad4d79711882d"
+          "Perp": "0x3153c91b6b7f29Cc6BCE51FfF639dA658Bd75363"
         },
         "identity": {
-          "DIDRegistry": "0xb0b3df1e279d87e72738487df8d7c0d7c2d1efce"
+          "DIDRegistry": "0x08ae70233ff8d34EcD03299D3c9019F0D1A2Dc71"
         },
         "defi": {
           "StableSwapFactory": "0xf0c54ebb09ba48393b2047e68631b81a16097705",
