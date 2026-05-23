@@ -34,6 +34,13 @@ pragma solidity ^0.8.24;
 ///           4 ACCREDITED_SELF      — BD ClaimIssuer, 365d (Reg D 506(b))
 ///           5 QIB                  — BD ClaimIssuer, 365d (Rule 144A)
 ///           6 AFFILIATE            — TA ClaimIssuer, persists
+///           9 REG_CF_SUBSCRIBER    — BD ClaimIssuer at primary Reg CF sale,
+///                                    per-(wallet, security); read by
+///                                    RegCFFirstYearModule for §227.501
+///                                    12-month resale gate. Never expires
+///                                    (the 12mo clock is computed from the
+///                                    claim's issuance timestamp, not its
+///                                    validUntil).
 ///           10 ID_VERIFIED         — IDV provider, 365d
 ///           11 LIVENESS            — IDV provider, 30d (re-attestable)
 ///           12 BIOMETRIC_UNIQUE    — IDV provider, persists
@@ -55,6 +62,7 @@ library Topics {
     uint256 internal constant AFFILIATE            = 6;
     uint256 internal constant SOURCE_OF_FUNDS      = 7;
     uint256 internal constant TAX_RESIDENCY        = 8;
+    uint256 internal constant REG_CF_SUBSCRIBER    = 9;
 
     // ── Identity / IDV (10-19) — typically IDV provider ─────────────────
     uint256 internal constant ID_VERIFIED          = 10;
