@@ -9,122 +9,282 @@ import { IIdentityRegistry } from "@luxfi/standard/securities/erc3643/registry/i
 import { IIdentity } from "@luxfi/standard/securities/onchainid/interface/IIdentity.sol";
 import { Topics } from "../constants/Topics.sol";
 
-/// @title Rule144LockupModule
-/// @notice Rule 144 holding-period gate plus the affiliate volume cap.
-/// @dev    Per-token configuration:
-///           * `unlockTimestamp` — until this time, recipients cannot transfer
-///             tokens out (first-receipt time recorded at mint).
-///           * Affiliate cap (1% of supply per rolling 4-week window) is
-///             enforced on holders that carry the AFFILIATE claim (topic 6).
-///         Transfers from address(0) (mint) record `firstReceived[to]`.
-///         A transfer (not mint) before `firstReceived[from] + holdingPeriod`
-///         reverts via `moduleCheck` returning false.
+/// @title  Rule144LockupModule
+/// @notice Canonical ERC-3643 IModule for SEC Rule 144 — holding period
+///         (§144(d)) plus affiliate volume cap (§144(e)). Configurable so
+///         every Rule 144 variant a securities token may need is
+///         expressible without forking the module.
+///
+/// @dev    Decomplected: one source of truth for the rule, fully
+///         per-compliance configurable. Concerns are kept separate:
+///
+///         (1) Holding-period clock — `holdingPeriod` per-compliance.
+///             Anchored at `firstAcquired[compliance][holder]`, set on
+///             the FIRST inbound transfer (mint OR receive). Carries
+///             forward through chain-of-custody per §144(d) tacking.
+///             Default `DEFAULT_HOLDING_PERIOD = 31_536_001` (1y + 1s)
+///             — the strict +1 second tiebreaker that removes the
+///             inclusive/exclusive day-365 ambiguity where SEC and
+///             FINRA counsel split. A reporting issuer can set 6 months
+///             via configure; a token not subject to §144 at all (e.g.
+///             a public-registered token) sets `holdingPeriod = 0`.
+///
+///         (2) Global pre-IPO lockup — `unlockTimestamp` per-compliance.
+///             When non-zero, no non-treasury transfer is allowed
+///             before this timestamp regardless of individual holding
+///             periods. Used for the founders' lock at IPO + the
+///             standard 180-day post-IPO lockup. 0 disables.
+///
+///         (3) Affiliate volume cap — `affiliateVolumeCapBps` +
+///             `affiliateWindow` per-compliance. A holder carrying the
+///             AFFILIATE (topic 6) claim may not sell more than
+///             `affiliateVolumeCapBps` basis-points of total supply
+///             within any rolling `affiliateWindow`. Default cap is
+///             100 bps (1% of supply per §144(e)(1)). Default window
+///             is 90 days (the §144(e) 3-month aggregate cap). Setting
+///             cap = 0 disables the volume gate.
+///
+///         (4) Treasury bypass — `issuerTreasury` per-compliance.
+///             Transfers TO the issuer treasury (buybacks,
+///             share-repurchase, redemptions) skip the holding-period
+///             AND the affiliate volume gate. Setting 0 disables.
+///
+///         Per-(compliance, holder) state is keyed on the compliance
+///         address so one module deployment can serve N security tokens.
 contract Rule144LockupModule is AbstractModule {
+    // ── constants ─────────────────────────────────────────────────────────
+
+    /// @notice Default §144(d) holding period — 1 Gregorian year + 1 second.
+    ///         Strict (>365d). See dev notes for the rationale on the +1s
+    ///         tiebreaker.
+    uint64 public constant DEFAULT_HOLDING_PERIOD = 31_536_001;
+
+    /// @notice Default affiliate-sale rolling window — 90 days
+    ///         (§144(e) three-month aggregate cap).
+    uint64 public constant DEFAULT_AFFILIATE_WINDOW = 90 days;
+
+    /// @notice Default affiliate volume cap — 100 bps (1%) of supply.
+    uint16 public constant DEFAULT_AFFILIATE_CAP_BPS = 100;
+
     string private constant _NAME = "Rule144LockupModule";
 
-    /// Per-compliance config.
+    /// ERC-1404 reason codes returned by `moduleReason`.
+    uint8 internal constant CODE_OK = 0;
+    uint8 internal constant CODE_LOCKED = 8;
+    uint8 internal constant CODE_AFFILIATE_LIMIT = 10;
+
+    // ── storage ───────────────────────────────────────────────────────────
+
+    /// @notice Per-compliance configuration.
     struct Config {
-        uint64 unlockTimestamp; // global unlock for non-affiliate holders
-        uint64 holdingPeriod; // per-receipt holding period (e.g. 6 months)
-        uint16 affiliateCapBps; // basis points of supply per 4-week window (e.g. 100 = 1%)
+        /// @notice Address that may receive transfers regardless of any
+        ///         holding-period or affiliate gate (issuer buybacks /
+        ///         redemptions). 0 disables.
+        address issuerTreasury;
+        /// @notice Per-receipt holding period (seconds). 0 disables the
+        ///         per-holder lockup. Defaulted to DEFAULT_HOLDING_PERIOD
+        ///         on configure() when the caller passes 0 AND wants the
+        ///         default — see `configure` semantics below.
+        uint64 holdingPeriod;
+        /// @notice Global pre-IPO lockup timestamp. Until this time, no
+        ///         non-treasury transfer is allowed. 0 disables.
+        uint64 unlockTimestamp;
+        /// @notice Rolling window for the affiliate sale cap. Defaulted
+        ///         to DEFAULT_AFFILIATE_WINDOW on configure() when 0.
+        uint64 affiliateWindow;
+        /// @notice Cap (basis points of total supply) on affiliate sales
+        ///         per rolling `affiliateWindow`. Defaulted to
+        ///         DEFAULT_AFFILIATE_CAP_BPS on configure() when 0.
+        ///         Setting cap to type(uint16).max (65535 ≡ 655.35%)
+        ///         effectively disables the gate.
+        uint16 affiliateVolumeCapBps;
+        /// @notice Init guard.
         bool initialised;
     }
 
+    /// @notice Per-compliance config.
     mapping(address compliance => Config) public config;
-    /// First time a wallet received tokens from this token (per compliance).
-    mapping(address compliance => mapping(address holder => uint64)) public firstReceived;
-    /// Rolling 4-week sales window per holder (sum within window).
+
+    /// @notice First-time-received timestamp per (compliance, holder).
+    ///         Anchored at the first inbound transfer; NEVER reset by
+    ///         partial sales (so each chain-of-custody hop carries the
+    ///         original clock forward, per §144(d) tacking).
+    mapping(address compliance => mapping(address holder => uint64)) public firstAcquired;
+
+    /// @notice Rolling-window affiliate sale total per (compliance, holder).
     mapping(address compliance => mapping(address holder => uint256)) public windowSold;
+
+    /// @notice Start of the current rolling window per (compliance, holder).
+    ///         Window rolls forward when the next sale falls AFTER
+    ///         `windowStart + affiliateWindow`.
     mapping(address compliance => mapping(address holder => uint64)) public windowStart;
 
-    uint64 internal constant WINDOW = 4 weeks;
+    // ── errors ────────────────────────────────────────────────────────────
 
     error AlreadyInitialised();
-    error NotComplianceOwner();
+    error ComplianceNotBound();
+    error NotIssuer();
+
+    // ── events ────────────────────────────────────────────────────────────
+
+    event Configured(
+        address indexed compliance,
+        address issuerTreasury,
+        uint64 holdingPeriod,
+        uint64 unlockTimestamp,
+        uint64 affiliateWindow,
+        uint16 affiliateVolumeCapBps
+    );
+    event IssuerTreasuryUpdated(address indexed compliance, address oldTreasury, address newTreasury);
+
+    // ── configuration ─────────────────────────────────────────────────────
 
     /// @notice One-shot init by the compliance owner (TA agent).
+    /// @dev    Zero in any of `holdingPeriod`, `affiliateWindow`,
+    ///         `affiliateVolumeCapBps` resolves to the corresponding
+    ///         DEFAULT_* constant. To truly disable a clock pass a
+    ///         sentinel: `holdingPeriod = type(uint64).max` for "never
+    ///         locked", `affiliateVolumeCapBps = type(uint16).max` for
+    ///         "no affiliate cap".
     function configure(address compliance, Config calldata cfg) external {
-        // Only callable by the compliance owner. AbstractModule's bindCompliance
-        // requires the compliance contract to call us; configuration is a separate
-        // step the compliance owner does after binding.
         if (config[compliance].initialised) revert AlreadyInitialised();
-        // Guard: compliance must already be bound to us.
-        require(this.isComplianceBound(compliance), "compliance not bound");
+        if (!this.isComplianceBound(compliance)) revert ComplianceNotBound();
+        uint64 hp = cfg.holdingPeriod == 0 ? DEFAULT_HOLDING_PERIOD : cfg.holdingPeriod;
+        if (hp == type(uint64).max) hp = 0; // sentinel: "no holding period"
+        uint64 aw = cfg.affiliateWindow == 0 ? DEFAULT_AFFILIATE_WINDOW : cfg.affiliateWindow;
+        uint16 cap = cfg.affiliateVolumeCapBps == 0 ? DEFAULT_AFFILIATE_CAP_BPS : cfg.affiliateVolumeCapBps;
+        if (cap == type(uint16).max) cap = 0; // sentinel: "no affiliate cap"
         config[compliance] = Config({
+            issuerTreasury: cfg.issuerTreasury,
+            holdingPeriod: hp,
             unlockTimestamp: cfg.unlockTimestamp,
-            holdingPeriod: cfg.holdingPeriod,
-            affiliateCapBps: cfg.affiliateCapBps,
+            affiliateWindow: aw,
+            affiliateVolumeCapBps: cap,
             initialised: true
         });
+        emit Configured(compliance, cfg.issuerTreasury, hp, cfg.unlockTimestamp, aw, cap);
     }
 
-    /// ERC-1404 codes returned by {moduleReason}.
-    uint8 internal constant CODE_OK = 0;
-    uint8 internal constant CODE_LOCKED = 8;
-    uint8 internal constant CODE_LIMIT_REACHED = 10;
+    /// @notice Convenience init: defaults for holdingPeriod (1y+1s),
+    ///         affiliateWindow (90d), and affiliateVolumeCapBps (100=1%).
+    ///         For full control (custom holding period, pre-IPO unlock
+    ///         timestamp, alternative window/cap) use the Config-taking
+    ///         overload above. Pass `affiliateVolumeCapBps = 0` to get
+    ///         the 100bps default; pass `type(uint16).max` to disable
+    ///         the volume gate entirely.
+    function configure(address compliance, address issuerTreasury, uint16 affiliateVolumeCapBps) external {
+        if (config[compliance].initialised) revert AlreadyInitialised();
+        if (!this.isComplianceBound(compliance)) revert ComplianceNotBound();
+        uint16 cap = affiliateVolumeCapBps == 0 ? DEFAULT_AFFILIATE_CAP_BPS : affiliateVolumeCapBps;
+        if (cap == type(uint16).max) cap = 0;
+        config[compliance] = Config({
+            issuerTreasury: issuerTreasury,
+            holdingPeriod: DEFAULT_HOLDING_PERIOD,
+            unlockTimestamp: 0,
+            affiliateWindow: DEFAULT_AFFILIATE_WINDOW,
+            affiliateVolumeCapBps: cap,
+            initialised: true
+        });
+        emit Configured(compliance, issuerTreasury, DEFAULT_HOLDING_PERIOD, 0, DEFAULT_AFFILIATE_WINDOW, cap);
+    }
 
-    /// @notice See {IModule-moduleCheck}.
+    /// @notice Rotate the issuer-treasury address. Compliance-owner only.
+    function setIssuerTreasury(address compliance, address newTreasury) external {
+        Config storage c = config[compliance];
+        if (!c.initialised) revert ComplianceNotBound();
+        if (msg.sender != c.issuerTreasury) revert NotIssuer();
+        address old = c.issuerTreasury;
+        c.issuerTreasury = newTreasury;
+        emit IssuerTreasuryUpdated(compliance, old, newTreasury);
+    }
+
+    // ── IModule view checks ───────────────────────────────────────────────
+
     function moduleCheck(address _from, address _to, uint256 _value, address _compliance)
         external
         view
         override
         returns (bool)
     {
-        return this.moduleReason(_from, _to, _value, _compliance) == CODE_OK;
+        return _reason(_from, _to, _value, _compliance) == CODE_OK;
     }
 
-    /// @notice See {IModule-moduleReason}. Returns code 8 (Locked) when the
-    ///         sender's per-receipt holding period has not elapsed or the
-    ///         global pre-IPO unlock timestamp is in the future. Returns code
-    ///         10 (Limit reached) when the affiliate would exceed its rolling
-    ///         4-week 1%-of-supply sale cap.
     function moduleReason(address _from, address _to, uint256 _value, address _compliance)
         external
         view
         override
         returns (uint8)
     {
-        Config memory cfg = config[_compliance];
-        if (!cfg.initialised) return CODE_OK;
-        // Mint or burn always allowed by this module.
-        if (_from == address(0) || _to == address(0)) return CODE_OK;
+        return _reason(_from, _to, _value, _compliance);
+    }
 
-        // Holding-period gate.
-        uint64 received = firstReceived[_compliance][_from];
-        if (received != 0) {
-            uint64 unlock = received + cfg.holdingPeriod;
-            if (block.timestamp < unlock) return CODE_LOCKED;
-        }
+    /// @dev Internal reason resolver. Order matters: treasury bypass
+    ///      first (issuer buybacks must always work); then global
+    ///      pre-IPO lockup; then per-holder holding period; then
+    ///      affiliate volume cap.
+    function _reason(address from, address to, uint256 value, address compliance)
+        internal
+        view
+        returns (uint8)
+    {
+        Config memory cfg = config[compliance];
+        if (!cfg.initialised) return CODE_OK;
+
+        // Mints + burns: unconditional. They're driven by the issuer or
+        // the user-initiated burn path; not Rule-144 events.
+        if (from == address(0) || to == address(0)) return CODE_OK;
+
+        // Treasury bypass — buybacks / share-repurchase never blocked.
+        if (cfg.issuerTreasury != address(0) && to == cfg.issuerTreasury) return CODE_OK;
+
+        // Global pre-IPO lockup.
         if (cfg.unlockTimestamp != 0 && block.timestamp < cfg.unlockTimestamp) {
-            // Pre-IPO global lockup.
             return CODE_LOCKED;
         }
 
-        // Affiliate volume cap.
-        if (_isAffiliate(_compliance, _from) && cfg.affiliateCapBps > 0) {
-            IToken securityToken = IToken(IModularCompliance(_compliance).getTokenBound());
-            uint256 cap = (securityToken.totalSupply() * cfg.affiliateCapBps) / 10000;
-            uint256 sold = _windowSold(_compliance, _from);
-            if (sold + _value > cap) return CODE_LIMIT_REACHED;
+        // Per-holder holding period. Strict `<` per the +1s tiebreaker:
+        //   allowed when (now - acquired) >= holdingPeriod.
+        if (cfg.holdingPeriod != 0) {
+            uint64 acquired = firstAcquired[compliance][from];
+            if (acquired != 0 && block.timestamp < uint256(acquired) + cfg.holdingPeriod) {
+                return CODE_LOCKED;
+            }
+        }
+
+        // Affiliate volume cap (§144(e)(1)).
+        if (cfg.affiliateVolumeCapBps != 0 && _isAffiliate(compliance, from)) {
+            uint256 cap = _volumeCap(compliance, cfg.affiliateVolumeCapBps);
+            uint256 sold = _activeWindowSold(compliance, from, cfg.affiliateWindow);
+            if (sold + value > cap) return CODE_AFFILIATE_LIMIT;
         }
         return CODE_OK;
     }
 
+    // ── IModule state updates ─────────────────────────────────────────────
+
+    /// @notice Anchor first-receipt timestamp on mint.
     function moduleMintAction(address _to, uint256) external override onlyComplianceCall {
-        if (firstReceived[msg.sender][_to] == 0) {
-            firstReceived[msg.sender][_to] = uint64(block.timestamp);
+        if (firstAcquired[msg.sender][_to] == 0) {
+            firstAcquired[msg.sender][_to] = uint64(block.timestamp);
         }
     }
 
-    function moduleTransferAction(address _from, address _to, uint256 _value) external override onlyComplianceCall {
-        // Track recipient first-received for downstream Rule 144 chain-of-custody.
-        if (firstReceived[msg.sender][_to] == 0) {
-            firstReceived[msg.sender][_to] = uint64(block.timestamp);
+    /// @notice Update first-receipt + affiliate window on transfer.
+    function moduleTransferAction(address _from, address _to, uint256 _value)
+        external
+        override
+        onlyComplianceCall
+    {
+        // Recipient: anchor first-receipt if this is their first inbound
+        // (chain-of-custody tacking per §144(d)).
+        if (firstAcquired[msg.sender][_to] == 0) {
+            firstAcquired[msg.sender][_to] = uint64(block.timestamp);
         }
-        // Update affiliate sales window.
-        if (_isAffiliate(msg.sender, _from)) {
+        // Sender: if affiliate, advance the rolling window.
+        Config memory cfg = config[msg.sender];
+        if (cfg.affiliateVolumeCapBps != 0 && _isAffiliate(msg.sender, _from)) {
             uint64 ws = windowStart[msg.sender][_from];
-            if (ws == 0 || block.timestamp >= ws + WINDOW) {
+            if (ws == 0 || block.timestamp >= uint256(ws) + cfg.affiliateWindow) {
                 windowStart[msg.sender][_from] = uint64(block.timestamp);
                 windowSold[msg.sender][_from] = _value;
             } else {
@@ -133,24 +293,35 @@ contract Rule144LockupModule is AbstractModule {
         }
     }
 
-    function moduleBurnAction(address, uint256) external override onlyComplianceCall { }
+    function moduleBurnAction(address, uint256) external override onlyComplianceCall {}
 
-    // ── Internals ──────────────────────────────────────────────────────────
+    // ── helpers ────────────────────────────────────────────────────────────
 
-    function _windowSold(address compliance, address holder) internal view returns (uint256) {
+    /// @dev capBps of current total supply (cap shrinks/grows with supply).
+    function _volumeCap(address compliance, uint16 capBps) internal view returns (uint256) {
+        IToken token = IToken(IModularCompliance(compliance).getTokenBound());
+        return (token.totalSupply() * uint256(capBps)) / 10_000;
+    }
+
+    /// @dev Active rolling-window sold; 0 when the window has elapsed.
+    function _activeWindowSold(address compliance, address holder, uint64 windowSize)
+        internal
+        view
+        returns (uint256)
+    {
         uint64 ws = windowStart[compliance][holder];
         if (ws == 0) return 0;
-        if (block.timestamp >= ws + WINDOW) return 0;
+        if (block.timestamp >= uint256(ws) + windowSize) return 0;
         return windowSold[compliance][holder];
     }
 
+    /// @dev True iff `user` carries the AFFILIATE (topic 6) claim.
     function _isAffiliate(address compliance, address user) internal view returns (bool) {
-        IToken securityToken = IToken(IModularCompliance(compliance).getTokenBound());
-        IIdentityRegistry idReg = securityToken.identityRegistry();
-        IIdentity id = idReg.identity(user);
+        IToken token = IToken(IModularCompliance(compliance).getTokenBound());
+        IIdentityRegistry registry = token.identityRegistry();
+        IIdentity id = registry.identity(user);
         if (address(id) == address(0)) return false;
         bytes32[] memory ids = id.getClaimIdsByTopic(Topics.AFFILIATE);
-        // Any non-empty AFFILIATE topic claim flags the user.
         return ids.length > 0;
     }
 
