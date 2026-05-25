@@ -3966,7 +3966,7 @@ means "never expires" (only valid for topic 6 AFFILIATE).
 ### ERC-1404 revert codes (canonical)
 
 Codes 0-11 only — no custom code space. Decoder lives at
-`@liquidityio/ui/compliance` (see `compliance/flows/erc1404-revert.md`).
+`@<tenant>/ui/compliance` (see `compliance/flows/erc1404-revert.md`).
 
 ### Why "factory wires pre-deployed components"
 

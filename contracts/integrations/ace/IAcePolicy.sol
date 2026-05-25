@@ -7,7 +7,7 @@
 //   packages/policy-management/src/interfaces/IPolicyEngine.sol
 //   packages/policy-management/src/interfaces/IPolicy.sol
 //
-// Not a full re-export — we don't re-implement the engine. Liquid EVM tokens
+// Not a full re-export — we don't re-implement the engine. regulated EVM tokens
 // stay ERC-3643/ModularCompliance native; this interface lets the adapter
 // module delegate evaluation to an external ACE policy contract when bound.
 pragma solidity ^0.8.20;

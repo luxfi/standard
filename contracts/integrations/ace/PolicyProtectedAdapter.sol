@@ -22,7 +22,7 @@ interface IERC1404 {
 
 /// @title PolicyProtectedAdapter
 /// @notice Bidirectional wrapper that lets Chainlink ACE-native integrators
-///         (Turtle et al.) interact with a Liquid EVM ERC-3643 SecurityToken
+///         (Turtle et al.) interact with a regulated EVM ERC-3643 SecurityToken
 ///         using the IPolicyProtected discovery surface they expect, WITHOUT
 ///         requiring the SecurityToken itself to inherit ACE mixins.
 ///
@@ -37,7 +37,7 @@ interface IERC1404 {
 ///             fire normally, all events emit from the underlying token.
 ///           - Re-exposes the ERC-1404 detect/message surface so ACE
 ///             integrators can pre-flight a transfer using the same canonical
-///             0..11 code table the rest of Liquidity uses.
+///             0..11 code table the rest of the SecurityToken surface uses.
 ///           - Stores per-sender context for ACE flows that need to present
 ///             a signed credential or any other inline blob.
 ///
