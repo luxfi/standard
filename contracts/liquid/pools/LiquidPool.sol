@@ -84,7 +84,13 @@ abstract contract LiquidPool is AccessControl, ReentrancyGuard, Pausable, PerAss
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(GOVERNANCE_ROLE, admin);
 
-        _initBasketThresholds(_basketId);
+        // Pool reserves are 1:1 with the L token supply by construction
+        // (every L mint pulls real reserve in; every burn ships reserve out),
+        // so the RestrictedMint band of the V4 graduated solvency model
+        // collapses to "Healthy iff backing >= liabilities, else Emergency".
+        // Governance can re-widen the band via setBasketThresholds if it
+        // adds external (yield-buffer) backing later.
+        _setBasketThresholds(_basketId, 10_000, 10_000);
     }
 
     // ─────────────────────────────────────────────────────────────────────
