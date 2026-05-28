@@ -59,10 +59,12 @@ abstract contract SolvencyStateMachineV4 {
         emit BasketThresholdsSet(basket, 11_111, 10_000);
     }
 
-    /// @notice Set per-basket thresholds. healthyBp must be > emergencyBp,
-    ///         emergencyBp must be > 0.
+    /// @notice Set per-basket thresholds. healthyBp must be >= emergencyBp,
+    ///         emergencyBp must be > 0. healthyBp == emergencyBp collapses
+    ///         the RestrictedMint band — usable for pools where backing is
+    ///         1:1 by construction (no over-collateralization invariant).
     function _setBasketThresholds(uint8 basket, uint16 _healthyBp, uint16 _emergencyBp) internal {
-        if (_emergencyBp == 0 || _healthyBp <= _emergencyBp) revert SolvencyV4_InvalidThreshold();
+        if (_emergencyBp == 0 || _healthyBp < _emergencyBp) revert SolvencyV4_InvalidThreshold();
         healthyBp[basket] = _healthyBp;
         emergencyBp[basket] = _emergencyBp;
         emit BasketThresholdsSet(basket, _healthyBp, _emergencyBp);
