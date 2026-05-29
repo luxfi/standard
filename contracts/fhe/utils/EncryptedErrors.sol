@@ -5,7 +5,7 @@ import { FHE, ebool, euint8 } from "../FHE.sol";
 
 /**
  * @title       EncryptedErrors.
- * @notice      This abstract contract is used for error handling in the fhEVM.
+ * @notice      This abstract contract is used for error handling in Lux FHEVM.
  *              Error codes are encrypted in the constructor inside the `_errorCodeDefinitions` mapping.
  * @dev         `_errorCodeDefinitions[0]` should always refer to the `NO_ERROR` code, by default.
  */
